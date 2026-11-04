@@ -175,7 +175,8 @@ final class DemoNativeContract {
     static PanelSpec panelFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
         if ("met_visit".equals(surfaceId) && "map".equals(component.getId())
                 && component.getType() == ComponentType.IMAGE && component.getAction() == null) {
-            return new PanelSpec("route_met", R.drawable.demo_route_preview, null);
+            // The real route only: without route_met.png the panel stays hidden.
+            return new PanelSpec("route_met", 0, null);
         }
         return null;
     }
@@ -196,7 +197,8 @@ final class DemoNativeContract {
     static Media videoFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
         if (isMetArtSurface(surfaceId) && "film".equals(component.getId())
                 && component.getType() == ComponentType.VIDEO) {
-            return new Media("met_artwork_film", MET_CREDIT);
+            // The film carries its own captions and credit.
+            return new Media("met_artwork_film", "");
         }
         return null;
     }
@@ -231,12 +233,61 @@ final class DemoNativeContract {
         if ("modal_confirmation".equals(surfaceId) && "buy".equals(component.getId())) {
             return "Buy this album for £9.99?";
         }
+        if ("met_visit".equals(surfaceId) && "reserve".equals(component.getId())) {
+            return "Reserve 2 timed-entry tickets for 3:00 PM?";
+        }
+        if ("ev_charge_coffee".equals(surfaceId) && "coffee".equals(component.getId())) {
+            return "Order your usual: oat milk latte, $5.25?";
+        }
         return null;
+    }
+
+    /** Surfaces whose agent answer joins the screen as its brief instead of replacing it. */
+    static boolean embedsAgentBrief(@NonNull String surfaceId) {
+        return "met_visit".equals(surfaceId);
+    }
+
+    /** A thumbnail (by drawable name) for an exact corpus row, drawn only while IMAGE is allowed. */
+    @Nullable
+    static String thumbnailFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        String id = component.getId();
+        if ("met_visit".equals(surfaceId)) {
+            if ("brief".equals(id)) return "met_436535";
+            if ("gallery".equals(id)) return "met_437881";
+        }
+        if ("ev_charge_coffee".equals(surfaceId) && "tour".equals(id)) return "met_435868";
+        return null;
+    }
+
+    /** A glyph for an exact corpus row, drawn while ICON is allowed; 0 for none. */
+    static int glyphFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        String id = component.getId();
+        if ("met_visit".equals(surfaceId)) {
+            if ("route".equals(id)) return R.drawable.a2ui_ic_route;
+            if ("reserve".equals(id)) return R.drawable.a2ui_ic_ticket;
+            if ("audio".equals(id)) return R.drawable.a2ui_ic_guide;
+            if ("artmode".equals(id)) return R.drawable.a2ui_ic_film;
+            if ("brief".equals(id) || "gallery".equals(id)) return R.drawable.a2ui_ic_film;
+        }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            if (id != null && id.length() == 2 && id.startsWith("c")) {
+                return R.drawable.a2ui_ic_battery;
+            }
+            if ("coffee".equals(id)) return R.drawable.a2ui_ic_pickup;
+            if ("tour".equals(id)) return R.drawable.a2ui_ic_film;
+        }
+        return 0;
     }
 
     /** The confirmation's supporting line for an exact corpus control, or null. */
     @Nullable
     static String confirmDetail(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        if ("met_visit".equals(surfaceId) && "reserve".equals(component.getId())) {
+            return "The Met Fifth Avenue · Thu Nov 5 · 81st St entrance";
+        }
+        if ("ev_charge_coffee".equals(surfaceId) && "coffee".equals(component.getId())) {
+            return "Fifth House Coffee Atelier · pickup at the counter";
+        }
         return null;
     }
 

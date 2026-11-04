@@ -89,7 +89,7 @@ MET = [
         CARUI + "AGENT", "--es", X + "PROVIDER", "muse", "--es", X + "ASK",
         "'Take us to The Met this afternoon'")),
     ("Reserve · confirm", lambda: speak("reserve entry for two at three")),
-    ("Ticket", lambda: tap_text("OK")),
+    ("Ticket", lambda: (tap_text("Confirm") or tap_text("OK"))),
     ("Drive · change strip", lambda: car("drive")),
     ("Drive · audio guide + passenger film", lambda: broadcast(
         CARUI + "PASSENGER", "--es", X + "MEDIA", "artwork")),
@@ -102,7 +102,7 @@ CHARGE = [
     ("Voice · first charger", lambda: speak("take me to the first one")),
     ("Park · charging", lambda: car("park")),
     ("Order coffee · confirm", lambda: speak("order my usual coffee")),
-    ("Pickup card", lambda: tap_text("OK")),
+    ("Pickup card", lambda: (tap_text("Confirm") or tap_text("OK"))),
     ("Drive off · strip", lambda: car("drive")),
     ("End card", lambda: (car("park"), broadcast(CARUI + "END_CARD"))),
 ]

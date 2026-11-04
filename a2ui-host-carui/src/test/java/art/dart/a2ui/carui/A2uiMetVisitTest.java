@@ -58,7 +58,7 @@ public class A2uiMetVisitTest {
     private static final String GALLERY = "Artwork highlights";
     private static final String FILM = "Film · Slideshow";
     private static final String RESERVE = "Reserve entry for two at 3 PM";
-    private static final String TICKET = "Timed entry · Thu Nov 5 · 3:00 PM · 2 guests · DEMO";
+    private static final String TICKET = "Timed entry · Thu Nov 5 · 3:00 PM · 2 guests";
     private static final String SOURCE = "Source · metmuseum.org — Hours and admission";
 
     @Before
@@ -111,6 +111,7 @@ public class A2uiMetVisitTest {
     public void theSlideshowOpensParkedAndLeavesWithMotion() {
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
         activity.selectCase("met_visit");
+        activity.mArtworkFilm = false; // the stills; the film is the video stage's test below
         CarUiContentListItem gallery = row(activity, GALLERY);
         gallery.getOnClickListener().onClick(gallery);
         shadowOf(Looper.getMainLooper()).idle();
@@ -209,11 +210,13 @@ public class A2uiMetVisitTest {
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
         activity.selectCase("met_visit");
         CarUiContentListItem toggle = row(activity, FILM);
-        assertThat(body(toggle)).containsExactly("Showing: slideshow");
+        assertThat(body(toggle)).containsExactly("Showing: film");
         toggle.getOnClickListener().onClick(toggle);
         shadowOf(Looper.getMainLooper()).idle();
-        assertThat(activity.mArtworkFilm).isTrue();
-        assertThat(body(row(activity, FILM))).containsExactly("Showing: film");
+        // The toggle flips the form and opens the artwork in it.
+        assertThat(activity.mArtworkFilm).isFalse();
+        assertThat(body(row(activity, FILM))).containsExactly("Showing: slideshow");
+        assertThat(activity.slideshowForTesting().isShowing()).isTrue();
 
         drive(activity, DRIVE);
         assertThat(titles(activity)).doesNotContain(FILM);
@@ -236,6 +239,54 @@ public class A2uiMetVisitTest {
         assertThat(MetArtworks.parseStarts("[{\"objectID\":436535,\"startMs\":0}]"))
                 .isEqualTo(MetArtworks.parseStarts(null));
         assertThat(MetArtworks.parseStarts("not json")).isEqualTo(MetArtworks.parseStarts(null));
+    }
+
+    @Test
+    public void theFilmPlaysParkedUnderTheVideoRulesAndLeavesWithMotion() {
+        A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        activity.selectCase("met_visit");
+        assertThat(activity.mArtworkFilm).isTrue();
+        CarUiContentListItem gallery = row(activity, GALLERY);
+        gallery.getOnClickListener().onClick(gallery);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertThat(activity.videoViewForTesting()).isNotNull();
+
+        drive(activity, DRIVE);
+        assertThat(activity.videoViewForTesting()).isNull();
+    }
+
+    @Test
+    public void askingWhatToSeeFirstInMotionMatchesAndDrawsNothingNew() {
+        A2uiCarUiActivity activity = started(DRIVE);
+        activity.selectCase("met_visit");
+        java.util.List<String> before = titles(activity);
+        ShadowAlertDialog.reset();
+
+        activity.onHeard("What should we see first?");
+
+        assertThat(titles(activity)).isEqualTo(before);
+        assertThat(ShadowAlertDialog.getLatestAlertDialog()).isNull();
+        assertThat(String.valueOf(org.robolectric.shadows.ShadowToast.getTextOfLatestToast()))
+                .doesNotContain("Nothing on screen");
+    }
+
+    @Test
+    public void aCaseSwitchStopsTheArtworkAndItsGuide() {
+        PassengerDisplay.resetForTesting();
+        A2uiCarUiActivity activity = started(DRIVE);
+        activity.selectCase("met_visit");
+        A2uiPassengerActivity passenger = org.robolectric.Robolectric.buildActivity(
+                A2uiPassengerActivity.class).create().start().get();
+        drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE); // its display allows it
+        activity.onPassengerRequest(PassengerMedia.ARTWORK);
+        assertThat(PassengerDisplay.playing()).isEqualTo(PassengerMedia.ARTWORK);
+
+        activity.selectCase("ev_charge_coffee");
+
+        assertThat(PassengerDisplay.playing()).isNull();
+        assertThat(passenger.videoForTesting()).isNull();
+        assertThat(titles(activity)).doesNotContain("Now playing · Audio guide");
+        PassengerDisplay.resetForTesting();
     }
 
     @Test
