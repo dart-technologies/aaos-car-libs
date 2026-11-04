@@ -48,11 +48,13 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
+        <!-- A fixed line height, not wrap_content: autosize measures against the view's height,
+             and a recycled card shrunk once for a long title would otherwise stay small. -->
         <TextView
             android:id="@+id/card_title"
             style="@style/A2uiBrandTitle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/a2ui_card_title_height"
             android:ellipsize="end"
             android:autoSizeMaxTextSize="23sp"
             android:autoSizeMinTextSize="18sp"
