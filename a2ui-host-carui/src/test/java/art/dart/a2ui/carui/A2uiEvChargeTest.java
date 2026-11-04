@@ -171,13 +171,15 @@ public class A2uiEvChargeTest {
                 .doesNotContainMatch("demo|not sent|\\$");
         assertThat(titles(activity)).doesNotContain(COFFEE);
         assertThat(String.join(" ", titles(activity))).doesNotContain("ready");
-        assertThat(titles(activity)).contains(cafe.whyTitle());
+        // Ordered: the pickup card answers why, and the short to watch takes its place.
+        assertThat(titles(activity)).doesNotContain(cafe.whyTitle());
+        assertThat(titles(activity)).contains(DemoNativeContract.BBB_TITLE);
 
         drive(activity, DRIVE);
         assertThat(titles(activity)).containsNoneOf(SESSION, pickup, cafe.whyTitle(),
-                "Finish the Met tour", SUGGESTION_20);
+                "Finish the Met tour", SUGGESTION_20, DemoNativeContract.BBB_TITLE);
         assertThat(activity.changeStripForTesting().getText().toString())
-                .isEqualTo("Put away for the drive: artwork, charging, order, café");
+                .isEqualTo("Put away for the drive: video, artwork, charging, order");
     }
 
     @Test

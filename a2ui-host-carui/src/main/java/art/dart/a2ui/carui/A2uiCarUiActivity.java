@@ -1305,9 +1305,16 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (pruned != null && embeddedBrief() != null) {
             pruned = withoutComponent(pruned, "brief");
         }
+        // Something to watch while charging, only parked at the charger once the coffee is
+        // ordered: the host withholds it otherwise (less, never more).
+        if (pruned != null && "ev_charge_coffee".equals(mSurfaceId)
+                && !driverMediaOffered(parked)) {
+            pruned = withoutComponent(pruned, DemoNativeContract.EV_DRIVER_MEDIA);
+        }
         // The charging window: what it offers leads; the comparison follows.
         if (pruned != null && mAtCharger && parked && "ev_charge_coffee".equals(mSurfaceId)) {
-            pruned = withChildrenFirst(pruned, "coffee", "tour");
+            pruned = withChildrenFirst(pruned, DemoNativeContract.EV_DRIVER_MEDIA, "coffee",
+                    "tour");
         }
         // Value limits bound the content inside the allowed components.
         A2uiValueLimits limits = limitsFor(source, current);
@@ -1864,10 +1871,20 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void addCoffeeWhyRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
             @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits) {
         if (mShowingAgent || !"ev_charge_coffee".equals(mSurfaceId) || !mAtCharger) return;
+        // Once ordered, the pickup card answers it, and the short to watch takes its place.
+        if (mOrderPlaced) return;
         CoffeeFixture.Pick coffee = coffeeNearCharger();
         if (coffee == null) return;
         addRow(rows, keys, HostRows.WHY, HostRows.card(allowed, limits, coffee.whyTitle(),
                 coffee.whyBody(), null, getDrawable(R.drawable.a2ui_ic_pickup)));
+    }
+
+    /**
+     * The charging window's short to watch is offered only on the corpus surface, parked at the
+     * charger after the coffee order; its player is parked-only besides (showVideoWith).
+     */
+    private boolean driverMediaOffered(boolean parked) {
+        return !mShowingAgent && mOrderPlaced && mAtCharger && parked;
     }
 
     static final long ARRIVAL_ARTWORK_DELAY_MS = 1200;
