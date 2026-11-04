@@ -9,7 +9,8 @@ verifies every response on the JVM, and writes build/provider-scoreboard.md.
                                [--inject-failure chatgpt=429] [--env-file .env]
                                [--cache-dir DIR] [--skip-verify]
 
-A provider calls its vendor only with its own named key; without one it is SKIPPED. --replay
+A provider calls its vendor only with its own named key, or its logged-in CLI where providers.json
+names one (labelled "subscription CLI"); otherwise it is SKIPPED. --replay
 serves the named providers from the gateway cache, never calling a vendor, and labels their rows
 "replay". --inject-failure fails a provider's vendor call (429, 500, 503 or timeout) in process,
 without a network call, to exercise the failure columns.
@@ -240,6 +241,8 @@ def main() -> int:
                 print(f"SKIP {provider}: no {skipped[provider]} in the environment or "
                       f"{args.env_file}; --replay {provider} serves its cached outputs")
                 continue
+            if mode == "live" and live_gateway.transport(provider) == "cli":
+                mode = "live (subscription CLI)"  # no API key: the provider's logged-in CLI answers
             for profile in profiles:
                 for case in cases:
                     response = gateway.handle(turn(provider, profile, case))

@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Vendor adapters: Anthropic Messages, OpenAI Responses, Gemini generateContent, and one
-OpenAI-compatible chat-completions adapter shared by xAI (Grok) and Meta (Muse).
+"""Vendor adapters: Anthropic Messages, OpenAI Responses, Gemini generateContent, one
+OpenAI-compatible chat-completions adapter shared by xAI (Grok) and Meta (Muse), and Claude Code
+headless for a subscription baseline.
 
 Raw HTTPS through urllib rather than five SDKs, deliberately: one transport with no hidden
 retries keeps latency comparable across vendors and makes the realtime deadline mean what it says.
@@ -26,6 +27,8 @@ import json
 import re
 import socket
 import ssl
+import subprocess
+import tempfile
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -235,8 +238,46 @@ def openai_chat(base_url, model, effort, max_tokens, key, system, user, schema, 
     return Completion(content, _token(response.get("model")))
 
 
+def claude_code_cli(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s):
+    """Claude Code headless on the logged-in subscription. ``base_url`` is the CLI command.
+
+    Not --bare: bare mode reads only ANTHROPIC_API_KEY. Isolation instead: no tools, MCP or slash
+    commands, an explicit system prompt, and an empty working directory (no project CLAUDE.md).
+    """
+    del key, max_tokens  # auth is the CLI's login; the CLI sizes its own output
+    command = [base_url, "-p", "--output-format", "json",
+               "--json-schema", json.dumps(schema, separators=(",", ":")), "--model", model,
+               "--tools", "", "--strict-mcp-config", "--disable-slash-commands",
+               "--no-session-persistence", "--permission-mode", "dontAsk",
+               "--system-prompt", system]
+    if effort:
+        command += ["--effort", effort]
+    with tempfile.TemporaryDirectory(prefix="a2ui-claude-") as cwd:
+        try:
+            done = subprocess.run(command + [user], cwd=cwd, stdin=subprocess.DEVNULL,
+                                  capture_output=True, text=True, timeout=timeout_s)
+        except subprocess.TimeoutExpired:
+            raise AdapterError("timeout") from None
+        except OSError:
+            raise AdapterError("upstream", "cli_missing") from None
+    try:
+        wrapper = json.loads(done.stdout)
+    except ValueError:
+        raise AdapterError("upstream", f"cli_exit_{done.returncode}") from None
+    if not isinstance(wrapper, dict) or wrapper.get("is_error"):
+        detail = wrapper.get("subtype") if isinstance(wrapper, dict) else None
+        raise AdapterError("upstream", _token(detail) or f"cli_exit_{done.returncode}")
+    structured = wrapper.get("structured_output")
+    if not isinstance(structured, dict):
+        raise AdapterError("upstream", "no_structured_output")
+    usage = wrapper.get("modelUsage")
+    served = next(iter(usage), None) if isinstance(usage, dict) else None
+    return Completion(json.dumps(structured), _token(served))
+
+
 ADAPTERS = {
     "anthropic_messages": anthropic_messages,
+    "claude_code_cli": claude_code_cli,
     "openai_responses": openai_responses,
     "gemini_generate_content": gemini_generate_content,
     "openai_chat": openai_chat,

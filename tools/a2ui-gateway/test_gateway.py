@@ -66,9 +66,11 @@ class GatewayCase(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def gateway(self, vendor, env=None, offline=False):
+    def gateway(self, vendor, env=None, offline=False, cli=None):
+        # which= is explicit so a machine with the claude CLI installed behaves like one without.
         gw = core.Gateway(self.config, {"ANTHROPIC_API_KEY": KEY} if env is None else env,
-                          pathlib.Path(self.tmp.name), offline, complete=vendor)
+                          pathlib.Path(self.tmp.name), offline, complete=vendor,
+                          which=lambda command: cli)
         self.addCleanup(gw.close)
         return gw
 
@@ -242,6 +244,85 @@ class ProfileTest(GatewayCase):
                          "actionId": "play", "outcome": "ALLOWED"})
         self.assertEqual((ack.status, ack.body["ack"], ack.body["provider"]),
                          (200, "actionResult", "muse"))
+
+
+class SubscriptionCliTest(GatewayCase):
+    def test_without_an_api_key_a_logged_in_cli_answers_and_says_so(self):
+        vendor = FakeVendor()
+        gw = self.gateway(vendor, env={}, cli="/usr/local/bin/claude")
+        self.assertEqual(gw.transport("claude"), "cli")
+        self.assertIsNone(gw.transport("muse"))  # no CLI configured: still unconfigured
+        response = gw.handle(turn())
+        self.assertEqual((response.status, response.source), (200, "live"))
+        self.assertEqual(vendor.calls[0]["adapter"], "claude_code_cli")
+        entry = next(pathlib.Path(self.tmp.name).rglob("*.json"))
+        self.assertEqual(json.loads(entry.read_text())["transport"], "cli")
+
+    def test_an_api_key_wins_over_the_cli(self):
+        vendor = FakeVendor()
+        gw = self.gateway(vendor, cli="/usr/local/bin/claude")
+        self.assertEqual(gw.transport("claude"), "api")
+        gw.handle(turn())
+        self.assertEqual((vendor.calls[0]["adapter"], vendor.calls[0]["key"]),
+                         ("anthropic_messages", KEY))
+
+
+class ClaudeCodeCliAdapterTest(unittest.TestCase):
+    """Runs the real adapter against a fake claude executable that records argv and cwd."""
+
+    def fake_cli(self, body: str) -> pathlib.Path:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = pathlib.Path(tmp.name)
+        cli = root / "claude"
+        cli.write_text("#!/usr/bin/env python3\nimport json, os, sys, time\n"
+                       f"open({str(root / 'argv.json')!r}, 'w').write("
+                       "json.dumps({'argv': sys.argv[1:], 'cwd': os.getcwd(), "
+                       "'files': os.listdir('.')}))\n" + body)
+        cli.chmod(0o755)
+        return cli
+
+    def call(self, cli, timeout_s=10):
+        return adapters.complete("claude_code_cli", str(cli), "claude-sonnet-5-5", "low", 100,
+                                 "\0cli", "sys", "usr", contract.GENERATION_SCHEMA, timeout_s)
+
+    def test_isolated_flags_and_structured_output(self):
+        cli = self.fake_cli("print(json.dumps({'is_error': False, 'subtype': 'success', "
+                            "'structured_output': {'ok': 1}, "
+                            "'modelUsage': {'claude-sonnet-5-5': {}}}))\n")
+        result = self.call(cli)
+        self.assertEqual((json.loads(result.text), result.served_model),
+                         ({"ok": 1}, "claude-sonnet-5-5"))
+        seen = json.loads((cli.parent / "argv.json").read_text())
+        argv = seen["argv"]
+        for flag in ("-p", "--strict-mcp-config", "--disable-slash-commands",
+                     "--no-session-persistence"):
+            self.assertIn(flag, argv)
+        self.assertNotIn("--bare", argv)  # bare mode ignores the subscription login
+        self.assertEqual(argv[argv.index("--tools") + 1], "")
+        self.assertEqual(argv[argv.index("--model") + 1], "claude-sonnet-5-5")
+        self.assertEqual(argv[argv.index("--system-prompt") + 1], "sys")
+        self.assertEqual(argv[-1], "usr")
+        self.assertEqual(json.loads(argv[argv.index("--json-schema") + 1]),
+                         contract.GENERATION_SCHEMA)
+        self.assertEqual(seen["files"], [])  # empty cwd: no project CLAUDE.md to discover
+        self.assertNotEqual(pathlib.Path(seen["cwd"]).resolve(), pathlib.Path.cwd().resolve())
+
+    def test_failures_are_tokens_only(self):
+        cases = [
+            ("print(json.dumps({'is_error': True, 'subtype': 'error_max_turns', "
+             "'result': 'secret prompt text'}))\n", "upstream:error_max_turns"),
+            ("print('not json: secret'); sys.exit(3)\n", "upstream:cli_exit_3"),
+            ("print(json.dumps({'is_error': False, 'result': 'x'}))\n",
+             "upstream:no_structured_output"),
+            ("time.sleep(5)\n", "timeout"),
+        ]
+        for body, expected in cases:
+            with self.subTest(expected=expected):
+                with self.assertRaises(adapters.AdapterError) as raised:
+                    self.call(self.fake_cli(body), timeout_s=1)
+                self.assertEqual(str(raised.exception), expected)
+                self.assertNotIn("secret", str(raised.exception))
 
 
 class HttpTest(GatewayCase):
