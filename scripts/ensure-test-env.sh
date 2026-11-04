@@ -28,7 +28,7 @@ REPO=${0:a:h:h}
 AVD=${AVD:-AAOS_35_1408p_GoogleAPIs}
 PLUGIN=$REPO/aaos-apps-gradle-project/build/plugin/outputs/apk/debug/plugin-debug.apk
 TARGET=/system/app/car-ui-lib-proxyplugin/car-ui-lib-proxyplugin.apk
-export ANDROID_HOME=${ANDROID_HOME:-/Users/michow/Library/Android/sdk}
+export ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk}
 
 boot_wait() {
   adb wait-for-device
