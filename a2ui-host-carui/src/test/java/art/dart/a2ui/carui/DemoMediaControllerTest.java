@@ -159,6 +159,47 @@ public class DemoMediaControllerTest {
     }
 
     @Test
+    public void aVideoStartsWhereItsStartRuleSaysOnceReadyAndCatchesUpAfterTheSeek() {
+        DemoMediaController media = new DemoMediaController(mApp, mSession);
+        VideoView video = new VideoView(mApp);
+        int[] passenger = {7200};
+        media.playVideo(video, R.raw.demo_placeholder_video, duration -> passenger[0]);
+        MediaPlayer player = mock(MediaPlayer.class);
+        org.mockito.Mockito.when(player.getDuration()).thenReturn(19300);
+
+        shadowOf(video).getOnPreparedListener().onPrepared(player);
+
+        // Asked once ready, to the exact frame, and looped like the passenger's copy.
+        verify(player).setLooping(true);
+        verify(player).seekTo(7200L, MediaPlayer.SEEK_CLOSEST);
+        ArgumentCaptor<MediaPlayer.OnSeekCompleteListener> landed =
+                ArgumentCaptor.forClass(MediaPlayer.OnSeekCompleteListener.class);
+        verify(player).setOnSeekCompleteListener(landed.capture());
+        // The passenger moved on while it seeked: once landed, it seeks again to catch up.
+        passenger[0] = 7500;
+        landed.getValue().onSeekComplete(player);
+        ArgumentCaptor<Long> again = ArgumentCaptor.forClass(Long.class);
+        verify(player, org.mockito.Mockito.times(2)).seekTo(again.capture(),
+                org.mockito.Mockito.eq(MediaPlayer.SEEK_CLOSEST));
+        assertThat(again.getAllValues().get(1)).isAtLeast(7500L);
+        assertThat(again.getAllValues().get(1)).isLessThan(19300L);
+    }
+
+    @Test
+    public void aVideoWithNoStartRulePlaysFromTheTop() {
+        DemoMediaController media = new DemoMediaController(mApp, mSession);
+        VideoView video = new VideoView(mApp);
+        media.playVideo(video, R.raw.demo_placeholder_video, null);
+        MediaPlayer player = mock(MediaPlayer.class);
+
+        shadowOf(video).getOnPreparedListener().onPrepared(player);
+
+        verify(player, org.mockito.Mockito.never()).seekTo(org.mockito.Mockito.anyLong(),
+                org.mockito.Mockito.anyInt());
+        assertThat(media.getMode()).isEqualTo(DemoMediaController.Mode.VIDEO);
+    }
+
+    @Test
     public void refusedFocusDoesNotStartPlayback() {
         mAudio.setNextFocusRequestResponse(AudioManager.AUDIOFOCUS_REQUEST_FAILED);
         DemoMediaController media = new DemoMediaController(mApp, mSession);
