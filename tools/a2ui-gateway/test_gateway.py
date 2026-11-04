@@ -360,6 +360,16 @@ class OtherCliAdapterTest(FakeCli, unittest.TestCase):
         for flag in ("--no-plan", "--no-subagents"):
             self.assertIn(flag, argv)
 
+    def test_antigravity_never_sends_an_empty_enum_and_restores_no_action(self):
+        result, argv = self.run_cli("antigravity_cli", (
+            "schema = sys.argv[sys.argv.index('--json-schema') + 1]\n"
+            "assert '\"\"' not in schema, 'empty enum value reached agy'\n"
+            "print(json.dumps({'status': 'success', 'response': json.dumps("
+            "{'surfaces': [{'components': [{'id': 'a', 'action': 'none'}, "
+            "{'id': 'b', 'action': 'play'}]}]})}))\n"), model="gemini-3.8-flash")
+        actions = [c["action"] for c in json.loads(result.text)["surfaces"][0]["components"]]
+        self.assertEqual(actions, ["", "play"])
+
     def test_antigravity_parses_a_json_string_response_and_reports_sign_in_failure(self):
         result, argv = self.run_cli("antigravity_cli", (
             "print(json.dumps({'status': 'success', 'response': json.dumps({'ok': 1})}))\n"),

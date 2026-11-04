@@ -340,11 +340,32 @@ def grok_cli(base_url, model, effort, max_tokens, key, system, user, schema, tim
                       _first_model(wrapper.get("modelUsage")))
 
 
+_NO_VALUE = "none"  # agy turns the schema into a function declaration, which rejects "" in an enum
+
+
+def _swap_empty_enum(node):
+    if isinstance(node, dict):
+        return {k: ([_NO_VALUE if v == "" else v for v in val] if k == "enum" else
+                    _swap_empty_enum(val)) for k, val in node.items()}
+    if isinstance(node, list):
+        return [_swap_empty_enum(v) for v in node]
+    return node
+
+
+def _restore_empty_action(node):
+    if isinstance(node, dict):
+        return {k: ("" if k == "action" and v == _NO_VALUE else _restore_empty_action(v))
+                for k, v in node.items()}
+    if isinstance(node, list):
+        return [_restore_empty_action(v) for v in node]
+    return node
+
+
 def antigravity_cli(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s):
     """Google Antigravity ``agy`` print mode on the Google login. model "default" omits -m."""
     del key, max_tokens
     command = [base_url, "-p", _one_prompt(system, user), "--output-format", "json",
-               "--json-schema", json.dumps(schema, separators=(",", ":")),
+               "--json-schema", json.dumps(_swap_empty_enum(schema), separators=(",", ":")),
                "--disable-slash-commands", "--print-timeout", f"{max(1, int(timeout_s))}s"]
     if model != "default":
         command += ["--model", model]
@@ -361,7 +382,8 @@ def antigravity_cli(base_url, model, effort, max_tokens, key, system, user, sche
         raise AdapterError("upstream", reason)
     usage = wrapper.get("usage")
     served = usage.get("model") if isinstance(usage, dict) else None
-    return Completion(_structured(wrapper.get("response")), _token(served))
+    output = json.loads(_structured(wrapper.get("response")))
+    return Completion(json.dumps(_restore_empty_action(output)), _token(served))
 
 
 ADAPTERS = {
