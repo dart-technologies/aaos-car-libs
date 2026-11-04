@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import importlib.util
 import json
 import math
 import pathlib
@@ -67,6 +68,19 @@ BACKGROUND = "0x0b0f14"
 LABELS = {"driver": CARDS / "label-driver.png", "passenger": CARDS / "label-passenger.png"}
 TITLE_FADE_S = 0.4
 STILL_LEAD_MS = 3000  # capture the idle passenger frame this long before its stream starts
+
+
+def _writer_normalization():
+    """The function prepare-elevenlabs-demo-audio.py writes transcriptNormalized with."""
+    spec = importlib.util.spec_from_file_location(
+        "prepare_elevenlabs_demo_audio",
+        pathlib.Path(__file__).resolve().with_name("prepare-elevenlabs-demo-audio.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.normalized_transcript
+
+
+normalized_transcript = _writer_normalization()
 
 
 class DemoFailure(RuntimeError):
@@ -135,7 +149,7 @@ def transcript_for(audio_dir: pathlib.Path, clip_id: str, expected: str,
             return expected, None
         raise DemoFailure(f"missing cached STT fixture {path}; run prepare-elevenlabs-demo-audio.py")
     data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("transcriptNormalized") != expected.casefold().strip():
+    if data.get("transcriptNormalized") != normalized_transcript(expected):
         raise DemoFailure(f"cached STT fixture {clip_id} no longer matches the scenario")
     if data.get("dispatchText") != expected:
         raise DemoFailure(f"cached STT fixture {clip_id} is not bound to the displayed phrase")
