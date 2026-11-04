@@ -47,8 +47,16 @@ scripts/run-nyc-demo.py nyc_concierge /tmp/nyc-concierge.mp4 --display-id "$DISP
 
 `run-nyc-demo.py` refuses another AVD, a second device, an inferred display, a non-debuggable Host B,
 a stale STT fixture or a failed car-service transition (never substitutes `DEMO`), restores park on
-exit, checks the MP4 (60–90 s, near target, ≥5 distinct frames, H.264/AAC, audible) and writes a
-sidecar binding APK, manifest, fixtures and source state. MP4s stay outside git.
+exit, checks the MP4 (exactly the manifest's 60–180 s, ≥5 distinct frames, H.264/AAC, audible) and
+writes a sidecar binding APK, manifest, fixtures and source state. MP4s stay outside git.
+
+A scenario with `"recording": {"layout": "dual"}` also needs `--passenger-display-id` (reference AVD:
+`4619827551948147201`). It records both physical displays with two `screenrecord` streams and
+composes them at 1920×1080, driver left (1248×702), passenger right (576×324), each labelled. The
+passenger stream starts at its first `passenger` action; until then the panel shows a frame captured
+from that display 3 s earlier. Optional `titleCard` (2–3 s PNG over the opening) and
+`endCardHoldFromMs` (freeze from there to the end). `python3 scripts/test_run_nyc_demo.py` checks
+the timeline and the composition without a device (synthetic `lavfi` recordings, pixel read-back).
 
 ```bash
 scripts/record-demo.sh --list            # 10 corpus cases + restrictions, voice-a, voice-b, handoff
@@ -66,9 +74,13 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Route preview, poster, album art, 8 s MP4, 12 s M4A | `a2ui-host-carui/src/main/res/{drawable-nodpi,raw}/demo_*` | yes | `scripts/generate-a2ui-demo-assets.sh` (ffmpeg, libx264, AAC) | `check-demo-assets.py` (SHA-256) |
 | 19 TTS clips, 6 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits) | `check-nyc-demo.py --require-audio` |
 | Claude corpus cache | `build/claude-corpus-cache/` | no | `scripts/claude-corpus-tester.py` | gateway schema on replay |
+| Passenger clip, 19.3 s 720p | `a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4` | yes | ffmpeg trim of Blender's MP4 (`demo/fixtures/bbb/SOURCE.json`) | `check-demo-assets.py` (SHA-256, source record) |
+| Panel labels | `a2ui-automotive/demo/cards/label-*.png` | yes | `scripts/render-demo-cards.py` (Pillow; this ffmpeg has no drawtext) | `test_run_nyc_demo.py` |
 
-Generated media hold no third-party content (the video is not Big Buck Bunny footage). ElevenLabs licensing
-is unverified for outward use. Regenerating spends credits: `--dry-run`, then `--verify-personas`, then bare.
+Generated `demo_*` media hold no third-party content (the placeholder video is not Big Buck Bunny).
+`bbb_passenger.mp4` is: Big Buck Bunny (c) copyright 2008, Blender Foundation / www.bigbuckbunny.org,
+CC BY 3.0, trimmed and re-encoded. ElevenLabs licensing is unverified for outward use. Regenerating
+spends credits: `--dry-run`, then `--verify-personas`, then bare.
 
 **Claims.** Proves Host B rendering, policy on injected phrases, parked confirmation, live
 re-projection, audio continuity. Not a live agent, live location/inventory/payment, production
