@@ -21,7 +21,7 @@
   "visit": {
     "date": "2026-11-05",
     "day": "Thursday",
-    "reason": "The Met Fifth Avenue is closed on Wednesdays, so the plan made on Wednesday is for Thursday afternoon."
+    "reason": "The story is set on Thursday afternoon; The Met Fifth Avenue is closed on Wednesdays. The forecast was captured on Wednesday for Thursday."
   },
   "route": {
     "fixture": "a2ui-automotive/demo/fixtures/route/hudson-yards-to-met.json",

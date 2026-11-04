@@ -298,6 +298,233 @@
         {"atMs": 51500, "effectId": "fifth_house_focus", "gainDb": -14},
         {"atMs": 69200, "effectId": "fifth_house_arrival", "gainDb": -13}
       ]
+    },
+    {
+      "id": "nyc_met",
+      "title": "Thursday at The Met, then a charge and a coffee",
+      "corpusCase": "met_visit",
+      "corpusSequence": ["met_visit", "ev_charge_coffee"],
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-met-2026-11-05.json",
+      "agentProfiles": "a2ui-automotive/demo/agent-profiles-v1.json",
+      "durationSeconds": 178,
+      "recording": {"layout": "dual"},
+      "titleCard": {"image": "a2ui-automotive/demo/cards/nyc_met-title.png", "seconds": 2.5},
+      "endCardHoldFromMs": 168000,
+      "premise": "Thursday afternoon at Hudson Yards. Parked, Muse gives a cited brief and a gallery of The Met's open-collection highlights, and timed entry is booked behind a parked-only confirmation. In drive the driver's screen simplifies while the passenger's screen plays the artwork film and an audio guide plays for everyone. After the visit a low battery brings up three nearby chargers, and a parked coffee order fills the wait.",
+      "parameterRationale": [
+        "Thursday, Nov 5: The Met Fifth Avenue is closed on Wednesdays, so the story uses Thursday's NWS forecast, captured the day before and labelled with its day.",
+        "Hudson Yards to The Met is a real 4.3-mile OSRM route over OpenStreetMap data, drawn locally without map tiles.",
+        "Two physical displays show the per-display rule: the passenger keeps moving pictures while the driver's screen simplifies.",
+        "The gallery and film use only The Met's CC0 Open Access images; the audio guide is narration timed to each work in the film.",
+        "Chapter 2 lowers the battery through the vehicle HAL, so the proactive charger card answers a vehicle signal, not a script.",
+        "The chargers are real OpenStreetMap entries near The Met; availability, price and speed beyond tagged output are unknown and never shown as live."
+      ],
+      "doNotClaim": [
+        "a real reservation, ticket, coffee order, payment or charging session",
+        "live weather, live location, or live charger availability, price or speed",
+        "that the brief or the audio guide was generated during the recording",
+        "any endorsement by The Metropolitan Museum of Art, OpenStreetMap or a charging network",
+        "that a DEMO restriction preset represents vehicle motion"
+      ],
+      "clips": [
+        {
+          "id": "met_narration_01",
+          "role": "narration",
+          "atMs": 1000,
+          "text": "Thursday afternoon at Hudson Yards. Your concierge already has the forecast, a chance of showers, and a plan for The Met."
+        },
+        {
+          "id": "met_utterance_visit",
+          "role": "user_utterance",
+          "atMs": 10000,
+          "text": "Take us to The Met this afternoon.",
+          "expectedTranscript": "take us to the met this afternoon"
+        },
+        {
+          "id": "met_narration_02",
+          "role": "narration",
+          "atMs": 16000,
+          "text": "Muse answers with a short brief, cited sources and a gallery of highlights. Detail like this only appears while parked."
+        },
+        {
+          "id": "met_utterance_reserve",
+          "role": "user_utterance",
+          "atMs": 26500,
+          "text": "Reserve entry for two at three.",
+          "expectedTranscript": "reserve entry for two at three"
+        },
+        {
+          "id": "met_narration_03",
+          "role": "narration",
+          "atMs": 31500,
+          "text": "Bookings wait until you're parked and you confirm. This ticket is a demo, so nothing is booked or paid."
+        },
+        {
+          "id": "met_narration_04",
+          "role": "narration",
+          "atMs": 39000,
+          "text": "The route uptown is ready, drawn from OpenStreetMap."
+        },
+        {
+          "id": "met_narration_05",
+          "role": "narration",
+          "atMs": 45000,
+          "text": "Now we're moving. The driver's screen simplifies, and the passenger's screen gets the art."
+        },
+        {
+          "id": "met_utterance_first",
+          "role": "user_utterance",
+          "atMs": 51500,
+          "text": "What should we see first?",
+          "expectedTranscript": "what should we see first"
+        },
+        {
+          "id": "met_guide_01",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 436535,
+          "placeholder": true,
+          "atMs": 54500,
+          "text": "Start with van Gogh's Wheat Field with Cypresses, and its swirling sky."
+        },
+        {
+          "id": "met_guide_02",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 437881,
+          "placeholder": true,
+          "atMs": 60367,
+          "text": "Next, Vermeer's Young Woman with a Water Pitcher, lit by quiet window light."
+        },
+        {
+          "id": "met_guide_03",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 437394,
+          "placeholder": true,
+          "atMs": 66233,
+          "text": "Rembrandt's Aristotle rests a hand on a bust of Homer. Watch the gold chain."
+        },
+        {
+          "id": "met_guide_04",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 435809,
+          "placeholder": true,
+          "atMs": 72100,
+          "text": "In Bruegel's The Harvesters, find the workers resting under the pear tree."
+        },
+        {
+          "id": "met_guide_05",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 436105,
+          "placeholder": true,
+          "atMs": 77967,
+          "text": "David's Death of Socrates: the philosopher reaches for the cup, mid-sentence."
+        },
+        {
+          "id": "met_guide_06",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 435868,
+          "placeholder": true,
+          "atMs": 83833,
+          "text": "End with Cézanne's Card Players, a simple game turned into pure focus."
+        },
+        {
+          "id": "met_narration_06",
+          "role": "narration",
+          "atMs": 91500,
+          "text": "Parked at The Met, the full experience comes back, and the film fills the screen."
+        },
+        {
+          "id": "met_narration_07",
+          "role": "narration",
+          "atMs": 101000,
+          "text": "Highlights from The Met's open collection, ready before you reach the steps."
+        },
+        {
+          "id": "ev_narration_01",
+          "role": "narration",
+          "atMs": 113500,
+          "text": "Back on the road, the car keeps watch so you don't have to."
+        },
+        {
+          "id": "ev_narration_02",
+          "role": "narration",
+          "atMs": 119000,
+          "text": "It noticed the battery running low and found three chargers on your way."
+        },
+        {
+          "id": "ev_utterance_first",
+          "role": "user_utterance",
+          "atMs": 124500,
+          "text": "Take me to the first one.",
+          "expectedTranscript": "take me to the first one"
+        },
+        {
+          "id": "ev_narration_03",
+          "role": "narration",
+          "atMs": 132000,
+          "text": "Parked and charging. Why not make the wait worthwhile?"
+        },
+        {
+          "id": "ev_utterance_coffee",
+          "role": "user_utterance",
+          "atMs": 136500,
+          "text": "Order my usual coffee.",
+          "expectedTranscript": "order my usual coffee"
+        },
+        {
+          "id": "ev_narration_04",
+          "role": "narration",
+          "atMs": 141500,
+          "text": "Your usual is confirmed for pickup. It's a demo order, so nothing is charged."
+        },
+        {
+          "id": "ev_narration_05",
+          "role": "narration",
+          "atMs": 151000,
+          "text": "Drive off, and the screen steps back again. Charging and pickup stay at a glance."
+        },
+        {
+          "id": "met_narration_end",
+          "role": "narration",
+          "atMs": 166000,
+          "text": "One agent, any model, and the car stays in charge."
+        }
+      ],
+      "actions": [
+        {"atMs": 13000, "type": "agent", "provider": "muse", "ask": "Take us to The Met this afternoon", "clipId": "met_utterance_visit"},
+        {"atMs": 27500, "type": "speak", "clipId": "met_utterance_reserve"},
+        {"atMs": 30000, "type": "tapText", "text": "OK"},
+        {"atMs": 44000, "type": "carState", "state": "drive"},
+        {"atMs": 52300, "type": "speak", "clipId": "met_utterance_first"},
+        {"atMs": 54000, "type": "passenger", "media": "artwork"},
+        {"atMs": 90500, "type": "carState", "state": "park"},
+        {"atMs": 91000, "type": "passenger", "media": "stop"},
+        {"atMs": 110000, "type": "selectCase", "caseId": "ev_charge_coffee"},
+        {"atMs": 112500, "type": "carState", "state": "drive"},
+        {"atMs": 118000, "type": "vehicleSignal", "signal": "battery", "percent": 18, "via": ["vhal-set", "vhal-inject", "broadcast"], "capacityWhFallback": 150000},
+        {"atMs": 125500, "type": "speak", "clipId": "ev_utterance_first"},
+        {"atMs": 131000, "type": "carState", "state": "park"},
+        {"atMs": 137500, "type": "speak", "clipId": "ev_utterance_coffee"},
+        {"atMs": 140000, "type": "tapText", "text": "OK"},
+        {"atMs": 150000, "type": "carState", "state": "drive"},
+        {"atMs": 162500, "type": "carState", "state": "park"},
+        {"atMs": 165000, "type": "endCard"}
+      ],
+      "soundEffects": [
+        {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
+        {"atMs": 30500, "effectId": "fifth_house_confirmed", "gainDb": -12},
+        {"atMs": 44500, "effectId": "fifth_house_focus", "gainDb": -14},
+        {"atMs": 90800, "effectId": "fifth_house_arrival", "gainDb": -13},
+        {"atMs": 113000, "effectId": "fifth_house_focus", "gainDb": -14},
+        {"atMs": 131300, "effectId": "fifth_house_arrival", "gainDb": -13},
+        {"atMs": 140500, "effectId": "fifth_house_confirmed", "gainDb": -12},
+        {"atMs": 150500, "effectId": "fifth_house_focus", "gainDb": -14}
+      ]
     }
   ]
 }

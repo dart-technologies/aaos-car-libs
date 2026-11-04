@@ -37,14 +37,21 @@ EXPECTED = {
         "d553b28c8e86ce574d79e68f3cee220f4c234a5da3d2609a277fa205c77a551b",
     "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4":
         "8ca6121326adfc437ee9eb902344bd27e023f338f69202e4605d10844f6f4609",
+    "a2ui-host-carui/src/main/res/drawable-nodpi/route_met.png":
+        "ff7c13c499e839875693135369101391150045c91baa88d9cd2bf3f5db03a071",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4":
+        "aa1cbf2b9b919ea3e7f2b12c1992daf6d4d35aca25bcda586658d1a06db37997",
 }
 # Third-party or derived media: the provenance record must name the same bytes and a licence.
 PROVENANCE = {
     "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4":
         "a2ui-automotive/demo/fixtures/bbb/SOURCE.json",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4":
+        "a2ui-automotive/demo/fixtures/met/FILM.json",
 }
 MAX_BYTES = {
     "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4": 4_000_000,
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4": 6_000_000,
 }
 
 

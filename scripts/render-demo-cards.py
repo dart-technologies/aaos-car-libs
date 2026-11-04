@@ -36,6 +36,41 @@ def font(size: int, face: str) -> ImageFont.FreeTypeFont:
     raise SystemExit("no usable font")
 
 
+GLYPH_FALLBACK = "/System/Library/Fonts/SFNS.ttf"  # has arrows Avenir Next lacks
+
+
+def missing(face: ImageFont.FreeTypeFont, char: str) -> bool:
+    """True when face would draw its .notdef box for char."""
+    return face.getmask(char).getbbox() == face.getmask("￿").getbbox()
+
+
+def runs(text: str, face: ImageFont.FreeTypeFont, size: int):
+    """(text, font) runs: face, except glyphs it lacks, drawn with the fallback font."""
+    fallback = ImageFont.truetype(GLYPH_FALLBACK, size) \
+        if pathlib.Path(GLYPH_FALLBACK).exists() else face
+    out: list[tuple[str, ImageFont.FreeTypeFont]] = []
+    for char in text:
+        chosen = fallback if char.strip() and missing(face, char) else face
+        if out and out[-1][1] is chosen:
+            out[-1] = (out[-1][0] + char, chosen)
+        else:
+            out.append((char, chosen))
+    return out
+
+
+def draw_text(draw: ImageDraw.ImageDraw, xy, text: str, size: int, face: str, fill) -> None:
+    x, y = xy
+    base = font(size, face)
+    baseline = y + base.getmetrics()[0]
+    for chunk, chunk_font in runs(text, base, size):
+        draw.text((x, baseline), chunk, font=chunk_font, fill=fill, anchor="ls")
+        x += draw.textlength(chunk, font=chunk_font)
+
+
+def text_width(draw: ImageDraw.ImageDraw, text: str, size: int, face: str) -> float:
+    return sum(draw.textlength(chunk, font=f) for chunk, f in runs(text, font(size, face), size))
+
+
 def label(text: str, accent: tuple[int, int, int]) -> Image.Image:
     face = font(24, "demi")
     probe = ImageDraw.Draw(Image.new("RGBA", (1, 1)))
@@ -58,10 +93,13 @@ def title_card(title: str, subtitle: str, footer: str) -> Image.Image:
         draw.line([(0, row), (width, row)],
                   fill=tuple(round(a + (b - a) * k) for a, b in zip(top, bottom)))
     draw.rectangle((160, 404, 256, 410), fill=(227, 179, 65))
-    draw.text((160, 436), title, font=font(104, "bold"), fill=(244, 246, 248))
-    draw.text((164, 584), subtitle, font=font(40, "medium"), fill=(157, 167, 179))
+    size = 104
+    while size > 48 and text_width(draw, title, size, "bold") > width - 320:
+        size -= 2  # fit long titles within the margins
+    draw_text(draw, (160, 436 + (104 - size) // 2), title, size, "bold", (244, 246, 248))
+    draw_text(draw, (164, 584), subtitle, 40, "medium", (157, 167, 179))
     if footer:
-        draw.text((164, 960), footer, font=font(26, "medium"), fill=(110, 118, 129))
+        draw_text(draw, (164, 960), footer, 26, "medium", (110, 118, 129))
     return image
 
 

@@ -27,7 +27,14 @@ PROFILES = ROOT / "a2ui-automotive/demo/agent-profiles-v1.json"
 RUNNER = ROOT / "scripts/run-nyc-demo.py"
 # The three original stories and their corpus cases; more may be added beside them.
 CANONICAL = {"nyc_poi_order": "poi_discovery_order", "nyc_curated_video": "big_buck_bunny",
-             "nyc_concierge": "poi_discovery_order"}
+             "nyc_concierge": "poi_discovery_order", "nyc_met": "met_visit"}
+FILM = ROOT / "a2ui-automotive/demo/fixtures/met/FILM.json"
+# The names other agents implement against; changing one here means changing it there.
+MET_SEQUENCE = ["met_visit", "ev_charge_coffee"]
+MET_UTTERANCES = {"take us to the met this afternoon", "reserve entry for two at three",
+                  "what should we see first", "take me to the first one",
+                  "order my usual coffee"}
+MET_ASK = "Take us to The Met this afternoon"
 ACTIONS = {"speak", "tapText", "carState", "keyEvent", "selectCase", "agent", "passenger",
            "endCard", "vehicleSignal"}
 PASSENGER_MEDIA = {"video", "artwork", "stop"}
@@ -96,6 +103,52 @@ def check_context(scenario_id: str, relative: str) -> None:
     if timestamp(freshness.get("liveRefreshRequiredAfter"),
                  f"{name} liveRefreshRequiredAfter") <= captured or not freshness.get("policy"):
         fail(f"{name} needs a refresh deadline after capture and a relabelling policy")
+
+
+def driving_at(scenario: dict, at_ms: int) -> bool:
+    """Whether the scripted car state at at_ms is drive (scenarios start parked)."""
+    state = "park"
+    for action in scenario["actions"]:
+        if action.get("type") == "carState" and int(action["atMs"]) <= at_ms:
+            state = action["state"]
+    return state == "drive"
+
+
+def check_met_story(scenario: dict) -> None:
+    """The nyc_met contract shared with the corpus, Host B and audio-guide work."""
+    if scenario.get("corpusSequence") != MET_SEQUENCE:
+        fail(f"nyc_met corpus sequence must be {MET_SEQUENCE}")
+    clips = scenario["clips"]
+    said = {clip["expectedTranscript"] for clip in clips if clip["role"] == "user_utterance"}
+    if said != MET_UTTERANCES:
+        fail(f"nyc_met guest lines drifted: {sorted(said ^ MET_UTTERANCES)}")
+    if any("tomorrow" in clip["text"].casefold() for clip in clips):
+        fail("nyc_met is set on Thursday itself; no line may say 'tomorrow'")
+    actions = scenario["actions"]
+    asks = [a for a in actions if a["type"] == "agent"]
+    if [(a.get("provider"), a.get("ask")) for a in asks] != [("muse", MET_ASK)]:
+        fail(f"nyc_met must make exactly one Muse request: {MET_ASK!r}")
+    artwork = [int(a["atMs"]) for a in actions
+               if a["type"] == "passenger" and a.get("media") == "artwork"]
+    if len(artwork) != 1 or not driving_at(scenario, artwork[0]):
+        fail("nyc_met starts the passenger artwork film once, while driving")
+    works = json.loads(FILM.read_text(encoding="utf-8"))["works"]
+    guide = sorted((c for c in clips if c.get("lane") == "audio_guide"), key=lambda c: c["id"])
+    if [c["id"] for c in guide] != [f"met_guide_{n:02d}" for n in range(1, len(works) + 1)]:
+        fail("nyc_met needs one audio-guide clip per film work, met_guide_01..")
+    for clip, work in zip(guide, works):
+        offset = int(clip["atMs"]) - artwork[0]
+        if clip.get("objectID") != work["objectID"] or not (
+                work["startMs"] <= offset <= work["startMs"] + 1500):
+            fail(f"{clip['id']} is not timed to {work['title']} in the film")
+        if not driving_at(scenario, int(clip["atMs"])):
+            fail(f"{clip['id']} plays outside the drive")
+    signals = [int(a["atMs"]) for a in actions if a["type"] == "vehicleSignal"]
+    if not signals or not all(driving_at(scenario, at) for at in signals):
+        fail("nyc_met lowers the battery while driving")
+    ends = [int(a["atMs"]) for a in actions if a["type"] == "endCard"]
+    if len(ends) != 1 or driving_at(scenario, ends[0]):
+        fail("nyc_met shows its end card once, parked")
 
 
 def corpus_ids() -> set[str]:
@@ -233,10 +286,14 @@ def main() -> int:
                 fail(f"vehicle signal needs battery percent 0–100 and known routes: {action}")
             if action.get("type") == "keyEvent" and action.get("key") != "BACK":
                 fail(f"unsupported key event {action}")
-            if action.get("type") == "speak":
+            if action.get("type") == "speak" or (action.get("type") == "agent"
+                                                 and "clipId" in action):
                 clip = clips.get(action.get("clipId"))
                 if not clip or clip.get("role") != "user_utterance":
-                    fail(f"speak action does not name an utterance: {action}")
+                    fail(f"{action['type']} action does not name an utterance: {action}")
+                if action["type"] == "agent" and normalized(action["ask"]) != normalized(
+                        clip["expectedTranscript"]):
+                    fail(f"agent request is not what the guest says: {action}")
             if action.get("type") == "selectCase" and action.get("caseId") not in scenario.get(
                     "corpusSequence", []):
                 fail(f"case transition is outside the declared sequence: {action}")
@@ -261,6 +318,7 @@ def main() -> int:
             if not -24 <= float(cue.get("gainDb", 0)) <= -6:
                 fail(f"{scenario['id']} sound effect is not safely below dialogue")
 
+    check_met_story(by_id["nyc_met"])
     estimated_sfx = sum(math.ceil(float(effect["durationSeconds"])
                                   * int(sfx["estimatedCreditsPerSecond"]))
                         for effect in effects.values())
