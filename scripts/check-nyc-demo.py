@@ -42,6 +42,16 @@ def audio_duration(path: pathlib.Path) -> float:
     return float(result.stdout.strip())
 
 
+# Transcript fixtures may come from either STT provider (prepare-elevenlabs-demo-audio.py --stt).
+MUSE_STT_MODEL = "muse-voice-transcribe-1.0"
+
+
+def known_stt(transcript: dict, manifest: dict) -> bool:
+    models = {"elevenlabs": manifest.get("stt", {}).get("modelId"), "muse": MUSE_STT_MODEL}
+    model = models.get(transcript.get("provider"))
+    return model is not None and transcript.get("modelId") == model
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--require-audio", action="store_true")
@@ -204,6 +214,8 @@ def main() -> int:
                     fail(f"STT fixture drift for {clip['id']}")
                 if transcript.get("dispatchText") != clip["expectedTranscript"]:
                     fail(f"STT replay is not exactly the displayed phrase for {clip['id']}")
+                if not known_stt(transcript, data):
+                    fail(f"STT fixture for {clip['id']} names an unknown provider or model")
             for clip in sorted(scenario["clips"], key=lambda item: item["atMs"]):
                 path = AUDIO / f"{clip['id']}.mp3"
                 start_ms = float(clip["atMs"])
