@@ -435,19 +435,22 @@ def label(pick: dict, cafes: list[dict]) -> str:
     return f"{pick['name']}, {where}" if twins and where else pick["name"]
 
 
-def display(pick: dict, charger: dict, cafes: list[dict]) -> dict:
-    """What Host B shows, built from the pick's cited fields and OSM's name and address."""
+def display(pick: dict, charger: dict, cafes: list[dict], *, compared: int,
+            runner_up: dict | None) -> dict:
+    """What Host B shows, built from the pick's cited fields and OSM's name and address: how many
+    cafés Muse compared (each researched with cited findings), then the runner-up by name."""
     s = pick["scores"]
-    parts = ["Muse picked it"]
+    parts = [f"Muse compared {compared} café{'' if compared == 1 else 's'}"]
     if s["open"]["closes"]:
         parts.append(f"open till {clock(s['open']['closes'])}")
     if s["oatMilkLatte"]["score"] >= 3:
         parts.append("oat milk")
     parts.append(f"{pick['walkMinutes']} min walk")
     source = (s["open"]["sources"] or s["oatMilkLatte"]["sources"])[0]
+    second = (f"Runner-up: {label(runner_up, cafes)}" if runner_up
+              else f"Source · {host(source['url'])}")
     return {"name": label(pick, cafes), "walkMinutes": pick["walkMinutes"],
-            "why": " · ".join(parts),
-            "source": f"Source · {host(source['url'])}", "sourceUrl": source["url"],
+            "why": " · ".join(parts), "source": second, "sourceUrl": source["url"],
             "price": s["price"]["price"] if s["price"] else None,
             "charger": charger["hostLabel"]}
 
@@ -546,6 +549,8 @@ def main() -> int:
     served = sorted({f.get("servedModel") for f in found.values() if f.get("servedModel")}
                     | {meta_scoring["servedModel"]} - {None})
     pick = ranked[0]
+    shown = display(pick, charger, cafes, compared=len(scorable),
+                    runner_up=ranked[1] if len(ranked) > 1 else None)
     cited_urls = list(dict.fromkeys(src["url"] for r in ranked for k in CRITERIA
                                     for src in r["scores"][k]["sources"]))
     osm = {"source": "OpenStreetMap via the Overpass API", **ODBL, "endpoint": meta["endpoint"],
@@ -569,7 +574,7 @@ def main() -> int:
                                  "6:30 pm 4, 6 pm 3; without one the model's score, at most 3",
                     "uncited": "a criterion without a valid citation scores 0",
                     "tieBreak": "total, then shorter walk, then nearer, then OSM id"},
-        "calls": calls, "display": display(pick, charger, cafes), "pick": pick["osmId"],
+        "calls": calls, "display": shown, "pick": pick["osmId"],
         "ranked": ranked, "disqualified": disqualified, "osm": osm,
         "attribution": {"osm": "© OpenStreetMap contributors (ODbL 1.0)",
                         "citedSources": cited_urls},
@@ -585,8 +590,7 @@ def main() -> int:
         "caveat": "Locations and names are OpenStreetMap's; hours, menu and reputation come from "
                   "the cited pages on the generation date and are not live. No order is placed.",
     }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    shown = display(pick, charger, cafes)
-    print(f"pick: {shown['name']} · {shown['why']}")
+    print(f"pick: {shown['name']} · {shown['why']} · {shown['source']}")
     print(f"wrote {args.out / 'COFFEE.json'}: {len(ranked)} ranked, {len(disqualified)} out")
     return 0
 

@@ -167,30 +167,38 @@ class Scoring(unittest.TestCase):
         self.assertEqual([coffee.clock(t) for t in ("19:00", "19:30", "21:00", "00:00")],
                          ["7", "7:30", "9", "midnight"])
 
+    def show(self, pick, cafes=None, compared=5, runner_up=None):
+        return coffee.display(pick, self.charger, self.cafes if cafes is None else cafes,
+                              compared=compared, runner_up=runner_up)
+
     def test_display_says_only_what_is_cited(self):
         ranked = self.rank()[0]
         top = copy.deepcopy(ranked[0])
-        shown = coffee.display(top, self.charger, self.cafes)
+        shown = self.show(top, compared=len(ranked), runner_up=ranked[1])
         self.assertEqual(shown["name"], top["name"])     # no namesake in the sample
-        self.assertTrue(shown["why"].startswith("Muse picked it · "))
+        self.assertTrue(shown["why"].startswith(f"Muse compared {len(ranked)} cafés · "))
         self.assertTrue(shown["why"].endswith(f" · {top['walkMinutes']} min walk"))
         if top["scores"]["open"]["closes"]:
             self.assertIn(f"open till {coffee.clock(top['scores']['open']['closes'])}",
                           shown["why"])
-        self.assertEqual(shown["source"], "Source · "
-                         + coffee.host(top["scores"]["open"]["sources"][0]["url"]))
+        self.assertEqual(shown["source"], f"Runner-up: {ranked[1]['name']}")
+        self.assertEqual(shown["sourceUrl"], top["scores"]["open"]["sources"][0]["url"])
         self.assertEqual(shown["charger"], "ChargePoint")
         self.assertIsNone(shown["price"])
+        # Alone, the pick keeps its citation's host on that row instead.
+        self.assertEqual(self.show(top)["source"], "Source · "
+                         + coffee.host(top["scores"]["open"]["sources"][0]["url"]))
+        self.assertTrue(self.show(top, compared=1)["why"].startswith("Muse compared 1 café · "))
         top["scores"]["oatMilkLatte"]["score"] = 0
-        self.assertNotIn("oat milk", coffee.display(top, self.charger, self.cafes)["why"])
+        self.assertNotIn("oat milk", self.show(top)["why"])
         shops = copy.deepcopy(self.shops)
         self.shop(SAMPLE["pick"], shops)["price"] = {"price": "$6.25", "sources": [1]}
         priced = next(r for r in self.rank(shops)[0] if r["osmId"] == SAMPLE["pick"])
-        self.assertEqual(coffee.display(priced, self.charger, self.cafes)["price"], "$6.25")
+        self.assertEqual(self.show(priced)["price"], "$6.25")
         for price in ({"price": "$6.25", "sources": []}, {"price": "about six", "sources": [1]}):
             self.shop(SAMPLE["pick"], shops)["price"] = price
             unpriced = next(r for r in self.rank(shops)[0] if r["osmId"] == SAMPLE["pick"])
-            self.assertIsNone(coffee.display(unpriced, self.charger, self.cafes)["price"])
+            self.assertIsNone(self.show(unpriced)["price"])
 
     def test_a_namesake_in_range_adds_the_osm_address(self):
         top = self.rank()[0][0]
@@ -199,8 +207,10 @@ class Scoring(unittest.TestCase):
         cafes = self.cafes + [twin]
         where = " ".join(coffee.STREET_WORDS.get(w, w) for w in top["address"].split())
         self.assertEqual(coffee.label(top, cafes), f"{top['name']}, {where}")
-        self.assertEqual(coffee.display(top, self.charger, cafes)["name"],
-                         f"{top['name']}, {where}")
+        self.assertEqual(self.show(top, cafes)["name"], f"{top['name']}, {where}")
+        # A runner-up with a namesake in range is told apart the same way.
+        self.assertEqual(self.show(self.rank()[0][1], cafes, runner_up=top)["source"],
+                         f"Runner-up: {top['name']}, {where}")
         self.assertEqual(coffee.label(dict(top, address="226 East 83rd Street"), cafes),
                          f"{top['name']}, 226 E 83rd St")
         self.assertEqual(coffee.label(dict(top, address=None), cafes), top["name"])
