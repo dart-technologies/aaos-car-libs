@@ -17,7 +17,7 @@ permissions:
 jobs:
   analysis:
     name: Scorecard analysis
-    # GITHUB_TOKEN cannot read a private repo's commits via GraphQL; re-enable when public.
+    # GITHUB_TOKEN cannot read a private repo's commits via GraphQL, and publishing needs a public repo.
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
@@ -35,8 +35,7 @@ jobs:
         with:
           results_file: results.sarif
           results_format: sarif
-          # Must stay false while the repo is private (no Scorecard API); flip it when going public.
-          publish_results: false
+          publish_results: true
 
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@7e3036b9cd87fc26dd06747b7aa4b96c27aaef3a # codeql-bundle-v2.20.3

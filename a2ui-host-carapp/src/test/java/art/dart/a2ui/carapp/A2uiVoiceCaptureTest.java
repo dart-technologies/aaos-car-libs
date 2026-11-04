@@ -536,15 +536,21 @@ public class A2uiVoiceCaptureTest {
         assertThat(capture.isListening()).isFalse();
     }
 
-    /** Presses per thread in the two-thread test below. See its comment for why the number. */
+    /**
+     * Trials for the two-thread test below. Unfixed code lost the race 129-294 times in 20,000, so
+     * the floor still catches it many times over; the time budget keeps a contended CI runner
+     * (hot spins waiting a scheduler slice each) inside the timeout.
+     */
     private static final int SIMULTANEOUS_PRESSES = 20_000;
+    private static final int MIN_SIMULTANEOUS_PRESSES = 2_000;
+    private static final long PRESS_BUDGET_NANOS = TimeUnit.SECONDS.toNanos(15);
 
     /**
      * Two threads calling {@code listen} at the same instant open one microphone, not two. Both
      * presses spin in the gate until aligned, then race the guard. The visibility half of the
      * defect cannot be demonstrated by a test, since observing it creates the happens-before edge.
      */
-    @Test(timeout = 60_000)
+    @Test(timeout = 120_000)
     public void twoThreadsPressingSpeakAtOnceOpenOnlyOneMicrophone() throws Exception {
         AtomicInteger inGate = new AtomicInteger();
         AtomicInteger bothPressesAligned = new AtomicInteger();
@@ -598,10 +604,12 @@ public class A2uiVoiceCaptureTest {
         CyclicBarrier startOfTrial = new CyclicBarrier(3);
         CyclicBarrier endOfTrial = new CyclicBarrier(3);
         AtomicReference<Throwable> onAPressThread = new AtomicReference<>();
+        AtomicBoolean done = new AtomicBoolean();
         Runnable press = () -> {
             try {
-                for (int i = 0; i < SIMULTANEOUS_PRESSES; i++) {
+                while (true) {
                     startOfTrial.await(30, TimeUnit.SECONDS);
+                    if (done.get()) return;
                     try {
                         capture.listen(SURFACE, () -> tree("root"), counter);
                     } finally {
@@ -618,7 +626,11 @@ public class A2uiVoiceCaptureTest {
         first.start();
         second.start();
 
-        for (int trial = 0; trial < SIMULTANEOUS_PRESSES; trial++) {
+        long started = System.nanoTime();
+        int trials = 0;
+        while (trials < SIMULTANEOUS_PRESSES && (trials < MIN_SIMULTANEOUS_PRESSES
+                || System.nanoTime() - started < PRESS_BUDGET_NANOS)) {
+            trials++;
             inGate.set(0);
             microphonesThisTrial.set(0);
             // The source never reported, so the winning press is still outstanding. This is the
@@ -630,17 +642,19 @@ public class A2uiVoiceCaptureTest {
                 trialsWithTwoMicrophones.incrementAndGet();
             }
         }
+        done.set(true);
+        startOfTrial.await(30, TimeUnit.SECONDS);
         first.join();
         second.join();
 
         assertThat(onAPressThread.get()).isNull();
         assertWithMessage("trials where both presses opened a microphone, of %s",
-                SIMULTANEOUS_PRESSES)
+                trials)
                 .that(trialsWithTwoMicrophones.get()).isEqualTo(0);
-        assertThat(microphones.get()).isEqualTo(SIMULTANEOUS_PRESSES);
-        assertThat(refusals.get()).isEqualTo(SIMULTANEOUS_PRESSES);
+        assertThat(microphones.get()).isEqualTo(trials);
+        assertThat(refusals.get()).isEqualTo(trials);
         // Anti-vacuity: every press saw the other in the gate, so they really raced.
-        assertThat(bothPressesAligned.get()).isEqualTo(2 * SIMULTANEOUS_PRESSES);
+        assertThat(bothPressesAligned.get()).isEqualTo(2 * trials);
     }
 
     /**
