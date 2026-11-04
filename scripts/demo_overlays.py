@@ -192,8 +192,29 @@ _BITRATES = {1: [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 32
 _RATES = {3: [44100, 48000, 32000], 2: [22050, 24000, 16000], 0: [11025, 12000, 8000]}
 
 
+def _xing(data: bytes, pos: int, version: int, mono: bool) -> tuple[int, int] | None:
+    """(audio frames, encoder delay + padding samples) from a Xing/Info + LAME header frame."""
+    at = pos + 4 + ((17 if mono else 32) if version == 3 else (9 if mono else 17))
+    if data[at:at + 4] not in (b"Xing", b"Info"):
+        return None
+    flags = int.from_bytes(data[at + 4:at + 8], "big")
+    if not flags & 1:
+        return None
+    frames = int.from_bytes(data[at + 8:at + 12], "big")
+    lame = at + 8 + 4 + (4 if flags & 2 else 0) + (100 if flags & 4 else 0) + \
+        (4 if flags & 8 else 0)
+    trim = 0  # a LAME-format tag, whoever wrote it ("LAME", ffmpeg's "Lavf"/"Lavc")
+    if data[lame:lame + 4].isalpha() and len(data) >= lame + 24:
+        b0, b1, b2 = data[lame + 21:lame + 24]
+        trim = ((b0 << 4) | (b1 >> 4)) + (((b1 & 0x0F) << 8) | b2)
+    return frames, trim
+
+
 def mp3_seconds(path: pathlib.Path) -> float:
-    """Duration of an MPEG Layer III file: frames x samples-per-frame / sample rate."""
+    """Duration of an MPEG Layer III file as a decoder plays it.
+
+    A Xing/Info header's frame count, less the LAME encoder delay and padding (what ffprobe
+    reports); without one, every frame header is counted (frames x samples / rate)."""
     data = pathlib.Path(path).read_bytes()
     pos = 0
     if data[:3] == b"ID3" and len(data) >= 10:
@@ -211,6 +232,10 @@ def mp3_seconds(path: pathlib.Path) -> float:
             continue
         per_frame = 1152 if version == 3 else 576
         frame_rate = _RATES[version][rate_i]
+        if not rate:
+            xing = _xing(data, pos, version, data[pos + 3] >> 6 == 3)
+            if xing:
+                return (xing[0] * per_frame - xing[1]) / frame_rate
         bitrate = _BITRATES[1 if version == 3 else 2][bitrate_i] * 1000
         samples += per_frame
         rate = frame_rate

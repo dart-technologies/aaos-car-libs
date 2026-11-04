@@ -123,6 +123,19 @@ class TimingTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ov.mp3_seconds(path)
 
+    def test_mp3_duration_trusts_an_info_tag_and_trims_encoder_delay(self):
+        # The cache's files carry ffmpeg's LAME-format Info tag; ffprobe reports frames x 1152
+        # less delay + padding, and so must this.
+        tag = (b"Info" + (15).to_bytes(4, "big") + (100).to_bytes(4, "big") + b"\x00" * 4
+               + b"\x00" * 100 + b"\x00" * 4 + b"Lavf" + b"\x00" * 17 + bytes([0x24, 0x05, 0x40]))
+        info = b"\xFF\xFB\x90\x00" + b"\x00" * 32 + tag
+        info += b"\x00" * (417 - len(info))
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "x.mp3"
+            path.write_bytes(info + mp3_bytes(99))
+            self.assertAlmostEqual(ov.mp3_seconds(path), (100 * 1152 - 576 - 1344) / 44100,
+                                   places=9)
+
     def test_captions_use_the_audio_file_when_the_clip_has_no_duration(self):
         with tempfile.TemporaryDirectory() as tmp:
             audio = pathlib.Path(tmp)
