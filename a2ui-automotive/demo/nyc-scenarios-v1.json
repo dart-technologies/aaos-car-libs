@@ -324,10 +324,10 @@
         "places": ["Hudson Yards", "The Met", "charging"],
         "beats": [
           {"atMs": 12000, "display": "driver", "label": "Muse brief"},
-          {"atMs": 21500, "display": "driver", "label": "Ticket confirmed"},
+          {"atMs": 22000, "display": "driver", "label": "Ticket confirmed"},
           {"atMs": 40000, "display": "driver", "label": "Audio guide"},
           {"atMs": 71000, "display": "driver", "label": "Film, parked"},
-          {"atMs": 86000, "display": "driver", "label": "Chargers"},
+          {"atMs": 87000, "display": "driver", "label": "Chargers"},
           {"atMs": 108000, "display": "driver", "label": "Café pick + order"},
           {"atMs": 117000, "display": "driver", "label": "Big Buck Bunny"},
           {"atMs": 45000, "display": "passenger", "label": "Passenger · film"},
