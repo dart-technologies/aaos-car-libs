@@ -346,7 +346,7 @@
           "id": "met_narration_02",
           "role": "narration",
           "atMs": 16500,
-          "text": "Muse answers with a short brief and cited sources. Detail like this only appears while parked."
+          "text": "Muse answers with a short brief and cited sources, shown only while parked."
         },
         {
           "id": "met_utterance_reserve",
@@ -365,7 +365,7 @@
           "id": "met_narration_05",
           "role": "narration",
           "atMs": 38000,
-          "text": "Now we're moving. The driver's screen simplifies, and the passenger's screen doesn't have to."
+          "text": "Now we're moving, and the driver's screen simplifies itself."
         },
         {
           "id": "met_utterance_first",
@@ -438,7 +438,7 @@
           "id": "ev_narration_02",
           "role": "narration",
           "atMs": 99100,
-          "text": "It noticed the battery running low and found three chargers on your way."
+          "text": "It noticed the battery running low and found chargers on your way."
         },
         {
           "id": "ev_utterance_first",
@@ -451,7 +451,7 @@
           "id": "ev_narration_03",
           "role": "narration",
           "atMs": 109200,
-          "text": "Parked and charging. Muse already checked 15 cafés within a short walk, each claim backed by a source."
+          "text": "Parked at the charger. Muse already checked 15 cafés within a short walk, each claim backed by a source."
         },
         {
           "id": "ev_utterance_coffee",
