@@ -15,7 +15,7 @@
 
 quality_cached replays an exact cached output, generating (and caching) only on a miss.
 realtime_low_latency calls the vendor and, if no valid answer arrives within the profile deadline
-(2500 ms), serves a cached output labelled ``fallback`` while the live call finishes and refreshes
+(providers.json deadlineMs), serves a cached output labelled ``fallback`` while the live call finishes and refreshes
 the cache. Every response says what produced it: ``source`` in the envelope, the output's own model
 and profile on the Response. Nothing is cached or returned before contract.validate_envelope.
 """
@@ -183,8 +183,16 @@ class Gateway:
         key = self._key(provider)
         return None if key is None else ("cli" if key == CLI_KEY else "api")
 
+    def settings(self, provider: str, profile: str) -> dict:
+        """The profile's model/effort; a CLI may override them (its login may not offer the API id)."""
+        chosen = dict(self.config["providers"][provider]["profiles"][profile])
+        if self.transport(provider) == "cli":
+            chosen.update(self.config["providers"][provider]["cli"].get("profiles", {})
+                          .get(profile, {}))
+        return chosen
+
     def model(self, provider: str, profile: str) -> str:
-        return self.config["providers"][provider]["profiles"][profile]["model"]
+        return self.settings(provider, profile)["model"]
 
     def cache_key(self, provider: str, profile: str, system: str, user: str) -> str:
         return contract.cache_key(self.model(provider, profile), system, user)
@@ -268,7 +276,7 @@ class Gateway:
     def _generate(self, provider: str, profile: str, system: str, user: str, key_hash: str,
                   key: str) -> dict:
         settings = self.config["providers"][provider]
-        chosen = settings["profiles"][profile]
+        chosen = self.settings(provider, profile)
         timing = self.config["profiles"][profile]
         began = self._clock()
         adapter, base_url = settings["adapter"], settings["baseUrl"]

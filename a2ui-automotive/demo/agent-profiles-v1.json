@@ -11,7 +11,7 @@
     },
     "realtime_low_latency": {
       "purpose": "Optional foreground concierge turn with an immediate cached fallback.",
-      "vehicleDeadlineMs": 2500,
+      "vehicleDeadlineMs": 10000,
       "networkDuringDemo": true,
       "fallback": "quality_cached"
     }

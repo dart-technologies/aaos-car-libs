@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Vendor adapters: Anthropic Messages, OpenAI Responses, Gemini generateContent, one
-OpenAI-compatible chat-completions adapter shared by xAI (Grok) and Meta (Muse), and Claude Code
-headless for a subscription baseline.
+OpenAI-compatible chat-completions adapter shared by xAI (Grok) and Meta (Muse), and subscription
+CLIs (Claude Code, Codex, Grok, Antigravity) for baselines without API keys.
 
 Raw HTTPS through urllib rather than five SDKs, deliberately: one transport with no hidden
 retries keeps latency comparable across vendors and makes the realtime deadline mean what it says.
@@ -24,6 +24,7 @@ carry the HTTP status and the vendor's error code token only; a vendor body can 
 from __future__ import annotations
 
 import json
+import pathlib
 import re
 import socket
 import ssl
@@ -41,6 +42,7 @@ ANTHROPIC_FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 _TOKEN = re.compile(r"^[A-Za-z0-9_.:-]{1,48}$")
 _MODEL = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+_CODEX_MODEL = re.compile(r"^model:\s*([A-Za-z0-9._-]+)\s*$", re.M)
 
 
 class AdapterError(Exception):
@@ -238,46 +240,131 @@ def openai_chat(base_url, model, effort, max_tokens, key, system, user, schema, 
     return Completion(content, _token(response.get("model")))
 
 
-def claude_code_cli(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s):
-    """Claude Code headless on the logged-in subscription. ``base_url`` is the CLI command.
+def _run_cli(command: list[str], cwd: str, timeout_s: float) -> subprocess.CompletedProcess:
+    try:
+        return subprocess.run(command, cwd=cwd, stdin=subprocess.DEVNULL, capture_output=True,
+                              text=True, timeout=timeout_s)
+    except subprocess.TimeoutExpired:
+        raise AdapterError("timeout") from None
+    except OSError:
+        raise AdapterError("upstream", "cli_missing") from None
 
-    Not --bare: bare mode reads only ANTHROPIC_API_KEY. Isolation instead: no tools, MCP or slash
-    commands, an explicit system prompt, and an empty working directory (no project CLAUDE.md).
-    """
-    del key, max_tokens  # auth is the CLI's login; the CLI sizes its own output
-    command = [base_url, "-p", "--output-format", "json",
-               "--json-schema", json.dumps(schema, separators=(",", ":")), "--model", model,
-               "--tools", "", "--strict-mcp-config", "--disable-slash-commands",
-               "--no-session-persistence", "--permission-mode", "dontAsk",
-               "--system-prompt", system]
-    if effort:
-        command += ["--effort", effort]
-    with tempfile.TemporaryDirectory(prefix="a2ui-claude-") as cwd:
-        try:
-            done = subprocess.run(command + [user], cwd=cwd, stdin=subprocess.DEVNULL,
-                                  capture_output=True, text=True, timeout=timeout_s)
-        except subprocess.TimeoutExpired:
-            raise AdapterError("timeout") from None
-        except OSError:
-            raise AdapterError("upstream", "cli_missing") from None
+
+def _cli_wrapper(done: subprocess.CompletedProcess) -> dict:
     try:
         wrapper = json.loads(done.stdout)
     except ValueError:
         raise AdapterError("upstream", f"cli_exit_{done.returncode}") from None
-    if not isinstance(wrapper, dict) or wrapper.get("is_error"):
-        detail = wrapper.get("subtype") if isinstance(wrapper, dict) else None
-        raise AdapterError("upstream", _token(detail) or f"cli_exit_{done.returncode}")
-    structured = wrapper.get("structured_output")
-    if not isinstance(structured, dict):
+    if not isinstance(wrapper, dict):
+        raise AdapterError("upstream", f"cli_exit_{done.returncode}")
+    return wrapper
+
+
+def _first_model(usage) -> str | None:
+    return _token(next(iter(usage), None)) if isinstance(usage, dict) and usage else None
+
+
+def _structured(value) -> str:
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except ValueError:
+            raise AdapterError("upstream", "no_structured_output") from None
+    if not isinstance(value, dict):
         raise AdapterError("upstream", "no_structured_output")
-    usage = wrapper.get("modelUsage")
-    served = next(iter(usage), None) if isinstance(usage, dict) else None
-    return Completion(json.dumps(structured), _token(served))
+    return json.dumps(value)
+
+
+def _one_prompt(system: str, user: str) -> str:
+    """For CLIs with no system-prompt flag: the same instructions, ahead of the request."""
+    return f"{system}\n\n---\n\n{user}"
+
+
+# Subscription CLIs. ``base_url`` is the command; auth is the CLI's own login, never an API key.
+# Each runs in an empty temp directory with tools, plugins and session state off where the CLI
+# allows it, so it answers the prompt rather than acting as a coding agent.
+
+def claude_code_cli(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s):
+    """Claude Code headless. Not --bare: bare mode reads only ANTHROPIC_API_KEY."""
+    del key, max_tokens
+    command = [base_url, "-p", "--output-format", "json",
+               "--json-schema", json.dumps(schema, separators=(",", ":")), "--model", model,
+               "--tools", "", "--strict-mcp-config", "--disable-slash-commands",
+               "--no-session-persistence", "--permission-mode", "dontAsk",
+               "--system-prompt", system] + (["--effort", effort] if effort else []) + [user]
+    with tempfile.TemporaryDirectory(prefix="a2ui-cli-") as cwd:
+        wrapper = _cli_wrapper(_run_cli(command, cwd, timeout_s))
+    if wrapper.get("is_error"):
+        raise AdapterError("upstream", _token(wrapper.get("subtype")) or "cli_error")
+    return Completion(_structured(wrapper.get("structured_output")),
+                      _first_model(wrapper.get("modelUsage")))
+
+
+def codex_exec_cli(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s):
+    """OpenAI Codex ``exec`` on the ChatGPT login: read-only sandbox, ephemeral, schema-enforced."""
+    del key, max_tokens
+    with tempfile.TemporaryDirectory(prefix="a2ui-cli-") as cwd:
+        schema_path = pathlib.Path(cwd, "schema.json")
+        out_path = pathlib.Path(cwd, "out.json")
+        schema_path.write_text(json.dumps(schema), encoding="utf-8")
+        work = pathlib.Path(cwd, "work")
+        work.mkdir()
+        command = [base_url, "exec", "--skip-git-repo-check", "--ephemeral", "-s", "read-only",
+                   "-C", str(work), "-m", model, "--output-schema", str(schema_path),
+                   "-o", str(out_path)]
+        if effort:
+            command += ["-c", f"model_reasoning_effort={effort}"]
+        done = _run_cli(command + [_one_prompt(system, user)], cwd, timeout_s)
+        if done.returncode != 0:
+            raise AdapterError("upstream", f"cli_exit_{done.returncode}")
+        try:
+            text = out_path.read_text(encoding="utf-8")
+        except OSError:
+            raise AdapterError("upstream", "no_structured_output") from None
+    served = _CODEX_MODEL.search(done.stderr + "\n" + done.stdout)
+    return Completion(_structured(text), _token(served.group(1)) if served else None)
+
+
+def grok_cli(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s):
+    """xAI Grok CLI single-turn mode on the logged-in session: no tools, plan or subagents."""
+    del key, max_tokens
+    command = [base_url, "-p", user, "--output-format", "json",
+               "--json-schema", json.dumps(schema, separators=(",", ":")), "-m", model,
+               "--system-prompt", system, "--tools", "", "--permission-mode", "dontAsk",
+               "--no-plan", "--no-subagents"] + (["--reasoning-effort", effort] if effort else [])
+    with tempfile.TemporaryDirectory(prefix="a2ui-cli-") as cwd:
+        wrapper = _cli_wrapper(_run_cli(command + ["--cwd", cwd], cwd, timeout_s))
+    if wrapper.get("error") or wrapper.get("is_error"):
+        raise AdapterError("upstream", _token(wrapper.get("stopReason")) or "cli_error")
+    return Completion(_structured(wrapper.get("structuredOutput")),
+                      _first_model(wrapper.get("modelUsage")))
+
+
+def antigravity_cli(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s):
+    """Google Antigravity ``agy`` print mode on the Google login. model "default" omits -m."""
+    del key, max_tokens
+    command = [base_url, "-p", _one_prompt(system, user), "--output-format", "json",
+               "--json-schema", json.dumps(schema, separators=(",", ":")),
+               "--disable-slash-commands", "--print-timeout", f"{max(1, int(timeout_s))}s"]
+    if model != "default":
+        command += ["--model", model]
+    if effort:
+        command += ["--effort", effort]
+    with tempfile.TemporaryDirectory(prefix="a2ui-cli-") as cwd:
+        wrapper = _cli_wrapper(_run_cli(command, cwd, timeout_s + 5))
+    if wrapper.get("error") or wrapper.get("status") not in (None, "success", "completed"):
+        raise AdapterError("upstream", _token(wrapper.get("status")) or "cli_error")
+    usage = wrapper.get("usage")
+    served = usage.get("model") if isinstance(usage, dict) else None
+    return Completion(_structured(wrapper.get("response")), _token(served))
 
 
 ADAPTERS = {
     "anthropic_messages": anthropic_messages,
     "claude_code_cli": claude_code_cli,
+    "codex_exec_cli": codex_exec_cli,
+    "grok_cli": grok_cli,
+    "antigravity_cli": antigravity_cli,
     "openai_responses": openai_responses,
     "gemini_generate_content": gemini_generate_content,
     "openai_chat": openai_chat,

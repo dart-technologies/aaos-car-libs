@@ -6,7 +6,7 @@
   },
   "profiles": {
     "quality_cached": { "deadlineMs": 0, "timeoutMs": 120000 },
-    "realtime_low_latency": { "deadlineMs": 2500, "timeoutMs": 30000 }
+    "realtime_low_latency": { "deadlineMs": 10000, "timeoutMs": 30000 }
   },
   "providers": {
     "claude": {
@@ -25,10 +25,13 @@
       "adapter": "openai_responses",
       "baseUrl": "https://api.openai.com/v1",
       "keyEnv": ["OPENAI_API_KEY"],
+      "cli": { "adapter": "codex_exec_cli", "command": "codex",
+               "profiles": { "quality_cached": { "model": "gpt-6-luna", "effort": "high" } },
+               "why": "Subscription baseline without OPENAI_API_KEY: Codex exec on the ChatGPT login. That login rejects gpt-6-terra (2026-11-04), so quality runs Luna at high effort." },
       "verifiedAt": "2026-11-03",
-      "source": "https://developers.openai.com/api/docs/models/gpt-6-astra and /gpt-6-luna",
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-luna; gpt-6-terra not yet checked against its page",
       "profiles": {
-        "quality_cached": { "model": "gpt-6-astra", "effort": "high", "maxTokens": 16000 },
+        "quality_cached": { "model": "gpt-6-terra", "effort": "high", "maxTokens": 16000 },
         "realtime_low_latency": { "model": "gpt-6-luna", "effort": "low", "maxTokens": 8000 }
       }
     },
@@ -36,6 +39,9 @@
       "adapter": "gemini_generate_content",
       "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
       "keyEnv": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+      "cli": { "adapter": "antigravity_cli", "command": "agy",
+               "profiles": { "quality_cached": { "model": "gemini-3.8-flash" }, "realtime_low_latency": { "model": "gemini-3.8-flash", "effort": "low" } },
+               "why": "Subscription baseline without a Gemini key: agy print mode on the Google login, Flash 3.8. Unverified until agy is signed in." },
       "verifiedAt": "2026-11-03",
       "source": "https://aistudio.google.com/docs/models/gemini-4-argon and /gemini-3.8-flash",
       "profiles": {
@@ -47,6 +53,9 @@
       "adapter": "openai_chat",
       "baseUrl": "https://api.x.ai/v1",
       "keyEnv": ["XAI_API_KEY"],
+      "cli": { "adapter": "grok_cli", "command": "grok",
+               "profiles": { "realtime_low_latency": { "model": "grok-4.7-build-fast" } },
+               "why": "Subscription baseline without XAI_API_KEY: grok -p on the xAI session. The session offers grok-4.7 but not the API realtime model, so realtime uses its fast model (verified 2026-11-04)." },
       "verifiedAt": "2026-11-03",
       "source": "https://docs.x.ai/developers/models (lists both ids; states no latency, so the non-reasoning model is a latency choice, not a documented tier)",
       "profiles": {

@@ -267,8 +267,8 @@ class SubscriptionCliTest(GatewayCase):
                          ("anthropic_messages", KEY))
 
 
-class ClaudeCodeCliAdapterTest(unittest.TestCase):
-    """Runs the real adapter against a fake claude executable that records argv and cwd."""
+class FakeCli:
+    """Real adapters against a fake CLI executable that records its argv, cwd and directory."""
 
     def fake_cli(self, body: str) -> pathlib.Path:
         tmp = tempfile.TemporaryDirectory()
@@ -282,6 +282,8 @@ class ClaudeCodeCliAdapterTest(unittest.TestCase):
         cli.chmod(0o755)
         return cli
 
+
+class ClaudeCodeCliAdapterTest(FakeCli, unittest.TestCase):
     def call(self, cli, timeout_s=10):
         return adapters.complete("claude_code_cli", str(cli), "claude-sonnet-5-5", "low", 100,
                                  "\0cli", "sys", "usr", contract.GENERATION_SCHEMA, timeout_s)
@@ -323,6 +325,64 @@ class ClaudeCodeCliAdapterTest(unittest.TestCase):
                     self.call(self.fake_cli(body), timeout_s=1)
                 self.assertEqual(str(raised.exception), expected)
                 self.assertNotIn("secret", str(raised.exception))
+
+
+class OtherCliAdapterTest(FakeCli, unittest.TestCase):
+    def run_cli(self, adapter, body, model="m-1"):
+        cli = self.fake_cli(body)
+        result = adapters.complete(adapter, str(cli), model, "high", 100, "\0cli", "SYS", "USR",
+                                   contract.GENERATION_SCHEMA, 10)
+        return result, json.loads((cli.parent / "argv.json").read_text())["argv"]
+
+    def test_codex_exec_is_read_only_ephemeral_and_schema_enforced(self):
+        result, argv = self.run_cli("codex_exec_cli", (
+            "out = sys.argv[sys.argv.index('-o') + 1]\n"
+            "schema = json.load(open(sys.argv[sys.argv.index('--output-schema') + 1]))\n"
+            "assert schema['type'] == 'object'\n"
+            "open(out, 'w').write(json.dumps({'ok': 1}))\n"
+            "sys.stderr.write('model: gpt-6-luna\\n')\n"), model="gpt-6-luna")
+        self.assertEqual((json.loads(result.text), result.served_model), ({"ok": 1}, "gpt-6-luna"))
+        self.assertEqual(argv[0], "exec")
+        for flag in ("--ephemeral", "--skip-git-repo-check"):
+            self.assertIn(flag, argv)
+        self.assertEqual(argv[argv.index("-s") + 1], "read-only")
+        self.assertIn("model_reasoning_effort=high", argv)
+        self.assertLess(argv[-1].index("SYS"), argv[-1].index("USR"))  # no system flag: prepended
+
+    def test_grok_single_turn_without_tools_plan_or_subagents(self):
+        result, argv = self.run_cli("grok_cli", (
+            "print(json.dumps({'structuredOutput': {'ok': 1}, "
+            "'modelUsage': {'grok-4.7': {}}}))\n"), model="grok-4.7")
+        self.assertEqual((json.loads(result.text), result.served_model), ({"ok": 1}, "grok-4.7"))
+        self.assertEqual(argv[argv.index("-p") + 1], "USR")
+        self.assertEqual(argv[argv.index("--system-prompt") + 1], "SYS")
+        self.assertEqual(argv[argv.index("--tools") + 1], "")
+        for flag in ("--no-plan", "--no-subagents"):
+            self.assertIn(flag, argv)
+
+    def test_antigravity_parses_a_json_string_response_and_reports_sign_in_failure(self):
+        result, argv = self.run_cli("antigravity_cli", (
+            "print(json.dumps({'status': 'success', 'response': json.dumps({'ok': 1})}))\n"),
+            model="gemini-3.8-flash")
+        self.assertEqual(json.loads(result.text), {"ok": 1})
+        self.assertEqual(argv[argv.index("--model") + 1], "gemini-3.8-flash")
+        with self.assertRaises(adapters.AdapterError) as raised:
+            self.run_cli("antigravity_cli", (
+                "print(json.dumps({'status': 'error', 'error': 'Authentication required'}));"
+                "sys.exit(1)\n"))
+        self.assertEqual(str(raised.exception), "upstream:error")
+
+
+class CliProfileOverrideTest(GatewayCase):
+    def test_a_cli_profile_overrides_the_api_model(self):
+        vendor = FakeVendor()
+        gw = self.gateway(vendor, env={}, cli="/usr/local/bin/codex")
+        self.assertEqual(gw.model("chatgpt", "quality_cached"), "gpt-6-luna")
+        gw.handle(turn(provider="chatgpt"))
+        self.assertEqual((vendor.calls[0]["adapter"], vendor.calls[0]["model"],
+                          vendor.calls[0]["effort"]), ("codex_exec_cli", "gpt-6-luna", "high"))
+        api = self.gateway(FakeVendor(), env={"OPENAI_API_KEY": KEY}, cli="/usr/local/bin/codex")
+        self.assertEqual(api.model("chatgpt", "quality_cached"), "gpt-6-terra")
 
 
 class HttpTest(GatewayCase):
