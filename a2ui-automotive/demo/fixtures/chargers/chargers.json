@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "near": {
+    "label": "The Met Fifth Avenue",
+    "lat": 40.7794,
+    "lon": -73.9634,
+    "radiusMeters": 1500
+  },
+  "attribution": "© OpenStreetMap contributors (ODbL)",
+  "note": "Locations and tags from OpenStreetMap; availability, pricing and live status are not known and must not be shown as live.",
+  "stations": [
+    {
+      "name": "Tesla Supercharger",
+      "lat": 40.78098,
+      "lon": -73.98041,
+      "operator": "Tesla",
+      "kW": 72.0,
+      "capacity": 4,
+      "osmId": "node/6695745785",
+      "osmUrl": "https://www.openstreetmap.org/node/6695745785",
+      "distanceFromMetMeters": 1443
+    },
+    {
+      "name": "FLO",
+      "lat": 40.786304,
+      "lon": -73.975694,
+      "operator": "FLO",
+      "kW": null,
+      "capacity": 2,
+      "osmId": "node/10781832314",
+      "osmUrl": "https://www.openstreetmap.org/node/10781832314",
+      "distanceFromMetMeters": 1289
+    },
+    {
+      "name": "ChargePoint",
+      "lat": 40.777871,
+      "lon": -73.957203,
+      "operator": "ChargePoint",
+      "kW": null,
+      "capacity": null,
+      "osmId": "node/5620136933",
+      "osmUrl": "https://www.openstreetmap.org/node/5620136933",
+      "distanceFromMetMeters": 549
+    }
+  ]
+}

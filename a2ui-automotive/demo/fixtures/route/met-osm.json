@@ -1,0 +1,28 @@
+{
+  "source": "OpenStreetMap via the Overpass API",
+  "license": "ODbL 1.0",
+  "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "attribution": "© OpenStreetMap contributors",
+  "endpoint": "https://overpass-api.de/api/interpreter",
+  "query": "[out:json][timeout:25];nwr[\"name\"=\"The Metropolitan Museum of Art\"][\"tourism\"=\"museum\"](40.77,-73.97,40.785,-73.955);out center tags;",
+  "fetchedAt": "2026-11-04T16:11:47Z",
+  "responseSha256": "892381b0b301556ec988b906bbd1d225071401e77363218d9b2b7295a6747583",
+  "osmBase": "2026-11-04T16:09:48Z",
+  "element": {
+    "type": "relation",
+    "id": 3698894,
+    "url": "https://www.openstreetmap.org/relation/3698894",
+    "center": {
+      "lat": 40.7793968,
+      "lon": -73.9634178
+    },
+    "tags": {
+      "addr:housenumber": "1000",
+      "addr:street": "5th Avenue",
+      "name": "The Metropolitan Museum of Art",
+      "tourism": "museum",
+      "website": "https://www.metmuseum.org/",
+      "wikidata": "Q160236"
+    }
+  }
+}

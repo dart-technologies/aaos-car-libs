@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import pathlib
 import struct
 import sys
@@ -34,6 +35,23 @@ EXPECTED = {
         "a92375f09d8c4d32c0da650788ca67086529b5cc76f2af3f307e980358b10b85",
     "a2ui-host-carui/src/main/res/raw/demo_placeholder_audio.m4a":
         "d553b28c8e86ce574d79e68f3cee220f4c234a5da3d2609a277fa205c77a551b",
+    "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4":
+        "8ca6121326adfc437ee9eb902344bd27e023f338f69202e4605d10844f6f4609",
+    "a2ui-host-carui/src/main/res/drawable-nodpi/route_met.png":
+        "ff7c13c499e839875693135369101391150045c91baa88d9cd2bf3f5db03a071",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4":
+        "aa1cbf2b9b919ea3e7f2b12c1992daf6d4d35aca25bcda586658d1a06db37997",
+}
+# Third-party or derived media: the provenance record must name the same bytes and a licence.
+PROVENANCE = {
+    "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4":
+        "a2ui-automotive/demo/fixtures/bbb/SOURCE.json",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4":
+        "a2ui-automotive/demo/fixtures/met/FILM.json",
+}
+MAX_BYTES = {
+    "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4": 4_000_000,
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4": 6_000_000,
 }
 
 
@@ -58,6 +76,19 @@ def main() -> int:
                 failures.append(f"undersized PNG {relative}: {width}x{height}")
         elif b"ftyp" not in data[:64]:
             failures.append(f"invalid ISO media header {relative}")
+        if len(data) > MAX_BYTES.get(relative, len(data)):
+            failures.append(f"oversized {relative}: {len(data)} bytes")
+        record = PROVENANCE.get(relative)
+        if record:
+            try:
+                meta = json.loads((ROOT / record).read_text(encoding="utf-8"))
+            except (OSError, ValueError) as error:
+                failures.append(f"unreadable provenance {record}: {error}")
+                continue
+            if meta.get("output", {}).get("sha256") != actual:
+                failures.append(f"provenance {record} does not name {relative}'s bytes")
+            if not meta.get("license") or not meta.get("licenseUrl"):
+                failures.append(f"provenance {record} has no licence")
     if failures:
         print("\n".join(failures), file=sys.stderr)
         return 1
