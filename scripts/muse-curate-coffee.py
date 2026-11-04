@@ -287,7 +287,10 @@ def score(key: str, cafes: list[dict], found: dict, effort: str) -> tuple[list[d
             "reasoning": {"effort": effort}, "store": False, "max_output_tokens": 16000}
     started = time.monotonic()
     response = call(key, body, timeout=300)
-    shops = json.loads(adapters._meta_answer(response)[0])["shops"]
+    # As the gateway parses: a fenced or prose-wrapped object still parses; no object is an
+    # AdapterError token, not a traceback.
+    shops = json.loads(adapters._structured(adapters._first_object(
+        adapters._meta_answer(response)[0])))["shops"]
     seen = [s["id"] for s in shops]
     if sorted(seen) != sorted(ids):
         raise RuntimeError(f"scores do not cover each café exactly once: {sorted(set(ids) ^ set(seen))}")
