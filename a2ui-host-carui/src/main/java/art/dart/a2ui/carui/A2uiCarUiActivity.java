@@ -551,6 +551,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     /** Bumped per placed order, so a confirmation can tell the card answered it. */
     private int mOrderSeq;
     private boolean mDroveWithOrder;
+    /** Artwork plays as the film (true) or the stills (false); the parked-only toggle flips it. */
+    @VisibleForTesting
+    boolean mArtworkFilm;
     /** The journey the commitment fields above belong to. */
     @Nullable private HostJourney mJourney;
     /** Parked again after driving with an order: the arrival moment. */
@@ -1351,9 +1354,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     /** Audio is said to continue only if it is playing and the new reading still allows it. */
     private boolean audioContinues(@NonNull Set<ComponentType> allowed) {
-        return allowed.contains(ComponentType.AUDIO_PLAYER) && mDemoMedia != null
+        if (!allowed.contains(ComponentType.AUDIO_PLAYER)) return false;
+        PassengerMedia passenger = PassengerMedia.forName(PassengerDisplay.playing());
+        return (passenger != null && passenger.mCabinAudio) || (mDemoMedia != null
                 && mDemoMedia.getMode() == DemoMediaController.Mode.AUDIO
-                && mDemoMedia.isPlaying();
+                && mDemoMedia.isPlaying());
     }
 
     /** Host-owned nouns for exact corpus components; agent surfaces fall back to type nouns. */
@@ -1395,6 +1400,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (journey == null) {
             return;
         }
+        addGuideRow(rows, keys, allowed, limits);
         if (mArrived && parked) {
             addRow(rows, keys, HostRows.ARRIVAL, HostRows.card(allowed, limits,
                     journeyData(journey, journey.mArrivalTitle),
@@ -1408,6 +1414,28 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                     journeyData(journey, journey.mConfirmTitle), body,
                     null, getDrawable(journey.mConfirmGlyph)));
         }
+    }
+
+    /**
+     * While the passenger display plays the Met artwork, the driver gets text only: which work
+     * the audio guide is on. Glanceable, no image, no action; audio is allowed in motion.
+     */
+    private void addGuideRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
+            @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits) {
+        String playing = PassengerDisplay.playing();
+        int segment = PassengerDisplay.segment();
+        if (!"met_visit".equals(mSurfaceId) || segment < 0
+                || !(PassengerMedia.ARTWORK.equals(playing)
+                        || PassengerMedia.SLIDESHOW.equals(playing))) {
+            return;
+        }
+        int index = Math.min(segment, MetArtworks.WORKS.size() - 1);
+        addRow(rows, keys, HostRows.GUIDE, HostRows.card(allowed, limits,
+                getString(R.string.a2ui_met_guide_title),
+                Collections.singletonList(getString(R.string.a2ui_met_guide_body,
+                        MetArtworks.WORKS.get(index).mTitle, index + 1,
+                        MetArtworks.WORKS.size())),
+                null, getDrawable(R.drawable.a2ui_ic_guide)));
     }
 
     private static void addRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
@@ -1536,7 +1564,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             return "FIFTH HOUSE · CITY NOTE";
         }
         if ("met_visit".equals(surfaceId)) {
-            return "THE MET · TODAY";
+            return "THE MET · THURSDAY";
         }
         return "A2UI · " + surfaceId.replace('_', ' ').toUpperCase(java.util.Locale.US);
     }
@@ -1759,6 +1787,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             CarUiContentListItem row = (CarUiContentListItem) rows.get(i);
             DemoNativeContract.Spec spec = DemoNativeContract.resolve(mSurfaceId, component);
             appendCitations(row, component);
+            if (spec != null && spec.mKind == DemoNativeContract.Kind.TOGGLE) {
+                List<com.android.car.ui.CarUiText> body = new ArrayList<>();
+                body.add(new com.android.car.ui.CarUiText(getString(mArtworkFilm
+                        ? R.string.a2ui_met_artmode_film : R.string.a2ui_met_artmode_slideshow)));
+                row.setBody(body);
+            }
             if (spec != null) {
                 int art = 0;
                 switch (spec.mKind) {
@@ -1880,6 +1914,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             case GALLERY:
                 showGallery(componentId);
                 break;
+            case TOGGLE:
+                mArtworkFilm = !mArtworkFilm;
+                // An open gallery follows the toggle at once, under the same checks.
+                if (mDemoDialogComponentId != null && "gallery".equals(mDemoDialogComponentId)) {
+                    showGallery("gallery");
+                }
+                refresh();
+                break;
             case ORDER:
                 placeOrder();
                 break;
@@ -1991,6 +2033,13 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
      * refresh() removes the view, and with it the surface, on the reading that forbids it.
      */
     private void showVideo(String componentId) {
+        A2uiComponent component = findRendered(mRenderedRoot, componentId);
+        showVideoWith(componentId, component == null ? null
+                : DemoNativeContract.videoFor(mSurfaceId, component));
+    }
+
+    private void showVideoWith(@NonNull String componentId,
+            @Nullable DemoNativeContract.Media media) {
         dismissDemoContent();
         VideoView video = new VideoView(this);
         mVideoStage.addView(video, 0, new FrameLayout.LayoutParams(
@@ -2006,9 +2055,6 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                     OnBackInvokedDispatcher.PRIORITY_DEFAULT, mVideoBack);
         }
-        A2uiComponent component = findRendered(mRenderedRoot, componentId);
-        DemoNativeContract.Media media = component == null ? null
-                : DemoNativeContract.videoFor(mSurfaceId, component);
         ((TextView) findViewById(R.id.video_caption)).setText(media == null
                 ? getString(R.string.a2ui_brand_video_caption) : media.mCaption);
         if (mDemoMedia != null) {
@@ -2084,6 +2130,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (gallery == null || !allowed.contains(ComponentType.VIDEO)
                 || !allowed.contains(ComponentType.IMAGE)) {
             Toast.makeText(this, A2uiActionBinder.REFUSED_NOTE, Toast.LENGTH_LONG).show();
+            return;
+        }
+        A2uiComponent film = findRendered(gallery, "film");
+        if (mArtworkFilm && film != null && film.getType() == ComponentType.VIDEO) {
+            // The film: a Video that survived inside the gallery, under the video rules.
+            showVideoWith(componentId, DemoNativeContract.videoFor(mSurfaceId, film));
             return;
         }
         String credit = DemoNativeContract.artworkCredit(mSurfaceId);

@@ -127,6 +127,38 @@ androidComponents {
     }
 }
 
+// Debug builds also bundle the Met film's per-work timing (FILM.json) as assets/met/FILM.json when
+// the fixtures agent has written it; MetArtworks falls back to a 6 s cadence without it.
+abstract class BundleMetFilmTiming extends DefaultTask {
+    @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract ConfigurableFileCollection getTiming()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir()
+
+    @Inject
+    abstract FileSystemOperations getFs()
+
+    @TaskAction
+    void bundle() {
+        fs.sync { spec ->
+            spec.from(timing) { into 'met' }
+            spec.into(outputDir)
+        }
+    }
+}
+def bundleMetFilmTiming = tasks.register('bundleMetFilmTiming', BundleMetFilmTiming) {
+    timing.from(fileTree(file('../a2ui-automotive/demo/fixtures/met')) { include 'FILM.json' })
+    outputDir = layout.buildDirectory.dir('generated/metFilmTiming')
+}
+androidComponents {
+    onVariants(selector().withBuildType('debug')) { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(bundleMetFilmTiming,
+                { it.outputDir })
+    }
+}
+
 // A2uiAgentLaneTest reads both MERGED manifests: unit tests run against debug, so the release one,
 // which must lack INTERNET and the network config, can only be checked from outside.
 def mergedManifests = [debug: objects.fileProperty(), release: objects.fileProperty()]

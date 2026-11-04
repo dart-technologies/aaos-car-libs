@@ -54,11 +54,11 @@ public class A2uiMetVisitTest {
 
     private static final int DRIVE = 0xff;
     private static final String ETA = "Arrive 2:41 PM · 19 min";
-    private static final String BRIEF = "Visit The Met today";
+    private static final String BRIEF = "Thursday at The Met";
     private static final String GALLERY = "Artwork highlights";
-    private static final String FILM = "Artwork film";
+    private static final String FILM = "Film · Slideshow";
     private static final String RESERVE = "Reserve entry for two at 3 PM";
-    private static final String TICKET = "Timed entry · 3:00 PM · 2 guests · DEMO";
+    private static final String TICKET = "Timed entry · Thu Nov 5 · 3:00 PM · 2 guests · DEMO";
     private static final String SOURCE = "Source · metmuseum.org — Hours and admission";
 
     @Before
@@ -177,6 +177,65 @@ public class A2uiMetVisitTest {
         assertThat(activity.mArrived).isTrue();
         assertThat(titles(activity)).contains("Arrived · The Met Fifth Avenue");
         assertThat(activity.visualPanelForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+    }
+
+    @Test
+    public void theAudioGuideCardIsTextOnlyAndFollowsThePassengerFilm() {
+        PassengerDisplay.resetForTesting();
+        A2uiCarUiActivity activity = started(DRIVE);
+        activity.selectCase("met_visit");
+        assertThat(titles(activity)).doesNotContain("Now playing · Audio guide");
+
+        PassengerDisplay.report(PassengerMedia.ARTWORK, 2);
+        shadowOf(Looper.getMainLooper()).idle();
+        CarUiContentListItem guide = row(activity, "Now playing · Audio guide");
+        assertThat(body(guide)).containsExactly("Aristotle with a Bust of Homer (3/6)");
+        assertGlanceable(guide);
+        // A glyph, never artwork, in motion.
+        assertThat(guide.getPrimaryIconType()).isEqualTo(CarUiContentListItem.IconType.STANDARD);
+
+        PassengerDisplay.report(PassengerMedia.ARTWORK, 3);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertThat(body(row(activity, "Now playing · Audio guide")))
+                .containsExactly("The Harvesters (4/6)");
+        PassengerDisplay.report(null, -1);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertThat(titles(activity)).doesNotContain("Now playing · Audio guide");
+        PassengerDisplay.resetForTesting();
+    }
+
+    @Test
+    public void theArtworkToggleIsParkedOnlyAndFlipsFilmAndStills() {
+        A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        activity.selectCase("met_visit");
+        CarUiContentListItem toggle = row(activity, FILM);
+        assertThat(body(toggle)).containsExactly("Showing: slideshow");
+        toggle.getOnClickListener().onClick(toggle);
+        shadowOf(Looper.getMainLooper()).idle();
+        assertThat(activity.mArtworkFilm).isTrue();
+        assertThat(body(row(activity, FILM))).containsExactly("Showing: film");
+
+        drive(activity, DRIVE);
+        assertThat(titles(activity)).doesNotContain(FILM);
+    }
+
+    @Test
+    public void filmTimingComesFromFilmJsonElseASixSecondCadence() {
+        assertThat(MetArtworks.parseStarts(null))
+                .isEqualTo(new long[]{0, 6000, 12000, 18000, 24000, 30000});
+        String json = "{\"works\":[{\"objectID\":436535,\"startMs\":0},"
+                + "{\"objectID\":437881,\"startMs\":9000},{\"objectID\":437394,\"startMs\":17500},"
+                + "{\"objectID\":435809,\"startMs\":26000},{\"objectID\":436105,\"startMs\":34000},"
+                + "{\"objectID\":435868,\"startMs\":43000}]}";
+        long[] starts = MetArtworks.parseStarts(json);
+        assertThat(starts).isEqualTo(new long[]{0, 9000, 17500, 26000, 34000, 43000});
+        assertThat(MetArtworks.segmentAt(starts, 8999)).isEqualTo(0);
+        assertThat(MetArtworks.segmentAt(starts, 9000)).isEqualTo(1);
+        assertThat(MetArtworks.segmentAt(starts, 60000)).isEqualTo(5);
+        // Partial timing would desynchronise the card: the cadence instead.
+        assertThat(MetArtworks.parseStarts("[{\"objectID\":436535,\"startMs\":0}]"))
+                .isEqualTo(MetArtworks.parseStarts(null));
+        assertThat(MetArtworks.parseStarts("not json")).isEqualTo(MetArtworks.parseStarts(null));
     }
 
     @Test

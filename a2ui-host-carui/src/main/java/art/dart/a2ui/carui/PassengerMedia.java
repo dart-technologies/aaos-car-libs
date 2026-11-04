@@ -27,6 +27,10 @@ final class PassengerMedia {
 
     /** {@code video}: Big Buck Bunny when bundled, else the generated decoder fixture. */
     static final String VIDEO = "video";
+    /** {@code artwork}: the slow-pan film of the six Met works, when bundled. */
+    static final String ARTWORK = "artwork";
+    /** {@code slideshow}: the six Met works as stills. */
+    static final String SLIDESHOW = "slideshow";
 
     @NonNull final String mName;
     /** Raw resource name, looked up at play time so a missing file falls back, not fails. */
@@ -36,21 +40,34 @@ final class PassengerMedia {
     final int mSegments;
     /** Whether its sound belongs in the cabin rather than the passenger's own zone. */
     final boolean mCabinAudio;
+    /** Stills shown as a slideshow rather than a video file. */
+    final boolean mStills;
 
     private PassengerMedia(@NonNull String name, @NonNull String rawName, @StringRes int credit,
-            int segments, boolean cabinAudio) {
+            int segments, boolean cabinAudio, boolean stills) {
         mName = name;
         mRawName = rawName;
         mCredit = credit;
         mSegments = segments;
         mCabinAudio = cabinAudio;
+        mStills = stills;
     }
 
     @Nullable
     static PassengerMedia forName(@Nullable String name) {
         if (VIDEO.equals(name)) {
             return new PassengerMedia(VIDEO, "bbb_passenger", R.string.a2ui_passenger_video_credit,
-                    1, false);
+                    1, false, false);
+        }
+        int works = MetArtworks.WORKS.size();
+        if (ARTWORK.equals(name)) {
+            // The audio guide is the film's soundtrack: it belongs in the cabin.
+            return new PassengerMedia(ARTWORK, "met_artwork_film", R.string.a2ui_met_film_credit,
+                    works, true, false);
+        }
+        if (SLIDESHOW.equals(name)) {
+            return new PassengerMedia(SLIDESHOW, "", R.string.a2ui_met_slides_credit, works, false,
+                    true);
         }
         return null;
     }

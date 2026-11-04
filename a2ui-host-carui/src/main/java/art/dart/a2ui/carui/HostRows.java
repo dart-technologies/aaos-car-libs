@@ -39,6 +39,7 @@ final class HostRows {
     static final String THINKING = "host:thinking";
     static final String ARRIVAL = "host:arrival";
     static final String ORDER = "host:order";
+    static final String GUIDE = "host:guide";
 
     private HostRows() {
     }

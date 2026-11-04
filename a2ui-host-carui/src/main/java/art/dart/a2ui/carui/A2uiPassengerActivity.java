@@ -67,6 +67,7 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
     private TextView mZone;
     @Nullable private VideoView mVideo;
     @Nullable private PassengerMedia mMedia;
+    private ArtworkSlideshow mSlideshow;
     /** This display's last genuine reading, captured before a demo zone reading replaces it. */
     @Nullable private CarUxRestrictions mGenuine;
     private boolean mDemoZone;
@@ -84,6 +85,13 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
         mMessage = findViewById(R.id.passenger_message);
         mCredit = findViewById(R.id.passenger_credit);
         mZone = findViewById(R.id.passenger_zone);
+        mSlideshow = new ArtworkSlideshow(findViewById(R.id.passenger_gallery),
+                findViewById(R.id.passenger_gallery_backdrop),
+                findViewById(R.id.passenger_gallery_image),
+                findViewById(R.id.passenger_gallery_title),
+                findViewById(R.id.passenger_gallery_caption),
+                findViewById(R.id.passenger_gallery_credit),
+                findViewById(R.id.passenger_gallery_counter), () -> true);
         mRestrictions = CarUxRestrictionsUtil.getInstance(this);
         CarUxRestrictionsUtil.RestrictionsSnapshot snapshot =
                 mRestrictions.getRestrictionsSnapshot();
@@ -141,7 +149,8 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
 
     /** Re-decides on every change of this display's reading; video goes the moment it may not. */
     private void enforce() {
-        if (mVideo != null && !allowedHere().contains(ComponentType.VIDEO)) {
+        if ((mVideo != null || mSlideshow.isShowing())
+                && !allowedHere().contains(ComponentType.VIDEO)) {
             Log.i(TAG, "video withdrawn: display " + mRestrictions.getDisplayId()
                     + " no longer allows VIDEO");
             teardownVideo();
@@ -191,6 +200,16 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
 
     private void startVideo(@NonNull PassengerMedia media) {
         teardownVideo();
+        if (media.mStills) {
+            // Auto-advancing stills are moving imagery: decided as video, above.
+            mSlideshow.show(MetArtworks.slides());
+            mMedia = media;
+            mMessage.setVisibility(View.GONE);
+            PassengerDisplay.report(media.mName, 0);
+            mHandler.postDelayed(mTick, TICK_MS);
+            Log.i(TAG, "showing " + media.mName + " on display " + mRestrictions.getDisplayId());
+            return;
+        }
         int named = getResources().getIdentifier(media.mRawName, "raw", getPackageName());
         int raw = named != 0 ? named : R.raw.demo_placeholder_video;
         VideoView video = new VideoView(this);
@@ -225,12 +244,19 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
     private void tick() {
         VideoView video = mVideo;
         PassengerMedia media = mMedia;
-        if (video == null || media == null) return;
-        int duration = video.getDuration();
+        if (media == null) return;
         int segment = 0;
-        if (duration > 0 && media.mSegments > 1) {
-            segment = Math.min(media.mSegments - 1,
-                    (int) ((long) video.getCurrentPosition() * media.mSegments / duration));
+        if (media.mStills) {
+            segment = mSlideshow.index();
+        } else if (video == null) {
+            return;
+        } else if (PassengerMedia.ARTWORK.equals(media.mName)) {
+            // Per-work start times from FILM.json, else the 6 s cadence.
+            segment = MetArtworks.segmentAt(MetArtworks.filmStarts(this),
+                    video.getCurrentPosition());
+        } else if (video.getDuration() > 0 && media.mSegments > 1) {
+            segment = Math.min(media.mSegments - 1, (int) ((long) video.getCurrentPosition()
+                    * media.mSegments / video.getDuration()));
         }
         PassengerDisplay.report(media.mName, segment);
         mHandler.postDelayed(mTick, TICK_MS);
@@ -238,6 +264,7 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
 
     private void teardownVideo() {
         mHandler.removeCallbacks(mTick);
+        mSlideshow.stop();
         VideoView video = mVideo;
         mVideo = null;
         mMedia = null;
@@ -258,6 +285,12 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
     @Nullable
     VideoView videoForTesting() {
         return mVideo;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    ArtworkSlideshow slideshowForTesting() {
+        return mSlideshow;
     }
 
     @VisibleForTesting

@@ -27,6 +27,79 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Stills, when the passenger media is a slideshow. -->
+    <FrameLayout
+        android:id="@+id/passenger_gallery"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/passenger_gallery_backdrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.35"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+
+        <ImageView
+            android:id="@+id/passenger_gallery_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="170dp"
+            android:paddingHorizontal="@dimen/a2ui_space_m"
+            android:paddingTop="72dp"
+            android:scaleType="fitCenter" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/a2ui_scrim_bottom" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/a2ui_space_l"
+            android:paddingBottom="56dp">
+
+            <TextView
+                android:id="@+id/passenger_gallery_title"
+                style="@style/A2uiBrandTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:textSize="24sp" />
+
+            <TextView
+                android:id="@+id/passenger_gallery_caption"
+                style="@style/A2uiBrandBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/passenger_gallery_credit"
+                style="@style/A2uiBrandCaption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/passenger_gallery_counter"
+            style="@style/A2uiBrandStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_marginTop="64dp"
+            android:layout_marginEnd="@dimen/a2ui_space_m" />
+    </FrameLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

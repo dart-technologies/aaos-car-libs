@@ -366,12 +366,12 @@ public final class UseCaseCorpus {
      */
     private static UseCase metVisit() {
         Builder b = new Builder("met_visit",
-                "From Hudson Yards to The Met: a cited brief, reserve timed entry while parked, "
-                        + "preview the route, then artwork on arrival",
+                "Plan tomorrow at The Met from Hudson Yards: a cited brief, reserve timed entry "
+                        + "while parked, preview the route, then artwork on arrival",
                 "BASELINE shows sources, map and artwork; motion's depth limit and type policy "
                         + "remove them while the ETA, brief and audio guide stay");
         b.container("root", "Column", "route", "brief", "weather", "reserve", "audio", "gallery",
-                "film");
+                "artmode");
         b.put("root", "title", "The Met, safely");
         b.container("route", "Card", "preview");
         b.put("route", "title", "Arrive 2:41 PM · 19 min");
@@ -380,15 +380,15 @@ public final class UseCaseCorpus {
         b.component("map", "Image", "Hudson Yards → The Met",
                 "Route preview · © OpenStreetMap contributors");
         b.container("brief", "Card", "sources");
-        b.put("brief", "title", "Visit The Met today");
-        b.put("brief", "subtitle", "Open until 5 PM · timed entry recommended");
+        b.put("brief", "title", "Thursday at The Met");
+        b.put("brief", "subtitle", "Open 10 AM–5 PM · closed Wednesdays · timed entry advised");
         b.container("sources", "List", "src1", "src2", "src3");
         b.put("sources", "title", "Sources");
         b.text("src1", "Source · metmuseum.org", "Hours and admission");
         b.text("src2", "Source · metmuseum.org", "Exhibitions on view");
-        b.text("src3", "Source · weather.gov", "Forecast for Central Park");
-        b.text("weather", "Today · Sunny · high 71°F",
-                "National Weather Service · Central Park forecast, Nov 4");
+        b.text("src3", "Source · metmuseum.org", "Accessibility and entrances");
+        b.text("weather", "Thursday · Mostly cloudy, chance of showers · high 72°F",
+                "National Weather Service · Central Park forecast for Nov 5");
         b.action("reserve", "Button", "Reserve entry for two at 3 PM",
                 "DEMO booking · confirm while parked", "reserve");
         b.put("reserve", "voicePhrase", "reserve entry for two at three");
@@ -396,7 +396,7 @@ public final class UseCaseCorpus {
                 "Plays in motion", "play");
         b.put("audio", "voicePhrase", "play the audio guide");
         b.container("gallery", "Modal", "met_436535", "met_437881", "met_437394", "met_435809",
-                "met_436105", "met_435868");
+                "met_436105", "met_435868", "film");
         b.put("gallery", "title", "Artwork highlights");
         b.put("gallery", "subtitle", "Six works · The Met Open Access");
         b.put("gallery", "action", "open");
@@ -410,9 +410,12 @@ public final class UseCaseCorpus {
         b.component("met_435809", "Image", "The Harvesters", "Pieter Bruegel the Elder · 1565");
         b.component("met_436105", "Image", "The Death of Socrates", "Jacques Louis David · 1787");
         b.component("met_435868", "Image", "The Card Players", "Paul Cézanne · 1890–92");
-        b.action("film", "Video", "Artwork film", "Six works, slowly · parked only", "open");
-        b.put("film", "voicePhrase", "play the artwork film");
-        b.data("/ticket/title", "Timed entry · 3:00 PM · 2 guests · DEMO");
+        b.component("film", "Video", "Artwork film", "Six works, slowly · parked only");
+        // Film or stills: a picker, so the policy removes it in motion with the gallery.
+        b.action("artmode", "ChoicePicker", "Film · Slideshow", "Artwork view · parked only",
+                "select");
+        b.put("artmode", "voicePhrase", "switch the artwork view");
+        b.data("/ticket/title", "Timed entry · Thu Nov 5 · 3:00 PM · 2 guests · DEMO");
         b.data("/ticket/detail", "The Met Fifth Avenue · 81st St entrance");
         b.data("/arrival/title", "Arrived · The Met Fifth Avenue");
         b.data("/arrival/detail", "81st St entrance · entry 3:00");

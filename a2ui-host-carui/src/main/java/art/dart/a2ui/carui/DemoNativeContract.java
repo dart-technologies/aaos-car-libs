@@ -24,7 +24,8 @@ import java.util.List;
 final class DemoNativeContract {
 
     enum Kind {
-        CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER, GALLERY
+        CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER, GALLERY,
+        TOGGLE
     }
 
     static final class Spec {
@@ -237,8 +238,9 @@ final class DemoNativeContract {
         if ("gallery".equals(id) && type == ComponentType.MODAL && "open".equals(action)) {
             return Spec.simple(Kind.GALLERY, "Artwork highlights");
         }
-        if ("film".equals(id) && type == ComponentType.VIDEO && "open".equals(action)) {
-            return Spec.simple(Kind.VIDEO, "Artwork film");
+        if ("artmode".equals(id) && type == ComponentType.CHOICE_PICKER
+                && "select".equals(action)) {
+            return Spec.simple(Kind.TOGGLE, "Film · Slideshow");
         }
         if ("audio".equals(id) && type == ComponentType.AUDIO_PLAYER && "play".equals(action)) {
             return Spec.simple(Kind.AUDIO, "Audio guide");
@@ -272,7 +274,7 @@ final class DemoNativeContract {
             if ("map".equals(id) || "preview".equals(id)) return "Map";
             if (id.startsWith("src") || "sources".equals(id)) return "Sources";
             if ("gallery".equals(id) || "film".equals(id)) return "Artwork";
-            if ("artmode".equals(id)) return "Artwork view";
+            if ("artmode".equals(id)) return "Artwork";
         }
         return null;
     }
