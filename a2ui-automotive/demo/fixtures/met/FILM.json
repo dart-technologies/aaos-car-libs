@@ -6,7 +6,7 @@
   "attribution": "The Met · Open Access (CC0)",
   "note": "Built from The Met Open Access images only; no Met video is used. Silent: the audio guide (met_guide_01..06) is separate narration timed to startMs.",
   "renderer": "scripts/render-met-artwork-film.py",
-  "rendererSha256": "a983eac4d937b4b512919a60341eb532d0e2743da60585276a133ae46e0780ae",
+  "rendererSha256": "74bf7f79014b873369d27def11b82def03e453df814ca983020241b9cff5b777",
   "encoder": "ffmpeg version 8.1 Copyright (c) 2000-2026 the FFmpeg developers",
   "captions": "pre-rendered with Pillow (this ffmpeg has no drawtext)",
   "font": "Avenir Next Medium",

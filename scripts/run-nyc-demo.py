@@ -6,8 +6,14 @@
 A scenario whose manifest entry says "recording": {"layout": "dual"} records the driver and the
 passenger physical displays with two screenrecord streams and composes them on a 1920x1080 canvas
 (driver larger, left; passenger right; each labelled). Everything else records one display, as
-before. Either may open on a title card and hold its end card; the output is exactly the
-manifest's duration (60–180 s).
+before. Either may open on a title card and hold its end card.
+
+Post-production, all built from the same recording so it always matches the UI:
+  preamble    problem cards rendered around frames of the raw driver recording, prepended;
+  outro       a closing card (the journey with real thumbnails, the architecture, the footer)
+              shown after the timeline over its held last frame;
+  disclaimer  one small line in the canvas margin for the whole video.
+durationSeconds is the device timeline; the output is preamble + timeline + outro (60–180 s).
 """
 
 from __future__ import annotations
@@ -59,15 +65,21 @@ DEVICE_PASSENGER_VIDEO = "/sdcard/a2ui-nyc-demo-passenger.mp4"
 SCREENRECORD_MAX_S = 180
 MIN_S, MAX_S = 60, 180
 FPS = 30
-# Side-by-side canvas, both panels 16:9: driver larger on the left, passenger on the right.
+# Layout, in one place (overlay work elsewhere overrides these): the side-by-side canvas, the
+# driver (16:9, left) and passenger (2:3, right) panels at the same height, their labels just
+# above, and the disclaimer's bottom-left anchor in the margin below both panels.
 CANVAS = (1920, 1080)
 DRIVER_BOX = (24, 186, 1344, 756)  # 16:9 driver and 2:3 passenger, same height
 PASSENGER_BOX = (1392, 186, 504, 756)
 LABEL_GAP = 12
 BACKGROUND = "0x0b0f14"
 LABELS = {"driver": CARDS / "label-driver.png", "passenger": CARDS / "label-passenger.png"}
+DISCLAIMER_POS = (24, 18)  # x from the left edge, margin above the bottom edge
 TITLE_FADE_S = 0.4
+PREAMBLE_FADE_S = 0.25  # each preamble card dips to the background; the story fades in after
+OUTRO_FADE_S = 0.5
 STILL_LEAD_MS = 3000  # capture the idle passenger frame this long before its stream starts
+CARD_RENDERER = ROOT / "scripts/render-demo-cards.py"
 
 
 def _writer_normalization():
@@ -89,7 +101,9 @@ class DemoFailure(RuntimeError):
 
 def run(command: list[str], *, capture: bool = True, check: bool = True,
         timeout: int = 60) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(command, text=True, capture_output=capture, timeout=timeout)
+    # No child reads the terminal: an ffmpeg waiting on stdin stalls a backgrounded recording.
+    result = subprocess.run(command, text=True, capture_output=capture, timeout=timeout,
+                            stdin=subprocess.DEVNULL)
     if check and result.returncode:
         summary = (result.stderr or result.stdout or "no diagnostic").strip().splitlines()[-1]
         raise DemoFailure(f"command failed ({' '.join(command[:3])}): {summary}")
@@ -482,13 +496,27 @@ class RenderPlan:
     title_seconds: float = 0.0
     hold_from: float | None = None
     audio_dir: pathlib.Path | None = None  # None renders silently
-    clips: list = field(default_factory=list)
+    clips: list = field(default_factory=list)  # atMs on the output timeline (placed_clips)
     cues: list = field(default_factory=list)
     labels: dict = field(default_factory=lambda: dict(LABELS))
+    preamble: list = field(default_factory=list)  # [(card PNG, seconds)], before the timeline
+    outro: tuple | None = None  # (card PNG, seconds), after the timeline over its last frame
+    disclaimer: pathlib.Path | None = None  # one line in the margin for the whole video
+
+    def total(self) -> float:
+        return (sum(seconds for _, seconds in self.preamble) + self.duration
+                + (self.outro[1] if self.outro else 0))
 
 
 def legacy(plan: RenderPlan) -> bool:
-    return plan.layout == "single" and plan.title is None and plan.hold_from is None
+    return (plan.layout == "single" and plan.title is None and plan.hold_from is None
+            and not plan.preamble and plan.outro is None and plan.disclaimer is None)
+
+
+def card_fit(width: int, height: int) -> str:
+    """A full-canvas card or title image, fitted to the canvas without distortion."""
+    return (f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+            f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color={BACKGROUND}")
 
 
 def fit(source: str, box: tuple[int, int, int, int], out: str) -> str:
@@ -509,8 +537,16 @@ def stream(index: int, seconds: float, hold_end: float | None) -> str:
 
 
 def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
-    """The single ffmpeg invocation that composes video, mixes timed audio and trims exactly."""
+    """The single ffmpeg invocation that composes video, mixes timed audio and trims exactly.
+
+    The timeline section runs for the device timeline plus the outro, whose card fades in over
+    the timeline's held last frame; the preamble cards are concatenated in front of it; the
+    disclaimer is overlaid on the result. Clip and cue times are already on that timeline.
+    """
     target = plan.duration
+    span = target + (plan.outro[1] if plan.outro else 0)
+    total = plan.total()
+    length = f"{total:g}" if float(total).is_integer() else f"{total:.3f}"
     command = ["ffmpeg", "-y", "-v", "error", "-i", str(plan.driver_raw)]
     count = 1
     filters: list[str] = []
@@ -523,17 +559,17 @@ def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
         width, height = plan.driver_size or (0, 0)
         if not width or not height:
             raise DemoFailure("a single-display title card needs the recording's size")
-        filters.append(stream(0, target, plan.hold_from) + "[base]")
+        filters.append(stream(0, span, plan.hold_from) + "[base]")
         last = "[base]"
     else:
         start = round(plan.passenger_start * FPS) / FPS
         hold = plan.hold_from
-        filters.append(f"color=c={BACKGROUND}:s={CANVAS[0]}x{CANVAS[1]}:r={FPS}:d={target}[bg]")
-        filters.append(fit(stream(0, target, hold) + ",", DRIVER_BOX, "[drv]"))
+        filters.append(f"color=c={BACKGROUND}:s={CANVAS[0]}x{CANVAS[1]}:r={FPS}:d={span}[bg]")
+        filters.append(fit(stream(0, span, hold) + ",", DRIVER_BOX, "[drv]"))
         rec_end = None if hold is None else hold - start
         record = plan.passenger_raw is not None and start < target and (
             rec_end is None or rec_end > 0)
-        idle = target if not record else start
+        idle = span if not record else start
         parts = []
         if idle > 0:
             if plan.passenger_still is not None:
@@ -548,7 +584,7 @@ def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
             parts.append("[pre]")
         if record:
             command += ["-i", str(plan.passenger_raw)]
-            filters.append(fit(stream(count, target - start, rec_end) + ",", PASSENGER_BOX,
+            filters.append(fit(stream(count, span - start, rec_end) + ",", PASSENGER_BOX,
                                "[rec]"))
             count += 1
             parts.append("[rec]")
@@ -571,12 +607,41 @@ def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
             seconds = plan.title_seconds
             command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{seconds:.3f}",
                         "-i", str(plan.title)]
-            filters.append(f"[{count}:v]scale={width}:{height}:force_original_aspect_ratio="
-                           f"decrease,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:"
-                           f"color={BACKGROUND},format=rgba,fade=t=out:"
+            filters.append(f"[{count}:v]{card_fit(width, height)},format=rgba,fade=t=out:"
                            f"st={seconds - TITLE_FADE_S:.3f}:d={TITLE_FADE_S}:alpha=1[title]")
             filters.append(f"{last}[title]overlay=0:0:eof_action=pass:repeatlast=0[titled]")
             last = "[titled]"
+            count += 1
+        if plan.outro is not None:
+            card, seconds = plan.outro
+            command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{seconds:.3f}",
+                        "-i", str(card)]
+            filters.append(f"[{count}:v]{card_fit(width, height)},format=rgba,fade=t=in:st=0:"
+                           f"d={OUTRO_FADE_S}:alpha=1,setpts=PTS-STARTPTS+{target}/TB[outro]")
+            filters.append(f"{last}[outro]overlay=0:0:eof_action=pass[closed]")
+            last = "[closed]"
+            count += 1
+        if plan.preamble:
+            filters.append(f"{last}setsar=1,format=yuv420p,fade=t=in:st=0:d={PREAMBLE_FADE_S}:"
+                           f"color={BACKGROUND}[story]")
+            parts = []
+            for n, (card, seconds) in enumerate(plan.preamble):
+                command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{seconds:.3f}",
+                            "-i", str(card)]
+                filters.append(
+                    f"[{count}:v]{card_fit(width, height)},setsar=1,format=yuv420p,"
+                    f"fade=t=in:st=0:d={PREAMBLE_FADE_S}:color={BACKGROUND},"
+                    f"fade=t=out:st={seconds - PREAMBLE_FADE_S:.3f}:d={PREAMBLE_FADE_S}:"
+                    f"color={BACKGROUND},trim=duration={seconds:.3f},setpts=PTS-STARTPTS[pre{n}]")
+                parts.append(f"[pre{n}]")
+                count += 1
+            filters.append("".join(parts) + f"[story]concat=n={len(parts) + 1}:v=1:a=0[cut]")
+            last = "[cut]"
+        if plan.disclaimer is not None:
+            command += ["-i", str(plan.disclaimer)]
+            x, margin = DISCLAIMER_POS
+            filters.append(f"{last}[{count}:v]overlay=x={x}:y=H-h-{margin}[noted]")
+            last = "[noted]"
             count += 1
         filters.append(f"{last}format=yuv420p[v]")
     maps = ["-map", "[v]"]
@@ -597,14 +662,185 @@ def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
             filters.append(f"[{offset}:a]volume={float(cue['gainDb']):g}dB,"
                            f"adelay=delays={int(cue['atMs'])}:all=1[a{offset}]")
             labels.append(f"[a{offset}]")
+        # A closing card's silent hold outlasts the last clip: pad the mix to the video's length.
+        pad = "" if legacy(plan) else f"apad=whole_dur={length},"
         filters.append("".join(labels) + f"amix=inputs={len(labels)}:duration=longest:"
-                       f"normalize=0,atrim=duration={target}[a]")
+                       f"normalize=0,{pad}atrim=duration={length}[a]")
         maps += ["-map", "[a]"]
     command += ["-filter_complex", ";".join(filters), *maps,
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p"]
     command += ["-c:a", "aac", "-b:a", "160k"] if plan.audio_dir is not None else ["-an"]
-    command += ["-t", str(target), "-movflags", "+faststart", str(output)]
+    command += ["-t", length, "-movflags", "+faststart", str(output)]
     return command
+
+
+def preamble_seconds(scenario: dict) -> float:
+    return round(sum(float(card["seconds"]) for card in scenario.get("preamble", [])), 3)
+
+
+def outro_seconds(scenario: dict) -> float:
+    return float(scenario["outro"]["seconds"]) if scenario.get("outro") else 0.0
+
+
+def total_seconds(scenario: dict) -> float:
+    """The output's length: preamble + device timeline + outro."""
+    return preamble_seconds(scenario) + int(scenario["durationSeconds"]) + outro_seconds(scenario)
+
+
+def section_offset_ms(scenario: dict, section: str) -> int:
+    """Where a clip's section starts on the output timeline. Preamble clips count from the
+    start of the video, timeline clips from the device timeline, outro clips from the outro."""
+    preamble = round(preamble_seconds(scenario) * 1000)
+    if section == "preamble":
+        return 0
+    if section == "timeline":
+        return preamble
+    if section == "outro":
+        return preamble + int(scenario["durationSeconds"]) * 1000
+    raise DemoFailure(f"unknown clip section {section!r}")
+
+
+def placed_clips(scenario: dict) -> list[dict]:
+    return [dict(clip, atMs=section_offset_ms(scenario, clip.get("section", "timeline"))
+                 + int(clip["atMs"])) for clip in scenario["clips"]]
+
+
+def placed_cues(scenario: dict) -> list[dict]:
+    offset = section_offset_ms(scenario, "timeline")
+    return [dict(cue, atMs=offset + int(cue["atMs"])) for cue in scenario.get("soundEffects", [])]
+
+
+def extract_frame(video: pathlib.Path | None, seconds: float,
+                  out: pathlib.Path) -> pathlib.Path | None:
+    """The frame on screen at `seconds`, or None. screenrecord emits nothing while the screen is
+    still, so a time past the stream's last frame means that last frame."""
+    if video is None or not video.is_file() or seconds < 0:
+        return None
+    out.unlink(missing_ok=True)
+    try:
+        at = min(seconds, max(0.0, probe_duration(video) - 0.05))
+    except (DemoFailure, ValueError, KeyError):
+        return None
+    attempts = [["-ss", f"{at:.3f}", "-i", str(video), "-frames:v", "1"],
+                ["-sseof", "-3", "-i", str(video), "-update", "1"]]  # the last decoded frame
+    for attempt in attempts:
+        result = run(["ffmpeg", "-nostdin", "-y", "-v", "error", *attempt, str(out)],
+                     check=False, timeout=60)
+        if not result.returncode and out.is_file() and out.stat().st_size > 0:
+            return out
+    return None
+
+
+def render_card(*args: str) -> None:
+    """render-demo-cards.py in a child interpreter, so this recorder never imports Pillow."""
+    run([sys.executable, str(CARD_RENDERER), *args], timeout=180)
+
+
+def build_preamble(scenario: dict, raw_video: pathlib.Path,
+                   prefix: pathlib.Path) -> tuple[list[tuple[pathlib.Path, float]], list[dict]]:
+    """Each preamble card, rendered around the raw driver frame at its frameAtMs."""
+    cards, evidence = [], []
+    for n, entry in enumerate(scenario.get("preamble", []), start=1):
+        frame = extract_frame(raw_video, int(entry["frameAtMs"]) / 1000,
+                              prefix.with_name(f"{prefix.name}.preamble-{n}.frame.png"))
+        card = prefix.with_name(f"{prefix.name}.preamble-{n}.png")
+        args = ["preamble", "--style", entry["style"], "--caption", entry["caption"],
+                "--out", str(card)]
+        if frame is not None:
+            args += ["--frame", str(frame)]
+        if entry.get("chip"):
+            args += ["--chip", entry["chip"]]
+        if entry.get("lockText"):
+            args += ["--lock-text", entry["lockText"]]
+        render_card(*args)
+        cards.append((card, float(entry["seconds"])))
+        evidence.append({"style": entry["style"], "frameAtMs": int(entry["frameAtMs"]),
+                         "frame": "raw driver recording" if frame else "unavailable; dark panel",
+                         "seconds": float(entry["seconds"]), "sha256": sha256(card)})
+    return cards, evidence
+
+
+def journey(scenario: dict) -> list[dict]:
+    """The car's state segments in order, from the carState actions (scenarios start parked)."""
+    segments = [{"state": "park", "startMs": 0}]
+    for action in sorted(scenario["actions"], key=lambda item: int(item["atMs"])):
+        if action["type"] == "carState" and action["state"] != segments[-1]["state"]:
+            segments[-1]["endMs"] = int(action["atMs"])
+            segments.append({"state": action["state"], "startMs": int(action["atMs"])})
+    segments[-1]["endMs"] = int(scenario["durationSeconds"]) * 1000
+    return segments
+
+
+def segment_at(segments: list[dict], at_ms: int) -> int:
+    return next((n for n, s in enumerate(segments) if s["startMs"] <= at_ms < s["endMs"]),
+                len(segments) - 1)
+
+
+def outro_spec(scenario: dict, frames: dict[int, pathlib.Path | None]) -> dict:
+    """render-demo-cards.py's outro spec: segments labelled from the scenario's places, beats
+    assigned to the segment they happen in, each with its frame (None draws a placeholder)."""
+    outro = scenario["outro"]
+    segments = journey(scenario)
+    places = iter(outro.get("places", []))
+    beats = outro.get("beats", [])
+    driver = [n for n, beat in enumerate(beats) if beat.get("display", "driver") == "driver"]
+    spec_segments = []
+    for n, segment in enumerate(segments):
+        if segment["state"] == "park":
+            place = next(places, None)
+            text = f"Parked · {place}" if place else "Parked"
+        else:
+            text = "Driving"
+        slots = sum(segment_at(segments, int(beats[i]["atMs"])) == n for i in driver)
+        spec_segments.append({"state": segment["state"], "label": text, "slots": max(1, slots)})
+
+    def lane(display: str) -> list[dict]:
+        return [{"segment": segment_at(segments, int(beat["atMs"])), "label": beat["label"],
+                 "image": str(frames[n]) if frames.get(n) else None}
+                for n, beat in enumerate(beats) if beat.get("display", "driver") == display]
+
+    icon = ROOT / outro["badgeIcon"] if outro.get("badgeIcon") else None
+    return {"segments": spec_segments, "driver": lane("driver"), "passenger": lane("passenger"),
+            "architecture": outro.get("architecture", []), "footer": outro.get("footer", []),
+            "icon": str(icon) if icon is not None and icon.is_file() else None}
+
+
+def build_outro(scenario: dict, raw_video: pathlib.Path, passenger_raw: pathlib.Path | None,
+                passenger_start: float, passenger_still: pathlib.Path | None,
+                prefix: pathlib.Path) -> tuple[tuple[pathlib.Path, float], list[dict]]:
+    """The closing card, its thumbnails taken from the raw recordings at each beat's time."""
+    frames: dict[int, pathlib.Path | None] = {}
+    evidence = []
+    for n, beat in enumerate(scenario["outro"].get("beats", [])):
+        out = prefix.with_name(f"{prefix.name}.outro-{n + 1}.frame.png")
+        at = int(beat["atMs"]) / 1000
+        if beat.get("display", "driver") == "passenger":
+            if passenger_raw is not None and at >= passenger_start:
+                frames[n] = extract_frame(passenger_raw, at - passenger_start, out)
+            else:
+                frames[n] = passenger_still if passenger_still and passenger_still.is_file() \
+                    else None
+        else:
+            frames[n] = extract_frame(raw_video, at, out)
+        evidence.append({"label": beat["label"], "display": beat.get("display", "driver"),
+                         "atMs": int(beat["atMs"]),
+                         "frame": "extracted" if frames[n] else "unavailable; placeholder"})
+    spec_path = prefix.with_name(f"{prefix.name}.outro.json")
+    spec_path.write_text(json.dumps(outro_spec(scenario, frames), indent=2) + "\n",
+                         encoding="utf-8")
+    card = prefix.with_name(f"{prefix.name}.outro.png")
+    render_card("outro", "--spec", str(spec_path), "--out", str(card))
+    return (card, outro_seconds(scenario)), evidence
+
+
+def disclaimer_image(scenario: dict) -> pathlib.Path | None:
+    note = scenario.get("disclaimer")
+    if not note:
+        return None
+    path = ROOT / note["image"]
+    if not path.is_file() or path.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+        raise DemoFailure(f"disclaimer {note['image']} is missing or not a PNG")
+    return path
 
 
 def probe_size(path: pathlib.Path) -> tuple[int, int]:
@@ -626,7 +862,7 @@ def render(plan: RenderPlan, output: pathlib.Path) -> None:
     run(render_command(plan, output), timeout=900)
 
 
-def check_duration(duration: float, expected: int) -> None:
+def check_duration(duration: float, expected: float) -> None:
     # Container duration is frame/AAC-packet based (observed 90.019934 for a 90 s cap): keep a
     # sub-frame tolerance only.
     if not MIN_S <= duration <= MAX_S + 0.1:
@@ -637,7 +873,7 @@ def check_duration(duration: float, expected: int) -> None:
                           f"{expected}s")
 
 
-def validate_video(path: pathlib.Path, expected_duration: int, require_audio: bool,
+def validate_video(path: pathlib.Path, expected_duration: float, require_audio: bool,
                    expected_size: tuple[int, int] | None = None) -> dict:
     data = path.read_bytes()
     if len(data) < 100_000 or data[4:8] != b"ftyp" or b"moov" not in data:
@@ -748,6 +984,73 @@ def title_card(scenario: dict) -> tuple[pathlib.Path | None, float]:
     return path, seconds
 
 
+def post_production(scenario: dict, *, layout: str, output: pathlib.Path,
+                    raw_video: pathlib.Path, passenger_raw: pathlib.Path | None,
+                    passenger_start: float, passenger_still: pathlib.Path | None,
+                    audio_dir: pathlib.Path | None) -> tuple[RenderPlan, dict]:
+    """The render plan for raw recordings already on disk: preamble and outro cards built from
+    their frames, the disclaimer, and every clip and cue placed on the output timeline. Also
+    re-renders an earlier capture without the device (scripts/run-nyc-demo.py --render-only)."""
+    title, title_seconds = title_card(scenario)
+    hold_ms = scenario.get("endCardHoldFromMs")
+    prefix = output.with_name(output.stem)
+    preamble, preamble_evidence = build_preamble(scenario, raw_video, prefix)
+    outro, outro_evidence = (build_outro(scenario, raw_video, passenger_raw, passenger_start,
+                                         passenger_still, prefix)
+                             if scenario.get("outro") else (None, []))
+    note = disclaimer_image(scenario)
+    plan = RenderPlan(
+        duration=int(scenario["durationSeconds"]), layout=layout, driver_raw=raw_video,
+        passenger_raw=passenger_raw, passenger_start=passenger_start,
+        passenger_still=passenger_still, title=title, title_seconds=title_seconds,
+        hold_from=hold_ms / 1000 if hold_ms is not None else None, audio_dir=audio_dir,
+        clips=placed_clips(scenario), cues=placed_cues(scenario), preamble=preamble,
+        outro=outro, disclaimer=note)
+    evidence = {
+        "totalSeconds": plan.total(),
+        "preambleSeconds": preamble_seconds(scenario),
+        "timelineSeconds": int(scenario["durationSeconds"]),
+        "outroSeconds": outro_seconds(scenario),
+        "preamble": preamble_evidence,
+        "outro": {"sha256": sha256(outro[0]), "beats": outro_evidence} if outro else None,
+        "disclaimer": {"image": scenario["disclaimer"]["image"], "sha256": sha256(note),
+                       "text": scenario["disclaimer"]["text"]} if note else None,
+    }
+    return plan, evidence
+
+
+def render_only(scenario: dict, args: argparse.Namespace) -> int:
+    """Compose an earlier capture without a device: post-production, render and validation."""
+    layout = layout_of(scenario)
+    prefix = args.from_raw or args.output.with_name(args.output.stem)
+    raw_video = prefix.with_name(prefix.name + ".raw.mp4")
+    passenger_raw = prefix.with_name(prefix.name + ".passenger.raw.mp4")
+    still = prefix.with_name(prefix.name + ".passenger-idle.png")
+    if not raw_video.is_file():
+        raise DemoFailure(f"no raw driver recording at {raw_video}")
+    start = args.passenger_start
+    if start is None:
+        start = next((int(a["atMs"]) / 1000 for a in sorted(
+            scenario["actions"], key=lambda item: int(item["atMs"]))
+            if a["type"] == "passenger"), 0.0)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    plan, post = post_production(
+        scenario, layout=layout, output=args.output, raw_video=raw_video,
+        passenger_raw=passenger_raw if layout == "dual" and passenger_raw.is_file() else None,
+        passenger_start=start, passenger_still=still if still.is_file() else None,
+        audio_dir=None if args.no_mux else args.audio_dir)
+    began = time.monotonic()
+    render(plan, args.output)
+    seconds = time.monotonic() - began
+    validation = validate_video(args.output, plan.total(), not args.no_mux,
+                                CANVAS if layout == "dual" else None)
+    print(f"PASS: {args.output} ({validation['durationSeconds']:.1f}s = preamble "
+          f"{post['preambleSeconds']:g} + timeline {post['timelineSeconds']} + outro "
+          f"{post['outroSeconds']:g}; rendered in {seconds:.0f}s; "
+          f"{validation['distinctContentFrames']} distinct content frames)")
+    return 0
+
+
 def resolve_layout(scenario: dict, passenger_display: str | None) -> str:
     layout = layout_of(scenario)
     if layout == "dual" and not passenger_display:
@@ -766,8 +1069,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("scenario", choices=[item["id"] for item in manifest["scenarios"]])
     parser.add_argument("output", type=pathlib.Path)
-    parser.add_argument("--display-id", required=True,
-                        help="driver physical SurfaceFlinger display id; never inferred")
+    parser.add_argument("--display-id",
+                        help="driver physical SurfaceFlinger display id; never inferred "
+                             "(required unless --render-only)")
     parser.add_argument("--passenger-display-id",
                         help="passenger physical display id, for dual-layout scenarios")
     parser.add_argument("--passenger-launch-display", default="2",
@@ -779,9 +1083,21 @@ def main() -> int:
                         help="engineering preflight only: inject expected text without STT evidence")
     parser.add_argument("--no-mux", action="store_true",
                         help="engineering preflight only: compose without the narration mix")
+    parser.add_argument("--render-only", action="store_true",
+                        help="no device: compose an earlier capture (<prefix>.raw.mp4, "
+                             ".passenger.raw.mp4, .passenger-idle.png) into <output>")
+    parser.add_argument("--from-raw", type=pathlib.Path,
+                        help="with --render-only: the capture's path prefix (default: output's)")
+    parser.add_argument("--passenger-start", type=float,
+                        help="with --render-only: second the passenger stream began (default: "
+                             "the first passenger action)")
     args = parser.parse_args()
 
     scenario = next(item for item in manifest["scenarios"] if item["id"] == args.scenario)
+    if args.render_only:
+        return render_only(scenario, args)
+    if not args.display_id:
+        parser.error("--display-id is required to record")
     layout = resolve_layout(scenario, args.passenger_display_id)
     dual = layout == "dual"
     title, title_seconds = title_card(scenario)
@@ -809,16 +1125,14 @@ def main() -> int:
     if evidence["passengerStartSeconds"] is not None:
         adb("pull", DEVICE_PASSENGER_VIDEO, str(passenger_raw))
     adb("shell", "rm", "-f", DEVICE_VIDEO, DEVICE_PASSENGER_VIDEO, check=False)
-    plan = RenderPlan(
-        duration=int(scenario["durationSeconds"]), layout=layout, driver_raw=raw_video,
+    plan, post = post_production(
+        scenario, layout=layout, output=args.output, raw_video=raw_video,
         passenger_raw=passenger_raw if evidence["passengerStartSeconds"] is not None else None,
         passenger_start=evidence["passengerStartSeconds"] or 0.0,
-        passenger_still=evidence["passengerStill"], title=title, title_seconds=title_seconds,
-        hold_from=hold_ms / 1000 if hold_ms is not None else None,
-        audio_dir=None if args.no_mux else args.audio_dir, clips=scenario["clips"],
-        cues=scenario.get("soundEffects", []))
+        passenger_still=evidence["passengerStill"],
+        audio_dir=None if args.no_mux else args.audio_dir)
     render(plan, args.output)
-    validation = validate_video(args.output, scenario["durationSeconds"], not args.no_mux,
+    validation = validate_video(args.output, plan.total(), not args.no_mux,
                                 CANVAS if dual else None)
     commit = run(["git", "rev-parse", "HEAD"]).stdout.strip()
     command = ["scripts/run-nyc-demo.py", scenario["id"], "<output>", "--display-id",
@@ -862,6 +1176,7 @@ def main() -> int:
         "titleCard": {"image": scenario["titleCard"]["image"], "sha256": sha256(title),
                       "seconds": title_seconds} if title else None,
         "endCardHoldFromMs": hold_ms,
+        "postProduction": post,
         "restrictionSource": "live car_service park→drive (no DEMO substitution)",
         "command": " ".join(command),
         "manifestSha256": sha256(MANIFEST),

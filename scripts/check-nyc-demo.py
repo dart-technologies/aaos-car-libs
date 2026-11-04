@@ -29,6 +29,7 @@ RUNNER = ROOT / "scripts/run-nyc-demo.py"
 CANONICAL = {"nyc_poi_order": "poi_discovery_order", "nyc_curated_video": "big_buck_bunny",
              "nyc_concierge": "poi_discovery_order", "nyc_met": "met_visit"}
 FILM = ROOT / "a2ui-automotive/demo/fixtures/met/FILM.json"
+FILM_PORTRAIT = ROOT / "a2ui-automotive/demo/fixtures/met/FILM_PORTRAIT.json"
 # The names other agents implement against; changing one here means changing it there.
 MET_SEQUENCE = ["met_visit", "ev_charge_coffee"]
 MET_UTTERANCES = {"take us to the met this afternoon", "reserve entry for two at three",
@@ -40,6 +41,36 @@ ACTIONS = {"speak", "tapText", "carState", "keyEvent", "selectCase", "agent", "p
 PASSENGER_MEDIA = {"video", "artwork", "stop"}
 VEHICLE_ROUTES = {"vhal-set", "vhal-inject", "broadcast"}
 WEATHER_HOSTS = {"forecast.weather.gov", "api.weather.gov"}
+SECTIONS = {"preamble", "timeline", "outro"}
+PREAMBLE_STYLES = ["unsafe", "useless", "answer"]
+# Spoken lines never call the story a demo, nor claim a booking or order went anywhere; the
+# margin disclaimer carries the demo's nature for the whole video.
+NEVER_SAID = re.compile(r"\b(demo|sent|booked|paid|placed|ordered)\b", re.I)
+
+
+def preamble_seconds(scenario: dict) -> float:
+    return round(sum(float(card.get("seconds", 0)) for card in scenario.get("preamble", [])), 3)
+
+
+def outro_seconds(scenario: dict) -> float:
+    return float(scenario["outro"].get("seconds", 0)) if scenario.get("outro") else 0.0
+
+
+def total_seconds(scenario: dict) -> float:
+    """The video's length: post-produced preamble + device timeline + outro (run-nyc-demo.py)."""
+    return (preamble_seconds(scenario) + int(scenario.get("durationSeconds", 0))
+            + outro_seconds(scenario))
+
+
+def section_bounds_ms(scenario: dict, section: str) -> tuple[int, int]:
+    """(offset on the video timeline, section length) for a clip's section, in ms."""
+    preamble = round(preamble_seconds(scenario) * 1000)
+    timeline = int(scenario.get("durationSeconds", 0)) * 1000
+    if section == "preamble":
+        return 0, preamble
+    if section == "timeline":
+        return preamble, timeline
+    return preamble + timeline, round(outro_seconds(scenario) * 1000)
 
 
 def normalized(text: str) -> str:
@@ -166,9 +197,101 @@ def check_met_story(scenario: dict) -> None:
     signals = [int(a["atMs"]) for a in actions if a["type"] == "vehicleSignal"]
     if not signals or not all(driving_at(scenario, at) for at in signals):
         fail("nyc_met lowers the battery while driving")
-    ends = [int(a["atMs"]) for a in actions if a["type"] == "endCard"]
-    if len(ends) != 1 or driving_at(scenario, ends[0]):
-        fail("nyc_met shows its end card once, parked")
+    # The story ends on the driver watching Big Buck Bunny while parked (after the coffee), and
+    # a post-produced closing card replaces the in-car end card.
+    if any(a["type"] == "endCard" for a in actions):
+        fail("nyc_met ends on Big Buck Bunny and its closing card, not an in-car end card")
+    confirms = [int(a["atMs"]) for a in actions
+                if a["type"] == "tapText" and a.get("text") == "Confirm"]
+    bunny = [int(a["atMs"]) for a in actions
+             if a["type"] == "tapText" and a.get("text") == "Big Buck Bunny"]
+    if len(bunny) != 1 or driving_at(scenario, bunny[0]) or not confirms or bunny[0] < max(
+            confirms):
+        fail("nyc_met taps Big Buck Bunny once, parked, after the coffee is confirmed")
+    if any(driving_at(scenario, int(a["atMs"])) for a in actions if a["atMs"] > bunny[0]):
+        fail("nyc_met stays parked while the driver watches")
+    for clip in clips:
+        if NEVER_SAID.search(clip["text"]):
+            fail(f"{clip['id']} says {NEVER_SAID.search(clip['text'])[0]!r}; the disclaimer, "
+                 "not the narration, says it is a demo, and nothing claims a real transaction")
+    note = scenario.get("disclaimer") or {}
+    image = (ROOT / str(note.get("image", ""))).resolve()
+    if image.parent != CARDS.resolve() or not image.is_file() or \
+            image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+        fail(f"nyc_met disclaimer is not a PNG in {CARDS.relative_to(ROOT)}")
+    if not all(word in str(note.get("text", "")) for word in (
+            "emulator", "demo data", "no affiliation")):
+        fail("nyc_met disclaimer must say simulated on the emulator, demo data, no affiliation")
+    check_preamble(scenario)
+    check_outro(scenario)
+    portrait = json.loads(FILM_PORTRAIT.read_text(encoding="utf-8"))
+    if [(w["objectID"], w["startMs"]) for w in portrait["works"]] != [
+            (w["objectID"], w["startMs"]) for w in works]:
+        fail("the portrait film's per-work startMs drifted from FILM.json; the guide would slip")
+
+
+def check_preamble(scenario: dict) -> None:
+    """Three cards from the recording's own frames: the parked full screen shown as unsafe, then
+    locked out, then the real pruned driving frame; each with its own narration inside it."""
+    cards = scenario.get("preamble", [])
+    if [card.get("style") for card in cards] != PREAMBLE_STYLES:
+        fail(f"nyc_met preamble cards must be {PREAMBLE_STYLES}")
+    if not 10 <= preamble_seconds(scenario) <= 15:
+        fail("nyc_met preamble runs 10–15 s")
+    clips = {clip["id"]: clip for clip in scenario["clips"]}
+    start = 0
+    for card in cards:
+        at = int(card.get("frameAtMs", -1))
+        if not 0 <= at < int(scenario["durationSeconds"]) * 1000 or not card.get("caption"):
+            fail(f"preamble {card['style']} needs a caption and a frame inside the timeline")
+        if driving_at(scenario, at) != (card["style"] == "answer"):
+            fail(f"preamble {card['style']} frame must be "
+                 + ("a driving" if card["style"] == "answer" else "the parked full") + " screen")
+        seconds = round(float(card.get("seconds", 0)) * 1000)
+        if not 2500 <= seconds <= 7000:
+            fail(f"preamble {card['style']} card holds 2.5–7 s")
+        clip = clips.get(card.get("clipId"))
+        if not clip or clip.get("section") != "preamble" or clip["role"] != "narration" or \
+                not start <= int(clip["atMs"]) < start + seconds:
+            fail(f"preamble {card['style']} narration must be a preamble clip inside its card")
+        start += seconds
+    if [c["id"] for c in scenario["clips"] if c.get("section") == "preamble"] != [
+            card["clipId"] for card in cards]:
+        fail("every preamble clip belongs to one preamble card, in order")
+
+
+def check_outro(scenario: dict) -> None:
+    """The closing card: one narration line then a silent hold, the journey's beats taken from
+    the recording at the right car state, the architecture, and the footer."""
+    outro = scenario.get("outro") or {}
+    if not 5 <= outro_seconds(scenario) <= 10:
+        fail("nyc_met closing card holds 5–10 s")
+    clips = [c for c in scenario["clips"] if c.get("section") == "outro"]
+    if [c["id"] for c in clips] != [outro.get("clipId")] or clips[0]["role"] != "narration":
+        fail("nyc_met closing card has exactly one narration clip, its clipId")
+    timeline = int(scenario["durationSeconds"]) * 1000
+    beats = outro.get("beats", [])
+    lanes = {"driver": [], "passenger": []}
+    for beat in beats:
+        at = int(beat.get("atMs", -1))
+        if beat.get("display") not in lanes or not beat.get("label") or not 0 <= at < timeline:
+            fail(f"closing-card beat needs a display, a label and a time in the timeline: {beat}")
+        lanes[beat["display"]].append(beat)
+    if len(lanes["driver"]) != 7 or not 1 <= len(lanes["passenger"]) <= 3:
+        fail("closing card shows seven driver beats and the passenger lane")
+    if any(not driving_at(scenario, int(b["atMs"])) for b in lanes["passenger"]):
+        fail("closing card's passenger thumbnails sit under the driving segments")
+    bunny = [int(a["atMs"]) for a in scenario["actions"]
+             if a["type"] == "tapText" and a.get("text") == "Big Buck Bunny"]
+    last = lanes["driver"][-1]
+    if last["label"] != "Big Buck Bunny" or driving_at(scenario, int(last["atMs"])) or \
+            not bunny or int(last["atMs"]) < bunny[0] + 3000:
+        fail("closing card's last driver beat is Big Buck Bunny playing, parked")
+    if len([b for b in outro.get("architecture", []) if b.get("badge")]) != 1 or not \
+            4 <= len(outro.get("architecture", [])) <= 5:
+        fail("closing card's architecture is 4–5 boxes with one Muse badge")
+    if len(outro.get("footer", [])) != 2:
+        fail("closing card's footer is the line and the credit")
 
 
 def corpus_ids() -> set[str]:
@@ -262,7 +385,9 @@ def main() -> int:
     placeholders = 0
     for scenario in scenarios:
         duration = int(scenario.get("durationSeconds", 0))
-        if not 60 <= duration <= 180:
+        # The bound is on the video: the device timeline plus any post-produced preamble and
+        # closing card. screenrecord's own limit bounds the timeline.
+        if not 60 <= total_seconds(scenario) <= 180 or not 0 < duration <= 175:
             fail(f"{scenario['id']} is outside the 60–180 second target")
         if not scenario.get("doNotClaim"):
             fail(f"{scenario['id']} has no explicit claim boundary")
@@ -289,7 +414,11 @@ def main() -> int:
             clip_texts[clip["id"]] = clip.get("text", "")
             if clip.get("role") not in {"narration", "user_utterance"}:
                 fail(f"unknown role on {clip['id']}")
-            if not 0 <= int(clip.get("atMs", -1)) < duration * 1000:
+            section = clip.get("section", "timeline")
+            if section not in SECTIONS or (section != "timeline" and (
+                    clip["role"] != "narration" or not scenario.get(section))):
+                fail(f"clip {clip['id']} names a section its scenario does not have")
+            if not 0 <= int(clip.get("atMs", -1)) < section_bounds_ms(scenario, section)[1]:
                 fail(f"clip {clip['id']} is outside its scenario timeline")
             tts_chars += len(clip.get("text", ""))
             placeholders += clip.get("placeholder") is True
@@ -397,15 +526,32 @@ def main() -> int:
                     fail(f"STT replay is not exactly the displayed phrase for {clip['id']}")
                 if not known_stt(transcript, data):
                     fail(f"STT fixture for {clip['id']} names an unknown provider or model")
-            for clip in sorted(scenario["clips"], key=lambda item: item["atMs"]):
+            # On the video's timeline: each clip at its section's offset, inside its section.
+            placed = []
+            for clip in scenario["clips"]:
+                offset, length = section_bounds_ms(scenario, clip.get("section", "timeline"))
+                placed.append((offset + float(clip["atMs"]), offset + length, clip))
+            for start_ms, section_end_ms, clip in sorted(placed, key=lambda item: item[0]):
                 path = AUDIO / f"{clip['id']}.mp3"
-                start_ms = float(clip["atMs"])
                 end_ms = start_ms + audio_duration(path) * 1000
                 if start_ms < previous_end_ms + 200:
                     fail(f"dialogue overlaps or has less than 200 ms separation at {clip['id']}")
-                if end_ms > scenario["durationSeconds"] * 1000:
-                    fail(f"dialogue extends past the recording at {clip['id']}")
+                if end_ms > section_end_ms:
+                    fail(f"dialogue extends past its section of the recording at {clip['id']}")
                 previous_end_ms = end_ms
+            card_start = 0.0
+            for card in scenario.get("preamble", []):
+                clip = next(c for c in scenario["clips"] if c["id"] == card["clipId"])
+                end_ms = float(clip["atMs"]) + audio_duration(AUDIO / f"{clip['id']}.mp3") * 1000
+                card_start += float(card["seconds"]) * 1000
+                if end_ms > card_start:
+                    fail(f"{clip['id']} runs past its preamble card")
+            if scenario.get("outro"):
+                clip = next(c for c in scenario["clips"]
+                            if c["id"] == scenario["outro"]["clipId"])
+                end_ms = float(clip["atMs"]) + audio_duration(AUDIO / f"{clip['id']}.mp3") * 1000
+                if end_ms > outro_seconds(scenario) * 1000 - 1500:
+                    fail(f"{clip['id']} leaves the closing card less than 1.5 s of silence")
         for effect_id, effect in effects.items():
             audio = AUDIO / "sfx" / f"{effect_id}.mp3"
             meta = AUDIO / "sfx" / f"{effect_id}.sfx.json"
