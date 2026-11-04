@@ -258,10 +258,12 @@ public class A2uiMetVisitTest {
         activity.selectCase("met_visit");
         activity.onHeard("reserve entry for two at three");
         AlertDialog asked = ShadowAlertDialog.getLatestAlertDialog();
-        // Pinned inside the display with a margin each side: both pills show whole.
+        // Capped and pinned inside the display with a margin each side: both pills show whole.
         android.util.DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
-        assertThat(asked.getWindow().getAttributes().width).isEqualTo(metrics.widthPixels
-                - 2 * Math.round(A2uiCarUiActivity.DIALOG_MARGIN_DP * metrics.density));
+        assertThat(asked.getWindow().getAttributes().width).isEqualTo(Math.min(
+                metrics.widthPixels
+                        - 2 * Math.round(A2uiCarUiActivity.DIALOG_MARGIN_DP * metrics.density),
+                Math.round(A2uiCarUiActivity.DIALOG_MAX_WIDTH_DP * metrics.density)));
         asked.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
         drive(activity, DRIVE);

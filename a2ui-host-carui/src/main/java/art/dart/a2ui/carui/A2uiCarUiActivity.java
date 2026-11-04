@@ -21,6 +21,7 @@ import android.app.Presentation;
 import android.car.drivingstate.CarUxRestrictions;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -59,6 +60,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.ui.CarUiLayoutInflaterFactory;
+import com.android.car.ui.FocusParkingView;
 import com.android.car.ui.baselayout.Insets;
 import com.android.car.ui.baselayout.InsetsChangedListener;
 import com.android.car.ui.core.CarUi;
@@ -460,11 +462,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void confirm(A2uiComponent component, CarUxRestrictionsUtil restrictions,
             Context uiContext) {
         A2uiDisplayBinder binder = binderFor(restrictions, uiContext);
-        AlertDialog asked = new AlertDialogBuilder(uiContext)
-                .setTitle(confirmTitle(component))
-                .setMessage(confirmMessage(component))
-                .setNegativeButton(R.string.a2ui_cancel, null)
-                .setPositiveButton(R.string.a2ui_confirm, (dialog, which) -> {
+        showConfirmation(uiContext, confirmTitle(component), confirmMessage(component),
+                (dialog, which) -> {
                     int orders = mOrderSeq;
                     A2uiActionPolicy.Decision again;
                     try {
@@ -485,15 +484,53 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                                     ? "Not available now — conditions changed"
                                     : component.getTitle() + " — done",
                             Toast.LENGTH_LONG).show();
-                })
-                .show();
-        fitDialog(asked, uiContext);
+                });
     }
 
     /**
-     * car-ui's dialog puts its buttons in a column on the right and can lay out wider than the
-     * display, clipping both pills at the edge. Pinned to the display's width less a margin each
-     * side, the message wraps instead.
+     * The one confirmation layout, tapped or spoken: the question and its detail on one left edge,
+     * Cancel and Confirm in one row at the bottom right. car-ui's builder offers no custom view
+     * and stacks its buttons in a column at the side, so the dialog's content is replaced whole.
+     * The framework's buttons keep the listeners and the AlertDialog contract; the visible pills
+     * press them, so a press is decided exactly as it was. Replaced, they are in no window: there
+     * is one "Confirm" for touch, rotary and uiautomator.
+     */
+    @VisibleForTesting
+    @NonNull
+    static AlertDialog showConfirmation(@NonNull Context uiContext, @NonNull CharSequence title,
+            @Nullable CharSequence message, @NonNull DialogInterface.OnClickListener onConfirm) {
+        AlertDialog dialog = new AlertDialog.Builder(uiContext)
+                .setNegativeButton(R.string.a2ui_cancel, null)
+                .setPositiveButton(R.string.a2ui_confirm, onConfirm)
+                .create();
+        View content = LayoutInflater.from(dialog.getContext())
+                .inflate(R.layout.a2ui_confirm_dialog, null);
+        ((TextView) content.findViewById(R.id.a2ui_confirm_title)).setText(title);
+        TextView detail = content.findViewById(R.id.a2ui_confirm_message);
+        detail.setText(message);
+        detail.setVisibility(message == null || message.length() == 0 ? View.GONE : View.VISIBLE);
+        dialog.show();
+        // show() installs the framework's layout; this replaces it.
+        dialog.setContentView(content);
+        content.findViewById(R.id.a2ui_confirm_cancel).setOnClickListener(
+                ignored -> dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick());
+        content.findViewById(R.id.a2ui_confirm_ok).setOnClickListener(
+                ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(R.drawable.a2ui_dialog_background);
+            // As car-ui's builder does: rotary focus parks here instead of wrapping around.
+            ((ViewGroup) window.getDecorView().getRootView())
+                    .addView(new FocusParkingView(dialog.getContext()));
+        }
+        fitDialog(dialog, uiContext);
+        return dialog;
+    }
+
+    /**
+     * A confirmation is a sentence and two buttons: capped at {@link #DIALOG_MAX_WIDTH_DP} and
+     * centred, never wider than the display less {@link #DIALOG_MARGIN_DP} each side, so the
+     * message wraps rather than clipping a button at the edge.
      */
     @VisibleForTesting
     static void fitDialog(@NonNull AlertDialog dialog, @NonNull Context uiContext) {
@@ -501,12 +538,16 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (window == null) return;
         android.util.DisplayMetrics metrics = uiContext.getResources().getDisplayMetrics();
         int margin = Math.round(DIALOG_MARGIN_DP * metrics.density);
-        window.setLayout(Math.max(0, metrics.widthPixels - 2 * margin),
+        int cap = Math.round(DIALOG_MAX_WIDTH_DP * metrics.density);
+        window.setLayout(Math.max(0, Math.min(metrics.widthPixels - 2 * margin, cap)),
                 ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     /** Space kept between a confirm dialog and each side edge of its display. */
     static final int DIALOG_MARGIN_DP = 64;
+
+    /** The widest a confirm dialog grows, on a wide display. */
+    static final int DIALOG_MAX_WIDTH_DP = 720;
 
     private CarUxRestrictionsUtil mRestrictions;
     private ToolbarController mToolbar;
@@ -1168,11 +1209,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         A2uiDisplayBinder capturedBinder = mActionBinder;
         String capturedSurfaceId = mSurfaceId;
-        AlertDialog asked = new AlertDialogBuilder(this)
-                .setTitle(confirmTitle(matched))
-                .setMessage(confirmMessage(matched))
-                .setNegativeButton(R.string.a2ui_cancel, null)
-                .setPositiveButton(R.string.a2ui_confirm, (dialog, which) -> {
+        showConfirmation(this, confirmTitle(matched), confirmMessage(matched),
+                (dialog, which) -> {
                     // Asked a third time: a dialog can be answered long after the vehicle changed.
                     if (capturedBinder == null || capturedBinder != mActionBinder
                             || !capturedSurfaceId.equals(mSurfaceId)) {
@@ -1206,9 +1244,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                         Toast.makeText(this, "Not available now — conditions changed",
                                 Toast.LENGTH_LONG).show();
                     }
-                })
-                .show();
-        fitDialog(asked, this);
+                });
     }
 
     private void refresh() {

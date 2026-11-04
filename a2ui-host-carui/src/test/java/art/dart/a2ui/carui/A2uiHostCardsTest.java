@@ -218,10 +218,12 @@ public class A2uiHostCardsTest {
         order.getOnClickListener().onClick(order);
         AlertDialog confirmation = ShadowAlertDialog.getLatestAlertDialog();
         assertThat(confirmation).isNotNull();
-        // A tapped confirmation is pinned inside the display too, a margin each side.
+        // A tapped confirmation is pinned inside the display too: capped, a margin each side.
         android.util.DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
-        assertThat(confirmation.getWindow().getAttributes().width).isEqualTo(metrics.widthPixels
-                - 2 * Math.round(A2uiCarUiActivity.DIALOG_MARGIN_DP * metrics.density));
+        assertThat(confirmation.getWindow().getAttributes().width).isEqualTo(Math.min(
+                metrics.widthPixels
+                        - 2 * Math.round(A2uiCarUiActivity.DIALOG_MARGIN_DP * metrics.density),
+                Math.round(A2uiCarUiActivity.DIALOG_MAX_WIDTH_DP * metrics.density)));
         confirmation.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
         assertThat(activity.mOrderPlaced).isTrue();

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2026 Dart Technologies. Licensed under the Apache License, Version 2.0. -->
+<!-- The confirmation dialog (a2ui_confirm_dialog.xml): one padding, one radius, one type pair. -->
+<resources>
+    <color name="a2ui_dialog_surface">#FF1D1F23</color>
+    <color name="a2ui_dialog_stroke">#1FFFFFFF</color>
+    <color name="a2ui_dialog_on_accent">#FF141518</color>
+    <color name="a2ui_dialog_quiet_stroke">#59FFF8EE</color>
+
+    <dimen name="a2ui_dialog_padding">32dp</dimen>
+    <dimen name="a2ui_dialog_radius">24dp</dimen>
+    <dimen name="a2ui_dialog_title_text_size">26sp</dimen>
+    <dimen name="a2ui_dialog_message_text_size">19sp</dimen>
+    <dimen name="a2ui_dialog_message_gap">10dp</dimen>
+    <dimen name="a2ui_dialog_buttons_gap">28dp</dimen>
+    <dimen name="a2ui_dialog_button_height">64dp</dimen>
+    <dimen name="a2ui_dialog_button_min_width">168dp</dimen>
+    <dimen name="a2ui_dialog_button_padding">32dp</dimen>
+    <dimen name="a2ui_dialog_button_gap">16dp</dimen>
+    <dimen name="a2ui_dialog_button_radius">32dp</dimen>
+    <dimen name="a2ui_dialog_button_text_size">20sp</dimen>
+</resources>
