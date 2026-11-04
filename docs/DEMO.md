@@ -11,10 +11,13 @@ transition (`cmd car_service emulate-driving-state park|drive`), never a synthet
 | `nyc_poi_order` | 78 | `poi_discovery_order` | Parked at Hudson Yards, bound for Brooklyn Museum: find coffee on the route, order ahead; drive → search and order go, route stays | Voice and touch share one policy; live re-projection |
 | `nyc_curated_video` | 78 | `big_buck_bunny` | Waiting in Long Island City: open a curated short; drive → video view and decoder close, the audio-only control keeps playing | `NO_VIDEO` drops video, not audio |
 | `nyc_concierge` | 90 | `poi_discovery_order`, then `big_buck_bunny` | Fifth House: parked order, brand audio kept in motion, visual chapter on arrival; closes on the fast foreground and higher-effort background lanes | The journey gets quieter, not unsafe; agents never control the car |
+| `nyc_met` | 178 | `met_visit`, then `ev_charge_coffee` | Thursday, Nov 5, Hudson Yards → The Met, both displays: cited Muse brief and gallery parked, timed entry confirmed parked; drive → driver screen simplifies, passenger plays the artwork film, audio guide for all; arrival brings the film full-bleed. Then a low battery (vehicle HAL) → three chargers, park and charge, coffee confirmed parked; end card | One agent, any model; the car decides per display |
 
 Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 2026-09-10 and not
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
-`demo/agent-profiles-v1.json`.
+`demo/agent-profiles-v1.json`. `nyc_met` instead uses real, attributed data: Thursday's NWS forecast
+captured Nov 4 (`demo/context/nyc-met-2026-11-05.json`), an OSRM route and OSM chargers, and The
+Met's CC0 images; its ticket and coffee order are `DEMO` and nothing is booked or paid.
 
 ## Corpus (`UseCaseCorpus`: 10 cases, all 18 catalog types)
 
@@ -43,6 +46,8 @@ Needs the AVD prepared by `scripts/ensure-test-env.sh --fix`, `ffmpeg`/`ffprobe`
   && adb install -r -t build/a2ui-host-carui/outputs/apk/debug/a2ui-host-carui-debug.apk)
 DISPLAY_ID=$(adb shell dumpsys SurfaceFlinger --display-id | awk '/^Display /{print $2; exit}')
 scripts/run-nyc-demo.py nyc_concierge /tmp/nyc-concierge.mp4 --display-id "$DISPLAY_ID"
+scripts/run-nyc-demo.py nyc_met /tmp/nyc-met.mp4 --display-id 4619827259835644672 \
+  --passenger-display-id 4619827551948147201
 ```
 
 `run-nyc-demo.py` refuses another AVD, a second device, an inferred display, a non-debuggable Host B,
@@ -76,11 +81,18 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Claude corpus cache | `build/claude-corpus-cache/` | no | `scripts/claude-corpus-tester.py` | gateway schema on replay |
 | Passenger clip, 19.3 s 720p | `a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4` | yes | ffmpeg trim of Blender's MP4 (`demo/fixtures/bbb/SOURCE.json`) | `check-demo-assets.py` (SHA-256, source record) |
 | Panel labels | `a2ui-automotive/demo/cards/label-*.png` | yes | `scripts/render-demo-cards.py` (Pillow; this ffmpeg has no drawtext) | `test_run_nyc_demo.py` |
+| `nyc_met` route image, 1024×576 | `res/drawable-nodpi/route_met.png` | yes | `scripts/render-met-route.py` from `demo/fixtures/route/` (no map tiles) | `check-demo-assets.py` |
+| Artwork film, 36 s 720p, silent | `res/raw/met_artwork_film.mp4` | yes | `scripts/render-met-artwork-film.py` (six CC0 works; `demo/fixtures/met/FILM.json` has per-work `startMs`) | `check-demo-assets.py` (SHA-256, record) |
+| Route, Met, NWS, chargers | `demo/fixtures/{route,nws,chargers}/` | yes | `scripts/fetch-nyc-met-fixtures.py`, `scripts/fetch-ev-chargers.py` (`python3 -I`) | `check-nyc-demo.py` (context) |
+| `nyc_met` title card | `demo/cards/nyc_met-title.png` | yes | `render-demo-cards.py title` | `check-nyc-demo.py` |
 
 Generated `demo_*` media hold no third-party content (the placeholder video is not Big Buck Bunny).
 `bbb_passenger.mp4` is: Big Buck Bunny (c) copyright 2008, Blender Foundation / www.bigbuckbunny.org,
-CC BY 3.0, trimmed and re-encoded. ElevenLabs licensing is unverified for outward use. Regenerating
-spends credits: `--dry-run`, then `--verify-personas`, then bare.
+CC BY 3.0, trimmed and re-encoded. `nyc_met` credits: route and chargers © OpenStreetMap contributors
+(ODbL), routed by OSRM; artworks The Metropolitan Museum of Art Open Access (CC0); weather U.S.
+National Weather Service (public domain). No logos; no endorsement implied. The six `met_guide_*`
+lines are placeholders until the Muse-written guide lands. ElevenLabs licensing is unverified for
+outward use. Regenerating spends credits: `--dry-run`, then `--verify-personas`, then bare.
 
 **Claims.** Proves Host B rendering, policy on injected phrases, parked confirmation, live
 re-projection, audio continuity. Not a live agent, live location/inventory/payment, production
