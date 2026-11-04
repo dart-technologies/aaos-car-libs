@@ -299,7 +299,7 @@ def mux_audio(audio_dir: pathlib.Path, raw_video: pathlib.Path,
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("scenario", choices=[
-        "nyc_poi_order", "nyc_curated_video", "nyc_astra_concierge"])
+        "nyc_poi_order", "nyc_curated_video", "nyc_concierge"])
     parser.add_argument("output", type=pathlib.Path)
     parser.add_argument("--display-id", required=True,
                         help="physical SurfaceFlinger display id; never inferred")

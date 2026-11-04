@@ -2,7 +2,13 @@
   "schemaVersion": 1,
   "vehicleContract": "a2ui.gateway.v1",
   "credentialBoundary": "gateway_or_operator_only",
-  "selectors": ["claude", "chatgpt", "gemini", "grok", "muse"],
+  "selectors": [
+    "claude",
+    "chatgpt",
+    "gemini",
+    "grok",
+    "muse"
+  ],
   "profiles": {
     "quality_cached": {
       "purpose": "Pre-generate, validate, and replay an exact response for the deterministic demo path.",
@@ -30,17 +36,13 @@
       "reason": "Keep the optional spoken round trip short; deterministic replay remains the acceptance path."
     },
     "background": {
-      "provider": "chatgpt",
-      "api": "responses",
-      "model": "gpt-6-astra",
-      "reasoningEffort": "high",
+      "provider": "selected",
+      "profile": "quality_cached",
       "background": true,
-      "store": false,
-      "promptCacheTtl": "30m",
       "vehicleDeadlineMs": 600000,
       "publishes": "staged concierge recommendations with evidence and expiry",
       "directVehicleActions": false,
-      "reason": "Use long-horizon research before or during the journey without blocking or directly controlling the driver surface."
+      "reason": "A higher-effort turn on the provider the scoreboard selects, run before or during the journey; it never blocks or directly controls the driver surface."
     }
   },
   "swapRule": "Changing provider changes only the gateway adapter. Schema, bounds, trusted action registry, display restrictions, and acceptance fixtures remain identical."

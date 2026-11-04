@@ -10,11 +10,11 @@ transition (`cmd car_service emulate-driving-state park|drive`), never a synthet
 |---|---:|---|---|---|
 | `nyc_poi_order` | 78 | `poi_discovery_order` | Parked at Hudson Yards, bound for Brooklyn Museum: find coffee on the route, order ahead; drive → search and order go, route stays | Voice and touch share one policy; live re-projection |
 | `nyc_curated_video` | 78 | `big_buck_bunny` | Waiting in Long Island City: open a curated short; drive → video view and decoder close, the audio-only control keeps playing | `NO_VIDEO` drops video, not audio |
-| `nyc_astra_concierge` | 90 | `poi_discovery_order`, then `big_buck_bunny` | Fifth House: parked order, brand audio kept in motion, visual chapter on arrival; closes on the Sonnet foreground and GPT-6 Astra background lanes | The journey gets quieter, not unsafe; agents never control the car |
+| `nyc_concierge` | 90 | `poi_discovery_order`, then `big_buck_bunny` | Fifth House: parked order, brand audio kept in motion, visual chapter on arrival; closes on the fast foreground and higher-effort background lanes | The journey gets quieter, not unsafe; agents never control the car |
 
-Context is a dated snapshot (`demo/context/nyc-astra-2026-09-07.json`, refresh due 2026-09-10 and not
+Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 2026-09-10 and not
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
-`demo/agent-profiles-v1.json`. Per the context file, this branch is not an eligible hackathon submission.
+`demo/agent-profiles-v1.json`.
 
 ## Corpus (`UseCaseCorpus`: 10 cases, all 18 catalog types)
 
@@ -42,7 +42,7 @@ Needs the AVD prepared by `scripts/ensure-test-env.sh --fix`, `ffmpeg`/`ffprobe`
 (cd aaos-apps-gradle-project && ./gradlew :a2ui-host-carui:assembleDebug \
   && adb install -r -t build/a2ui-host-carui/outputs/apk/debug/a2ui-host-carui-debug.apk)
 DISPLAY_ID=$(adb shell dumpsys SurfaceFlinger --display-id | awk '/^Display /{print $2; exit}')
-scripts/run-nyc-demo.py nyc_astra_concierge /tmp/nyc-astra.mp4 --display-id "$DISPLAY_ID"
+scripts/run-nyc-demo.py nyc_concierge /tmp/nyc-concierge.mp4 --display-id "$DISPLAY_ID"
 ```
 
 `run-nyc-demo.py` refuses another AVD, a second device, an inferred display, a non-debuggable Host B,
