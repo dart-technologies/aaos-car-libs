@@ -5,7 +5,7 @@
 # too, because it builds car-ui-lib and the Flutter binding from their own build.gradle files.
 
 [versions]
-agp = "9.3.1"
+agp = "9.5.0"
 androidx-annotation = "1.10.0"
 androidx-appcompat = "1.8.0"
 androidx-arch-core = "2.2.0"
