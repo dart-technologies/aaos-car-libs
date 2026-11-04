@@ -39,6 +39,8 @@
     <string name="a2ui_state_demo_open_detail">Simulated reading · no limits</string>
     <string name="a2ui_state_demo_restricted_detail">Simulated reading · restricted</string>
 
+    <string name="a2ui_close">Close</string>
+
     <!-- Closing card. Bullets and footer are OEM-overridable. -->
     <string name="a2ui_end_card_title">Why OEMs ship A2UI this way</string>
     <string name="a2ui_end_card_bullet_1">The vehicle enforces the policy, and fails closed</string>

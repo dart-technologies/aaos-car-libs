@@ -210,7 +210,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="@dimen/a2ui_space_m"
-            android:layout_weight="0.62"
+            android:layout_weight="0.5"
             android:background="@drawable/a2ui_panel_background"
             android:visibility="gone">
 
@@ -325,9 +325,7 @@
             android:id="@+id/gallery_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingBottom="120dp"
-            android:paddingHorizontal="@dimen/a2ui_space_xl"
-            android:paddingTop="@dimen/a2ui_space_l"
+            android:paddingVertical="@dimen/a2ui_space_s"
             android:scaleType="fitCenter" />
 
         <View
@@ -383,7 +381,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"
             android:layout_margin="@dimen/a2ui_space_l"
-            android:text="@android:string/cancel" />
+            android:text="@string/a2ui_close" />
     </FrameLayout>
 
     <!-- Closing card: static host text, shown only while parked. -->
@@ -409,14 +407,15 @@
             style="@style/A2uiBrandDisplay"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/a2ui_space_l"
-            android:text="@string/a2ui_end_card_title" />
+            android:layout_marginTop="@dimen/a2ui_space_m"
+            android:text="@string/a2ui_end_card_title"
+            android:textSize="34sp" />
 
         <LinearLayout
             android:id="@+id/end_card_bullets"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/a2ui_space_xl"
+            android:layout_marginTop="@dimen/a2ui_space_m"
             android:orientation="vertical" />
 
         <TextView
@@ -424,9 +423,9 @@
             style="@style/A2uiBrandCaption"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/a2ui_space_xl"
+            android:layout_marginTop="@dimen/a2ui_space_m"
             android:letterSpacing="0.04"
             android:text="@string/a2ui_end_card_footer"
-            android:textSize="20sp" />
+            android:textSize="17sp" />
     </LinearLayout>
 </FrameLayout>

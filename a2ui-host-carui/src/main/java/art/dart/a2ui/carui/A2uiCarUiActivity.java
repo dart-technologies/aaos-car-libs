@@ -1448,7 +1448,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             addRow(rows, keys, HostRows.ARRIVAL, HostRows.card(allowed, limits,
                     journeyData(journey, journey.mArrivalTitle),
                     Collections.singletonList(journeyData(journey, journey.mArrivalDetail)),
-                    getDrawable(journey.mArrivalArt), null));
+                    // With a hero panel the image is there; the row stays text.
+                    journey.mHeroArt != 0 || journey.mArrivalArt == 0 ? null
+                            : getDrawable(journey.mArrivalArt), null));
         }
         if (mOrderPlaced && (!journey.mConfirmParkedOnly || parked)) {
             List<String> body = new ArrayList<>();
@@ -2407,7 +2409,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             LinearLayout line = new LinearLayout(this);
             line.setOrientation(LinearLayout.HORIZONTAL);
             line.setGravity(Gravity.CENTER_VERTICAL);
-            line.setPadding(0, Math.round(10 * density), 0, Math.round(10 * density));
+            line.setPadding(0, Math.round(5 * density), 0, Math.round(5 * density));
             View mark = new View(this);
             mark.setBackgroundColor(getColor(R.color.a2ui_brand_accent));
             LinearLayout.LayoutParams markSize = new LinearLayout.LayoutParams(
@@ -2417,7 +2419,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             TextView text = new TextView(this);
             text.setText(bullet);
             text.setTextAppearance(R.style.A2uiBrandBody);
-            text.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 28);
+            text.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 23);
             line.addView(text);
             container.addView(line);
         }
