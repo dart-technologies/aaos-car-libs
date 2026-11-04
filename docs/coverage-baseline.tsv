@@ -1,0 +1,34 @@
+# Machine-written by scripts/check-coverage.py --record. Do not hand-edit.
+#
+# STATUS is the load-bearing column, not the counts.
+#
+#   MEASURED  JaCoCo attributes execution to this module's classes. `covered` may not drop.
+#   BLIND     The suite runs under Robolectric, whose instrumenting classloader rewrites the
+#             bytecode so JaCoCo cannot match its execution data to the analysed class files.
+#             `covered` is 0 and that is a fact about the INSTRUMENT, not about the tests --
+#             docs/gate-counts.tsv is what asserts the tests still run and pass.
+#   EMPTY     Nothing to measure: 0 covered AND 0 missed, i.e. the module publishes no classes of
+#             its own. Kept distinct from BLIND deliberately -- ':oem-apis' takes its contract from
+#             the published plugin-apis artifact and has no main sources, which is not the same
+#             statement as "instrumented away". Collapsing the two would let a module that lost
+#             all of its classes pass as a known limitation.
+#
+# A module changing status in any direction is an error, so that "0% because blind" can never
+# quietly become the alibi for "0% because the tests stopped running".
+#
+# module	status	covered	missed	recorded	commit
+
+# 2026-11-03 accepted loss (car-media-common 740->739): Java 17 target: nestmates drop the synthetic accessor calls that gave 6 continuation lines their own line-table entry (2 covered, 4 missed). Same instructions, attributed to the statement's first line; no test lost reach.
+a2ui-host-carapp	MEASURED	439	60	2026-11-03	055d5ae04-dirty
+a2ui-host-carui	MEASURED	656	494	2026-11-03	055d5ae04-dirty
+a2ui-model	MEASURED	1482	32	2026-11-03	055d5ae04-dirty
+car-apps-common	MEASURED	72	1377	2026-11-03	055d5ae04-dirty
+car-assist-lib	MEASURED	18	130	2026-11-03	055d5ae04-dirty
+car-media-common	MEASURED	739	974	2026-11-03	055d5ae04-dirty
+car-rotary-lib	MEASURED	16	955	2026-11-03	055d5ae04-dirty
+car-telephony-common	MEASURED	58	856	2026-11-03	055d5ae04-dirty
+car-ui-lib	MEASURED	163	7138	2026-11-03	055d5ae04-dirty
+car-uxr-client-lib	MEASURED	66	47	2026-11-03	055d5ae04-dirty
+model	MEASURED	149	56	2026-11-03	055d5ae04-dirty
+oem-apis	EMPTY	0	0	2026-11-03	055d5ae04-dirty
+plugin	MEASURED	111	1943	2026-11-03	055d5ae04-dirty

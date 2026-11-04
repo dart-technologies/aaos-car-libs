@@ -1,0 +1,323 @@
+# AndroidManifest package
+com.android.car.media.common
+
+public class com.android.car.media.common.ControlBarHelper {
+    public com.android.car.media.common.ControlBarHelper();
+    public static void initProgressBar(android.content.Context, androidx.lifecycle.LifecycleOwner, com.android.car.media.common.playback.PlaybackViewModel, android.widget.ProgressBar, boolean);
+public class com.android.car.media.common.CustomPlaybackAction {
+    public com.android.car.media.common.CustomPlaybackAction(android.graphics.drawable.Drawable, java.lang.String, android.os.Bundle);
+    public final android.graphics.drawable.Drawable mIcon;
+    public final android.os.Bundle mExtras;
+    public final java.lang.String mAction;
+public class com.android.car.media.common.FixedRatioImageView extends android.widget.ImageView {
+    protected void onMeasure(int, int);
+    public com.android.car.media.common.FixedRatioImageView(android.content.Context);
+    public com.android.car.media.common.FixedRatioImageView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.media.common.FixedRatioImageView(android.content.Context, android.util.AttributeSet, int);
+    public void setAspectRatio(float);
+public class com.android.car.media.common.GridSpacingItemDecoration extends androidx.recyclerview.widget.RecyclerView$ItemDecoration {
+    public com.android.car.media.common.GridSpacingItemDecoration(int);
+    public void getItemOffsets(android.graphics.Rect, android.view.View, androidx.recyclerview.widget.RecyclerView, androidx.recyclerview.widget.RecyclerView$State);
+public final class com.android.car.media.common.Media3Adapters {
+    public static com.android.car.media.common.MediaItemMetadata fromMedia3(androidx.media3.common.MediaItem);
+    public static com.android.car.media.common.MediaItemMetadata fromMedia3(java.lang.String, androidx.media3.common.MediaMetadata);
+    public static com.android.car.media.common.MediaItemMetadata fromMedia3QueueItem(androidx.media3.common.MediaItem, long);
+public class com.android.car.media.common.MediaButtonController {
+    public com.android.car.media.common.MediaButtonController(android.content.Context, com.android.car.apps.common.CarControlBar, int, int, int, int);
+    public void setModel(com.android.car.media.common.playback.PlaybackViewModel, androidx.lifecycle.LifecycleOwner);
+public final class com.android.car.media.common.MediaConstants {
+    public com.android.car.media.common.MediaConstants();
+    public static final int CONTENT_STYLE_CATEGORY_GRID_ITEM_HINT_VALUE = 4;
+    public static final int CONTENT_STYLE_CATEGORY_LIST_ITEM_HINT_VALUE = 3;
+    public static final int CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2;
+    public static final int CONTENT_STYLE_LIST_ITEM_HINT_VALUE = 1;
+    public static final java.lang.String CONTENT_STYLE_BROWSABLE_HINT = "android.media.browse.CONTENT_STYLE_BROWSABLE_HINT";
+    public static final java.lang.String CONTENT_STYLE_BROWSABLE_HINT_PRERELEASE = "android.auto.media.CONTENT_STYLE_BROWSABLE_HINT";
+    public static final java.lang.String CONTENT_STYLE_GROUP_TITLE_HINT = "android.media.browse.CONTENT_STYLE_GROUP_TITLE_HINT";
+    public static final java.lang.String CONTENT_STYLE_GROUP_TITLE_HINT_PRERELEASE = "android.auto.media.CONTENT_STYLE_GROUP_TITLE_HINT";
+    public static final java.lang.String CONTENT_STYLE_PLAYABLE_HINT = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT";
+    public static final java.lang.String CONTENT_STYLE_PLAYABLE_HINT_PRERELEASE = "android.auto.media.CONTENT_STYLE_PLAYABLE_HINT";
+    public static final java.lang.String ERROR_RESOLUTION_ACTION_INTENT = "android.media.extras.ERROR_RESOLUTION_ACTION_INTENT";
+    public static final java.lang.String ERROR_RESOLUTION_ACTION_LABEL = "android.media.extras.ERROR_RESOLUTION_ACTION_LABEL";
+    public static final java.lang.String ERROR_RESOLUTION_ACTION_MESSAGE = "android.media.extras.ERROR_RESOLUTION_ACTION_MESSAGE";
+    public static final java.lang.String EXTRA_DOWNLOAD_STATUS = "android.media.extra.DOWNLOAD_STATUS";
+    public static final java.lang.String EXTRA_IS_EXPLICIT = "android.media.IS_EXPLICIT";
+    public static final java.lang.String EXTRA_MEDIA_ART_SIZE_HINT_PIXELS = "android.media.extras.MEDIA_ART_SIZE_HINT_PIXELS";
+    public static final java.lang.String MEDIA_SEARCH_SUPPORTED = "android.media.browse.SEARCH_SUPPORTED";
+    public static final java.lang.String MEDIA_SEARCH_SUPPORTED_PRERELEASE = "android.auto.media.SEARCH_SUPPORTED";
+    public static final java.lang.String PLAYBACK_SLOT_RESERVATION_SKIP_TO_NEXT = "android.media.playback.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_NEXT";
+    public static final java.lang.String PLAYBACK_SLOT_RESERVATION_SKIP_TO_PREV = "android.media.playback.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_PREVIOUS";
+    public static final java.lang.String SLOT_RESERVATION_SKIP_TO_NEXT = "com.google.android.gms.car.media.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_NEXT";
+    public static final java.lang.String SLOT_RESERVATION_SKIP_TO_PREV = "com.google.android.gms.car.media.ALWAYS_RESERVE_SPACE_FOR.ACTION_SKIP_TO_PREVIOUS";
+    public static long EXTRA_METADATA_ENABLED_VALUE;
+public final class com.android.car.media.common.MediaErrorCodes {
+    public static final int ERROR_CODE_ACTION_ABORTED = 10;
+    public static final int ERROR_CODE_APP_ERROR = 1;
+    public static final int ERROR_CODE_AUTHENTICATION_EXPIRED = 3;
+    public static final int ERROR_CODE_CONCURRENT_STREAM_LIMIT = 5;
+    public static final int ERROR_CODE_CONTENT_ALREADY_PLAYING = 8;
+    public static final int ERROR_CODE_END_OF_QUEUE = 11;
+    public static final int ERROR_CODE_NOT_AVAILABLE_IN_REGION = 7;
+    public static final int ERROR_CODE_NOT_SUPPORTED = 2;
+    public static final int ERROR_CODE_PARENTAL_CONTROL_RESTRICTED = 6;
+    public static final int ERROR_CODE_PREMIUM_ACCOUNT_REQUIRED = 4;
+    public static final int ERROR_CODE_SKIP_LIMIT_REACHED = 9;
+    public static final int ERROR_CODE_UNKNOWN_ERROR = 0;
+    public static final int STATE_ERROR = 7;
+public class com.android.car.media.common.MediaItemMetadata implements android.os.Parcelable {
+    public android.os.Bundle getExtras();
+    public boolean equals(java.lang.Object);
+    public boolean isBrowsable();
+    public boolean isDownloaded();
+    public boolean isExplicit();
+    public boolean isPlayable();
+    public com.android.car.media.common.MediaItemMetadata$ArtworkRef getArtworkKey();
+    public com.android.car.media.common.MediaItemMetadata(android.os.Parcel);
+    public com.android.car.media.common.MediaItemMetadata(android.support.v4.media.MediaBrowserCompat$MediaItem);
+    public com.android.car.media.common.MediaItemMetadata(android.support.v4.media.MediaMetadataCompat);
+    public com.android.car.media.common.MediaItemMetadata(android.support.v4.media.session.MediaSessionCompat$QueueItem);
+    public int describeContents();
+    public int getBrowsableContentStyleHint();
+    public int getPlayableContentStyleHint();
+    public int hashCode();
+    public java.lang.CharSequence getArtist();
+    public java.lang.CharSequence getSubtitle();
+    public java.lang.CharSequence getTitle();
+    public java.lang.Long getQueueId();
+    public java.lang.String getAlbumTitle();
+    public java.lang.String getId();
+    public java.lang.String getTitleGrouping();
+    public java.lang.String toString();
+    public static final android.os.Parcelable$Creator<com.android.car.media.common.MediaItemMetadata> CREATOR;
+    public void writeToParcel(android.os.Parcel, int);
+public class com.android.car.media.common.MediaItemMetadata$ArtworkRef implements com.android.car.apps.common.imaging.ImageBinder$ImageRef {
+    public android.graphics.drawable.Drawable getImage(android.content.Context);
+    public android.graphics.drawable.Drawable getPlaceholder(android.content.Context, com.android.car.apps.common.imaging.ImageBinder$PlaceholderType);
+    public android.net.Uri getImageURI();
+    public boolean equals(android.content.Context, java.lang.Object);
+    public com.android.car.media.common.MediaItemMetadata$ArtworkRef(com.android.car.media.common.MediaItemMetadata);
+    public java.lang.String toString();
+public final class com.android.car.media.common.MediaItemMetadata$Builder {
+    public com.android.car.media.common.MediaItemMetadata build();
+    public com.android.car.media.common.MediaItemMetadata$Builder setAlbumTitle(java.lang.String);
+    public com.android.car.media.common.MediaItemMetadata$Builder setArtist(java.lang.String);
+    public com.android.car.media.common.MediaItemMetadata$Builder setArtworkUri(android.net.Uri);
+    public com.android.car.media.common.MediaItemMetadata$Builder setBrowsable(boolean);
+    public com.android.car.media.common.MediaItemMetadata$Builder setExtras(android.os.Bundle);
+    public com.android.car.media.common.MediaItemMetadata$Builder setIconBitmap(android.graphics.Bitmap);
+    public com.android.car.media.common.MediaItemMetadata$Builder setId(java.lang.String);
+    public com.android.car.media.common.MediaItemMetadata$Builder setPlayable(boolean);
+    public com.android.car.media.common.MediaItemMetadata$Builder setQueueId(java.lang.Long);
+    public com.android.car.media.common.MediaItemMetadata$Builder setSubtitle(java.lang.CharSequence);
+    public com.android.car.media.common.MediaItemMetadata$Builder setTitle(java.lang.CharSequence);
+    public com.android.car.media.common.MediaItemMetadata$Builder();
+public class com.android.car.media.common.MetadataController {
+    public com.android.car.media.common.MetadataController(androidx.lifecycle.LifecycleOwner, com.android.car.media.common.playback.PlaybackViewModel, android.widget.TextView, android.widget.TextView, android.widget.TextView, android.widget.TextView, android.widget.TextView, android.widget.TextView, android.widget.TextView, android.widget.SeekBar, android.widget.ImageView, android.util.Size);
+public class com.android.car.media.common.MinimizedPlaybackControlBar extends com.android.car.apps.common.MinimizedControlBar {
+    public com.android.car.media.common.MinimizedPlaybackControlBar(android.content.Context);
+    public com.android.car.media.common.MinimizedPlaybackControlBar(android.content.Context, android.util.AttributeSet);
+    public com.android.car.media.common.MinimizedPlaybackControlBar(android.content.Context, android.util.AttributeSet, int);
+    public void setModel(com.android.car.media.common.playback.PlaybackViewModel, androidx.lifecycle.LifecycleOwner, android.util.Size);
+public class com.android.car.media.common.PlayPauseStopImageView extends android.widget.ImageView {
+    public com.android.car.media.common.PlayPauseStopImageView(android.content.Context, android.util.AttributeSet);
+    public int getAction();
+    public int[] onCreateDrawableState(int);
+    public static final int ACTION_DISABLED = 0;
+    public static final int ACTION_PAUSE = 3;
+    public static final int ACTION_PLAY = 1;
+    public static final int ACTION_STOP = 2;
+    public void setAction(int);
+public interface com.android.car.media.common.PlayPauseStopImageView$Action extends java.lang.annotation.Annotation {
+public class com.android.car.media.common.PlaybackControlsActionBar extends com.android.car.apps.common.ControlBar {
+    public com.android.car.media.common.PlaybackControlsActionBar(android.content.Context);
+    public com.android.car.media.common.PlaybackControlsActionBar(android.content.Context, android.util.AttributeSet);
+    public com.android.car.media.common.PlaybackControlsActionBar(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.media.common.PlaybackControlsActionBar(android.content.Context, android.util.AttributeSet, int, int);
+    public void setModel(com.android.car.media.common.playback.PlaybackViewModel, androidx.lifecycle.LifecycleOwner);
+public class com.android.car.media.common.PlaybackErrorViewController {
+    public com.android.car.media.common.PlaybackErrorViewController(android.view.View);
+    public void hideError();
+    public void hideErrorNoAnim();
+    public void setError(java.lang.String, java.lang.String, android.app.PendingIntent, boolean);
+public abstract class com.android.car.media.common.PlaybackErrorsHelper {
+    protected abstract void handleNewPlaybackState(java.lang.String, android.app.PendingIntent, java.lang.String);
+    public com.android.car.media.common.PlaybackErrorsHelper(android.content.Context);
+    public void handlePlaybackState(java.lang.String, com.android.car.media.common.playback.PlaybackViewModel$PlaybackStateWrapper, boolean);
+public class com.android.car.media.common.PlaybackFragment extends androidx.fragment.app.Fragment {
+    public android.view.View onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
+    public com.android.car.media.common.PlaybackFragment();
+    public void onDestroyView();
+public class com.android.car.media.common.PlaybackFragment$ViewModel extends androidx.lifecycle.AndroidViewModel {
+    public com.android.car.media.common.PlaybackFragment$ViewModel(android.app.Application);
+public class com.android.car.media.common.browse.MediaBrowserViewModelImpl {
+    public static boolean getSupportsSearch(android.os.Bundle);
+    public static int getRootBrowsableHint(android.os.Bundle);
+    public static int getRootPlayableHint(android.os.Bundle);
+    public static java.util.Collection<com.android.car.media.common.MediaItemMetadata> computeRemovedItems(java.util.List<com.android.car.media.common.MediaItemMetadata>, java.util.List<com.android.car.media.common.MediaItemMetadata>);
+    public static java.util.List<com.android.car.media.common.MediaItemMetadata> filterItems(boolean, java.util.List<com.android.car.media.common.MediaItemMetadata>);
+    public static java.util.List<com.android.car.media.common.MediaItemMetadata> selectBrowseableItems(java.util.List<com.android.car.media.common.MediaItemMetadata>);
+public class com.android.car.media.common.browse.MediaItemsRepository {
+    public androidx.lifecycle.LiveData<com.android.car.media.common.source.MediaBrowserConnector$BrowsingState> getBrowsingState();
+    public com.android.car.media.common.browse.MediaItemsRepository$MediaItemsLiveData getMediaChildren(java.lang.String);
+    public com.android.car.media.common.browse.MediaItemsRepository$MediaItemsLiveData getRootMediaItems();
+    public com.android.car.media.common.browse.MediaItemsRepository$MediaItemsLiveData getSearchMediaItems();
+    public com.android.car.media.common.browse.MediaItemsRepository(androidx.lifecycle.LiveData<com.android.car.media.common.source.MediaBrowserConnector$BrowsingState>);
+    public static com.android.car.media.common.browse.MediaItemsRepository get(android.app.Application, int);
+    public void setSearchQuery(java.lang.String);
+public class com.android.car.media.common.browse.MediaItemsRepository$MediaItemsLiveData extends androidx.lifecycle.LiveData<com.android.car.apps.common.util.FutureData<java.util.List<com.android.car.media.common.MediaItemMetadata>>> {
+public final class com.android.car.media.common.playback.Media3PlaybackState {
+    public static android.support.v4.media.session.PlaybackStateCompat toPlaybackState(androidx.media3.common.Player);
+    public static android.support.v4.media.session.PlaybackStateCompat toPlaybackState(androidx.media3.session.MediaController);
+    public static int toLegacyState(androidx.media3.common.Player);
+    public static long toLegacyActions(androidx.media3.common.Player);
+    public static long toLegacyActions(androidx.media3.session.MediaController);
+public class com.android.car.media.common.playback.PlaybackProgress {
+    public boolean hasTime();
+    public com.android.car.media.common.playback.PlaybackProgress(long, long);
+    public java.lang.CharSequence getCurrentTimeText();
+    public java.lang.CharSequence getMaxTimeText();
+    public long getMaxProgress();
+    public long getProgress();
+public class com.android.car.media.common.playback.PlaybackStateAnnotations {
+    public com.android.car.media.common.playback.PlaybackStateAnnotations();
+public interface com.android.car.media.common.playback.PlaybackStateAnnotations$Actions extends java.lang.annotation.Annotation {
+public interface com.android.car.media.common.playback.PlaybackStateAnnotations$State extends java.lang.annotation.Annotation {
+public abstract class com.android.car.media.common.playback.PlaybackTiming {
+    protected abstract float speed();
+    public abstract boolean keepsTicking();
+    public abstract boolean positionAdvances();
+    public abstract long lastPositionUpdateTime();
+    public abstract long position();
+    public float effectiveSpeed();
+    public static com.android.car.media.common.playback.PlaybackTiming from(android.support.v4.media.session.PlaybackStateCompat);
+    public static final long POSITION_UNKNOWN = -1l;
+public class com.android.car.media.common.playback.PlaybackViewModel extends androidx.lifecycle.AndroidViewModel {
+    public androidx.lifecycle.LiveData<com.android.car.media.common.MediaItemMetadata> getMetadata();
+    public androidx.lifecycle.LiveData<com.android.car.media.common.playback.PlaybackProgress> getProgress();
+    public androidx.lifecycle.LiveData<com.android.car.media.common.playback.PlaybackViewModel$PlaybackController> getPlaybackController();
+    public androidx.lifecycle.LiveData<com.android.car.media.common.playback.PlaybackViewModel$PlaybackStateWrapper> getPlaybackStateWrapper();
+    public androidx.lifecycle.LiveData<com.android.car.media.common.source.MediaSourceColors> getMediaSourceColors();
+    public androidx.lifecycle.LiveData<java.lang.Boolean> hasQueue();
+    public androidx.lifecycle.LiveData<java.lang.CharSequence> getQueueTitle();
+    public androidx.lifecycle.LiveData<java.util.List<com.android.car.media.common.MediaItemMetadata>> getQueue();
+    public androidx.media3.common.MediaMetadata getMediaMetadata();
+    public androidx.media3.common.Player$Listener getPlayerListener();
+    public androidx.media3.session.MediaController getMediaController();
+    public com.android.car.media.common.playback.PlaybackViewModel(android.app.Application, androidx.lifecycle.LiveData<com.android.car.media.common.source.MediaBrowserConnector$BrowsingState>);
+    public static com.android.car.media.common.playback.PlaybackViewModel get(android.app.Application, int);
+    public static final int ACTION_DISABLED = 0;
+    public static final int ACTION_PAUSE = 3;
+    public static final int ACTION_PLAY = 1;
+    public static final int ACTION_STOP = 2;
+public interface com.android.car.media.common.playback.PlaybackViewModel$Action extends java.lang.annotation.Annotation {
+public class com.android.car.media.common.playback.PlaybackViewModel$PlaybackController {
+    public void doCustomAction(java.lang.String, android.os.Bundle);
+    public void pause();
+    public void play();
+    public void playItem(com.android.car.media.common.MediaItemMetadata);
+    public void prepare();
+    public void seekTo(long);
+    public void skipToNext();
+    public void skipToPrevious();
+    public void skipToQueueItem(long);
+    public void stop();
+public final class com.android.car.media.common.playback.PlaybackViewModel$PlaybackStateWrapper {
+    public android.os.Bundle getExtras();
+    public android.support.v4.media.session.PlaybackStateCompat getStateCompat();
+    public boolean iSkipPreviousReserved();
+    public boolean isLoading();
+    public boolean isPlaying();
+    public boolean isSeekToEnabled();
+    public boolean isSkipNextEnabled();
+    public boolean isSkipNextReserved();
+    public boolean isSkipPreviousEnabled();
+    public boolean shouldDisplay();
+    public int getErrorCode();
+    public int getMainAction();
+    public int getState();
+    public java.lang.CharSequence getErrorMessage();
+    public java.util.List<com.android.car.media.common.playback.PlaybackViewModel$RawCustomPlaybackAction> getCustomActions();
+    public long getActiveQueueItemId();
+    public long getMaxProgress();
+    public long getSupportedActions();
+public class com.android.car.media.common.playback.PlaybackViewModel$RawCustomPlaybackAction {
+    public boolean equals(java.lang.Object);
+    public com.android.car.media.common.CustomPlaybackAction fetchDrawable(android.content.Context);
+    public com.android.car.media.common.playback.PlaybackViewModel$RawCustomPlaybackAction(int, java.lang.String, java.lang.String, android.os.Bundle);
+    public final android.os.Bundle mExtras;
+    public final int mIcon;
+    public final java.lang.String mAction;
+    public final java.lang.String mPackageName;
+    public int hashCode();
+public class com.android.car.media.common.source.MediaBrowserConnector {
+    protected com.google.common.util.concurrent.ListenableFuture<androidx.media3.session.MediaBrowser> createMediaBrowser(com.android.car.media.common.source.MediaSource, androidx.media3.session.MediaBrowser$Listener);
+    public com.android.car.media.common.source.MediaBrowserConnector(android.content.Context, com.android.car.media.common.source.MediaBrowserConnector$Callback);
+    public static final java.util.concurrent.Executor CALLBACK_EXECUTOR;
+    public void connectTo(com.android.car.media.common.source.MediaSource);
+public interface com.android.car.media.common.source.MediaBrowserConnector$BrowserEventListener {
+    public default void onChildrenChanged(java.lang.String);
+    public default void onSearchResultChanged(java.lang.String);
+public class com.android.car.media.common.source.MediaBrowserConnector$BrowsingState {
+    public androidx.media3.session.MediaController getController();
+    public boolean equals(java.lang.Object);
+    public com.android.car.media.common.source.MediaBrowserConnector$BrowsingState(com.android.car.media.common.source.MediaSource, androidx.media3.session.MediaBrowser, com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus);
+    public final androidx.media3.session.MediaBrowser mBrowser;
+    public final com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus mConnectionStatus;
+    public final com.android.car.media.common.source.MediaSource mMediaSource;
+    public int hashCode();
+    public void addBrowserEventListener(com.android.car.media.common.source.MediaBrowserConnector$BrowserEventListener);
+public interface com.android.car.media.common.source.MediaBrowserConnector$Callback {
+    public abstract void onBrowserConnectionChanged(com.android.car.media.common.source.MediaBrowserConnector$BrowsingState);
+public final class com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus extends java.lang.Enum<com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus> {
+    public static com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus valueOf(java.lang.String);
+    public static com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus[] values();
+    public static final com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus CONNECTED;
+    public static final com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus CONNECTING;
+    public static final com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus DISCONNECTING;
+    public static final com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus REJECTED;
+    public static final com.android.car.media.common.source.MediaBrowserConnector$ConnectionStatus SUSPENDED;
+public class com.android.car.media.common.source.MediaSource {
+    public android.content.ComponentName getBrowseServiceComponentName();
+    public android.graphics.Bitmap getCroppedPackageIcon();
+    public android.graphics.drawable.Drawable getIcon();
+    public boolean equals(java.lang.Object);
+    public com.android.car.media.common.source.MediaSource(android.content.ComponentName, java.lang.CharSequence, android.graphics.drawable.Drawable, com.android.car.apps.common.IconCropper);
+    public int hashCode();
+    public java.lang.CharSequence getDisplayName();
+    public java.lang.String getPackageName();
+    public java.lang.String toString();
+    public static android.content.Intent getSourceSelectorIntent(android.content.Context, boolean);
+    public static com.android.car.media.common.source.MediaSource create(android.content.Context, android.content.ComponentName);
+public class com.android.car.media.common.source.MediaSourceColors {
+    public com.android.car.media.common.source.MediaSourceColors(int, int, int);
+    public int getAccentColor(int);
+    public int getPrimaryColor(int);
+    public int getPrimaryColorDark(int);
+public class com.android.car.media.common.source.MediaSourceColors$Factory {
+    public com.android.car.media.common.source.MediaSourceColors extractColors(com.android.car.media.common.source.MediaSource);
+    public com.android.car.media.common.source.MediaSourceColors extractColors(java.lang.String);
+    public com.android.car.media.common.source.MediaSourceColors$Factory(android.content.Context);
+public class com.android.car.media.common.source.MediaSourceViewModel extends androidx.lifecycle.AndroidViewModel {
+    protected void onCleared();
+    public androidx.lifecycle.LiveData<com.android.car.media.common.source.MediaBrowserConnector$BrowsingState> getBrowsingState();
+    public androidx.lifecycle.LiveData<com.android.car.media.common.source.MediaSource> getPrimaryMediaSource();
+    public static com.android.car.media.common.source.MediaSourceViewModel get(android.app.Application, int);
+    public void setPrimaryMediaSource(com.android.car.media.common.source.MediaSource, int);
+public class com.android.car.media.common.source.MediaSourcesProvider {
+    public java.util.List<com.android.car.media.common.source.MediaSource> getList();
+    public static com.android.car.media.common.source.MediaSourcesProvider createForTesting(android.content.Context);
+    public static com.android.car.media.common.source.MediaSourcesProvider getInstance(android.content.Context);
+public class com.android.car.media.common.source.MediaTrampolineHelper implements androidx.lifecycle.LifecycleObserver {
+    public com.android.car.media.common.source.MediaTrampolineHelper(androidx.fragment.app.FragmentActivity);
+    public void onPause();
+    public void onResume();
+    public void setLaunchedMediaSource(android.content.ComponentName);
+
+# annotations.zip
+    com.android.car.media.common.MediaButtonController int convertMainAction(com.android.car.media.common.playback.PlaybackViewModel.PlaybackStateWrapper)  androidx.annotation.IntDef value={com.android.car.media.common.PlayPauseStopImageView.ACTION_PLAY, com.android.car.media.common.PlayPauseStopImageView.ACTION_STOP, com.android.car.media.common.PlayPauseStopImageView.ACTION_PAUSE, com.android.car.media.common.PlayPauseStopImageView.ACTION_DISABLED}
+    com.android.car.media.common.PlayPauseStopImageView void setAction(int) 0  androidx.annotation.IntDef value={com.android.car.media.common.PlayPauseStopImageView.ACTION_PLAY, com.android.car.media.common.PlayPauseStopImageView.ACTION_STOP, com.android.car.media.common.PlayPauseStopImageView.ACTION_PAUSE, com.android.car.media.common.PlayPauseStopImageView.ACTION_DISABLED}
+    com.android.car.media.common.PlayPauseStopImageView.Action  androidx.annotation.IntDef value={com.android.car.media.common.PlayPauseStopImageView.ACTION_PLAY, com.android.car.media.common.PlayPauseStopImageView.ACTION_STOP, com.android.car.media.common.PlayPauseStopImageView.ACTION_PAUSE, com.android.car.media.common.PlayPauseStopImageView.ACTION_DISABLED}
+    com.android.car.media.common.playback.PlaybackStateAnnotations.Actions  androidx.annotation.LongDef flag=true value={android.media.session.PlaybackState.ACTION_STOP, android.media.session.PlaybackState.ACTION_PAUSE, android.media.session.PlaybackState.ACTION_PLAY, android.media.session.PlaybackState.ACTION_REWIND, android.media.session.PlaybackState.ACTION_SKIP_TO_PREVIOUS, android.media.session.PlaybackState.ACTION_SKIP_TO_NEXT, android.media.session.PlaybackState.ACTION_FAST_FORWARD, android.media.session.PlaybackState.ACTION_SET_RATING, android.media.session.PlaybackState.ACTION_SEEK_TO, android.media.session.PlaybackState.ACTION_PLAY_PAUSE, android.media.session.PlaybackState.ACTION_PLAY_FROM_MEDIA_ID, android.media.session.PlaybackState.ACTION_PLAY_FROM_SEARCH, android.media.session.PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM, android.media.session.PlaybackState.ACTION_PLAY_FROM_URI, android.media.session.PlaybackState.ACTION_PREPARE, android.media.session.PlaybackState.ACTION_PREPARE_FROM_MEDIA_ID, android.media.session.PlaybackState.ACTION_PREPARE_FROM_SEARCH, android.media.session.PlaybackState.ACTION_PREPARE_FROM_URI}
+    com.android.car.media.common.playback.PlaybackStateAnnotations.State  androidx.annotation.IntDef value={android.media.session.PlaybackState.STATE_NONE, android.media.session.PlaybackState.STATE_STOPPED, android.media.session.PlaybackState.STATE_PAUSED, android.media.session.PlaybackState.STATE_PLAYING, android.media.session.PlaybackState.STATE_FAST_FORWARDING, android.media.session.PlaybackState.STATE_REWINDING, android.media.session.PlaybackState.STATE_BUFFERING, android.media.session.PlaybackState.STATE_ERROR, android.media.session.PlaybackState.STATE_CONNECTING, android.media.session.PlaybackState.STATE_SKIPPING_TO_PREVIOUS, android.media.session.PlaybackState.STATE_SKIPPING_TO_NEXT, android.media.session.PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM}
+    com.android.car.media.common.playback.PlaybackViewModel.Action  androidx.annotation.IntDef value={com.android.car.media.common.playback.PlaybackViewModel.ACTION_PLAY, com.android.car.media.common.playback.PlaybackViewModel.ACTION_STOP, com.android.car.media.common.playback.PlaybackViewModel.ACTION_PAUSE, com.android.car.media.common.playback.PlaybackViewModel.ACTION_DISABLED}
+    com.android.car.media.common.playback.PlaybackViewModel.PlaybackStateWrapper int getMainAction()  androidx.annotation.IntDef value={com.android.car.media.common.playback.PlaybackViewModel.ACTION_PLAY, com.android.car.media.common.playback.PlaybackViewModel.ACTION_STOP, com.android.car.media.common.playback.PlaybackViewModel.ACTION_PAUSE, com.android.car.media.common.playback.PlaybackViewModel.ACTION_DISABLED}

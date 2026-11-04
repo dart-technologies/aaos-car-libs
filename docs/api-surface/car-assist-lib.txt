@@ -1,0 +1,48 @@
+# AndroidManifest package
+com.android.car.assist
+
+public abstract class com.android.car.assist.CarVoiceInteractionSession extends android.service.voice.VoiceInteractionSession {
+    protected abstract void onShow(java.lang.String, android.os.Bundle, int);
+    protected static java.lang.String getRequestedVoiceAction(android.os.Bundle);
+    public com.android.car.assist.CarVoiceInteractionSession(android.content.Context);
+    public com.android.car.assist.CarVoiceInteractionSession(android.content.Context, android.os.Handler);
+    public com.android.car.assist.payloadhandlers.NotificationPayloadHandler getNotificationPayloadHandler();
+    public final void onShow(android.os.Bundle, int);
+    public static final java.lang.String EXCEPTION_NOTIFICATION_LISTENER_PERMISSIONS_MISSING = "EXCEPTION_NOTIFICATION_LISTENER_PERMISSIONS_MISSING";
+    public static final java.lang.String EXTRA_SUBSTITUTE_APP_NAME = "android.substName";
+    public static final java.lang.String KEY_ACTION = "KEY_ACTION";
+    public static final java.lang.String KEY_CONVERSATION = "KEY_CONVERSATION";
+    public static final java.lang.String KEY_DEVICE_ADDRESS = "KEY_DEVICE_ADDRESS";
+    public static final java.lang.String KEY_DEVICE_NAME = "KEY DEVICE_NAME";
+    public static final java.lang.String KEY_EXCEPTION = "KEY_EXCEPTION";
+    public static final java.lang.String KEY_FALLBACK_ASSISTANT_ENABLED = "KEY_FALLBACK_ASSISTANT_ENABLED";
+    public static final java.lang.String KEY_NOTIFICATION = "KEY_NOTIFICATION";
+    public static final java.lang.String KEY_PHONE_NUMBER = "KEY_PHONE_NUMBER";
+    public static final java.lang.String KEY_RECIPIENT_NAME = "KEY RECIPIENT NAME";
+    public static final java.lang.String KEY_RECIPIENT_UID = "KEY_RECIPIENT_UID";
+    public static final java.lang.String KEY_SEND_PENDING_INTENT = "KEY_SEND_PENDING INTENT";
+    public static final java.lang.String VOICE_ACTION_HANDLE_EXCEPTION = "VOICE_ACTION_HANDLE_EXCEPTION";
+    public static final java.lang.String VOICE_ACTION_NO_ACTION = "VOICE_ACTION_NO_ACTION";
+    public static final java.lang.String VOICE_ACTION_READ_CONVERSATION = "VOICE_ACTION_READ_CONVERSATION";
+    public static final java.lang.String VOICE_ACTION_READ_NOTIFICATION = "VOICE_ACTION_READ_NOTIFICATION";
+    public static final java.lang.String VOICE_ACTION_REPLY_CONVERSATION = "VOICE_ACTION_REPLY_CONVERSATION";
+    public static final java.lang.String VOICE_ACTION_REPLY_NOTIFICATION = "VOICE_ACTION_REPLY_NOTIFICATION";
+    public static final java.lang.String VOICE_ACTION_SEND_SMS = "VOICE_ACTION_SEND_SMS";
+public interface com.android.car.assist.CarVoiceInteractionSession$ExceptionValue extends java.lang.annotation.Annotation {
+public class com.android.car.assist.payloadhandlers.ConversationPayloadHandler {
+    public static android.app.Notification createNotificationFromConversation(android.content.Context, java.lang.String, com.android.car.messenger.common.Conversation, int, java.lang.String);
+    public static java.lang.String getPackageName(android.app.PendingIntent);
+public class com.android.car.assist.payloadhandlers.NotificationPayloadHandler {
+    public android.app.Notification getNotification(android.os.Bundle);
+    public android.app.Notification$Action getAction(android.app.Notification, int);
+    public android.app.Notification$Action getAction(android.os.Bundle, int);
+    public android.content.Intent writeReply(android.app.Notification$Action, java.lang.CharSequence);
+    public android.content.Intent writeReply(android.os.Bundle, java.lang.CharSequence);
+    public android.service.notification.StatusBarNotification getStatusBarNotification(android.os.Bundle);
+    public boolean fireAction(android.app.Notification$Action, android.content.Intent);
+    public com.android.car.assist.payloadhandlers.NotificationPayloadHandler(android.content.Context);
+    public java.util.List<androidx.core.app.NotificationCompat$MessagingStyle$Message> getMessages(android.app.Notification);
+    public java.util.List<androidx.core.app.NotificationCompat$MessagingStyle$Message> getMessages(android.os.Bundle);
+
+# annotations.zip
+    com.android.car.assist.CarVoiceInteractionSession.ExceptionValue  androidx.annotation.StringDef value={com.android.car.assist.CarVoiceInteractionSession.EXCEPTION_NOTIFICATION_LISTENER_PERMISSIONS_MISSING}

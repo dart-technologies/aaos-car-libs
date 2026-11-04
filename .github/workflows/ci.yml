@@ -1,0 +1,233 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+#
+# A green run means it builds and the JVM suites pass (counts in docs/gate-counts.tsv). It does not
+# run the instrumented suites, which need an AAOS emulator with this repo's proxy plugin in
+# /system/app on a non-public GAS image; the plugin boundary and the UX-restriction runtime path
+# are covered only by the local gate, scripts/run-bump-gate.sh.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: jobs escalate only what they need.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & JVM tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: platform-tools  # default also asks for 'tools', which Google removed
+
+      - name: Install platform 37
+        # compileSdk 37 (settings.gradle: aaosLatestSDK); the platform also supplies
+        # optional/android.car.jar for useLibrary 'android.car'. The id is "platforms;android-37.0":
+        # "android-37" does not exist and fails this step. Nothing pins buildToolsVersion (AGP 9
+        # bundles aapt2 and d8), so build-tools here is a hint.
+        run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+
+      - name: Validate Gradle wrapper jars
+        # The committed wrapper jar runs before any build logic can inspect it. Validates the one
+        # tracked jar (the flutter example's is gitignored); min-wrapper-count keeps that asserted.
+        # distributionSha256Sum pins the download, not the wrapper; neither catches a genuine jar
+        # of the wrong version. Same pinned action as setup-gradle: one review covers both.
+        uses: gradle/actions/wrapper-validation@8379f6a1328ee0e06e2bb424dadb7b159856a326 # v4.4.0
+        with:
+          min-wrapper-count: 1
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8379f6a1328ee0e06e2bb424dadb7b159856a326 # v4.4.0
+
+      - name: Assemble
+        working-directory: aaos-apps-gradle-project
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: JVM unit tests
+        working-directory: aaos-apps-gradle-project
+        # Tasks come from scripts/gate-modules.tsv, the one list the gate and the ledger also read.
+        run: |
+          TASKS=$(grep -v '^#' ../scripts/gate-modules.tsv \
+                  | awk -F'\t' 'NF {printf " %s:testDebugUnitTest", $1}')
+          COUNT=$(printf '%s' "$TASKS" | wc -w | tr -d ' ')
+          # ../scripts: this step runs in aaos-apps-gradle-project.
+          EXPECTED=$(grep -vcE '^[[:space:]]*(#|$)' ../scripts/gate-modules.tsv)
+          # Non-emptiness first: 0 == 0 would pass an unreadable manifest.
+          if [ -z "$EXPECTED" ] || [ "$EXPECTED" -lt 1 ]; then
+            echo "gate-modules.tsv yielded no rows; refusing to infer that zero suites is correct"
+            exit 1
+          fi
+          if [ "$COUNT" -ne "$EXPECTED" ]; then
+            echo "gate-modules.tsv has $EXPECTED row(s) but yielded $COUNT task(s); refusing"
+            exit 1
+          fi
+          echo "running $COUNT JVM suite(s) from scripts/gate-modules.tsv"
+          # An array, expanded quoted: unquoted $TASKS works only because bash word-splits.
+          read -r -a TASK_ARRAY <<< "$TASKS"
+          ./gradlew "${TASK_ARRAY[@]}" --stacktrace
+
+      - name: Unit-test coverage
+        working-directory: aaos-apps-gradle-project
+        # Coverage runs here rather than in the local gate, with the test results already in hand.
+        # Same task list as the step above.
+        run: |
+          TASKS=$(grep -v '^#' ../scripts/gate-modules.tsv \
+                  | awk -F'\t' 'NF {printf " %s:createDebugUnitTestCoverageReport", $1}')
+          COUNT=$(printf '%s' "$TASKS" | wc -w | tr -d ' ')
+          # ../scripts: this step runs in aaos-apps-gradle-project.
+          EXPECTED=$(grep -vcE '^[[:space:]]*(#|$)' ../scripts/gate-modules.tsv)
+          # Non-emptiness first: 0 == 0 would pass an unreadable manifest.
+          if [ -z "$EXPECTED" ] || [ "$EXPECTED" -lt 1 ]; then
+            echo "gate-modules.tsv yielded no rows; refusing to infer that zero suites is correct"
+            exit 1
+          fi
+          if [ "$COUNT" -ne "$EXPECTED" ]; then
+            echo "gate-modules.tsv has $EXPECTED row(s) but yielded $COUNT task(s); refusing"
+            exit 1
+          fi
+          read -r -a TASK_ARRAY <<< "$TASKS"
+          ./gradlew "${TASK_ARRAY[@]}" --stacktrace
+
+      - name: Coverage baseline
+        # Per-module status (MEASURED/BLIND/EMPTY), not a percentage; any transition fails.
+        run: python3 scripts/check-coverage.py
+
+      - name: Executed-count gate
+        # BUILD SUCCESSFUL is not the criterion: a suite that ran zero tests also succeeds. Counts
+        # come from docs/gate-counts.tsv, as in the local gate. --max-failures 0 is load-bearing.
+        run: |
+          set -o pipefail
+          fail=0
+          while read -r m n; do
+            d="aaos-apps-gradle-project/build/$m/test-results/testDebugUnitTest"
+            python3 scripts/check-instrumented-run.py "$d" --expect "$n" --max-failures 0 || fail=1
+          done < <(python3 scripts/record-gate-counts.py --print)
+          # Catches what the loop cannot: a suite that RAN but is absent from the ledger.
+          python3 scripts/record-gate-counts.py --check || fail=1
+          exit $fail
+
+      - name: Published API surface
+        # In the build job because the surface check reads built AARs. -PwithFlutter, or
+        # ':car-uxr-flutter' is excluded and never checked.
+        working-directory: aaos-apps-gradle-project
+        run: ./gradlew -PwithFlutter assembleDebug --stacktrace
+
+      - name: Published API surface matches the baselines
+        run: python3 scripts/check-api-surface.py
+
+      - name: API design lint on the fork's own API
+        # Needs android.jar from the SDK for metalava's classpath. Lints fork-authored modules only.
+        run: python3 scripts/check-api-lint.py
+
+      - name: Overlayable surfaces are packaged
+        # A declared <overlayable> missing from the APK still builds. Runs after Assemble.
+        run: python3 scripts/check-overlayable-packaged.py
+
+      - name: Build coverage
+        # Every .java under every configured source root must be selected by some module and compiled.
+        run: |
+          set -o pipefail
+          ( cd aaos-apps-gradle-project \
+            && ./gradlew -I ../scripts/dump-source-sets.gradle help -q ) \
+            | grep -E '^SRCSET|^FILTER' > /tmp/ss.tsv
+          test -s /tmp/ss.tsv || { echo "could not dump source sets"; exit 2; }
+          python3 scripts/check-build-coverage.py \
+            --source-sets /tmp/ss.tsv \
+            --build-dir aaos-apps-gradle-project/build \
+            --baseline scripts/build-coverage-baseline.txt \
+            --repo-root .
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: jvm-test-results
+          path: aaos-apps-gradle-project/build/*/test-results/**/*.xml
+          if-no-files-found: error
+          retention-days: 14
+
+  hygiene:
+    name: Hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0  # licence check lists files added since the fork point
+
+      - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: '3.12'
+
+      - name: actionlint
+        # The release binary, checksum-verified; never `bash <(curl ...)` from a mutable tag.
+        env:
+          ACTIONLINT_SHA256: '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757'
+        run: |
+          set -euo pipefail
+          curl -fsSL -o actionlint.tar.gz \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz actionlint
+          ./actionlint -color
+
+      - name: Actions are SHA-pinned
+        # Mutable action tags are a supply-chain risk; enforced, not reviewed.
+        run: python3 scripts/check-workflow-pins.py
+
+      - name: A2UI conformance
+        # The automotive suite must stay valid against both pinned upstream schemas.
+        run: |
+          python3 -m pip install --quiet --require-hashes \
+            -r scripts/requirements-a2ui-conformance-py312-linux.txt
+          python3 scripts/check-a2ui-conformance.py
+
+      - name: Demo workflows cover the corpus
+        # record-demo.sh's case table must match UseCaseCorpus.java, or a new case is never recorded.
+        run: python3 scripts/check-demo-workflows.py
+
+      - name: Screenshot evidence is structurally valid and auditable
+        # Every capture names a display and carries a checksum/provenance sidecar.
+        run: python3 scripts/check-screenshot-evidence.py
+
+      - name: Generated demo assets are exact and structurally valid
+        run: python3 scripts/check-demo-assets.py
+
+      - name: NYC timed demo scenarios are bounded and mapped to the corpus
+        # Provider keys and paid audio do not belong in CI. This validates the data contract,
+        # 60–90s timing, exact action vocabulary, and 10k-credit ceiling without making a request.
+        run: python3 scripts/check-nyc-demo.py
+
+      - name: Licence headers
+        # Files this fork adds carry an Apache-2.0 header; inherited AOSP files are left alone.
+        run: python3 scripts/check-license-headers.py
+
+      - name: Gate metadata is consistent
+        # CI cannot run the local instrumented gate, but it checks the files that gate depends on.
+        run: python3 scripts/check-gate-metadata.py

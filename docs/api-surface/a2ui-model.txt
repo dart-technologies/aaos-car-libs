@@ -1,0 +1,368 @@
+# AndroidManifest package
+art.dart.a2ui
+
+public interface art.dart.a2ui.agent.AccessTokenProvider {
+    public abstract java.lang.String getAccessToken() throws art.dart.a2ui.agent.AgentTransportException;
+public final class art.dart.a2ui.agent.AgentActionOutcome extends java.lang.Enum<art.dart.a2ui.agent.AgentActionOutcome> {
+    public static art.dart.a2ui.agent.AgentActionOutcome valueOf(java.lang.String);
+    public static art.dart.a2ui.agent.AgentActionOutcome[] values();
+    public static final art.dart.a2ui.agent.AgentActionOutcome ALLOWED;
+    public static final art.dart.a2ui.agent.AgentActionOutcome CONFIRMED;
+    public static final art.dart.a2ui.agent.AgentActionOutcome FAILED;
+    public static final art.dart.a2ui.agent.AgentActionOutcome REFUSED;
+public final class art.dart.a2ui.agent.AgentExecutionProfile extends java.lang.Enum<art.dart.a2ui.agent.AgentExecutionProfile> {
+    public java.lang.String wireName();
+    public static art.dart.a2ui.agent.AgentExecutionProfile valueOf(java.lang.String);
+    public static art.dart.a2ui.agent.AgentExecutionProfile[] values();
+    public static final art.dart.a2ui.agent.AgentExecutionProfile QUALITY_CACHED;
+    public static final art.dart.a2ui.agent.AgentExecutionProfile REALTIME_LOW_LATENCY;
+public final class art.dart.a2ui.agent.AgentGatewayAcknowledgement {
+    public art.dart.a2ui.agent.AgentProvider getProvider();
+    public java.lang.String getSessionId();
+    public java.lang.String getTurnId();
+public final class art.dart.a2ui.agent.AgentGatewayConfig {
+    public art.dart.a2ui.agent.AgentGatewayConfig(java.lang.String);
+    public art.dart.a2ui.agent.AgentGatewayConfig(java.lang.String, int, int, int);
+    public int getConnectTimeoutMillis();
+    public int getMaxResponseBytes();
+    public int getReadTimeoutMillis();
+    public java.lang.String getEndpoint();
+    public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 10000;
+    public static final int DEFAULT_MAX_RESPONSE_BYTES = 262144;
+    public static final int DEFAULT_READ_TIMEOUT_MILLIS = 30000;
+public final class art.dart.a2ui.agent.AgentGatewayEnvelope {
+    public art.dart.a2ui.agent.AgentProvider getProvider();
+    public java.lang.String getAssistantText();
+    public java.lang.String getSessionId();
+    public java.lang.String getSource();
+    public java.lang.String getTurnId();
+    public java.util.List<art.dart.a2ui.protocol.A2uiMessage> getMessages();
+    public static final java.lang.String SCHEMA = "a2ui.gateway.v1";
+    public static final java.lang.String SOURCE_CACHE = "cache";
+    public static final java.lang.String SOURCE_FALLBACK = "fallback";
+    public static final java.lang.String SOURCE_LIVE = "live";
+public final class art.dart.a2ui.agent.AgentGatewayProtocol {
+    public static byte[] encodeActionResult(art.dart.a2ui.agent.AgentProvider, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, art.dart.a2ui.agent.AgentActionOutcome, java.lang.String);
+    public static byte[] encodeTurn(art.dart.a2ui.agent.AgentProvider, art.dart.a2ui.agent.AgentExecutionProfile, java.lang.String, java.lang.String, java.lang.String, int, int, boolean);
+    public static byte[] encodeTurn(art.dart.a2ui.agent.AgentProvider, java.lang.String, java.lang.String, java.lang.String, int, int, boolean);
+public final class art.dart.a2ui.agent.AgentProvider extends java.lang.Enum<art.dart.a2ui.agent.AgentProvider> {
+    public java.lang.String wireName();
+    public static art.dart.a2ui.agent.AgentProvider fromWireName(java.lang.String);
+    public static art.dart.a2ui.agent.AgentProvider valueOf(java.lang.String);
+    public static art.dart.a2ui.agent.AgentProvider[] values();
+    public static final art.dart.a2ui.agent.AgentProvider CHATGPT;
+    public static final art.dart.a2ui.agent.AgentProvider CLAUDE;
+    public static final art.dart.a2ui.agent.AgentProvider GEMINI;
+    public static final art.dart.a2ui.agent.AgentProvider GROK;
+    public static final art.dart.a2ui.agent.AgentProvider MUSE;
+public final class art.dart.a2ui.agent.AgentSession implements java.lang.AutoCloseable {
+    public art.dart.a2ui.agent.AgentExecutionProfile getExecutionProfile();
+    public art.dart.a2ui.agent.AgentProvider getProvider();
+    public art.dart.a2ui.agent.AgentSession(java.lang.String, art.dart.a2ui.agent.AgentProvider, art.dart.a2ui.agent.AgentTransport, art.dart.a2ui.agent.BoundedA2uiJsonDecoder, art.dart.a2ui.protocol.A2uiMessageProcessor, art.dart.a2ui.agent.TrustedActionRegistry);
+    public void close();
+    public void selectExecutionProfile(art.dart.a2ui.agent.AgentExecutionProfile);
+    public void selectProvider(art.dart.a2ui.agent.AgentProvider);
+    public void sendActionResult(java.lang.String, java.lang.String, java.lang.String, java.lang.String, art.dart.a2ui.agent.AgentActionOutcome, java.lang.String, java.util.concurrent.Executor, art.dart.a2ui.agent.AgentSession$ActionResultCallback);
+    public void submitTurn(java.lang.String, java.lang.String, int, int, boolean, java.util.concurrent.Executor, art.dart.a2ui.agent.AgentSession$Callback);
+public interface art.dart.a2ui.agent.AgentSession$ActionResultCallback {
+    public abstract void onAcknowledged(art.dart.a2ui.agent.AgentGatewayAcknowledgement);
+    public abstract void onFailure(art.dart.a2ui.agent.AgentTransportException);
+public interface art.dart.a2ui.agent.AgentSession$Callback {
+    public abstract void onApplied(art.dart.a2ui.agent.AgentGatewayEnvelope);
+    public abstract void onFailure(art.dart.a2ui.agent.AgentTransportException);
+public interface art.dart.a2ui.agent.AgentTransport extends java.lang.AutoCloseable {
+    public abstract void close();
+    public abstract void send(byte[], java.util.concurrent.Executor, art.dart.a2ui.agent.AgentTransport$Callback);
+public interface art.dart.a2ui.agent.AgentTransport$Callback {
+    public abstract void onFailure(art.dart.a2ui.agent.AgentTransportException);
+    public abstract void onResponse(byte[]);
+public final class art.dart.a2ui.agent.AgentTransportException extends java.lang.Exception {
+    public art.dart.a2ui.agent.AgentTransportException$Kind getKind();
+    public art.dart.a2ui.agent.AgentTransportException(art.dart.a2ui.agent.AgentTransportException$Kind, java.lang.String);
+    public art.dart.a2ui.agent.AgentTransportException(art.dart.a2ui.agent.AgentTransportException$Kind, java.lang.String, int, java.lang.Throwable);
+    public int getHttpStatus();
+public final class art.dart.a2ui.agent.AgentTransportException$Kind extends java.lang.Enum<art.dart.a2ui.agent.AgentTransportException$Kind> {
+    public static art.dart.a2ui.agent.AgentTransportException$Kind valueOf(java.lang.String);
+    public static art.dart.a2ui.agent.AgentTransportException$Kind[] values();
+    public static final art.dart.a2ui.agent.AgentTransportException$Kind AUTHENTICATION;
+    public static final art.dart.a2ui.agent.AgentTransportException$Kind CLOSED;
+    public static final art.dart.a2ui.agent.AgentTransportException$Kind HTTP;
+    public static final art.dart.a2ui.agent.AgentTransportException$Kind MALFORMED;
+    public static final art.dart.a2ui.agent.AgentTransportException$Kind NETWORK;
+    public static final art.dart.a2ui.agent.AgentTransportException$Kind RESPONSE_TOO_LARGE;
+public final class art.dart.a2ui.agent.BoundedA2uiJsonDecoder {
+    public art.dart.a2ui.agent.AgentGatewayAcknowledgement decodeAcknowledgement(byte[]);
+    public art.dart.a2ui.agent.AgentGatewayEnvelope decode(byte[]);
+    public art.dart.a2ui.agent.BoundedA2uiJsonDecoder();
+    public art.dart.a2ui.agent.BoundedA2uiJsonDecoder(int, int, int, int, int);
+    public static final int DEFAULT_MAX_BYTES = 262144;
+    public static final int DEFAULT_MAX_DEPTH = 64;
+    public static final int DEFAULT_MAX_MESSAGES = 64;
+    public static final int DEFAULT_MAX_NODES = 1000;
+    public static final int DEFAULT_MAX_STRING_CHARS = 4096;
+public final class art.dart.a2ui.agent.HttpsAgentTransport implements art.dart.a2ui.agent.AgentTransport {
+    public art.dart.a2ui.agent.HttpsAgentTransport(art.dart.a2ui.agent.AgentGatewayConfig, art.dart.a2ui.agent.AccessTokenProvider, java.util.concurrent.Executor);
+    public void close();
+    public void send(byte[], java.util.concurrent.Executor, art.dart.a2ui.agent.AgentTransport$Callback);
+public final class art.dart.a2ui.agent.TrustedActionRegistry implements art.dart.a2ui.protocol.A2uiMessageProcessor$ActionClassResolver,art.dart.a2ui.protocol.A2uiMessageProcessor$ActionSink {
+    public art.dart.a2ui.policy.A2uiActionClass resolve(java.lang.String, art.dart.a2ui.policy.A2uiActionClass);
+    public boolean hasAction(java.lang.String);
+    public void onAction(java.lang.String, java.lang.String, java.lang.String, java.lang.Object);
+public final class art.dart.a2ui.agent.TrustedActionRegistry$Builder {
+    public art.dart.a2ui.agent.TrustedActionRegistry build();
+    public art.dart.a2ui.agent.TrustedActionRegistry$Builder addAction(java.lang.String, art.dart.a2ui.policy.A2uiActionClass, art.dart.a2ui.agent.TrustedActionRegistry$Handler);
+    public art.dart.a2ui.agent.TrustedActionRegistry$Builder setRejectionListener(art.dart.a2ui.agent.TrustedActionRegistry$RejectionListener);
+    public art.dart.a2ui.agent.TrustedActionRegistry$Builder();
+public interface art.dart.a2ui.agent.TrustedActionRegistry$Handler {
+    public abstract void onAction(java.lang.String, java.lang.String, java.lang.Object);
+public interface art.dart.a2ui.agent.TrustedActionRegistry$RejectionListener {
+    public abstract void onUnknownAction(java.lang.String);
+public final class art.dart.a2ui.demo.DemoRestrictions {
+    public static final java.lang.String ACTION_SET = "art.dart.a2ui.demo.action.SET";
+    public static final java.lang.String EXTRA_ACTIVE = "art.dart.a2ui.demo.extra.ACTIVE";
+    public static java.lang.Integer get();
+    public static void set(java.lang.Integer);
+public final class art.dart.a2ui.demo.DemoSurface {
+    public static art.dart.a2ui.model.A2uiComponent create();
+public final class art.dart.a2ui.demo.DemoTrace {
+    public static art.dart.a2ui.model.A2uiComponent project();
+    public static art.dart.a2ui.protocol.A2uiMessageProcessor newProcessor();
+    public static final java.lang.String CATALOG_ID = "automotive";
+    public static final java.lang.String ROOT_ID = "root";
+    public static final java.lang.String SURFACE_ID = "showcase";
+    public static final java.lang.String VERSION = "v0.9";
+    public static java.util.List<art.dart.a2ui.protocol.A2uiMessage> messages();
+public final class art.dart.a2ui.demo.UseCaseCorpus {
+    public static art.dart.a2ui.demo.UseCaseCorpus$UseCase byId(java.lang.String);
+    public static final java.lang.String CATALOG_ID = "automotive";
+    public static final java.lang.String VERSION = "v0.9";
+    public static java.util.List<art.dart.a2ui.demo.UseCaseCorpus$UseCase> all();
+public final class art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability extends java.lang.Enum<art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability> {
+    public static art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability valueOf(java.lang.String);
+    public static art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability[] values();
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability GRID;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability HANDOFF;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability LIST;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MAP_WITH_CONTENT;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MEDIA_PLAYBACK;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MODAL;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability NAVIGATION;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability PLACE_LIST_MAP;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability ROUTE_PREVIEW;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability SEARCH;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability SETTINGS;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability VIDEO;
+public final class art.dart.a2ui.demo.UseCaseCorpus$UseCase {
+    public java.lang.String getId();
+    public java.lang.String getIntent();
+    public java.lang.String getInterestingAt();
+    public java.lang.String toString();
+    public java.util.List<art.dart.a2ui.protocol.A2uiMessage> getMessages();
+    public java.util.Set<art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability> getTemplateCapabilities();
+    public java.util.Set<art.dart.a2ui.model.ComponentType> getComponentTypes();
+public final class art.dart.a2ui.model.A2uiComponent {
+    public art.dart.a2ui.model.ComponentType getType();
+    public art.dart.a2ui.policy.A2uiActionClass getActionClass();
+    public boolean hasChildren();
+    public boolean isInteractive();
+    public java.lang.String getAction();
+    public java.lang.String getDeclaredVoicePhrase();
+    public java.lang.String getId();
+    public java.lang.String getSubtitle();
+    public java.lang.String getTitle();
+    public java.lang.String getVoicePhrase();
+    public java.lang.String toString();
+    public java.util.List<art.dart.a2ui.model.A2uiComponent> getChildren();
+public final class art.dart.a2ui.model.A2uiComponent$Builder {
+    public art.dart.a2ui.model.A2uiComponent build();
+    public art.dart.a2ui.model.A2uiComponent$Builder addChild(art.dart.a2ui.model.A2uiComponent);
+    public art.dart.a2ui.model.A2uiComponent$Builder copyPropertiesFrom(art.dart.a2ui.model.A2uiComponent);
+    public art.dart.a2ui.model.A2uiComponent$Builder setAction(java.lang.String);
+    public art.dart.a2ui.model.A2uiComponent$Builder setActionClass(art.dart.a2ui.policy.A2uiActionClass);
+    public art.dart.a2ui.model.A2uiComponent$Builder setId(java.lang.String);
+    public art.dart.a2ui.model.A2uiComponent$Builder setSubtitle(java.lang.String);
+    public art.dart.a2ui.model.A2uiComponent$Builder setTitle(java.lang.String);
+    public art.dart.a2ui.model.A2uiComponent$Builder setVoicePhrase(java.lang.String);
+    public art.dart.a2ui.model.A2uiComponent$Builder(art.dart.a2ui.model.ComponentType);
+public final class art.dart.a2ui.model.ComponentType extends java.lang.Enum<art.dart.a2ui.model.ComponentType> {
+    public java.lang.String catalogName();
+    public static art.dart.a2ui.model.ComponentType fromCatalogName(java.lang.String);
+    public static art.dart.a2ui.model.ComponentType valueOf(java.lang.String);
+    public static art.dart.a2ui.model.ComponentType[] values();
+    public static final art.dart.a2ui.model.ComponentType AUDIO_PLAYER;
+    public static final art.dart.a2ui.model.ComponentType BUTTON;
+    public static final art.dart.a2ui.model.ComponentType CARD;
+    public static final art.dart.a2ui.model.ComponentType CHECK_BOX;
+    public static final art.dart.a2ui.model.ComponentType CHOICE_PICKER;
+    public static final art.dart.a2ui.model.ComponentType COLUMN;
+    public static final art.dart.a2ui.model.ComponentType DATE_TIME_INPUT;
+    public static final art.dart.a2ui.model.ComponentType DIVIDER;
+    public static final art.dart.a2ui.model.ComponentType ICON;
+    public static final art.dart.a2ui.model.ComponentType IMAGE;
+    public static final art.dart.a2ui.model.ComponentType LIST;
+    public static final art.dart.a2ui.model.ComponentType MODAL;
+    public static final art.dart.a2ui.model.ComponentType ROW;
+    public static final art.dart.a2ui.model.ComponentType SLIDER;
+    public static final art.dart.a2ui.model.ComponentType TABS;
+    public static final art.dart.a2ui.model.ComponentType TEXT;
+    public static final art.dart.a2ui.model.ComponentType TEXT_FIELD;
+    public static final art.dart.a2ui.model.ComponentType VIDEO;
+public interface art.dart.a2ui.policy.A2uiActionBinder {
+    public abstract art.dart.a2ui.policy.A2uiActionPolicy$Decision decisionFor(art.dart.a2ui.model.A2uiComponent);
+    public abstract void onInvoke(art.dart.a2ui.model.A2uiComponent);
+    public static final java.lang.String EMPTY_WHILE_DRIVING_NOTE = "Nothing may be shown while driving";
+    public static final java.lang.String REFUSED_NOTE = "Unavailable while driving";
+    public static java.lang.String voiceHint(java.lang.String);
+public final class art.dart.a2ui.policy.A2uiActionClass extends java.lang.Enum<art.dart.a2ui.policy.A2uiActionClass> {
+    public boolean isAtLeast(art.dart.a2ui.policy.A2uiActionClass);
+    public int severity();
+    public static art.dart.a2ui.policy.A2uiActionClass mostRestrictive(art.dart.a2ui.policy.A2uiActionClass, art.dart.a2ui.policy.A2uiActionClass);
+    public static art.dart.a2ui.policy.A2uiActionClass valueOf(java.lang.String);
+    public static art.dart.a2ui.policy.A2uiActionClass[] values();
+    public static final art.dart.a2ui.policy.A2uiActionClass CONSEQUENTIAL;
+    public static final art.dart.a2ui.policy.A2uiActionClass DESTRUCTIVE;
+    public static final art.dart.a2ui.policy.A2uiActionClass NAVIGATION;
+    public static final art.dart.a2ui.policy.A2uiActionClass SAFE;
+    public static final art.dart.a2ui.policy.A2uiActionClass TEXT_ENTRY;
+public final class art.dart.a2ui.policy.A2uiActionPolicy {
+    public static art.dart.a2ui.policy.A2uiActionClass classify(java.lang.String, art.dart.a2ui.policy.A2uiActionClass);
+    public static art.dart.a2ui.policy.A2uiActionPolicy$Decision decide(art.dart.a2ui.policy.A2uiActionClass, int, boolean);
+public final class art.dart.a2ui.policy.A2uiActionPolicy$Decision extends java.lang.Enum<art.dart.a2ui.policy.A2uiActionPolicy$Decision> {
+    public static art.dart.a2ui.policy.A2uiActionPolicy$Decision valueOf(java.lang.String);
+    public static art.dart.a2ui.policy.A2uiActionPolicy$Decision[] values();
+    public static final art.dart.a2ui.policy.A2uiActionPolicy$Decision ALLOW;
+    public static final art.dart.a2ui.policy.A2uiActionPolicy$Decision CONFIRM;
+    public static final art.dart.a2ui.policy.A2uiActionPolicy$Decision REFUSE;
+public final class art.dart.a2ui.policy.A2uiHandoff {
+    public static art.dart.a2ui.policy.A2uiHandoff$Result reproject(art.dart.a2ui.model.A2uiComponent, art.dart.a2ui.policy.A2uiHandoff$Endpoint, art.dart.a2ui.policy.A2uiHandoff$Endpoint);
+public final class art.dart.a2ui.policy.A2uiHandoff$Endpoint {
+    public static art.dart.a2ui.policy.A2uiHandoff$Endpoint of(java.util.Set<art.dart.a2ui.model.ComponentType>, art.dart.a2ui.policy.A2uiValueLimits, int, boolean);
+public final class art.dart.a2ui.policy.A2uiHandoff$Result {
+    public art.dart.a2ui.model.A2uiComponent atDestination();
+    public art.dart.a2ui.model.A2uiComponent atSource();
+    public int netComponentsRemoved();
+    public java.util.Map<java.lang.String, art.dart.a2ui.policy.A2uiActionPolicy$Decision> decisionsAtDestination();
+    public java.util.Map<java.lang.String, art.dart.a2ui.policy.A2uiActionPolicy$Decision> decisionsAtSource();
+    public java.util.Set<java.lang.String> redecided();
+public final class art.dart.a2ui.policy.A2uiPruner {
+    public static art.dart.a2ui.model.A2uiComponent applyLimits(art.dart.a2ui.model.A2uiComponent, art.dart.a2ui.policy.A2uiValueLimits);
+    public static art.dart.a2ui.model.A2uiComponent prune(art.dart.a2ui.model.A2uiComponent, java.util.Set<art.dart.a2ui.model.ComponentType>);
+    public static int countOfType(art.dart.a2ui.model.A2uiComponent, art.dart.a2ui.model.ComponentType);
+public final class art.dart.a2ui.policy.A2uiRestrictionPolicy {
+    public static boolean allowsListening(int, boolean);
+    public static boolean allowsVoiceTranscription(int);
+    public static final int UX_RESTRICTIONS_BASELINE = 0;
+    public static final int UX_RESTRICTIONS_FULLY_RESTRICTED = 511;
+    public static final int UX_RESTRICTIONS_LIMIT_CONTENT = 32;
+    public static final int UX_RESTRICTIONS_LIMIT_STRING_LENGTH = 4;
+    public static final int UX_RESTRICTIONS_NO_DIALPAD = 1;
+    public static final int UX_RESTRICTIONS_NO_FILTERING = 2;
+    public static final int UX_RESTRICTIONS_NO_KEYBOARD = 8;
+    public static final int UX_RESTRICTIONS_NO_SETUP = 64;
+    public static final int UX_RESTRICTIONS_NO_TEXT_MESSAGE = 128;
+    public static final int UX_RESTRICTIONS_NO_VIDEO = 16;
+    public static final int UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION = 256;
+    public static java.util.Set<art.dart.a2ui.model.ComponentType> allowedComponents(int);
+    public static java.util.Set<art.dart.a2ui.model.ComponentType> failClosedComponents();
+public final class art.dart.a2ui.policy.A2uiValueLimits {
+    public boolean isUnrestricted();
+    public int getMaxContentDepth();
+    public int getMaxContentItems();
+    public int getMaxStringLength();
+    public java.lang.String toString();
+    public static art.dart.a2ui.policy.A2uiValueLimits failClosed();
+    public static art.dart.a2ui.policy.A2uiValueLimits from(int, int, int, int);
+    public static art.dart.a2ui.policy.A2uiValueLimits unrestricted();
+    public static final int UNLIMITED = 2147483647;
+public final class art.dart.a2ui.policy.A2uiVisibleTree {
+    public static art.dart.a2ui.model.A2uiComponent visibleRoot(art.dart.a2ui.model.A2uiComponent, int);
+    public static boolean isContainer(art.dart.a2ui.model.ComponentType);
+    public static final int MIN_USABLE_CONTENT_LIMIT = 1;
+    public static java.util.List<art.dart.a2ui.model.A2uiComponent> renderableRows(art.dart.a2ui.model.A2uiComponent);
+public final class art.dart.a2ui.protocol.A2uiDisplayBinder implements art.dart.a2ui.policy.A2uiActionBinder {
+    public art.dart.a2ui.policy.A2uiActionPolicy$Decision confirm(art.dart.a2ui.model.A2uiComponent);
+    public art.dart.a2ui.policy.A2uiActionPolicy$Decision decisionFor(art.dart.a2ui.model.A2uiComponent);
+    public art.dart.a2ui.protocol.A2uiDisplayBinder(art.dart.a2ui.protocol.A2uiMessageProcessor, java.lang.String, art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReader, art.dart.a2ui.protocol.A2uiDisplayBinder$Outcome);
+    public art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReader reader();
+    public void onInvoke(art.dart.a2ui.model.A2uiComponent);
+public interface art.dart.a2ui.protocol.A2uiDisplayBinder$Outcome {
+    public abstract void onDecided(art.dart.a2ui.model.A2uiComponent, art.dart.a2ui.policy.A2uiActionPolicy$Decision);
+public final class art.dart.a2ui.protocol.A2uiMessage {
+    public art.dart.a2ui.protocol.A2uiMessage$Kind getKind();
+    public java.lang.Object getValue();
+    public java.lang.String getCatalogId();
+    public java.lang.String getPath();
+    public java.lang.String getSurfaceId();
+    public java.lang.String getVersion();
+    public java.lang.String toString();
+    public java.util.List<java.util.Map<java.lang.String, java.lang.Object>> getComponents();
+    public static art.dart.a2ui.protocol.A2uiMessage createSurface(java.lang.String, java.lang.String, java.lang.String);
+    public static art.dart.a2ui.protocol.A2uiMessage deleteSurface(java.lang.String, java.lang.String);
+    public static art.dart.a2ui.protocol.A2uiMessage updateComponents(java.lang.String, java.lang.String, java.util.List<java.util.Map<java.lang.String, java.lang.Object>>);
+    public static art.dart.a2ui.protocol.A2uiMessage updateDataModel(java.lang.String, java.lang.String, java.lang.String, java.lang.Object);
+    public static java.util.Map<java.lang.String, java.lang.Object> component(java.lang.String, java.lang.String);
+public final class art.dart.a2ui.protocol.A2uiMessage$Kind extends java.lang.Enum<art.dart.a2ui.protocol.A2uiMessage$Kind> {
+    public static art.dart.a2ui.protocol.A2uiMessage$Kind valueOf(java.lang.String);
+    public static art.dart.a2ui.protocol.A2uiMessage$Kind[] values();
+    public static final art.dart.a2ui.protocol.A2uiMessage$Kind CREATE_SURFACE;
+    public static final art.dart.a2ui.protocol.A2uiMessage$Kind DELETE_SURFACE;
+    public static final art.dart.a2ui.protocol.A2uiMessage$Kind UPDATE_COMPONENTS;
+    public static final art.dart.a2ui.protocol.A2uiMessage$Kind UPDATE_DATA_MODEL;
+public final class art.dart.a2ui.protocol.A2uiMessageProcessor {
+    public art.dart.a2ui.policy.A2uiActionPolicy$Decision confirmAction(java.lang.String, java.lang.String, java.lang.String, java.lang.Object, art.dart.a2ui.policy.A2uiActionClass);
+    public art.dart.a2ui.policy.A2uiActionPolicy$Decision confirmAction(java.lang.String, java.lang.String, java.lang.String, java.lang.Object, art.dart.a2ui.policy.A2uiActionClass, art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReader);
+    public art.dart.a2ui.policy.A2uiActionPolicy$Decision dispatchAction(java.lang.String, java.lang.String, java.lang.String, java.lang.Object);
+    public art.dart.a2ui.policy.A2uiActionPolicy$Decision dispatchAction(java.lang.String, java.lang.String, java.lang.String, java.lang.Object, art.dart.a2ui.policy.A2uiActionClass);
+    public art.dart.a2ui.policy.A2uiActionPolicy$Decision dispatchAction(java.lang.String, java.lang.String, java.lang.String, java.lang.Object, art.dart.a2ui.policy.A2uiActionClass, art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReader);
+    public art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceDispatchResult dispatchByVoiceForResult(java.lang.String, java.lang.String, art.dart.a2ui.model.A2uiComponent, art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReader);
+    public art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome dispatchByVoice(java.lang.String, java.lang.String, art.dart.a2ui.model.A2uiComponent);
+    public art.dart.a2ui.protocol.A2uiMessageProcessor(java.lang.String, java.util.Set<java.lang.String>);
+    public art.dart.a2ui.protocol.A2uiSurface getSurface(java.lang.String);
+    public java.util.Map<java.lang.String, art.dart.a2ui.protocol.A2uiSurface> getSurfaces();
+    public void process(art.dart.a2ui.protocol.A2uiMessage);
+    public void processAll(java.lang.Iterable<art.dart.a2ui.protocol.A2uiMessage>);
+    public void reset();
+    public void setActionClassResolver(art.dart.a2ui.protocol.A2uiMessageProcessor$ActionClassResolver);
+    public void setActionSink(art.dart.a2ui.protocol.A2uiMessageProcessor$ActionSink);
+    public void setRestrictionReader(art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReader);
+public interface art.dart.a2ui.protocol.A2uiMessageProcessor$ActionClassResolver {
+    public abstract art.dart.a2ui.policy.A2uiActionClass resolve(java.lang.String, art.dart.a2ui.policy.A2uiActionClass);
+public interface art.dart.a2ui.protocol.A2uiMessageProcessor$ActionSink {
+    public abstract void onAction(java.lang.String, java.lang.String, java.lang.String, java.lang.Object);
+public interface art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReader {
+    public abstract boolean isTrustworthy();
+    public abstract int activeRestrictions();
+    public default art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReading currentReading();
+public final class art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReading {
+    public art.dart.a2ui.protocol.A2uiMessageProcessor$RestrictionReading(int, boolean);
+    public boolean isTrustworthy();
+    public int getActiveRestrictions();
+public final class art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceDispatchResult {
+    public art.dart.a2ui.model.A2uiComponent getMatchedComponent();
+    public art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome getOutcome();
+public final class art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome extends java.lang.Enum<art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome> {
+    public static art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome valueOf(java.lang.String);
+    public static art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome[] values();
+    public static final art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome AMBIGUOUS;
+    public static final art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome CONFIRMATION_REQUIRED;
+    public static final art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome DISPATCHED;
+    public static final art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome NO_MATCH;
+    public static final art.dart.a2ui.protocol.A2uiMessageProcessor$VoiceOutcome REFUSED_BY_POLICY;
+public class art.dart.a2ui.protocol.A2uiProtocolException extends java.lang.RuntimeException {
+    public art.dart.a2ui.protocol.A2uiProtocolException$Category getCategory();
+    public art.dart.a2ui.protocol.A2uiProtocolException(art.dart.a2ui.protocol.A2uiProtocolException$Category, java.lang.String);
+public final class art.dart.a2ui.protocol.A2uiProtocolException$Category extends java.lang.Enum<art.dart.a2ui.protocol.A2uiProtocolException$Category> {
+    public static art.dart.a2ui.protocol.A2uiProtocolException$Category valueOf(java.lang.String);
+    public static art.dart.a2ui.protocol.A2uiProtocolException$Category[] values();
+    public static final art.dart.a2ui.protocol.A2uiProtocolException$Category CATALOG;
+    public static final art.dart.a2ui.protocol.A2uiProtocolException$Category INTEGRITY;
+    public static final art.dart.a2ui.protocol.A2uiProtocolException$Category MALFORMED;
+public final class art.dart.a2ui.protocol.A2uiSurface {
+    public art.dart.a2ui.model.A2uiComponent project(java.lang.String);
+    public art.dart.a2ui.policy.A2uiActionClass declaredActionClass(java.lang.String);
+    public java.lang.Object readDataModel(java.lang.String);
+    public java.lang.String getCatalogId();
+    public java.lang.String getSurfaceId();
+    public java.lang.String requireDeclaredAction(java.lang.String);
+    public java.util.Map<java.lang.String, java.lang.Object> getDataModel();
+    public java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.lang.Object>> getComponents();

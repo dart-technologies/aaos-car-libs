@@ -1,0 +1,51 @@
+# Module/configuration pairs that legitimately resolve a dependency to something other than the
+# version a bump declares. Read by run-bump-gate.sh step 0.
+#
+# WHY THIS FILE EXISTS
+#
+# Step 0 asserts that a bump actually took effect, by checking the RESOLVED version rather than the
+# declared one. Its original rule was "exactly one version across the whole repository", and that
+# rule is wrong for a repo which builds libraries AND independent APKs: an application module with
+# its own APK never shares a runtime classpath with the library modules, so it resolving something
+# different is a fact rather than a fault.
+#
+# The cost of the old rule was not a false alarm — it was worse. Two bumps in a row (media 1.8.0,
+# and appcompat 1.8.0 before this file) could not be gated with a coordinate at all, so step 0 was
+# SKIPPED and the check that distinguishes "safe" from "had no effect" simply did not run. A check
+# too blunt to be used is not a strict check; it is an absent one.
+#
+# WHAT AN ENTRY MEANS
+#
+# "This exact module/configuration resolves this exact version, for this recorded reason, and that
+# is expected." It is NOT a waiver on the coordinate as a whole: every OTHER row still has to be the
+# expected version, so a new non-uniformity in a different module still fails.
+#
+# TWO RULES THAT KEEP THIS FROM BECOMING A MASK
+#
+#   1. An entry that matches NOTHING in the run is a FAILURE, not a pass. An allowlist entry
+#      outliving the condition it waives is a silent hole — the same lesson the PreferenceTest
+#      intermittent entry taught when its defect was fixed at source and the waiver was deleted
+#      rather than left behind.
+#   2. Every entry needs a reason, and the reason has to say why the difference is harmless rather
+#      than merely restating the versions.
+#
+# Format: coordinate<TAB>module<TAB>configuration<TAB>version<TAB>reason
+
+androidx.media:media	:a2ui-host-carapp	debugRuntimeClasspath	1.6.0	Transitive via androidx.car.app:app:1.7.0. Host A is an APPLICATION module with its own APK, so it never shares a runtime classpath with car-media-common; forcing uniformity would change what Host A loads for no benefit. androidx.media is deprecated in favour of Media3, so the long-term fix is a migration rather than a pin.
+androidx.appcompat:appcompat	:car-rotary-lib	debugRuntimeClasspath	1.2.0	Transitive via androidx.constraintlayout:constraintlayout. car-rotary-lib declares no appcompat and compiles against none, so nothing in it raises what constraintlayout drags in; its own instrumented tests run on debugAndroidTestRuntimeClasspath, which resolves the expected version. Adding a declaration to force uniformity would mean declaring a dependency the module does not use. Verified pre-existing by stashing the bump and re-measuring, and unchanged by constraintlayout 2.2.2.
+androidx.fragment:fragment	:car-rotary-lib	debugRuntimeClasspath	1.1.0	Transitive via constraintlayout -> appcompat 1.2.0, the path the appcompat row records. car-rotary-lib declares and imports no fragment; its instrumented tests resolve 1.8.9 through :car-ui-lib.
+androidx.fragment:fragment	:plugin	debugAndroidTestCompileClasspath	1.5.4	Transitive via appcompat 1.8.0. The plugin is a separate APK that declares and imports no fragment and depends on neither car-ui-lib nor car-apps-common, so it shares no classpath with the modules raised to 1.8.9.
+androidx.fragment:fragment	:plugin	debugCompileClasspath	1.5.4	Transitive via appcompat 1.8.0. The plugin is a separate APK that declares and imports no fragment and depends on neither car-ui-lib nor car-apps-common, so it shares no classpath with the modules raised to 1.8.9.
+androidx.fragment:fragment	:plugin	debugRuntimeClasspath	1.5.4	Transitive via appcompat 1.8.0. The plugin is a separate APK that declares and imports no fragment and depends on neither car-ui-lib nor car-apps-common, so it shares no classpath with the modules raised to 1.8.9.
+androidx.fragment:fragment	:plugin	debugUnitTestCompileClasspath	1.5.4	Transitive via appcompat 1.8.0. The plugin is a separate APK that declares and imports no fragment and depends on neither car-ui-lib nor car-apps-common, so it shares no classpath with the modules raised to 1.8.9.
+androidx.lifecycle:lifecycle-common-java8	:a2ui-host-carapp	debugAndroidTestCompileClasspath	2.6.2	Transitive via androidx.car.app:app:1.7.0, raised to 2.6.2 by appcompat. Host A is an APPLICATION with its own APK that declares no lifecycle, so it shares no runtime classpath with the modules moved to 2.9.4; the artifact is empty since 2.6.
+androidx.lifecycle:lifecycle-common-java8	:a2ui-host-carapp	debugCompileClasspath	2.6.2	Transitive via androidx.car.app:app:1.7.0, raised to 2.6.2 by appcompat. Host A is an APPLICATION with its own APK that declares no lifecycle, so it shares no runtime classpath with the modules moved to 2.9.4; the artifact is empty since 2.6.
+androidx.lifecycle:lifecycle-common-java8	:a2ui-host-carapp	debugRuntimeClasspath	2.6.2	Transitive via androidx.car.app:app:1.7.0, raised to 2.6.2 by appcompat. Host A is an APPLICATION with its own APK that declares no lifecycle, so it shares no runtime classpath with the modules moved to 2.9.4; the artifact is empty since 2.6.
+androidx.lifecycle:lifecycle-common-java8	:a2ui-host-carapp	debugUnitTestCompileClasspath	2.6.2	Transitive via androidx.car.app:app:1.7.0, raised to 2.6.2 by appcompat. Host A is an APPLICATION with its own APK that declares no lifecycle, so it shares no runtime classpath with the modules moved to 2.9.4; the artifact is empty since 2.6.
+org.mockito:mockito-core	:car-apps-common-testutils	debugAndroidTestCompileClasspath	2.25.0	Transitive via androidx.arch.core:core-testing:2.2.0. testutils declares and imports no Mockito and has no tests; every test classpath consuming it declares mockito-core 5.14.2, which wins there.
+org.mockito:mockito-core	:car-apps-common-testutils	debugAndroidTestRuntimeClasspath	2.25.0	Transitive via androidx.arch.core:core-testing:2.2.0. testutils declares and imports no Mockito and has no tests; every test classpath consuming it declares mockito-core 5.14.2, which wins there.
+org.mockito:mockito-core	:car-apps-common-testutils	debugCompileClasspath	2.25.0	Transitive via androidx.arch.core:core-testing:2.2.0. testutils declares and imports no Mockito and has no tests; every test classpath consuming it declares mockito-core 5.14.2, which wins there.
+org.mockito:mockito-core	:car-apps-common-testutils	debugRuntimeClasspath	2.25.0	Transitive via androidx.arch.core:core-testing:2.2.0. testutils declares and imports no Mockito and has no tests; every test classpath consuming it declares mockito-core 5.14.2, which wins there.
+org.mockito:mockito-core	:car-apps-common-testutils	debugUnitTestCompileClasspath	2.25.0	Transitive via androidx.arch.core:core-testing:2.2.0. testutils declares and imports no Mockito and has no tests; every test classpath consuming it declares mockito-core 5.14.2, which wins there.
+org.mockito:mockito-core	:car-ui-lib	debugAndroidTestCompileClasspath	2.28.2	dexmaker-mockito-inline 2.28.1 pulls 2.28.2 over the declared 2.19.0. Mockito 5 under dexmaker-inline aborts ART (LocationImpl.stackWalk).
+org.mockito:mockito-core	:car-ui-lib	debugAndroidTestRuntimeClasspath	2.28.2	dexmaker-mockito-inline 2.28.1 pulls 2.28.2 over the declared 2.19.0. Mockito 5 under dexmaker-inline aborts ART (LocationImpl.stackWalk).

@@ -1,0 +1,73 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+#
+# Runs scripts/check-gate-sensitivity.py: applies known defects and asserts the suites go red.
+# Weekly rather than per push because each mutation runs a full JVM suite, so a change that blinds
+# the gate can hide for up to a week; docs/VERIFICATION.md also lists it as a release gate.
+
+name: Gate sensitivity
+
+on:
+  schedule:
+    # Mondays 04:17 UTC. Off the hour on purpose: scheduled jobs cluster there and get delayed.
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sensitivity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutate:
+    name: Mutations must be detected
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: platform-tools  # default also asks for 'tools', which Google removed
+
+      - name: Install platform 37
+        # "platforms;android-37.0": the bare "android-37" id does not exist. See ci.yml.
+        run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+
+      - name: Validate Gradle wrapper jars
+        # The committed wrapper jar runs before any build logic can inspect it. Validates the one
+        # tracked jar (the flutter example's is gitignored); min-wrapper-count keeps that asserted.
+        # distributionSha256Sum pins the download, not the wrapper; neither catches a genuine jar
+        # of the wrong version. Same pinned action as setup-gradle: one review covers both.
+        uses: gradle/actions/wrapper-validation@8379f6a1328ee0e06e2bb424dadb7b159856a326 # v4.4.0
+        with:
+          min-wrapper-count: 1
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8379f6a1328ee0e06e2bb424dadb7b159856a326 # v4.4.0
+
+      - name: Check gate sensitivity
+        # Exit 1: a mutation went undetected. Exit 2: could not be determined, also a failure.
+        run: python3 scripts/check-gate-sensitivity.py
+
+      - name: Confirm the tree was restored
+        # The harness restores mutated files from byte copies; confirm it did.
+        if: always()
+        run: |
+          if ! git diff --quiet; then
+            echo "::error::check-gate-sensitivity.py left the tree modified"
+            git diff --stat
+            exit 1
+          fi
+          echo "tree is clean"

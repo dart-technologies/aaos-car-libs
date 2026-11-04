@@ -1,0 +1,48 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Emits each Android module's effective main source configuration as Gradle resolves it, rather
+// than parsing build files (srcDirs overrides, a parent-directory module, include/exclude filters).
+//
+//   ./gradlew -I ../scripts/dump-source-sets.gradle help -q
+//
+// Output, one field per line, tab-separated, prefixed so it survives being mixed with other output:
+//   SRCSET<TAB>:project:path<TAB>srcDir<TAB>absolute/dir
+//   FILTER<TAB>:project:path<TAB>include|exclude<TAB>pattern
+
+gradle.projectsEvaluated { g ->
+    // Printed at configuration time, so a configuration-cache hit would print nothing.
+    g.rootProject.tasks.named('help') {
+        it.notCompatibleWithConfigurationCache('dump-source-sets.gradle prints at configuration time')
+    }
+
+    g.rootProject.allprojects { p ->
+        def android = p.extensions.findByName('android')
+        if (android == null) return
+        def main = android.sourceSets.findByName('main')
+        if (main == null) return
+
+        main.java.srcDirs.each { dir ->
+            println "SRCSET\t${p.path}\t${dir}"
+        }
+        main.java.includes.each { pattern ->
+            println "FILTER\t${p.path}\tinclude\t${pattern}"
+        }
+        main.java.excludes.each { pattern ->
+            println "FILTER\t${p.path}\texclude\t${pattern}"
+        }
+    }
+}

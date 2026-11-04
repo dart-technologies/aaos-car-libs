@@ -1,0 +1,17 @@
+# Gated modules with NO registered mutation, and why.
+#
+# scripts/check-gate-sensitivity.py requires every module in scripts/gate-modules.tsv to carry at
+# least one mutation OR a row here. MINIMUM_MUTATIONS constrains the COUNT and says nothing about
+# the SPREAD -- all 123 could sit in one module and the floor would pass, while "the gate can still
+# see" was printed over modules it cannot see at all.
+#
+# An entry here waives a real gap. It is not a place to park work: each row must say what would
+# have to be true to remove it, in terms someone can act on. An exemption that outlives the
+# condition it waives is the shape this repository treats as a hard failure everywhere else
+# (resolution-exceptions.tsv, build-coverage-baseline.txt, overlayable-baseline.txt).
+#
+# module	reason
+:oem-apis	no main sources at all -- src/main holds only AndroidManifest.xml, and the plugin contract comes from the published car-ui-lib-plugin-apis artifact. There is nothing in this module to mutate. Its 15 tests are contract tests over an external jar. Remove this row if the module ever gains source.
+:car-rotary-lib	6 JVM tests reaching 16 of 987 lines; its real suite is the 100 instrumented tests, and an instrumented mutation costs a full connected run per mutation. Remove this row once the module has a JVM test whose failure is specific enough to name as an expected detector -- DirectManipulationHelper is the obvious candidate.
+:car-assist-lib	18 of 148 lines covered by 9 tests, none reaching the NotificationPayloadHandler paths worth mutating. Remove this row when getMessages(Bundle) is tested -- docs/STATUS.md records that defect and it is one line of test away.
+:car-telephony-common	entered the ledgers on 2026-08-21 with 3 tests over one file (Contact.fromCursor). A mutation is worth adding as soon as a second file is covered; mutating Contact today would pin a characterisation test of a known defect, which measures the test rather than the gate.

@@ -1,0 +1,55 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Prints the resolved version of a coordinate across every module, not the declared one: a bump
+// below the transitive floor changes nothing, and only a repo-wide view of resolution shows it.
+//
+//   ./gradlew -I scripts/dump-resolved-version.gradle -PresolveCoord=androidx.core:core resolvedVersions -q
+//
+// Output: RESOLVED<TAB>:project<TAB>configuration<TAB>group:name<TAB>version
+
+gradle.projectsEvaluated { g ->
+    g.rootProject.allprojects { p ->
+        p.tasks.register('resolvedVersions') {
+            // Resolves configurations at execution time, which the configuration cache cannot store.
+            notCompatibleWithConfigurationCache('resolves configurations through the Project at execution time')
+            doLast {
+                def filter = p.findProperty('resolveCoord')
+                if (!filter) {
+                    throw new GradleException('pass -PresolveCoord=group:name')
+                }
+                def (wantGroup, wantName) = filter.tokenize(':')
+                // androidTest configurations too: tests can resolve another version (car-rotary-lib).
+                ['debugCompileClasspath', 'debugRuntimeClasspath',
+                 'debugAndroidTestCompileClasspath', 'debugAndroidTestRuntimeClasspath',
+                 'debugUnitTestCompileClasspath'].each { cfgName ->
+                    def cfg = p.configurations.findByName(cfgName)
+                    if (cfg == null || !cfg.canBeResolved) return
+                    try {
+                        cfg.incoming.resolutionResult.allComponents.each { c ->
+                            def id = c.moduleVersion
+                            if (id != null && id.group == wantGroup && id.name == wantName) {
+                                println "RESOLVED\t${p.path}\t${cfgName}\t${id.group}:${id.name}\t${id.version}"
+                            }
+                        }
+                    } catch (Exception ignored) {
+                        println "UNRESOLVED\t${p.path}\t${cfgName}\t${filter}\t<could-not-resolve>"
+                    }
+                }
+            }
+        }
+    }
+}

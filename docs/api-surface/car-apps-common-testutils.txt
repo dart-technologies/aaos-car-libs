@@ -1,0 +1,19 @@
+# AndroidManifest package
+com.android.car.apps.common.testutils
+
+public class com.android.car.apps.common.testutils.CaptureObserver<T> implements androidx.lifecycle.Observer<T> {
+    public T getObservedValue();
+    public boolean hasBeenNotified();
+    public com.android.car.apps.common.testutils.CaptureObserver();
+    public void onChanged(T);
+    public void reset();
+public class com.android.car.apps.common.testutils.InstantTaskExecutorRule extends org.junit.rules.TestWatcher {
+    protected void finished(org.junit.runner.Description);
+    protected void starting(org.junit.runner.Description);
+    public com.android.car.apps.common.testutils.InstantTaskExecutorRule();
+public class com.android.car.apps.common.testutils.TestLifecycleOwner extends org.junit.rules.ExternalResource implements androidx.lifecycle.LifecycleOwner {
+    protected void after();
+    protected void before() throws java.lang.Throwable;
+    public androidx.lifecycle.Lifecycle getLifecycle();
+    public com.android.car.apps.common.testutils.TestLifecycleOwner();
+    public void markState(androidx.lifecycle.Lifecycle$State);

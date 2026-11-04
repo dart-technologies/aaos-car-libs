@@ -1,0 +1,328 @@
+# AndroidManifest package
+com.android.car.apps.common
+
+public class com.android.car.apps.common.BackgroundImageView extends androidx.constraintlayout.widget.ConstraintLayout {
+    public com.android.car.apps.common.BackgroundImageView(android.content.Context);
+    public com.android.car.apps.common.BackgroundImageView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.apps.common.BackgroundImageView(android.content.Context, android.util.AttributeSet, int);
+    public void setBackgroundColor(int);
+    public void setBackgroundDrawable(android.graphics.drawable.Drawable);
+    public void setBackgroundDrawable(android.graphics.drawable.Drawable, boolean);
+    public void setBackgroundImage(android.graphics.Bitmap, boolean);
+    public void setDimmed(boolean);
+    public void setImageAdditionalScale(float);
+public class com.android.car.apps.common.BitmapUtils {
+    public com.android.car.apps.common.BitmapUtils();
+    public static android.graphics.Bitmap createTintedBitmap(android.graphics.Bitmap, int);
+    public static android.graphics.Bitmap cropBitmap(android.graphics.Bitmap, int, int);
+    public static android.graphics.Bitmap fromDrawable(android.graphics.drawable.Drawable, android.util.Size);
+    public static android.graphics.Bitmap scaleBitmap(android.graphics.Bitmap, int, int);
+    public static android.graphics.drawable.Drawable maybeFlagDrawable(android.content.Context, android.graphics.drawable.Drawable);
+public interface com.android.car.apps.common.CarControlBar {
+    public abstract android.widget.ImageButton createIconButton(android.graphics.drawable.Drawable);
+    public abstract android.widget.ImageButton createIconButton(android.graphics.drawable.Drawable, int);
+    public abstract int getFocusedViewIndex();
+    public abstract void setFocusAtViewIndex(int);
+    public abstract void setView(android.view.View, int);
+    public abstract void setViews(android.view.View[]);
+    public static final int INVALID_VIEW_INDEX = -1;
+    public static final int SLOT_EXPAND_COLLAPSE = 3;
+    public static final int SLOT_LEFT = 1;
+    public static final int SLOT_MAIN = 0;
+    public static final int SLOT_RIGHT = 2;
+    public static int getSlotIndex(int, int);
+public interface com.android.car.apps.common.CarControlBar$SlotPosition extends java.lang.annotation.Annotation {
+public class com.android.car.apps.common.CommonFlags {
+    public boolean shouldFlagImproperImageRefs();
+    public static com.android.car.apps.common.CommonFlags getInstance(android.content.Context);
+public class com.android.car.apps.common.ControlBar extends android.widget.RelativeLayout implements com.android.car.apps.common.ExpandableControlBar {
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    public android.widget.ImageButton createIconButton(android.graphics.drawable.Drawable);
+    public android.widget.ImageButton createIconButton(android.graphics.drawable.Drawable, int);
+    public com.android.car.apps.common.ControlBar(android.content.Context);
+    public com.android.car.apps.common.ControlBar(android.content.Context, android.util.AttributeSet);
+    public com.android.car.apps.common.ControlBar(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.apps.common.ControlBar(android.content.Context, android.util.AttributeSet, int, int);
+    public int getFocusedViewIndex();
+    public void close();
+    public void registerExpandCollapseCallback(com.android.car.apps.common.ExpandableControlBar$ExpandCollapseCallback);
+    public void setExpandCollapseView(android.view.View);
+    public void setFocusAtViewIndex(int);
+    public void setView(android.view.View, int);
+    public void setViews(android.view.View[]);
+public class com.android.car.apps.common.CropAlignedImageView extends android.widget.ImageView {
+    protected boolean setFrame(int, int, int, int);
+    public com.android.car.apps.common.CropAlignedImageView(android.content.Context);
+    public com.android.car.apps.common.CropAlignedImageView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.apps.common.CropAlignedImageView(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.apps.common.CropAlignedImageView(android.content.Context, android.util.AttributeSet, int, int);
+    public void setImageAdditionalScale(float);
+public class com.android.car.apps.common.CrossfadeImageView extends android.widget.FrameLayout {
+    public com.android.car.apps.common.CrossfadeImageView(android.content.Context);
+    public com.android.car.apps.common.CrossfadeImageView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.apps.common.CrossfadeImageView(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.apps.common.CrossfadeImageView(android.content.Context, android.util.AttributeSet, int, int);
+    public void setBackgroundColor(int);
+    public void setImageAdditionalScale(float);
+    public void setImageBitmap(android.graphics.Bitmap, boolean);
+public interface com.android.car.apps.common.ExpandableControlBar extends com.android.car.apps.common.CarControlBar {
+    public abstract void close();
+    public abstract void registerExpandCollapseCallback(com.android.car.apps.common.ExpandableControlBar$ExpandCollapseCallback);
+public interface com.android.car.apps.common.ExpandableControlBar$ExpandCollapseCallback {
+    public abstract void onExpandCollapse(boolean);
+public class com.android.car.apps.common.FragmentUtils {
+    public static <T> T getParent(androidx.fragment.app.Fragment, java.lang.Class<T>);
+    public static <T> T requireParent(androidx.fragment.app.Fragment, java.lang.Class<T>);
+    public static void checkParent(androidx.fragment.app.Fragment, java.lang.Class<?>) throws java.lang.AssertionError;
+    public static void setParentForTesting(java.lang.Object);
+public final class com.android.car.apps.common.IconCropper {
+    public android.graphics.Bitmap crop(android.graphics.Bitmap);
+    public android.graphics.Bitmap crop(android.graphics.drawable.Drawable);
+    public com.android.car.apps.common.IconCropper(android.content.Context);
+    public com.android.car.apps.common.IconCropper(android.graphics.Path);
+public class com.android.car.apps.common.ImageUtils {
+    public com.android.car.apps.common.ImageUtils();
+    public static android.graphics.Bitmap blur(android.content.Context, android.graphics.Bitmap, android.util.Size, float);
+public class com.android.car.apps.common.LetterTileDrawable extends android.graphics.drawable.Drawable {
+    public android.graphics.Bitmap toBitmap(int);
+    public com.android.car.apps.common.LetterTileDrawable(android.content.res.Resources);
+    public com.android.car.apps.common.LetterTileDrawable(android.content.res.Resources, java.lang.String, java.lang.String);
+    public int getColor();
+    public int getOpacity();
+    public static final int TYPE_BUSINESS = 2;
+    public static final int TYPE_DEFAULT = 1;
+    public static final int TYPE_PERSON = 1;
+    public static final int TYPE_VOICEMAIL = 3;
+    public void draw(android.graphics.Canvas);
+    public void setAlpha(int);
+    public void setColorFilter(android.graphics.ColorFilter);
+    public void setContactDetails(java.lang.String, java.lang.String);
+    public void setContactType(int);
+    public void setIsCircular(boolean);
+    public void setOffset(float);
+    public void setScale(float);
+public class com.android.car.apps.common.MinimizedControlBar extends androidx.constraintlayout.widget.ConstraintLayout implements com.android.car.apps.common.CarControlBar {
+    protected android.widget.ImageView mContentTile;
+    protected android.widget.TextView mSubtitle;
+    protected android.widget.TextView mTitle;
+    protected com.android.car.apps.common.MinimizedControlBar(android.content.Context, android.util.AttributeSet, int, int);
+    public android.widget.ImageButton createIconButton(android.graphics.drawable.Drawable);
+    public android.widget.ImageButton createIconButton(android.graphics.drawable.Drawable, int);
+    public com.android.car.apps.common.MinimizedControlBar(android.content.Context);
+    public com.android.car.apps.common.MinimizedControlBar(android.content.Context, android.util.AttributeSet);
+    public com.android.car.apps.common.MinimizedControlBar(android.content.Context, android.util.AttributeSet, int);
+    public int getFocusedViewIndex();
+    public void setFocusAtViewIndex(int);
+    public void setView(android.view.View, int);
+    public void setViews(android.view.View[]);
+public class com.android.car.apps.common.NavigationUtils {
+    public com.android.car.apps.common.NavigationUtils();
+    public static android.content.Intent getNavigationIntent(android.content.Context, java.lang.String);
+    public static android.content.Intent getNavigationIntent(android.content.res.Resources, java.lang.String);
+    public static android.content.Intent getViewAddressIntent(android.content.Context, java.lang.String);
+    public static android.content.Intent getViewAddressIntent(android.content.res.Resources, java.lang.String);
+public class com.android.car.apps.common.RefcountObject<T> {
+    public T getObject();
+    public com.android.car.apps.common.RefcountObject(T);
+    public synchronized int addRef();
+    public synchronized int getRef();
+    public synchronized int releaseRef();
+    public void setRefcountListener(com.android.car.apps.common.RefcountObject$RefcountListener);
+public interface com.android.car.apps.common.RefcountObject$RefcountListener {
+    public abstract void onRefcountZero(com.android.car.apps.common.RefcountObject<?>);
+public final class com.android.car.apps.common.UriUtils {
+    public static android.content.Intent$ShortcutIconResource getIconResource(android.content.Context, android.net.Uri);
+    public static android.graphics.drawable.Drawable getDrawable(android.content.Context, android.content.Intent$ShortcutIconResource);
+    public static android.net.Uri getAccountImageChangeNotifyUri(android.net.Uri);
+    public static android.net.Uri getAccountImageUri(java.lang.String);
+    public static android.net.Uri getAccountImageUri(java.lang.String, android.net.Uri);
+    public static android.net.Uri getAndroidResourceUri(java.lang.String);
+    public static android.net.Uri getShortcutIconResourceUri(android.content.Intent$ShortcutIconResource);
+    public static android.net.Uri getSubactionDialogUri(android.net.Uri, java.lang.String, java.lang.String);
+    public static android.net.Uri getSubactionDialogUri(android.net.Uri, java.lang.String, java.lang.String, int);
+    public static android.net.Uri getSubactionDialogUri(android.net.Uri, java.lang.String, java.lang.String, java.lang.String);
+    public static android.net.Uri getSubactionDialogUri(android.net.Uri, java.lang.String, java.lang.String, java.lang.String, int);
+    public static boolean isAccountImageUri(android.net.Uri);
+    public static boolean isAndroidResourceUri(android.net.Uri);
+    public static boolean isContentUri(android.net.Uri);
+    public static boolean isEmpty(android.net.Uri);
+    public static boolean isShortcutIconResourceUri(android.net.Uri);
+    public static boolean isWebUri(android.net.Uri);
+    public static int getSubactionDialogActionStartIndex(android.net.Uri);
+    public static java.lang.String getAccountName(android.net.Uri);
+    public static java.lang.String getAndroidResourceUri(android.content.Context, int);
+    public static java.lang.String getAndroidResourceUri(android.content.res.Resources, int);
+    public static java.lang.String getPackageName(android.content.Context, android.net.Uri);
+    public static java.lang.String getSubactionDialogActionStartName(android.net.Uri);
+    public static java.lang.String getSubactionDialogDescription(android.net.Uri);
+    public static java.lang.String getSubactionDialogTitle(android.net.Uri);
+public class com.android.car.apps.common.UxrButton extends android.widget.TextView {
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    protected void showBlockingMessage();
+    public com.android.car.apps.common.UxrButton(android.content.Context);
+    public com.android.car.apps.common.UxrButton(android.content.Context, android.util.AttributeSet);
+    public com.android.car.apps.common.UxrButton(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.apps.common.UxrButton(android.content.Context, android.util.AttributeSet, int, int);
+    public int[] onCreateDrawableState(int);
+    public void setOnClickListener(android.view.View$OnClickListener);
+    public void setUxRestrictions(int);
+public class com.android.car.apps.common.UxrTextView extends android.widget.TextView {
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    public com.android.car.apps.common.UxrTextView(android.content.Context);
+    public com.android.car.apps.common.UxrTextView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.apps.common.UxrTextView(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.apps.common.UxrTextView(android.content.Context, android.util.AttributeSet, int, int);
+    public void setAllCaps(boolean);
+    public void setInputType(int);
+    public void setSingleLine(boolean);
+public class com.android.car.apps.common.imaging.ImageBinder<T extends com.android.car.apps.common.imaging.ImageBinder$ImageRef> {
+    protected com.android.car.apps.common.imaging.ImageBinder(com.android.car.apps.common.imaging.ImageBinder$PlaceholderType, android.util.Size);
+    protected void prepareForNewBinding(android.content.Context);
+    protected void setDrawable(android.graphics.drawable.Drawable);
+    public com.android.car.apps.common.imaging.ImageBinder(com.android.car.apps.common.imaging.ImageBinder$PlaceholderType, android.util.Size, java.util.function.Consumer<android.graphics.drawable.Drawable>);
+    public void setImage(android.content.Context, T);
+public interface com.android.car.apps.common.imaging.ImageBinder$ImageRef {
+    public abstract android.graphics.drawable.Drawable getPlaceholder(android.content.Context, com.android.car.apps.common.imaging.ImageBinder$PlaceholderType);
+    public abstract android.net.Uri getImageURI();
+    public abstract boolean equals(android.content.Context, java.lang.Object);
+    public default android.graphics.drawable.Drawable getImage(android.content.Context);
+public final class com.android.car.apps.common.imaging.ImageBinder$PlaceholderType extends java.lang.Enum<com.android.car.apps.common.imaging.ImageBinder$PlaceholderType> {
+    public static com.android.car.apps.common.imaging.ImageBinder$PlaceholderType valueOf(java.lang.String);
+    public static com.android.car.apps.common.imaging.ImageBinder$PlaceholderType[] values();
+    public static final com.android.car.apps.common.imaging.ImageBinder$PlaceholderType BACKGROUND;
+    public static final com.android.car.apps.common.imaging.ImageBinder$PlaceholderType FOREGROUND;
+    public static final com.android.car.apps.common.imaging.ImageBinder$PlaceholderType NONE;
+public class com.android.car.apps.common.imaging.ImageViewBinder<T extends com.android.car.apps.common.imaging.ImageBinder$ImageRef> extends com.android.car.apps.common.imaging.ImageBinder<T> {
+    protected void prepareForNewBinding(android.content.Context);
+    protected void setDrawable(android.graphics.drawable.Drawable);
+    public com.android.car.apps.common.imaging.ImageViewBinder(android.util.Size, android.widget.ImageView);
+    public com.android.car.apps.common.imaging.ImageViewBinder(com.android.car.apps.common.imaging.ImageBinder$PlaceholderType, android.util.Size, android.widget.ImageView, boolean);
+    public void maybeCancelLoading(android.content.Context);
+    public void maybeRestartLoading(android.content.Context);
+    public void setImage(android.content.Context, T);
+public class com.android.car.apps.common.imaging.LocalImageFetcher {
+    public static com.android.car.apps.common.imaging.LocalImageFetcher getInstance(android.content.Context);
+    public void cancelRequest(com.android.car.apps.common.imaging.ImageKey, java.util.function.BiConsumer<com.android.car.apps.common.imaging.ImageKey, android.graphics.drawable.Drawable>);
+    public void getImage(android.content.Context, com.android.car.apps.common.imaging.ImageKey, java.util.function.BiConsumer<com.android.car.apps.common.imaging.ImageKey, android.graphics.drawable.Drawable>);
+public class com.android.car.apps.common.log.L {
+    public com.android.car.apps.common.log.L();
+    public static void d(java.lang.String, java.lang.String, java.lang.Object...);
+    public static void e(java.lang.String, java.lang.Exception, java.lang.String, java.lang.Object...);
+    public static void e(java.lang.String, java.lang.String, java.lang.Object...);
+    public static void i(java.lang.String, java.lang.String, java.lang.Object...);
+    public static void v(java.lang.String, java.lang.String, java.lang.Object...);
+    public static void w(java.lang.String, java.lang.String, java.lang.Object...);
+public class com.android.car.apps.common.util.Assert {
+    public static void fail(java.lang.String);
+    public static void isMainThread();
+public class com.android.car.apps.common.util.CarAppsDebugUtils {
+    public com.android.car.apps.common.util.CarAppsDebugUtils();
+    public static java.lang.String idHash(java.lang.Object);
+public class com.android.car.apps.common.util.CarAppsIOUtils {
+    public com.android.car.apps.common.util.CarAppsIOUtils();
+    public static void copy(java.io.InputStream, java.io.OutputStream) throws java.io.IOException;
+public class com.android.car.apps.common.util.CarPackageManagerUtils {
+    public com.android.car.apps.common.util.CarPackageManagerUtils();
+    public static boolean isDistractionOptimized(android.car.content.pm.CarPackageManager, android.app.PendingIntent);
+    public static boolean isDistractionOptimized(android.car.content.pm.CarPackageManager, android.content.pm.ActivityInfo);
+    public static boolean isDistractionOptimized(android.car.content.pm.CarPackageManager, android.content.pm.PackageManager, android.content.Intent);
+public class com.android.car.apps.common.util.FutureData<T> {
+    public T getData();
+    public T getPastData();
+    public boolean isLoading();
+    public com.android.car.apps.common.util.FutureData(boolean, T);
+    public static <T> T getData(com.android.car.apps.common.util.FutureData<T>);
+    public static <T> T getPastData(com.android.car.apps.common.util.FutureData<T>);
+    public static <T> com.android.car.apps.common.util.FutureData<T> newLoadedData(T);
+    public static <T> com.android.car.apps.common.util.FutureData<T> newLoadedData(T, T);
+    public static <T> com.android.car.apps.common.util.FutureData<T> newLoadingData();
+public class com.android.car.apps.common.util.LiveDataFunctions {
+    public static <P, T> androidx.lifecycle.LiveData<T> iff(androidx.lifecycle.LiveData<P>, java.util.function.Predicate<? super P>, androidx.lifecycle.LiveData<T>);
+    public static <T, R> androidx.lifecycle.LiveData<R> mapNonNull(androidx.lifecycle.LiveData<T>, R, androidx.arch.core.util.Function<T, R>);
+    public static <T, R> androidx.lifecycle.LiveData<R> mapNonNull(androidx.lifecycle.LiveData<T>, androidx.arch.core.util.Function<T, R>);
+    public static <T, R> androidx.lifecycle.LiveData<R> switchMapNonNull(androidx.lifecycle.LiveData<T>, R, androidx.arch.core.util.Function<T, androidx.lifecycle.LiveData<R>>);
+    public static <T, R> androidx.lifecycle.LiveData<R> switchMapNonNull(androidx.lifecycle.LiveData<T>, androidx.arch.core.util.Function<T, androidx.lifecycle.LiveData<R>>);
+    public static <T, R> androidx.lifecycle.LiveData<com.android.car.apps.common.util.FutureData<R>> loadingSwitchMap(androidx.lifecycle.LiveData<T>, androidx.arch.core.util.Function<T, androidx.lifecycle.LiveData<R>>);
+    public static <T, U, R> androidx.lifecycle.LiveData<R> combine(androidx.lifecycle.LiveData<T>, androidx.lifecycle.LiveData<U>, java.util.function.BiFunction<T, U, R>);
+    public static <T, U> androidx.lifecycle.LiveData<androidx.core.util.Pair<T, U>> pair(androidx.lifecycle.LiveData<T>, androidx.lifecycle.LiveData<U>);
+    public static <T> androidx.lifecycle.LiveData<T> iff(androidx.lifecycle.LiveData<java.lang.Boolean>, androidx.lifecycle.LiveData<T>);
+    public static <T> androidx.lifecycle.LiveData<T> nullLiveData();
+    public static <T> androidx.lifecycle.MutableLiveData<T> dataOf(T);
+public final class com.android.car.apps.common.util.PagedSmoothScroller extends androidx.recyclerview.widget.LinearSmoothScroller {
+    protected float calculateSpeedPerPixel(android.util.DisplayMetrics);
+    protected int calculateTimeForDeceleration(int);
+    protected int getVerticalSnapPreference();
+    protected void onTargetFound(android.view.View, androidx.recyclerview.widget.RecyclerView$State, androidx.recyclerview.widget.RecyclerView$SmoothScroller$Action);
+    public com.android.car.apps.common.util.PagedSmoothScroller(android.content.Context);
+public class com.android.car.apps.common.util.SafeLog {
+    public static void logd(java.lang.String, java.lang.String);
+    public static void loge(java.lang.String, java.lang.String);
+    public static void loge(java.lang.String, java.lang.String, java.lang.Exception);
+    public static void logi(java.lang.String, java.lang.String);
+    public static void logv(java.lang.String, java.lang.String);
+    public static void logw(java.lang.String, java.lang.String);
+public class com.android.car.apps.common.util.Themes {
+    public com.android.car.apps.common.util.Themes();
+    public static android.content.res.ColorStateList getAttrColorStateList(android.content.Context, int);
+    public static android.content.res.ColorStateList getAttrColorStateList(android.content.Context, int, int);
+    public static android.graphics.drawable.Drawable getAttrDrawable(android.content.Context, int);
+    public static android.graphics.drawable.Drawable getAttrDrawable(android.content.Context, int, int);
+    public static boolean getAttrBoolean(android.content.Context, int);
+    public static boolean getAttrBoolean(android.content.Context, int, int);
+    public static int getAttrColor(android.content.Context, int);
+    public static int getAttrColor(android.content.Context, int, int);
+    public static int getAttrDimensionPixelSize(android.content.Context, int);
+    public static int getAttrDimensionPixelSize(android.content.Context, int, int);
+    public static int getAttrInteger(android.content.Context, int);
+    public static int getAttrInteger(android.content.Context, int, int);
+    public static int getAttrResourceId(android.content.Context, int);
+    public static int getAttrResourceId(android.content.Context, int, int);
+public class com.android.car.apps.common.util.VectorMath {
+    public static final float EPSILON = 1.0E-4f;
+    public static float center(float, float);
+    public static float dotProduct(float, float, float, float);
+    public static float norm2(float, float);
+public class com.android.car.apps.common.util.ViewUtils {
+    public com.android.car.apps.common.util.ViewUtils();
+    public static android.animation.Animator$AnimatorListener hideViewAfterAnimation(android.view.View);
+    public static java.util.List<android.view.View> getViewsById(android.view.View, android.content.res.Resources, int, com.android.car.apps.common.util.ViewUtils$Filter);
+    public static void hideViewAnimated(android.view.View, int);
+    public static void hideViewAnimated(android.view.View, int, com.android.car.apps.common.util.ViewUtils$ViewAnimEndListener);
+    public static void hideViewsAnimated(java.util.List<android.view.View>, int);
+    public static void removeFromParent(android.view.View);
+    public static void setActivated(android.view.View, boolean);
+    public static void setEnabled(android.view.View, boolean);
+    public static void setInvisible(android.view.View, boolean);
+    public static void setOnClickListener(android.view.View, android.view.View$OnClickListener);
+    public static void setText(android.widget.TextView, int);
+    public static void setText(android.widget.TextView, java.lang.CharSequence);
+    public static void setView(android.view.View, android.widget.FrameLayout);
+    public static void setVisible(android.view.View, boolean);
+    public static void setVisible(java.util.List<android.view.View>, boolean);
+    public static void showHideViewAnimated(boolean, android.view.View, int, com.android.car.apps.common.util.ViewUtils$ViewAnimEndListener);
+    public static void showViewAnimated(android.view.View, int);
+    public static void showViewAnimated(android.view.View, int, com.android.car.apps.common.util.ViewUtils$ViewAnimEndListener);
+    public static void showViewsAnimated(java.util.List<android.view.View>, int);
+public interface com.android.car.apps.common.util.ViewUtils$Filter {
+    public abstract boolean isValid(android.view.View);
+public interface com.android.car.apps.common.util.ViewUtils$ViewAnimEndListener {
+    public abstract void onAnimationEnd(android.view.View);
+public class com.android.car.apps.common.widget.PagedSnapHelper extends androidx.recyclerview.widget.LinearSnapHelper {
+    protected androidx.recyclerview.widget.RecyclerView$SmoothScroller createScroller(androidx.recyclerview.widget.RecyclerView$LayoutManager);
+    public android.view.View findSnapView(androidx.recyclerview.widget.RecyclerView$LayoutManager);
+    public boolean isAtEnd(androidx.recyclerview.widget.RecyclerView$LayoutManager);
+    public com.android.car.apps.common.widget.PagedSnapHelper(android.content.Context);
+    public int[] calculateDistanceToFinalSnap(androidx.recyclerview.widget.RecyclerView$LayoutManager, android.view.View);
+    public int[] calculateScrollDistance(int, int);
+    public void attachToRecyclerView(androidx.recyclerview.widget.RecyclerView);
+
+# annotations.zip
+    com.android.car.apps.common.CarControlBar int getSlotIndex(int, int) 0  androidx.annotation.IntDef value={com.android.car.apps.common.CarControlBar.SLOT_MAIN, com.android.car.apps.common.CarControlBar.SLOT_LEFT, com.android.car.apps.common.CarControlBar.SLOT_RIGHT, com.android.car.apps.common.CarControlBar.SLOT_EXPAND_COLLAPSE}
+    com.android.car.apps.common.CarControlBar void setView(android.view.View, int) 1  androidx.annotation.IntDef value={com.android.car.apps.common.CarControlBar.SLOT_MAIN, com.android.car.apps.common.CarControlBar.SLOT_LEFT, com.android.car.apps.common.CarControlBar.SLOT_RIGHT, com.android.car.apps.common.CarControlBar.SLOT_EXPAND_COLLAPSE}
+    com.android.car.apps.common.CarControlBar.SlotPosition  androidx.annotation.IntDef value={com.android.car.apps.common.CarControlBar.SLOT_MAIN, com.android.car.apps.common.CarControlBar.SLOT_LEFT, com.android.car.apps.common.CarControlBar.SLOT_RIGHT, com.android.car.apps.common.CarControlBar.SLOT_EXPAND_COLLAPSE}
+    com.android.car.apps.common.ControlBar int getSlotIndex(int) 0  androidx.annotation.IntDef value={com.android.car.apps.common.CarControlBar.SLOT_MAIN, com.android.car.apps.common.CarControlBar.SLOT_LEFT, com.android.car.apps.common.CarControlBar.SLOT_RIGHT, com.android.car.apps.common.CarControlBar.SLOT_EXPAND_COLLAPSE}
+    com.android.car.apps.common.ControlBar void setView(android.view.View, int) 1  androidx.annotation.IntDef value={com.android.car.apps.common.CarControlBar.SLOT_MAIN, com.android.car.apps.common.CarControlBar.SLOT_LEFT, com.android.car.apps.common.CarControlBar.SLOT_RIGHT, com.android.car.apps.common.CarControlBar.SLOT_EXPAND_COLLAPSE}
+    com.android.car.apps.common.MinimizedControlBar void setView(android.view.View, int) 1  androidx.annotation.IntDef value={com.android.car.apps.common.CarControlBar.SLOT_MAIN, com.android.car.apps.common.CarControlBar.SLOT_LEFT, com.android.car.apps.common.CarControlBar.SLOT_RIGHT, com.android.car.apps.common.CarControlBar.SLOT_EXPAND_COLLAPSE}

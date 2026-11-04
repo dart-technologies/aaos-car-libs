@@ -1,0 +1,362 @@
+# Tests observed to fail intermittently at UNCHANGED source.
+#
+# This list is NOT a baseline and NOT an excuse. A test here is expected to pass; it is recorded
+# only because a single failure of it is insufficient evidence of a regression. When the entire
+# newly-failing set is contained in this list, run-bump-gate.sh reports INDETERMINATE (rc=2) rather
+# than FAIL (rc=1), and tells the operator to re-run — because "could not determine" is the honest
+# reading of one failure of a test that flakes, and it is a state this gate already models.
+#
+# The distinction that keeps this from becoming a mask: anything newly-failing that is NOT on this
+# list is still a hard failure, and a test on this list that fails in TWO CONSECUTIVE runs is a
+# regression — the gate cannot see that, so the operator must.
+#
+# Adding an entry requires evidence: the runs observed, and what made it flake if known. An entry
+# without that is a test someone silenced.
+#
+# Format: ClassName#methodName<TAB># evidence
+
+# Espresso scroll-then-click. The test scrolls the preference list until "list" is visible, then
+# clicks by text; the click races the scroll settling. Observed 2026-08-15: FAILED in the Host A
+# scaffold gate, PASSED on immediate re-run (where a DIFFERENT test, the then-new
+# disconnect_evictsSoTheNextGetInstanceReconnects, failed instead and turned out to be a real
+# defect); FAILED again in the plugin-apis 1.5.0 swap gate, PASSED on immediate re-run with the
+# failing set exactly equal to baseline. 2 of 4 runs, source unchanged between them.
+#
+# Ruled out as a cause of the 1.5.0 failure specifically: nothing in car-ui-lib or the plugin
+# references PreferenceOEMV1 or the oemapis.preference package that 1.5.0 adds, so the new package
+# is inert on this path.
+# PreferenceTest#testListPreference — ENTRY REMOVED 2026-08-16. The race it waived is FIXED at
+# source (CarUiRecyclerViewActions.actionOnItem); see the RESOLVED section below. Leaving the
+# line here would have been worse than never adding it: a future regression in this test would
+# be downgraded from FAIL to INDETERMINATE by a waiver whose stated cause no longer exists.
+# An allowlist entry outliving its defect is a silent hole, and closing the defect without
+# closing the entry is not closure.
+
+# NOT a flaky test — a TRUNCATED RUN, logged here because the operator note above is the only place
+# that distinction gets recorded. Observed 2026-08-16 in the post-B4/B5 gate: the car-rotary-lib
+# instrumented suite reported executed=9 of an expected 100, with FocusAreaTest#testBoundsOffsetWithRtl
+# throwing IndexOutOfBoundsException from inside ViewGroup.onInitializeAccessibilityNodeInfoInternal
+# (a platform frame, not test code) — an accessibility-node walk over a child list that had emptied
+# under it. The instrumentation process died there and the remaining 91 never ran.
+#
+# Immediate re-run of the same suite, same source: 100 executed, 0 failures.
+#
+# Deliberately NOT added as an entry below. An entry would tell the gate to tolerate this test
+# failing, and the gate must not tolerate a truncated run at all — a partial run's failure count
+# describes nothing, which is exactly why check-instrumented-run.py refuses to read one. The gate
+# behaved correctly here: it called the truncation and stopped. This note exists so that a SECOND
+# occurrence is recognised as a pattern rather than met with another shrug and a re-run.
+
+# OBSERVED ONCE, deliberately NOT given an entry below. 2026-08-16, post-B4/B5 gate:
+# ToolbarSearchTest#test_registerSearchListeners_callsListeners[3] failed with
+# "Wanted but not invoked: runnable.run() ... zero interactions with this mock". Immediate re-run of
+# the same suite on the same source: the failing set was exactly the baseline three, signatures
+# matching.
+#
+# Mechanism, as far as it can be localised: the test types "hello\n" and verifies five
+# character-level accept() callbacks and then one searchCompletedListener.run(). All FIVE accept()
+# verifications passed; only the terminal newline's completion callback did not fire. That places it
+# in the IME action delivered by the trailing newline, and rules out the two explanations that would
+# have been product defects — the search field being disabled, or the listener never being
+# registered, either of which would have failed the first accept() instead.
+#
+# Ruled out as causes, on two independent grounds rather than by re-running until green:
+#   1. car-ui-lib has no dependency on a2ui-model or a2ui-host-carapp, so nothing in B4/B5 can
+#      reach this suite.
+#   2. The only car-ui-lib source change in this batch (extracting the fail-closed decision into two
+#      static final constants) compiles to BYTE-IDENTICAL bytecode — verified by diffing `javap -c -p`
+#      output against a build of the HEAD version of the file. Both constants are compile-time
+#      constants and are folded by javac.
+#
+# UPDATE, later the same day: it recurred, so the entry below now exists on the terms this note set.
+# The recurrence was parameter [1] on a FRESHLY COLD-BOOTED, verified-clean device — different
+# instance, different device state, identical mechanism (line 123, "zero interactions").
+#
+# The differing parameter is what settles the diagnosis. A deterministic regression in the
+# search-listener path would fail the SAME parameter every time; a race fails whichever instance
+# happens to lose it. Observed [3], then [1], with a clean baseline-3 run in between.
+#
+# Both of this session's car-ui-lib changes are ruled out, on independent grounds:
+#   - the fail-closed constant extraction compiles to BYTE-IDENTICAL bytecode (verified by diffing
+#     `javap -c -p` against a build of the HEAD version);
+#   - the complyString/truncateToComply fix POSTDATES the first failure, so it cannot explain a
+#     failure that had already happened. Its only caller is UxrTextView in car-apps-common, which is
+#     not in car-ui-lib's instrumented suite at all.
+
+# SECOND TRUNCATION, 2026-08-16, and what the environment check said about it.
+#
+# car-ui-lib instrumented reported executed=138 of 503 — a process death, not a test result. The
+# gate refused to read the failing set, which is correct: a partial run's missing failures are
+# missing TESTS. This is the second truncation of the session; the first was car-rotary-lib at
+# 9/100, noted above.
+#
+# Two observations now, so it is a pattern rather than a one-off, and the state it happened in was
+# recorded rather than guessed. scripts/ensure-test-env.sh reported, immediately afterwards:
+#
+#   - a leftover art.dart.a2ui.carapp process still holding a virtual display (displays had crept
+#     from 4 to 5 across the session)
+#   - guest uptime 47762s — over 13 hours
+#   - host load average 7.86
+#
+# All three are the conditions that check was written to detect, and it detected them. Remedy taken:
+# force-stopped the leftover apps and cold booted, which is the control the check itself names.
+#
+# ONE THING THE COLD BOOT REVEALED, worth more than the truncation itself:
+#
+#   A cold boot REVERTS /system, so the proxy plugin becomes the system image's older build. The
+#   check caught it instantly ("installed: 13550369 bytes, expected: 11067949") and states the
+#   consequence: the suite truncates at 227/497 and the baseline reads 50 failures instead of 13.
+#
+# So a wrong plugin is a KNOWN cause of truncation in this repository. That is not what caused the
+# two above — the check reported byte-identity before both — but it means truncation should always
+# be met by verifying the plugin first, because there is a documented mechanism for it rather than
+# only a suspicion. Recovery is `scripts/ensure-test-env.sh --fix`, which rebuilds, reboots with
+# -writable-system, re-pushes and re-verifies.
+#
+# Still deliberately NOT baselining anything. A truncated run must never be tolerated: the gate
+# behaved correctly both times by refusing to read one.
+# Both entries re-confirmed 2026-08-18, and BOTH indices were seen to flake in the same day:
+#   - [3] failed alone in the mediaitemsrepository-tests gate; re-run green, failing set back to 3.
+#   - [1] failed alone in the api-gate-and-52-tests gate; re-run green, failing set down to 1.
+# Both were correctly INDETERMINATE (rc=2) rather than FAIL, and neither is the regression branch
+# the header describes, which needs the SAME test failing twice consecutively.
+#
+# The second run is also why the "1 baseline failure passed this run" note matters: this suite
+# flakes in both directions, roughly 31 of 497 runs, and the gate refuses to record a disappearing
+# baseline failure as an improvement without a second run reproducing it. A ratchet that moves on
+# one lucky run is the same defect as one that absorbs a red run, pointing the other way.
+
+# Mechanism, as precisely as it can be stated: the test types "hello\n" and verifies five
+# character-level accept() callbacks followed by one searchCompletedListener.run(). In BOTH
+# failures all five accept() verifications passed and only the terminal newline's completion
+# callback did not fire. That places it in the IME action delivered by the trailing newline, and
+# rules out the two explanations that would have been product defects — the search field being
+# disabled, or the listener never being registered — either of which fails the FIRST accept().
+#
+# The entries are PER PARAMETER, and an earlier draft of this note got that wrong. The gate compares
+# full test identities including the "[n]" suffix — baseline-failset.txt lists
+# testAlphaJumpToMiddleForThumbWhenTrackClicked[0] and [1] as separate lines for the same reason — so
+# an unparameterised entry would match nothing and a recurrence would still hard-fail. Worth
+# recording because the mistake reads as harmless and is not: it produces an entry that looks like
+# tolerance and delivers none.
+#
+# Only the two OBSERVED instances are listed. The race is in the shared test body, so [0] and [2]
+# could flake identically — but they have not been seen to, and listing them would be tolerating a
+# failure on prediction rather than evidence. If one of them fails, that is a hard failure and it
+# earns its own line with its own run.
+
+# TRUNCATION, third and fourth occurrences — and the control that resolves it, confirmed twice.
+#
+# 2026-08-16, later session: car-ui-lib instrumented truncated at 459/503, then at 18/503 TWICE with
+# `gradle rc=0` — a silent truncation the gate caught only because it asserts executed counts rather
+# than trusting exit codes.
+#
+# Twice at exactly 18 looked deterministic, and a hypothesis followed: AlertDialogBuilderTest runs
+# first alphabetically, contains the baselined test_setCursor_works (a DIALOG test that fails after
+# opening a dialog), and the next class to run is AppStyledDialogControllerTest — whose first test
+# reported failure with NO detail text, which is what process death looks like.
+#
+# THE HYPOTHESIS WAS WRONG, and the control disproved it rather than confirming it:
+#
+#   - AppStyledDialogControllerTest passes 4/4 in isolation, no crash.
+#   - After a cold boot + `ensure-test-env.sh --fix`, the FULL suite ran 503/503 with exactly the
+#     baseline three failures — same order, same baselined dialog failure, no truncation.
+#
+# So the baselined failure does not cause the truncation. What correlates is accumulated device
+# state across a long session, and the remedy is the same one that worked earlier the same day:
+#
+#     adb emu kill; emulator -avd ... -writable-system -no-snapshot-load; ensure-test-env.sh --fix
+#
+# The `--fix` half is not optional: a cold boot REVERTS /system, so the proxy plugin becomes the
+# image's older build, and a wrong plugin is itself a documented cause of truncation.
+#
+# Recorded, again NOT baselined. A truncated run must never be tolerated; the gate refused to read
+# one on all four occasions, which is the behaviour that made this diagnosable at all. What is worth
+# carrying forward is narrower than "truncation is flaky": it is that truncation which reproduces
+# within a session can still be environmental, so the cold-boot control comes BEFORE any hypothesis
+# about test interaction.
+
+# ============================================================================================
+# RESOLVED, 2026-08-16: PreferenceTest#testListPreference — the scroll/click race, FIXED at source.
+#
+# This replaces an "UNRESOLVED / cannot explain" section written here earlier. That section was
+# wrong in its conclusion and, more usefully, wrong in three specific readings that are worth
+# preserving because each one looked like evidence.
+#
+# THE MECHANISM. The test did:
+#
+#     mActivity.runOnUiThread(() -> mActivity.scrollToPreference("list"));
+#     onView(withText(R.string.title_list_preference)).perform(click());
+#
+# Two operations with nothing between them. A RecyclerView scroll is an animation across frames,
+# not a backlog of looper messages, so Espresso considers the main thread idle while the target row
+# is still moving. The click lands on nothing, the dialog never opens, and the failure surfaces
+# several assertions later as a missing radio widget — which reads like a RENDERING fault at a
+# point in the test far from the actual mistake.
+#
+# THE FIX. One atomic, synchronised action:
+#
+#     onView(withId(R.id.recycler_view)).perform(
+#             CarUiRecyclerViewActions.actionOnItem(
+#                     hasDescendant(withText(R.string.title_list_preference)), click()));
+#
+# `hasDescendant` is required: the ViewHolder matcher tests the ITEM VIEW, while `withText` matches
+# the TextView inside it, so passing withText directly finds no item and the scroll fails with a
+# PerformException. No new dependency — espresso-contrib already resolves, and
+# CarUiRecyclerViewActions is this repository's own helper.
+#
+# WHAT DID NOT WORK, recorded so it is not retried:
+#   - An IdlingResource sampling RecyclerView state. The scroll has not STARTED when Espresso next
+#     polls, so every condition is already true and it reports idle immediately: a no-op wearing the
+#     costume of a fix. Arming it explicitly before the scroll only moves the same problem to the
+#     next frame.
+#   - A fixed sleep before the click. It passes, and it is worse than nothing: it encodes frame
+#     timing measured on one machine and returns on slower hardware as the same misleading symptom.
+#
+# THREE MISREADINGS THAT COST HOURS, all mine, all from the same failure dump:
+#   1. "The dialog DID open — CarUiRecyclerView and the list title are in the hierarchy." They
+#      belong to the PREFERENCE SCREEN, not the dialog. This produced a content-limiting theory.
+#   2. "One radio widget rendered instead of three." Zero were rendered. The single occurrence was
+#      the MATCHER'S OWN DESCRIPTION in the exception text. Counted wrong twice.
+#   3. Treating a deterministic failure as environmental for six controls (cold boot, --fix,
+#      -wipe-data, UXR state, driving state, isolation) because earlier truncations in the same
+#      session HAD been environmental. The prior probability was real; the reasoning was not.
+#
+# The generalisable lesson, and the reason this is written at length: a symptom several assertions
+# downstream of its cause will describe the wrong subsystem, confidently. When an Espresso failure
+# says "view missing", check whether the step BEFORE it actually happened before theorising about
+# why the view is absent.
+#
+# Also worth noting against the baseline-signature column: this failure and the recorded scroll/click
+# race are BOTH NoMatchingViewException, so a type-level signature would not have separated them.
+# That column is coarser than its introduction implied.
+
+
+# TRUNCATED RUN, 2026-08-18, media3-stage4-metadata gate: car-ui-lib instrumented executed 346 of
+# an expected 503 and the gate returned rc=2 without reading the failing set -- correctly, because a
+# partial run's missing failures are missing TESTS, not passing ones.
+#
+# The cause is in the instrumentation log and is not a test: "device 'emulator-5554' not found",
+# with "Test run failed to complete. Expected 503 tests, received 345". The emulator process was
+# gone entirely afterwards -- adb listed no devices and no qemu process was running. Nothing about
+# the change under test is established or contradicted by that run.
+#
+# Recorded here rather than nowhere because the distinction this file exists to draw -- a flaky
+# TEST versus a truncated RUN -- is exactly what a bare "2 failures" line would have obscured. The
+# gate refused to read those 2 failures at all, which is the behaviour worth keeping.
+
+# ============================================================================================
+# RESOLVED, 2026-08-17: FocusAreaTest#testBoundsOffsetWithRtl - the accessibility-walk race,
+# FIXED at source. No allowlist entry was ever added for it, and none is needed.
+#
+# The failure: IndexOutOfBoundsException thrown from inside
+# ViewGroup.onInitializeAccessibilityNodeInfoInternal, reached via
+# FocusArea.onInitializeAccessibilityNodeInfo. Seen twice at unchanged rotary source - 2026-08-16,
+# where it killed the instrumentation process and truncated the suite at 9 of 100, and 2026-08-17
+# in the media3-conversion-layer gate, where the run completed with exactly 1 failure. Counting the
+# retained gate logs put it at 1 run in 20.
+#
+# The cause, which the earlier notes did not have: the tests called
+# createAccessibilityNodeInfo() from the INSTRUMENTATION thread. That platform method reads the
+# child count and then indexes the child list, so a layout running concurrently on the UI thread
+# can empty the list between those two steps - "Index 1 out of bounds for length 0" exactly.
+# testBoundsOffsetWithRtl is the one that hit it because setLayoutDirection(RTL) requests a
+# relayout first, and the test posted only once, which guarantees another pass of the message loop
+# and not that layout has settled. The other three call sites in that file had the same hazard and
+# differed only in having no relayout in flight to lose the race to.
+#
+# The fix: all four go through a nodeOn(View) helper that creates the node on the view's own
+# thread, so the walk can no longer interleave with layout.
+#
+# Verified: car-rotary-lib connectedDebugAndroidTest rc=0, 100 tests, 0 failures, 0 errors, with
+# all four patched tests present in the run.
+#
+# The honest limit on that verification, stated because the number invites over-reading: ONE green
+# run does not demonstrate a 1-in-20 failure is gone - 19 of 20 runs were already green before the
+# fix. The claim being made is structural rather than statistical. The interleave is removed
+# because the walk now happens on the thread that owns the view tree, and a green run is
+# consistent with that but is not evidence for it. If this test fails again, the fix is wrong and
+# the diagnosis above is the first thing to doubt.
+#
+# Why this is a fix and not an allowlist entry: an entry would have downgraded a future failure of
+# this test from FAIL to INDETERMINATE, on a module unrelated to the work that surfaced it. The
+# evidence bar for writing one had been met - and the entry was still the worse option, because the
+# race was explicable and small. Same conclusion the PreferenceTest section below reaches.
+
+# ============================================================================================
+# RESOLVED, 2026-08-18: ToolbarSearchTest#test_registerSearchListeners_callsListeners[1] and [3]
+# -- the IME action race, FIXED at source. BOTH allowlist entries removed above.
+#
+# The test typed "hello\n" and relied on the trailing newline becoming a search submission. That
+# only happens if the IME translates the newline into an editor action, and in SearchMode.EDIT that
+# translation races an IME restart: SearchView.setPlainText(true) switches imeOptions from
+# IME_ACTION_SEARCH to IME_ACTION_DONE and then calls InputMethodManager.restartInput(), which is
+# asynchronous. A newline arriving before the IME has restarted is delivered as a plain character
+# rather than an action, so onEditorAction never fires and the completed listener never runs.
+#
+# The parameter indices are what make this more than a plausible story. The four parameters are
+# [0]=(plugin off, SEARCH), [1]=(plugin off, EDIT), [2]=(plugin on, SEARCH), [3]=(plugin on, EDIT).
+# The two observed to fail were [1] and [3] -- exactly the two EDIT cases, across both plugin
+# settings. Only EDIT calls setPlainText on this path, and only setPlainText restarts the input.
+#
+# The fix: type and submit separately, with pressImeActionButton(), which performs the editor action
+# directly on the current input connection instead of hoping the IME derives one. SearchView's
+# handler accepts IME_ACTION_DONE *or* IME_ACTION_SEARCH, so it is correct on either side of the
+# restart rather than only after it.
+#
+# Verified: ToolbarSearchTest, all 40 tests across all four parameters, 0 failures, rc=0.
+#
+# The same limit as the FocusArea fix applies and is worth repeating: one green run does not
+# demonstrate that a roughly-2-in-8 intermittent is gone. The claim is structural, not statistical.
+# What is stronger here than there is that the mechanism PREDICTS which parameters fail, and the
+# prediction matches what was observed. If [0] or [2] ever fails, this diagnosis is wrong.
+
+# NOT a flaky test, and NOT the test's fault: an OPERATOR-INDUCED failure, 2026-08-19.
+#
+# A2uiHandoffLifecycleTest#asupersededPresentationsLateDismissalDoesNotTearDownItsReplacement failed
+# once with android.view.InflateException inflating car_ui_toolbar_menu_item under Robolectric, in
+# the a2ui-apilint-round2 gate (rc=1).
+#
+# What was different about that run: an independent review subagent was reading the working tree
+# WHILE the gate ran. That is the only variable, and it was mine. The obvious suspect -- a new
+# check-api-lint.py step added to the gate that shells out to gradle -- was tested and cleared:
+#   1. a2ui-host-carui suite alone, after the failure:            rc=0, 0 failures
+#   2. check-api-lint.py immediately followed by that suite:      rc=0, 0 failures
+#   3. full gate with nothing else running (round3-clean):        rc=0, a2ui-host-carui 38/0
+#
+# Recorded here rather than nowhere because the honest reading is "this run established nothing"
+# and the cause was process, not code. No allowlist entry: an entry would waive a test that has not
+# been shown to flake on its own, and the fix for this one is not to run other work against the tree
+# while a gate is measuring it -- which is the rule that already exists and that I broke.
+
+# ---------------------------------------------------------------------------------------------
+# ACTIVE ENTRY, added 2026-08-21.
+#
+PreferenceTest#testListPreference	focus-establishment race; 504/4 then 504/3 on an unchanged tree 2026-08-21; see upstream-reports/0001 (3 clean + 1 failure in a targeted loop, patch narrows but does not close it)
+#
+# A focus-establishment race, and the first active entry this file has ever carried. It is added
+# because the evidence for it already existed IN THIS REPOSITORY and the gate could not reach it:
+# upstream-reports/0001-PreferenceTest-fix-scroll-click-race.md records that the prepared patch
+# "NARROWS the race; it does not close it", that the test "failed the gate again on 2026-08-20",
+# and that a targeted loop produced 3 clean runs and 1 failure. So the repository knew this test
+# flakes, held the measurement, and still hard-failed on it — the mechanism built to consume that
+# evidence sat empty while the evidence sat in a report the gate never reads.
+#
+# Reproduced again on 2026-08-21 during the A2 work: one instrumented run at 504/4 with this test
+# in the failing set, then an immediate re-run at 504/3 with the baseline set exactly. One failure,
+# one clean, on an unchanged tree.
+#
+# The diagnosis is the report's, not a guess: the failure is ~110 lines past the patched click, in
+# the rotary-focus section after setInTouchMode(false) and two KEYCODE_DPAD_CENTER presses. Leaving
+# touch mode does not place focus synchronously, so if focus has not landed when the first press
+# arrives the second does not reopen the dialog and its radio buttons never exist.
+#
+# WHAT THIS ENTRY DOES AND DOES NOT DO. It downgrades a failure of this ONE test from FAIL to
+# INDETERMINATE — re-run, not pass. It does not excuse it: two CONSECUTIVE failures are still a
+# regression, and the gate cannot see that, so a human has to. Remove this entry the day the focus
+# race is fixed rather than the day it stops being noticed.
+#
+# It was NOT added while the failure was unexplained. The sequence was: fail, re-run clean, then
+# match the observed test against evidence already on disk. Adding it before the re-run would have
+# been papering over a possible regression from the change under test with a plausible story.
+CarUiRecyclerViewTest#testPageDownMaintainsMinimumScrollThumbTrackHeight[0]	order-dependent; failed 1 of 3 full runs 2026-11-04 (504/4), passed 3/3 isolated and the next full run on the same deps

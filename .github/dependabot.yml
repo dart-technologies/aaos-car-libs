@@ -1,0 +1,29 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+version: 2
+updates:
+  # Dependabot bumps both the SHA pin and its trailing # vX comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'ci'
+
+  - package-ecosystem: gradle
+    # Every version is in gradle/libs.versions.toml under this directory, which Dependabot reads.
+    directory: /aaos-apps-gradle-project
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'deps'
+    groups:
+      androidx-test:
+        patterns:
+          - 'androidx.test*'
+    ignore:
+      # The plugin ABI version is a compatibility decision against what ships on head units
+      # (FORK.md), not an automatic update.
+      - dependency-name: 'com.android.car.ui:car-ui-lib-plugin-apis'

@@ -1,0 +1,44 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+
+name: Scorecard
+
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: '19 6 * * 1'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    # GITHUB_TOKEN cannot read a private repo's commits via GraphQL; re-enable when public.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@f49aabe0b5af0936a0987cfb85d86b75731b0186 # v2.4.1
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # Must stay false while the repo is private (no Scorecard API); flip it when going public.
+          publish_results: false
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@7e3036b9cd87fc26dd06747b7aa4b96c27aaef3a # codeql-bundle-v2.20.3
+        with:
+          sarif_file: results.sarif

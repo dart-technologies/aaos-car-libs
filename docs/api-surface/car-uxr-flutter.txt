@@ -1,0 +1,14 @@
+# AndroidManifest package
+art.dart.car_uxr
+
+public class art.dart.car_uxr.CarUxrPlugin implements io.flutter.embedding.engine.plugins.FlutterPlugin,io.flutter.embedding.engine.plugins.activity.ActivityAware,io.flutter.plugin.common.MethodChannel$MethodCallHandler,io.flutter.plugin.common.EventChannel$StreamHandler {
+    public art.dart.car_uxr.CarUxrPlugin();
+    public void onAttachedToActivity(io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding);
+    public void onAttachedToEngine(io.flutter.embedding.engine.plugins.FlutterPlugin$FlutterPluginBinding);
+    public void onCancel(java.lang.Object);
+    public void onDetachedFromActivity();
+    public void onDetachedFromActivityForConfigChanges();
+    public void onDetachedFromEngine(io.flutter.embedding.engine.plugins.FlutterPlugin$FlutterPluginBinding);
+    public void onListen(java.lang.Object, io.flutter.plugin.common.EventChannel$EventSink);
+    public void onMethodCall(io.flutter.plugin.common.MethodCall, io.flutter.plugin.common.MethodChannel$Result);
+    public void onReattachedToActivityForConfigChanges(io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding);
