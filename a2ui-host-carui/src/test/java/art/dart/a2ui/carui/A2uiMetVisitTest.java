@@ -105,6 +105,23 @@ public class A2uiMetVisitTest {
         // No sources, no cited row: nothing is invented.
         assertThat(A2uiCarUiActivity.briefBody(lines, java.util.Collections.emptyList(),
                 "Muse")).containsExactly(lines.get(1));
+        // A brief with no title of its own: the first component's title leads the card, its
+        // subtitle half becomes a last-resort line, and the hours win the line under it.
+        java.util.List<String> untitled = new java.util.ArrayList<>(java.util.Arrays.asList(
+                "The Met Fifth Avenue · Upper East Side bordering Central Park",
+                "Open today Thursday 10 am to 5 pm"));
+        assertThat(A2uiCarUiActivity.briefTitle(untitled, false))
+                .isEqualTo("The Met Fifth Avenue");
+        assertThat(A2uiCarUiActivity.briefBody(untitled,
+                java.util.Collections.singletonList("Source · metmuseum.org"), "Muse"))
+                .containsExactly("Open today Thursday 10 am to 5 pm",
+                        "Muse · cited · metmuseum.org").inOrder();
+        // A titled brief keeps its title whole, a "·" and all.
+        java.util.List<String> titled = new java.util.ArrayList<>(
+                java.util.Collections.singletonList("The Met · this afternoon"));
+        assertThat(A2uiCarUiActivity.briefTitle(titled, true))
+                .isEqualTo("The Met · this afternoon");
+        assertThat(titled).isEmpty();
         // An entrance by street name is not an address.
         assertThat(A2uiCarUiActivity.briefBody(
                 java.util.Collections.singletonList("Use the 81st St entrance"),

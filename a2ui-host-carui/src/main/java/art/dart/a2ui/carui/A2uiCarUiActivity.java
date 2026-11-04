@@ -1747,7 +1747,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         List<String> sources = new ArrayList<>();
         collectBriefLines(pruned, true, lines, sources);
         if (lines.isEmpty()) return;
-        String title = lines.remove(0);
+        String rootTitle = pruned.getTitle();
+        String title = briefTitle(lines, pruned.hasChildren() && rootTitle != null
+                && !rootTitle.trim().isEmpty());
         List<String> body = briefBody(lines, sources, providerLabel(mAgent.provider()));
         String thumb = DemoNativeContract.thumbnailFor(mSurfaceId,
                 new A2uiComponent.Builder(ComponentType.CARD).setId("brief").build());
@@ -1761,6 +1763,23 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             "\\b\\d{1,5}\\s+(?:[A-Z][\\w.]*\\s+){0,3}(?:Avenue|Ave|Street|St|Road|Rd|Boulevard"
                     + "|Blvd|Place|Pl|Drive|Dr|Lane|Ln|Way|Parkway|Pkwy|Broadway|Plaza|Square|Sq)\\b"
                     + "|\\b[A-Z]{2}\\s+\\d{5}(?:-\\d{4})?\\b");
+
+    /**
+     * Takes the card's title from the front of {@code lines}. A brief with no title of its own
+     * leads with a component's "title · subtitle", too long for a one-line card title: its title
+     * leads, and the subtitle half goes to the back of {@code lines}, a last-resort line.
+     */
+    @VisibleForTesting
+    @NonNull
+    static String briefTitle(@NonNull List<String> lines, boolean titledBrief) {
+        String title = lines.remove(0);
+        int join = titledBrief ? -1 : title.indexOf(" · ");
+        if (join > 0) {
+            lines.add(title.substring(join + " · ".length()));
+            title = title.substring(0, join);
+        }
+        return title;
+    }
 
     /**
      * The brief card's lines under its title: the brief's first line that is not just a street
