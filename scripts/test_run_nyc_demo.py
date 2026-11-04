@@ -497,6 +497,145 @@ class PostProductionCompositionTest(unittest.TestCase):
         self.assertGreater(max_volume(self.out, 9.05, 0.4), -30, "outro clip at 8.5 + 0.5 s")
 
 
+COCKPIT = {
+    "id": "t_cockpit", "durationSeconds": 8,
+    "actions": [{"atMs": 2000, "type": "carState", "state": "drive"},
+                {"atMs": 6000, "type": "carState", "state": "park"}],
+    "storyBeats": [{"title": "Start"},
+                   {"title": "Go", "anchor": {"type": "carState", "state": "drive"}}],
+    "preamble": [{"seconds": 1.5}, {"seconds": 1.0}], "outro": {"seconds": 2.0},
+    "clips": [{"id": "p1", "section": "preamble", "atMs": 300, "role": "narration",
+               "text": "A model can't see the road.", "durationMs": 900},
+              {"id": "t1", "atMs": 2500, "role": "user_utterance",
+               "text": "Take us to The Met.", "durationMs": 1200},
+              {"id": "o1", "section": "outro", "atMs": 300, "role": "narration",
+               "text": "The car decides.", "durationMs": 800}],
+}
+
+
+@unittest.skipUnless(FFMPEG and PILLOW, "ffmpeg/ffprobe or Pillow not installed")
+class CockpitCompositionTest(unittest.TestCase):
+    """The cockpit: one frame that never moves, the intro easing into the preamble inside the
+    driver window, the recordings in the windows, rail, captions, closing card: pixels read back
+    from a synthetic render through the same overlay renderer the recorder runs."""
+    HOLD, FADE = 0.4, 0.3
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = pathlib.Path(tempfile.mkdtemp())
+        tmp = cls.tmp
+        solid(tmp / "driver.mp4", [("red", 4), ("blue", 1.5), ("magenta", 1)])
+        solid(tmp / "passenger.mp4", [("green", 3)], size="528x792", rate=2)
+        still(tmp / "idle.png", "yellow", "528x792")
+        still(tmp / "pre1.png", "cyan", "1920x1080")
+        still(tmp / "pre2.png", "0xff8000", "1920x1080")
+        still(tmp / "title.png", "white", "1920x1080")
+        still(tmp / "outro.png", "0x808080", "1920x1080")
+        still(tmp / "note.png", "white", "300x24")
+        lead_ms = round(cls.HOLD * 1000)
+        cls.clips = demo.placed_clips(COCKPIT, lead_ms)
+        spec = {"clips": cls.clips, "scenario": COCKPIT,
+                "railOffsetS": cls.HOLD + demo.preamble_seconds(COCKPIT), "audioDir": None,
+                "srt": str(tmp / "cockpit.srt"),
+                "intro": {"hold": cls.HOLD, "fade": cls.FADE, "zoom": 0.025}}
+        (tmp / "spec.json").write_text(json.dumps(spec), encoding="utf-8")
+        demo.run([sys.executable, str(demo.OVERLAY_RENDERER), "overlays", "--spec",
+                  str(tmp / "spec.json"), "--out", str(tmp / "overlays")], timeout=300)
+        cls.overlays = json.loads((tmp / "overlays" / "overlays.json").read_text())
+        cls.plan = demo.RenderPlan(
+            duration=8, layout="dual", driver_raw=tmp / "driver.mp4",
+            passenger_raw=tmp / "passenger.mp4", passenger_start=3.0,
+            passenger_still=tmp / "idle.png", title=tmp / "title.png", title_seconds=2.0,
+            hold_from=5.0, preamble=[(tmp / "pre1.png", 1.5), (tmp / "pre2.png", 1.0)],
+            outro=(tmp / "outro.png", 2.0), disclaimer=tmp / "note.png",
+            cockpit=cls.overlays, lead=cls.HOLD, clips=cls.clips)
+        cls.out = tmp / "cockpit.mp4"
+        demo.render(cls.plan, cls.out)
+        lay = cls.overlays["layout"]
+        cls.driver = (lay["driver"][0] + lay["driver"][2] // 2,
+                      lay["driver"][1] + lay["driver"][3] // 2)
+        cls.passenger = (lay["passenger"][0] + lay["passenger"][2] // 2,
+                         lay["passenger"][1] + lay["passenger"][3] // 2)
+        cls.head = cls.HOLD + 2.5  # the device timeline's zero on the output
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp)
+
+    def test_length_and_frame_count_are_exact(self):
+        self.assertEqual(self.plan.total(), self.HOLD + 2.5 + 8 + 2)
+        frames = subprocess.run(
+            ["ffprobe", "-v", "error", "-count_frames", "-select_streams", "v:0",
+             "-show_entries", "stream=nb_read_frames", "-of", "csv=p=0", str(self.out)],
+            check=True, capture_output=True, text=True).stdout.strip()
+        self.assertEqual(int(frames), round(self.plan.total() * demo.FPS), "no drops or dups")
+        self.assertEqual(demo.probe_size(self.out), (1920, 1080))
+
+    def test_the_frame_never_moves(self):
+        lay = self.overlays["layout"]
+        gap = (lay["passenger"][0] - 30, lay["driver"][1] + 300)   # bezel between the screens
+        reference = pixel(self.out, self.HOLD + self.FADE + 0.1, *gap)
+        for t in (2.0, 3.4, 6.0, 9.9):
+            self.assertTrue(near(pixel(self.out, t, *gap), reference, 6), t)
+        # The intro's glow lights the bezels, then eases out with the crossfade.
+        self.assertGreater(sum(pixel(self.out, 0.1, *gap)), sum(reference) + 30, "intro glow")
+
+    def test_intro_eases_into_the_first_preamble_card_in_the_driver_window(self):
+        from PIL import Image
+        with Image.open(self.overlays["intro"]["driver"] % 3) as first:
+            expected = first.convert("RGB").getpixel((first.width // 2, first.height // 2))
+        self.assertTrue(near(pixel(self.out, 0.1, *self.driver), expected, 40), "graffiti")
+        distances = [sum(abs(a - b) for a, b in zip(pixel(self.out, t, *self.driver), CYAN))
+                     for t in (0.42, 0.5, 0.57, 0.63, 0.68)]
+        self.assertEqual(distances, sorted(distances, reverse=True), "eased, monotonic")
+        self.assertTrue(near(pixel(self.out, 0.8, *self.driver), CYAN), "intro gone")
+        self.assertTrue(near(pixel(self.out, 0.8, *self.passenger), YELLOW), "idle passenger")
+        self.assertTrue(near(pixel(self.out, self.HOLD + 2.0, *self.driver), ORANGE))
+
+    def test_recordings_and_chapter_card_play_in_the_windows(self):
+        head = self.head
+        self.assertTrue(near(pixel(self.out, head + 0.6, *self.driver), WHITE), "chapter card")
+        self.assertTrue(near(pixel(self.out, head + 2.5, *self.driver), RED))
+        self.assertTrue(near(pixel(self.out, head + 2.5, *self.passenger), YELLOW))
+        self.assertTrue(near(pixel(self.out, head + 4.5, *self.driver), BLUE))
+        self.assertTrue(near(pixel(self.out, head + 4.5, *self.passenger), GREEN))
+        self.assertTrue(near(pixel(self.out, head + 7.0, *self.driver), BLUE), "held")
+
+    def test_rail_shows_only_over_the_device_timeline(self):
+        from PIL import Image
+        png, start, end = self.overlays["rail"][1]
+        band = self.overlays["layout"]["railBand"]
+        with Image.open(png) as rail:
+            x, y = next((x, y) for y in range(rail.height) for x in range(rail.width // 2)
+                        if rail.getpixel((x, y))[3] == 255 and min(rail.getpixel((x, y))[:3]) > 200)
+        self.assertGreaterEqual(start, self.head)
+        point = (band[0] + x, band[1] + y)
+        self.assertGreater(min(pixel(self.out, (start + end) / 2, *point)), 150, "rail title")
+        self.assertLess(max(pixel(self.out, 1.0, *point)), 120, "no rail during the preamble")
+
+    def test_captions_cover_preamble_timeline_and_outro(self):
+        from PIL import Image
+        band = self.overlays["layout"]["captionBand"]
+        sections = []
+        for png, start, end in self.overlays["captions"]:
+            with Image.open(png) as cue:
+                x, y = next((x, y) for y in range(cue.height) for x in range(cue.width)
+                            if cue.getpixel((x, y))[3] == 255
+                            and min(cue.getpixel((x, y))[:3]) > 230)
+            sections.append(start)
+            point = (band[0] + x, band[1] + y)
+            self.assertGreater(min(pixel(self.out, (start + end) / 2, *point)), 180, png)
+        self.assertEqual(len(sections), 3)
+        self.assertTrue(self.HOLD <= sections[0] < self.head <= sections[1]
+                        < self.head + 8 <= sections[2])
+        srt = (self.tmp / "cockpit.srt").read_text(encoding="utf-8")
+        self.assertIn("[Passenger] Take us to The Met.", srt)
+
+    def test_closing_card_covers_everything_and_captions_stay_on_top(self):
+        self.assertTrue(near(pixel(self.out, 12.4, 960, 300), GREY))
+        self.assertTrue(near(pixel(self.out, 12.4, *self.driver), GREY))
+
+
 OUTRO = {
     "id": "t_outro", "durationSeconds": 6,
     "actions": [{"atMs": 2000, "type": "carState", "state": "drive"},

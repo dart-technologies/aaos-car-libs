@@ -89,6 +89,8 @@ MIN_SHOWN_S = 1.2
 MAX_CPS = 20.0                # never faster than 20 characters a second, whatever the audio
 GAP_S = 0.08                  # captions never touch: the next one starts after this gap
 SPEAKERS = {"user_utterance": "Passenger"}
+# The closing card's footer sits just above the caption band: one-line captions there.
+SECTION_MAX_LINES = {"outro": 1}
 LANES = {"audio_guide": "Audio guide"}
 
 # Beats anchor on the scenario's own actions: each is the first action after the previous beat
@@ -245,12 +247,20 @@ def mp3_seconds(path: pathlib.Path) -> float:
     return samples / rate
 
 
-def speech_seconds(clip: dict, audio_dir: pathlib.Path | None) -> float:
+ESTIMATE_CPS = 15.0  # speech rate assumed only when asked to estimate missing audio
+
+
+def speech_seconds(clip: dict, audio_dir: pathlib.Path | None, estimate: bool = False) -> float:
+    """The clip's speech length: durationMs, else its MP3. A preflight without the audio cache
+    may pass estimate=True to assume ESTIMATE_CPS for a missing file; nothing else guesses."""
     if clip.get("durationMs") is not None:
         return float(clip["durationMs"]) / 1000
-    if audio_dir is None:
-        raise ValueError(f"clip {clip.get('id')} has no durationMs and no audio_dir was given")
-    return mp3_seconds(pathlib.Path(audio_dir) / f"{clip['id']}.mp3")
+    path = pathlib.Path(audio_dir) / f"{clip['id']}.mp3" if audio_dir is not None else None
+    if path is not None and path.is_file():
+        return mp3_seconds(path)
+    if estimate:
+        return len(str(clip.get("text", ""))) / ESTIMATE_CPS
+    raise ValueError(f"clip {clip.get('id')} has no durationMs and no audio at {path}")
 
 
 def speaker(clip: dict) -> str | None:
@@ -266,10 +276,10 @@ class Cue:
 
 
 def caption_cues(clips: list[dict], *, audio_dir: pathlib.Path | None = None,
-                 offset_s: float = 0.0) -> list[Cue]:
+                 offset_s: float = 0.0, estimate: bool = False) -> list[Cue]:
     """Timed, at-most-two-line cues: each clip from its start for its speech plus LINGER_S
     (never under MIN_SHOWN_S or faster than MAX_CPS), cut GAP_S before the next clip, and split
-    into consecutive cues, timed by length, when it needs more than two lines."""
+    into consecutive cues, timed by length, when it needs more lines than its section allows."""
     ordered = sorted((c for c in clips if str(c.get("text", "")).strip()),
                      key=lambda c: int(c["atMs"]))
     face = font(CAPTION_SIZE)
@@ -277,15 +287,16 @@ def caption_cues(clips: list[dict], *, audio_dir: pathlib.Path | None = None,
     for index, clip in enumerate(ordered):
         text = " ".join(str(clip["text"]).split())
         start = int(clip["atMs"]) / 1000
-        shown = max(speech_seconds(clip, audio_dir) + LINGER_S, len(text) / MAX_CPS,
-                    MIN_SHOWN_S)
+        shown = max(speech_seconds(clip, audio_dir, estimate) + LINGER_S,
+                    len(text) / MAX_CPS, MIN_SHOWN_S)
         end = start + shown
         if index + 1 < len(ordered):
             end = min(end, int(ordered[index + 1]["atMs"]) / 1000 - GAP_S)
         if end <= start:
             continue
         who = speaker(clip)
-        parts = chunks(text, face, CAPTION_MAX_W - (tag_width(who) if who else 0))
+        parts = chunks(text, face, CAPTION_MAX_W - (tag_width(who) if who else 0),
+                       SECTION_MAX_LINES.get(clip.get("section", "timeline"), 2))
         total = sum(len(" ".join(p)) for p in parts)
         at = start
         for part in parts:
@@ -343,12 +354,14 @@ def caption_image(cue: Cue) -> Image.Image:
 
 
 def captions(clips: list[dict], out_dir: pathlib.Path, *, audio_dir: pathlib.Path | None = None,
-             offset_s: float = 0.0) -> list[tuple[pathlib.Path, float, float]]:
+             offset_s: float = 0.0,
+             estimate: bool = False) -> list[tuple[pathlib.Path, float, float]]:
     """Burned-in captions: one caption-band PNG per cue, with the window it is shown in."""
     out_dir = pathlib.Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     out = []
-    for index, cue in enumerate(caption_cues(clips, audio_dir=audio_dir, offset_s=offset_s)):
+    for index, cue in enumerate(caption_cues(clips, audio_dir=audio_dir, offset_s=offset_s,
+                                             estimate=estimate)):
         path = out_dir / f"caption-{index:03d}.png"
         caption_image(cue).save(path, format="PNG", optimize=True)
         out.append((path, cue.start_s, cue.end_s))
@@ -364,9 +377,10 @@ def srt_time(seconds: float) -> str:
 
 
 def srt_text(clips: list[dict], *, audio_dir: pathlib.Path | None = None,
-             offset_s: float = 0.0) -> str:
+             offset_s: float = 0.0, estimate: bool = False) -> str:
     blocks = []
-    for index, cue in enumerate(caption_cues(clips, audio_dir=audio_dir, offset_s=offset_s), 1):
+    for index, cue in enumerate(caption_cues(clips, audio_dir=audio_dir, offset_s=offset_s,
+                                             estimate=estimate), 1):
         lines = list(cue.lines)
         if cue.speaker:
             lines[0] = f"[{cue.speaker}] {lines[0]}"
@@ -376,11 +390,12 @@ def srt_text(clips: list[dict], *, audio_dir: pathlib.Path | None = None,
 
 
 def write_srt(clips: list[dict], path: pathlib.Path, *, audio_dir: pathlib.Path | None = None,
-              offset_s: float = 0.0) -> pathlib.Path:
+              offset_s: float = 0.0, estimate: bool = False) -> pathlib.Path:
     """SubRip closed captions with exactly the burned-in cues' text and timing."""
     path = pathlib.Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(srt_text(clips, audio_dir=audio_dir, offset_s=offset_s), encoding="utf-8")
+    path.write_text(srt_text(clips, audio_dir=audio_dir, offset_s=offset_s, estimate=estimate),
+                    encoding="utf-8")
     return path
 
 
@@ -660,6 +675,45 @@ def intro_frames(out_dir: pathlib.Path, *, hold_s: float = 2.0, fade_s: float = 
             "frames": count, "fps": fps, "fadeStartS": hold_s, "endS": count / fps}
 
 
+def render_overlays(spec: dict, out_dir: pathlib.Path) -> dict:
+    """Everything the recorder lays over the cockpit, from one JSON-able spec, so the recorder
+    itself never imports Pillow. All times are on the output video's timeline.
+
+    spec: clips          the scenario's clips with atMs already placed on the output timeline
+          scenario       the scenario (its actions and durationSeconds give the story beats)
+          railOffsetS    where the device timeline starts in the output (beats are relative)
+          audioDir       the speech cache; estimateMissing allows a preflight without it
+          intro          {"hold", "fade", "zoom"} seconds/seconds/fraction, or absent
+          srt            where to write the SubRip file, or absent
+    Writes <out_dir>/overlays.json and returns it: layout, captions, rail, intro, srt.
+    """
+    out_dir = pathlib.Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    audio = pathlib.Path(spec["audioDir"]) if spec.get("audioDir") else None
+    estimate = bool(spec.get("estimateMissing"))
+    clips = spec["clips"]
+    scenario = spec["scenario"]
+    rail = story_rail(scenario_beats(scenario), out_dir / "rail",
+                      states=vehicle_states(scenario), offset_s=float(spec["railOffsetS"]))
+    shown = captions(clips, out_dir / "captions", audio_dir=audio, estimate=estimate)
+    intro = None
+    if spec.get("intro"):
+        params = spec["intro"]
+        intro = intro_frames(out_dir / "intro", hold_s=float(params["hold"]),
+                             fade_s=float(params["fade"]), zoom=float(params["zoom"]))
+    srt = None
+    if spec.get("srt"):
+        srt = str(write_srt(clips, spec["srt"], audio_dir=audio, estimate=estimate))
+    missing = [c["id"] for c in clips if c.get("durationMs") is None and str(c.get("text", ""))
+               and (audio is None or not (audio / f"{c['id']}.mp3").is_file())]
+    result = {"layout": {**layout(), "root": str(ROOT)},
+              "captions": [[str(p), s, e] for p, s, e in shown],
+              "rail": [[str(p), s, e] for p, s, e in rail],
+              "intro": intro, "srt": srt, "estimatedClips": missing if estimate else []}
+    (out_dir / "overlays.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    return result
+
+
 def cockpit_layout_record(approach: dict) -> dict:
     return {
         "schemaVersion": 1,
@@ -748,6 +802,9 @@ def main(argv: list[str] | None = None) -> int:
     srt.add_argument("--offset", type=float, default=0.0)
     srt.add_argument("--out", type=pathlib.Path)
     sub.add_parser("cockpit", help="re-render cockpit-frame.png and cockpit-layout.json")
+    over_cmd = sub.add_parser("overlays", help="render every overlay from a recorder spec")
+    over_cmd.add_argument("--spec", type=pathlib.Path, required=True)
+    over_cmd.add_argument("--out", type=pathlib.Path, required=True)
     frames = sub.add_parser("intro-frames", help="write the intro screens' frame sequences")
     frames.add_argument("--out", type=pathlib.Path, required=True)
     frames.add_argument("--hold", type=float, default=2.0)
@@ -769,6 +826,11 @@ def main(argv: list[str] | None = None) -> int:
                                   encoding="utf-8")
         for path in (COCKPIT_FRAME, COCKPIT_GLOW, COCKPIT_LAYOUT):
             print(f"wrote {path.relative_to(ROOT)}")
+    elif args.command == "overlays":
+        spec = json.loads(args.spec.read_text(encoding="utf-8"))
+        result = render_overlays(spec, args.out)
+        print(f"wrote {len(result['captions'])} captions, {len(result['rail'])} rail states"
+              f"{', intro' if result['intro'] else ''} to {args.out}")
     elif args.command == "intro-frames":
         print(json.dumps(intro_frames(args.out, hold_s=args.hold, fade_s=args.fade,
                                       zoom=args.zoom), indent=2))
