@@ -500,6 +500,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     com.android.car.ui.toolbar.MenuItem mSpeakItem;
     @VisibleForTesting
     com.android.car.ui.toolbar.MenuItem mSearchItem;
+    /** The debug console's toolbar entry; visible only with the technical details. */
+    @Nullable private com.android.car.ui.toolbar.MenuItem mConsoleItem;
     private UxrContentLimiterImpl mLimiter;
     private TextView mStatusBadge;
     /** The vehicle-state banner: PARKED, DRIVING, DEMO or SAFE MODE. */
@@ -653,10 +655,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         menuItems.add(mSpeakItem);
         menuItems.add(mSearchItem);
         if (debugBusAllowed(getApplicationInfo(), Build.TYPE)) {
-            menuItems.add(com.android.car.ui.toolbar.MenuItem.builder(this)
+            // Engineering console: shown with the technical details (tap the banner), not on
+            // the presentation screen.
+            mConsoleItem = com.android.car.ui.toolbar.MenuItem.builder(this)
                     .setTitle("Demo")
+                    .setVisible(false)
                     .setOnClickListener(ignored -> showDemoConsole())
-                    .build());
+                    .build();
+            menuItems.add(mConsoleItem);
             mAgent = AgentLane.create(getMainExecutor(), mAgentListener);
             mProviderItem = com.android.car.ui.toolbar.MenuItem.builder(this)
                     .setTitle(providerLabel(mAgent.provider()))
@@ -1773,6 +1779,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     private void setDiagnosticsExpanded(boolean expanded) {
         mDiagnosticsExpanded = expanded;
+        if (mConsoleItem != null) mConsoleItem.setVisible(expanded);
         if (mStatus != null) {
             mStatus.setVisibility(expanded ? View.VISIBLE : View.GONE);
         }
