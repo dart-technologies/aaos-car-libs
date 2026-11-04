@@ -1,0 +1,33 @@
+name: car_uxr
+description: >-
+  Android Automotive UX restriction state for Flutter. Exposes CarUxRestrictions,
+  its delivery provenance and the owning display to Dart, and fails closed on
+  every path where the signal cannot be trusted.
+version: 0.2.0
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Explicit rather than relied upon transitively: the model layer is pure Dart
+  # so it can be unit-tested without a Flutter binding.
+  meta: ^1.15.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+# Android only, and deliberately not federated. There is no iOS equivalent of
+# CarUxRestrictions and there never will be, so a platform-interface package
+# plus per-platform implementations would be pure ceremony.
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: art.dart.car_uxr
+        pluginClass: CarUxrPlugin

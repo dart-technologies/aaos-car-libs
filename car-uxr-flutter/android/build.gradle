@@ -1,0 +1,93 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace = 'art.dart.car_uxr'
+    compileSdk = gradle.ext.has('aaosLatestSDK') ? gradle.ext.aaosLatestSDK : 36
+
+    defaultConfig {
+        minSdk = 28
+        targetSdk = gradle.ext.has('aaosTargetSDK') ? gradle.ext.aaosTargetSDK : 36
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig = false
+    }
+
+    testOptions {
+        unitTests {
+            // Stub android.jar / android.car.jar methods throw; defaults let the lifecycle run on
+            // the JVM.
+            returnDefaultValues = true
+        }
+    }
+
+    // CarUxRestrictions comes from the public android.car.jar, as everywhere else in this repo.
+    useLibrary 'android.car'
+}
+
+dependencies {
+    // Literal coordinates: this plugin builds inside consumer apps, which have no catalog.
+    implementation 'androidx.annotation:annotation:1.10.0'
+
+    // compileOnly: the host app supplies the Flutter embedding. The engine hash is read from
+    // FLUTTER_ROOT's engine.version when available.
+    def engineVersion = '1.0.0-' + flutterEngineHash()
+    compileOnly "io.flutter:flutter_embedding_debug:${engineVersion}"
+
+    // The logic lives in car-ui-lib so a Kotlin OEM gets the same guarantees. The dependency
+    // points only this way: car-ui-lib must never depend on Flutter (README.md).
+    implementation project(':car-ui-lib')
+
+    // The lifecycle is plain Java against plain interfaces, driven on the JVM.
+    testImplementation 'junit:junit:4.13.2'
+    // Mockito 5's default mock maker is inline, which is required here: CarUxRestrictions is
+    // final and CarUxRestrictionsUtil.getInstance is static.
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'com.google.truth:truth:1.4.4'
+    // The embedding is compileOnly for packaging, but the tests need it at runtime.
+    testImplementation "io.flutter:flutter_embedding_debug:${engineVersion}"
+}
+
+/**
+ * Reads the engine hash from the Flutter SDK, falling back to the value this module was last
+ * verified against. Set FLUTTER_ROOT, or -PflutterRoot=/path/to/flutter.
+ */
+static String readEngineHash(File flutterRoot, String fallback) {
+    if (flutterRoot != null) {
+        File versionFile = new File(flutterRoot, 'bin/internal/engine.version')
+        if (versionFile.exists()) {
+            return versionFile.text.trim()
+        }
+    }
+    return fallback
+}
+
+String flutterEngineHash() {
+    String fromProperty = project.findProperty('flutterRoot')
+    String fromEnv = System.getenv('FLUTTER_ROOT')
+    File root = fromProperty != null ? new File(fromProperty)
+            : (fromEnv != null ? new File(fromEnv) : null)
+    // Fallback is the engine of Flutter 3.44.9, which this module is verified against.
+    return readEngineHash(root, '5a2a6a42cce67f965cf540fcecf616faca624aa1')
+}
