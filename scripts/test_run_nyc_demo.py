@@ -577,8 +577,17 @@ class CockpitCompositionTest(unittest.TestCase):
         reference = pixel(self.out, self.HOLD + self.FADE + 0.1, *gap)
         for t in (2.0, 3.4, 6.0, 9.9):
             self.assertTrue(near(pixel(self.out, t, *gap), reference, 6), t)
+        # It is the committed cockpit frame, not the background showing through.
+        from PIL import Image
+        with Image.open(pathlib.Path(lay["root"]) / lay["frame"]) as frame:
+            drawn = frame.convert("RGB").getpixel(gap)
+        self.assertTrue(near(reference, drawn, 8), (reference, drawn))
+        self.assertFalse(near(reference, BG, 3), "frame drawn over the background")
         # The intro's glow lights the bezels, then eases out with the crossfade.
-        self.assertGreater(sum(pixel(self.out, 0.1, *gap)), sum(reference) + 30, "intro glow")
+        lit = sum(pixel(self.out, 0.1, *gap))
+        self.assertGreater(lit, sum(reference) + 30, "intro glow")
+        self.assertLess(sum(pixel(self.out, self.HOLD + self.FADE * 0.6, *gap)), lit - 10,
+                        "the glow fades with the crossfade")
 
     def test_intro_eases_into_the_first_preamble_card_in_the_driver_window(self):
         from PIL import Image
@@ -712,6 +721,39 @@ class CardsFromTheRecordingTest(unittest.TestCase):
             dict(OUTRO, preamble=OUTRO["preamble"][1:]), self.tmp / "gone.mp4", self.tmp / "q")
         self.assertEqual(evidence[0]["frame"], "unavailable; dark panel")
         self.assertTrue(near(pixel(missing[0][0], 0, *FRAME_CENTRE), PANEL, 4))
+
+    def test_post_production_wires_the_cockpit_for_a_dual_recording(self):
+        scenario = dict(OUTRO, storyBeats=[{"title": "Here"}, {
+            "title": "Away", "anchor": {"type": "carState", "state": "drive"}}], clips=[
+            {"id": "p", "section": "preamble", "atMs": 200, "role": "narration",
+             "text": "Unsafe.", "durationMs": 800},
+            {"id": "t", "atMs": 1000, "role": "user_utterance", "text": "Go.", "durationMs": 600},
+            {"id": "o", "section": "outro", "atMs": 500, "role": "narration",
+             "text": "The end.", "durationMs": 700}],
+            soundEffects=[{"effectId": "chime", "atMs": 1500, "gainDb": -12}])
+        common = dict(layout="dual", raw_video=self.tmp / "driver.mp4", passenger_raw=None,
+                      passenger_start=0.0, passenger_still=None, audio_dir=None)
+        plan, evidence = demo.post_production(scenario, output=self.tmp / "c.mp4",
+                                              cockpit=True, **common)
+        self.assertEqual(plan.lead, demo.INTRO_HOLD_S)
+        self.assertEqual(plan.total(), demo.INTRO_HOLD_S + demo.total_seconds(scenario))
+        lead_ms = round(demo.INTRO_HOLD_S * 1000)
+        self.assertEqual([c["atMs"] for c in plan.clips],
+                         [c["atMs"] + lead_ms for c in demo.placed_clips(scenario)])
+        self.assertEqual([c["atMs"] for c in plan.cues],
+                         [c["atMs"] + lead_ms for c in demo.placed_cues(scenario)])
+        self.assertEqual(len(plan.cockpit["captions"]), 3, "preamble, timeline and outro")
+        self.assertEqual(plan.cockpit["captions"][0][1], (lead_ms + 200) / 1000)
+        self.assertEqual(plan.cockpit["rail"][0][1], demo.INTRO_HOLD_S + 6.0, "after preamble")
+        self.assertEqual(plan.cockpit["intro"]["frames"],
+                         round((demo.INTRO_HOLD_S + demo.INTRO_FADE_S) * demo.FPS))
+        self.assertTrue((self.tmp / "c.srt").is_file(), "SRT next to the video")
+        self.assertEqual(evidence["cockpit"]["captions"], 3)
+        self.assertEqual(evidence["cockpit"]["estimatedCaptionClips"], [])
+        plain, evidence = demo.post_production(scenario, output=self.tmp / "s.mp4", **common)
+        self.assertIsNone(plain.cockpit)
+        self.assertEqual((plain.lead, evidence["cockpit"]), (0.0, None))
+        self.assertFalse((self.tmp / "s.srt").exists())
 
 
 def legacy_command(audio_dir, raw_video, final_video, clips, cues, target_seconds):
