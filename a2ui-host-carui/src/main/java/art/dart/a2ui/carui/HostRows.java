@@ -43,6 +43,8 @@ final class HostRows {
     static final String SUGGEST = "host:suggest";
     static final String SESSION = "host:session";
     static final String AGENT_BRIEF = "host:agent-brief";
+    /** Why the café was picked, with its source (ev_charge_coffee, parked at the charger). */
+    static final String WHY = "host:why";
 
     /** The noun a host card goes by in the change line, or null for one never reported. */
     @androidx.annotation.Nullable
@@ -54,6 +56,7 @@ final class HostRows {
             case SUGGEST: return "Suggestion";
             case SESSION: return "Charging";
             case AGENT_BRIEF: return "Brief";
+            case WHY: return "Café";
             default: return null;
         }
     }

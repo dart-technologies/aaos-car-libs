@@ -450,7 +450,7 @@ public final class UseCaseCorpus {
             b.put(id, "voicePhrase", "take me to the " + ordinals[i] + " one");
         }
         b.action("coffee", "Button", "Order your usual",
-                "Oat milk latte · $5.25 · pickup at the counter", "purchase");
+                "Oat milk latte · pickup at the counter", "purchase");
         b.put("coffee", "voicePhrase", "order my usual coffee");
         b.container("tour", "Modal", "met_436535", "met_437881", "met_437394", "met_435809",
                 "met_436105", "met_435868", "film");
@@ -476,8 +476,10 @@ public final class UseCaseCorpus {
         b.data("/chargers/2/name", "Charger east");
         b.data("/chargers/2/detail", "1.9 mi · public charging");
         b.data("/session/detail", "about 22 min");
+        // Generic words; Host B names the real café (fixtures/coffee) near the chosen charger.
         b.data("/order/status", "Coffee ready at the counter");
-        b.data("/order/pickup", "Oat milk latte · Fifth House Coffee Atelier");
+        b.data("/order/pickup", "Oat milk latte");
+        b.data("/order/note", "Demo · nothing sent to the café");
         b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
                 TemplateCapability.MODAL, TemplateCapability.VIDEO);
         return b.build();

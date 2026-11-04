@@ -237,9 +237,17 @@ final class DemoNativeContract {
             return "Reserve 2 timed-entry tickets for 3:00 PM?";
         }
         if ("ev_charge_coffee".equals(surfaceId) && "coffee".equals(component.getId())) {
-            return "Order your usual: oat milk latte, $5.25?";
+            // No price: none is shown unless the café fixture cites a menu (CoffeeFixture).
+            return "Order your usual: oat milk latte?";
         }
         return null;
+    }
+
+    /** The exact corpus coffee reorder, whose words a bundled café fixture may supply. */
+    static boolean isCoffeeOrder(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return "ev_charge_coffee".equals(surfaceId) && "coffee".equals(component.getId())
+                && component.getType() == ComponentType.BUTTON
+                && "purchase".equals(component.getAction());
     }
 
     /** Surfaces whose agent answer joins the screen as its brief instead of replacing it. */
@@ -286,7 +294,7 @@ final class DemoNativeContract {
             return "The Met Fifth Avenue · Thu Nov 5 · 81st St entrance";
         }
         if ("ev_charge_coffee".equals(surfaceId) && "coffee".equals(component.getId())) {
-            return "Fifth House Coffee Atelier · pickup at the counter";
+            return "Pickup at the counter";
         }
         return null;
     }

@@ -30,6 +30,9 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.os.Looper;
 import android.provider.Settings;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.android.car.ui.core.CarUiInstaller;
 import com.android.car.ui.utils.CarUxRestrictionsUtil;
@@ -44,6 +47,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.shadows.ShadowAlertDialog;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** Charge and a coffee: the vehicle's battery reading starts it, inside the prune/decide path. */
@@ -55,6 +59,7 @@ public class A2uiEvChargeTest {
     private static final String SESSION = "Charging · 20% → 80% · about 22 min";
     private static final String CREDIT = " · © OpenStreetMap";
     private static final String COFFEE = "Coffee ready at the counter";
+    private static final String NOTE = "Demo · nothing sent to the café";
 
     private Application mApp;
     private int mOriginalFlags;
@@ -128,27 +133,134 @@ public class A2uiEvChargeTest {
     public void theParkedWindowOpensThenItsCardsCollapseWhenDrivingAway() {
         A2uiCarUiActivity activity = started(DRIVE);
         activity.selectCase("ev_charge_coffee");
+        CoffeeFixture.Pick cafe = bundledCafe();
         activity.onVehicleBattery(20);
         activity.onHeard("take me to the first one");
+        // Not while driving: why the café was picked is parked-only detail.
+        assertThat(titles(activity)).doesNotContain(cafe.whyTitle());
         drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
 
         assertThat(activity.mAtCharger).isTrue();
         assertGlanceable(row(activity, SESSION));
         assertThat(titles(activity)).doesNotContain(SUGGESTION_20);
         assertThat(titles(activity)).contains("Finish the Met tour");
+        // Parked at the charger it was picked for: why this café, and where that came from.
+        assertGlanceable(row(activity, cafe.whyTitle()));
+        assertThat(body(row(activity, cafe.whyTitle())))
+                .containsExactly(cafe.mWhy, cafe.mSource).inOrder();
 
         // The existing order flow: parked, confirmed, then the pickup card.
         activity.onHeard("Order my usual coffee.");
         AlertDialog confirm = ShadowAlertDialog.getLatestAlertDialog();
+        assertThat(dialogTexts(confirm)).containsAtLeast(cafe.mPrice == null
+                ? "Order your usual: oat milk latte?"
+                : "Order your usual: oat milk latte, " + cafe.mPrice + "?",
+                cafe.mName + " · " + cafe.mWalkMinutes + " min walk from the charger");
         confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
-        assertGlanceable(row(activity, COFFEE));
+        String pickup = "Coffee ready at " + cafe.mName;
+        assertGlanceable(row(activity, pickup));
+        assertThat(body(row(activity, pickup))).containsExactly(
+                "Oat milk latte · " + cafe.mWalkMinutes + " min walk", NOTE).inOrder();
+        assertThat(titles(activity)).doesNotContain(COFFEE);
+        assertThat(titles(activity)).contains(cafe.whyTitle());
 
         drive(activity, DRIVE);
-        assertThat(titles(activity)).containsNoneOf(SESSION, COFFEE, "Finish the Met tour",
-                SUGGESTION_20);
+        assertThat(titles(activity)).containsNoneOf(SESSION, pickup, cafe.whyTitle(),
+                "Finish the Met tour", SUGGESTION_20);
         assertThat(activity.changeStripForTesting().getText().toString())
-                .startsWith("Artwork hidden · Charging & order cards collapsed · ");
+                .startsWith("Artwork hidden · Charging, order & café cards collapsed · ");
+    }
+
+    @Test
+    public void anotherChargerKeepsTheGenericWordsAndNamesNoCafe() {
+        A2uiCarUiActivity activity = started(DRIVE);
+        activity.selectCase("ev_charge_coffee");
+        CoffeeFixture.Pick cafe = bundledCafe();
+        activity.onVehicleBattery(20);
+        activity.onHeard("take me to the second one");
+        assertThat(activity.mChosenCharger).isEqualTo(1);
+        drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+
+        // The walk was measured from the first charger, so nothing here names the café.
+        assertThat(activity.mAtCharger).isTrue();
+        assertThat(String.join(" ", titles(activity))).doesNotContain(cafe.mName);
+        activity.onHeard("Order my usual coffee.");
+        AlertDialog confirm = ShadowAlertDialog.getLatestAlertDialog();
+        assertThat(dialogTexts(confirm))
+                .containsAtLeast("Order your usual: oat milk latte?", "Pickup at the counter");
+        assertThat(String.join(" ", dialogTexts(confirm))).doesNotContain(cafe.mName);
+        confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
+        shadowOf(Looper.getMainLooper()).idle();
+        assertThat(body(row(activity, COFFEE))).containsExactly("Oat milk latte", NOTE).inOrder();
+        assertThat(String.join(" ", titles(activity))).doesNotContain(cafe.mName);
+    }
+
+    @Test
+    public void theBundledCafeIsTheOneTheActivityLoads() {
+        A2uiCarUiActivity activity = started(DRIVE);
+        CoffeeFixture.Pick cafe = bundledCafe();
+        assertThat(activity.mCoffee).isNotNull();
+        assertThat(activity.mCoffee.mName).isEqualTo(cafe.mName);
+        // Measured from the charger "take me to the first one" picks: the nearest Host B draws.
+        assertThat(cafe.mCharger).isEqualTo("ChargePoint");
+        assertThat(cafe.mWalkMinutes).isAtMost(CoffeeFixture.MAX_WALK_MINUTES);
+        assertThat(cafe.mWhy).startsWith("Muse picked it · ");
+        assertThat(cafe.mWhy).endsWith(" · " + cafe.mWalkMinutes + " min walk");
+    }
+
+    @Test
+    public void cafeFixtureNeedsEveryDisplayFieldAndNeverInventsAPrice() {
+        String ok = "{'display':{'name':'Cafe','walkMinutes':2,'why':'Muse picked it · 2 min walk',"
+                + "'source':'Source · a.com','price':null,'charger':'ChargePoint'}}";
+        CoffeeFixture.Pick pick = CoffeeFixture.parse(ok);
+        assertThat(pick).isNotNull();
+        assertThat(pick.confirmTitle()).isEqualTo("Order your usual: oat milk latte?");
+        assertThat(pick.confirmDetail()).isEqualTo("Cafe · 2 min walk from the charger");
+        assertThat(pick.pickupTitle()).isEqualTo("Coffee ready at Cafe");
+        assertThat(pick.pickupDetail()).isEqualTo("Oat milk latte · 2 min walk");
+        assertThat(pick.whyBody()).containsExactly("Muse picked it · 2 min walk", "Source · a.com")
+                .inOrder();
+        assertThat(pick.isNear("ChargePoint")).isTrue();
+        assertThat(pick.isNear("FLO")).isFalse();
+        assertThat(pick.isNear(null)).isFalse();
+        assertThat(CoffeeFixture.parse(ok.replace("null", "'$6.25'")).confirmTitle())
+                .isEqualTo("Order your usual: oat milk latte, $6.25?");
+        assertThat(CoffeeFixture.parse(ok.replace("null", "'about six dollars'")).mPrice)
+                .isNull();
+        assertThat(CoffeeFixture.parse(ok.replace("'walkMinutes':2", "'walkMinutes':7")))
+                .isNull();
+        assertThat(CoffeeFixture.parse(ok.replace("Source · ", ""))).isNull();
+        assertThat(CoffeeFixture.parse(ok.replace("'name':'Cafe'", "'name':' '"))).isNull();
+        assertThat(CoffeeFixture.parse("{}")).isNull();
+        assertThat(CoffeeFixture.parse("nope")).isNull();
+        assertThat(CoffeeFixture.parse(null)).isNull();
+    }
+
+    /** Every string a dialog draws: car-ui's builder puts the title in its own view. */
+    private static List<String> dialogTexts(AlertDialog dialog) {
+        List<String> out = new ArrayList<>();
+        collectTexts(dialog.getWindow().getDecorView(), out);
+        return out;
+    }
+
+    private static void collectTexts(View view, List<String> out) {
+        if (view instanceof TextView && view.getVisibility() == View.VISIBLE) {
+            CharSequence text = ((TextView) view).getText();
+            if (text != null && text.length() > 0) out.add(text.toString());
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) collectTexts(group.getChildAt(i), out);
+        }
+    }
+
+    /** The café the debug build bundles (fixtures/coffee/COFFEE.json), read as the app reads it. */
+    private CoffeeFixture.Pick bundledCafe() {
+        CoffeeFixture.Pick cafe = CoffeeFixture.parse(
+                ChargerFixture.readAsset(mApp, CoffeeFixture.ASSET));
+        assertThat(cafe).isNotNull();
+        return cafe;
     }
 
     @Test

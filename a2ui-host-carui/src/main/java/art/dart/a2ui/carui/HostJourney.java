@@ -82,10 +82,13 @@ final class HostJourney {
             R.drawable.a2ui_ic_ticket, R.drawable.met_435809, R.drawable.met_435809, "reserve",
             false);
 
-    /** Charge and a coffee: the reorder's pickup card lives in the parked charging window. */
+    /**
+     * Charge and a coffee: the reorder's pickup card lives in the parked charging window. Its note
+     * says nothing reached the café; the café itself comes from CoffeeFixture.
+     */
     private static final HostJourney EV = new HostJourney("ev", "ev_charge_coffee",
             new LinkedHashSet<>(Collections.singletonList("ev_charge_coffee")),
-            "/order/status", Collections.singletonList("/order/pickup"), null, null,
+            "/order/status", Arrays.asList("/order/pickup", "/order/note"), null, null,
             R.drawable.a2ui_ic_pickup, 0, 0, "coffee", true);
 
     private static final List<HostJourney> ALL = Arrays.asList(FIFTH_HOUSE, MET, EV);

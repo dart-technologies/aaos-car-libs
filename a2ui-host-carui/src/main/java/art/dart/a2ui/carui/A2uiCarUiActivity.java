@@ -573,6 +573,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     /** The charger chosen from the comparison (0-based), or -1. */
     @VisibleForTesting
     int mChosenCharger = -1;
+    /** The bundled café (OSM, picked by Muse from cited sources), or null without the fixture. */
+    @Nullable
+    @VisibleForTesting
+    CoffeeFixture.Pick mCoffee;
     private boolean mDroveToCharger;
     /** Parked after driving to the chosen charger: the charging window. */
     @VisibleForTesting
@@ -794,6 +798,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
         // Real chargers, when the fixture is bundled, enter through the processor like agent text.
         mProcessor.processAll(ChargerFixture.messages(this));
+        mCoffee = CoffeeFixture.load(this);
         mEnergy = new VehicleEnergy(pct -> runOnMain(() -> onVehicleBattery(pct)));
 
         mDemoMedia = new DemoMediaController(this);
@@ -1519,12 +1524,20 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         addGuideRow(rows, keys, allowed, limits);
         addChargingRows(rows, keys, allowed, limits, parked, pruned);
         if (mOrderPlaced && (!journey.mConfirmParkedOnly || parked)) {
+            String title = journeyData(journey, journey.mConfirmTitle);
             List<String> body = new ArrayList<>();
             for (String pointer : journey.mConfirmBody) body.add(journeyData(journey, pointer));
-            addRow(rows, keys, HostRows.ORDER, HostRows.card(allowed, limits,
-                    journeyData(journey, journey.mConfirmTitle), body,
+            // The real café's name only for the charger it was picked for; the trace's note stays.
+            CoffeeFixture.Pick coffee = journey == HostJourney.forSurface("ev_charge_coffee")
+                    ? coffeeNearCharger() : null;
+            if (coffee != null && !body.isEmpty()) {
+                title = coffee.pickupTitle();
+                body.set(0, coffee.pickupDetail());
+            }
+            addRow(rows, keys, HostRows.ORDER, HostRows.card(allowed, limits, title, body,
                     null, getDrawable(journey.mConfirmGlyph)));
         }
+        if (parked) addCoffeeWhyRow(rows, keys, allowed, limits);
         // The brief is detail: parked only, like the narration says.
         if (parked) addAgentBriefRow(rows, keys, allowed, limits);
     }
@@ -1611,6 +1624,25 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (index < 0) return null;
         return journeyData(HostJourney.forSurface("ev_charge_coffee"),
                 "/chargers/" + index + "/name");
+    }
+
+    /** The bundled café when the chosen charger is the one its walk was measured from. */
+    @Nullable
+    private CoffeeFixture.Pick coffeeNearCharger() {
+        return mCoffee != null && mCoffee.isNear(chargerName(mChosenCharger)) ? mCoffee : null;
+    }
+
+    /**
+     * Why Muse picked the café, with its source: parked at that charger only, a glanceable card
+     * under the same TEXT gate, clamp and content cap as every host row.
+     */
+    private void addCoffeeWhyRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
+            @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits) {
+        if (mShowingAgent || !"ev_charge_coffee".equals(mSurfaceId) || !mAtCharger) return;
+        CoffeeFixture.Pick coffee = coffeeNearCharger();
+        if (coffee == null) return;
+        addRow(rows, keys, HostRows.WHY, HostRows.card(allowed, limits, coffee.whyTitle(),
+                coffee.whyBody(), null, getDrawable(R.drawable.a2ui_ic_pickup)));
     }
 
     static final long ARRIVAL_ARTWORK_DELAY_MS = 1200;
@@ -1772,6 +1804,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @VisibleForTesting
     @NonNull
     String confirmTitle(@NonNull A2uiComponent component) {
+        CoffeeFixture.Pick coffee = coffeeFor(component);
+        if (coffee != null) return coffee.confirmTitle();
         String exact = mShowingAgent ? null : DemoNativeContract.confirmPrompt(mSurfaceId,
                 component);
         if (exact != null) return exact;
@@ -1782,9 +1816,18 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     @Nullable
     private String confirmMessage(@NonNull A2uiComponent component) {
+        CoffeeFixture.Pick coffee = coffeeFor(component);
+        if (coffee != null) return coffee.confirmDetail();
         String exact = mShowingAgent ? null : DemoNativeContract.confirmDetail(mSurfaceId,
                 component);
         return exact != null ? exact : component.getSubtitle();
+    }
+
+    /** The café for the corpus coffee order, near the chosen charger; else null. */
+    @Nullable
+    private CoffeeFixture.Pick coffeeFor(@NonNull A2uiComponent component) {
+        return !mShowingAgent && DemoNativeContract.isCoffeeOrder(mSurfaceId, component)
+                ? coffeeNearCharger() : null;
     }
 
     /** Hides any card the list cannot show whole. */
