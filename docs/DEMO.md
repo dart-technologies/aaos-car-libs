@@ -11,7 +11,7 @@ transition (`cmd car_service emulate-driving-state park|drive`), never a synthet
 | `nyc_poi_order` | 78 | `poi_discovery_order` | Parked at Hudson Yards, bound for Brooklyn Museum: find coffee on the route, order ahead; drive → search and order go, route stays | Voice and touch share one policy; live re-projection |
 | `nyc_curated_video` | 78 | `big_buck_bunny` | Waiting in Long Island City: open a curated short; drive → video view and decoder close, the audio-only control keeps playing | `NO_VIDEO` drops video, not audio |
 | `nyc_concierge` | 90 | `poi_discovery_order`, then `big_buck_bunny` | Fifth House: parked order, brand audio kept in motion, visual chapter on arrival; closes on the fast foreground and higher-effort background lanes | The journey gets quieter, not unsafe; agents never control the car |
-| `nyc_met` | 178 | `met_visit`, then `ev_charge_coffee` | Thursday, Nov 5, Hudson Yards → The Met, both displays: cited Muse brief and gallery parked, timed entry confirmed parked; drive → driver screen simplifies, passenger plays the artwork film, audio guide for all; arrival brings the film full-bleed. Then a low battery (vehicle HAL) → three chargers, park and charge, coffee confirmed parked; end card | One agent, any model; the car decides per display |
+| `nyc_met` | 132 | `met_visit`, then `ev_charge_coffee` | Thursday, Nov 5, Hudson Yards → The Met, both displays: cited Muse brief parked, timed entry confirmed parked; drive → driver screen simplifies, passenger plays the artwork film, Muse's audio guide for all; parked at The Met the film moves to the driver's screen. Then a low battery (vehicle HAL) → three chargers; parked and charging, the passenger plays the short film and Muse's café pick (15 cafés compared) backs a parked coffee order; end card | Muse does the research; the car decides per display |
 
 Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 2026-09-10 and not
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
@@ -85,8 +85,9 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Asset | Where | In git | Made by | Checked by |
 |---|---|---|---|---|
 | Route preview, poster, album art, 8 s MP4, 12 s M4A | `a2ui-host-carui/src/main/res/{drawable-nodpi,raw}/demo_*` | yes | `scripts/generate-a2ui-demo-assets.sh` (ffmpeg, libx264, AAC) | `check-demo-assets.py` (SHA-256) |
-| 19 TTS clips, 6 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits); `--stt muse` transcribes with Muse Voice Transcribe (`META_API_KEY`) | `check-nyc-demo.py --require-audio` |
-| Met audio guide: 6 narrations with their cited sources | `a2ui-automotive/demo/fixtures/met/AUDIO_GUIDE.json` | yes | `scripts/muse-audio-guide.py` (Muse Spark, `web_search`, `META_API_KEY`, 7 calls) | — |
+| 40 TTS clips, 11 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits); `--stt muse` transcribes with Muse Voice Transcribe (`META_API_KEY`; `nyc_met`'s five guest lines) | `check-nyc-demo.py --require-audio` |
+| Met audio guide: one line per film work, at most 11 words, with its cited sources | `a2ui-automotive/demo/fixtures/met/AUDIO_GUIDE.json` | yes | `scripts/muse-audio-guide.py` (Muse Spark, `web_search`, `META_API_KEY`, 7 calls; cites only pages about each Met object) | `check-nyc-demo.py` (one clip per work, timed to the film) |
+| Muse's Thursday brief for The Met, with its citations | `a2ui-automotive/demo/fixtures/met/BRIEF.json` | yes | the dev gateway's `quality_cached` entry (Muse Spark, `web_search`); copy to `build/a2ui-gateway-cache/muse/quality_cached/<cacheKey>.json` and run `serve.py --offline` to replay it keyless | `test_gateway.py` (replays offline) |
 | `nyc_met` café: OSM cafés within 400 m of the first charger, Muse's cited findings, scores, gate and pick | `a2ui-automotive/demo/fixtures/coffee/{COFFEE,SOURCE}.json` | yes | `scripts/muse-curate-coffee.py` (Overpass; Muse Spark `web_search`, one call per café within 6 min plus one scoring call; walk and ranking computed by the script) | `test_muse_curate_coffee.py`, `check-nyc-demo.py` (context) |
 | Claude corpus cache | `build/claude-corpus-cache/` | no | `scripts/claude-corpus-tester.py` | gateway schema on replay |
 | Passenger clip, 19.3 s 720p | `a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4` | yes | ffmpeg trim of Blender's MP4 (`demo/fixtures/bbb/SOURCE.json`) | `check-demo-assets.py` (SHA-256, source record) |
@@ -101,8 +102,9 @@ Generated `demo_*` media hold no third-party content (the placeholder video is n
 CC BY 3.0, trimmed and re-encoded. `nyc_met` credits: route, chargers and café © OpenStreetMap
 contributors (ODbL), routed by OSRM; café findings link their sources (`COFFEE.json`); artworks The Metropolitan Museum of Art Open Access (CC0); weather U.S.
 National Weather Service (public domain). No logos; no endorsement implied. The six `met_guide_*`
-lines are placeholders until the Muse-written guide lands. ElevenLabs licensing is unverified for
-outward use. Regenerating spends credits: `--dry-run`, then `--verify-personas`, then bare.
+lines are Muse's, copied from `AUDIO_GUIDE.json`, each citing only The Met's page for that work
+(and Smarthistory's for Aristotle). ElevenLabs licensing is unverified for outward use.
+Regenerating spends credits: `--dry-run`, then `--verify-personas`, then bare.
 
 **Claims.** Proves Host B rendering, policy on injected phrases, parked confirmation, live
 re-projection, audio continuity. Not a live agent, live location/inventory/payment, production
