@@ -122,15 +122,44 @@
                 android:text="@string/a2ui_ask_by_voice"
                 android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/surface_heading"
-                style="@style/A2uiBrandSectionHeading"
+            <!-- The heading's place. The change line takes it while it shows, so the line sits in
+                 the header band and never covers a card. -->
+            <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/a2ui_brand_heading_margin_horizontal"
-                android:layout_weight="1"
-                android:gravity="end|center_vertical"
-                android:text="@string/a2ui_brand_pickup_heading" />
+                android:layout_marginStart="@dimen/a2ui_space_m"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/surface_heading"
+                    style="@style/A2uiBrandSectionHeading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="@dimen/a2ui_brand_heading_margin_horizontal"
+                    android:gravity="end|center_vertical"
+                    android:text="@string/a2ui_brand_pickup_heading" />
+
+                <!-- What changed at the last restriction change. Transient and never
+                     interactive. -->
+                <TextView
+                    android:id="@+id/change_strip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|center_vertical"
+                    android:accessibilityLiveRegion="polite"
+                    android:background="@drawable/a2ui_strip_background"
+                    android:clickable="false"
+                    android:ellipsize="end"
+                    android:focusable="false"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="2"
+                    android:paddingHorizontal="@dimen/a2ui_space_m"
+                    android:paddingVertical="@dimen/a2ui_space_xs"
+                    android:textColor="@color/a2ui_brand_on_surface"
+                    android:textSize="@dimen/a2ui_strip_text_size"
+                    android:visibility="gone" />
+            </FrameLayout>
         </LinearLayout>
 
         <TextView
@@ -225,7 +254,8 @@
                 tools:ignore="Instantiatable" />
         </LinearLayout>
 
-        <!-- Visitor surfaces: the same rows as surface cards (CardListAdapter). -->
+        <!-- Visitor surfaces: the same rows as surface cards (CardListAdapter). The start inset
+             clears the system's back button, an overlay at the display's left edge. -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/card_list"
             android:layout_width="0dp"
@@ -233,7 +263,8 @@
             android:layout_weight="1"
             android:clipToPadding="false"
             android:overScrollMode="never"
-            android:paddingHorizontal="@dimen/a2ui_space_l"
+            android:paddingStart="@dimen/a2ui_card_list_inset_start"
+            android:paddingEnd="@dimen/a2ui_space_l"
             android:paddingTop="@dimen/a2ui_space_m"
             android:paddingBottom="@dimen/a2ui_space_s"
             android:visibility="gone" />
@@ -246,7 +277,7 @@
             android:layout_height="match_parent"
             android:layout_marginVertical="@dimen/a2ui_space_m"
             android:layout_marginEnd="@dimen/a2ui_space_l"
-            android:layout_weight="0.62"
+            android:layout_weight="0.55"
             android:background="@drawable/a2ui_panel_background"
             android:visibility="gone">
 
@@ -292,24 +323,6 @@
         </FrameLayout>
     </LinearLayout>
 
-        <!-- What changed at the last restriction change. Transient and never interactive. -->
-        <TextView
-            android:id="@+id/change_strip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="@dimen/a2ui_space_m"
-            android:accessibilityLiveRegion="polite"
-            android:background="@drawable/a2ui_strip_background"
-            android:clickable="false"
-            android:elevation="8dp"
-            android:focusable="false"
-            android:fontFamily="sans-serif-medium"
-            android:paddingHorizontal="@dimen/a2ui_space_l"
-            android:paddingVertical="@dimen/a2ui_space_s"
-            android:textColor="@color/a2ui_brand_on_surface"
-            android:textSize="@dimen/a2ui_strip_text_size"
-            android:visibility="gone" />
     </FrameLayout>
 </LinearLayout>
 

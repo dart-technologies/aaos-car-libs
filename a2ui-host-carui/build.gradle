@@ -142,6 +142,10 @@ abstract class BundleMetFilmTiming extends DefaultTask {
     @PathSensitive(PathSensitivity.NAME_ONLY)
     abstract ConfigurableFileCollection getCoffee()
 
+    @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract ConfigurableFileCollection getNws()
+
     @OutputDirectory
     abstract DirectoryProperty getOutputDir()
 
@@ -154,6 +158,7 @@ abstract class BundleMetFilmTiming extends DefaultTask {
             spec.from(timing) { into 'met' }
             spec.from(chargers) { into 'chargers' }
             spec.from(coffee) { into 'coffee' }
+            spec.from(nws) { into 'nws' }
             spec.into(outputDir)
         }
     }
@@ -167,6 +172,10 @@ def bundleMetFilmTiming = tasks.register('bundleMetFilmTiming', BundleMetFilmTim
     // And the café Muse picked near the first charger, as assets/coffee/COFFEE.json.
     coffee.from(fileTree(file('../a2ui-automotive/demo/fixtures/coffee')) {
         include 'COFFEE.json'
+    })
+    // And the NWS forecast (public domain) for the Met's weather row, as assets/nws/.
+    nws.from(fileTree(file('../a2ui-automotive/demo/fixtures/nws')) {
+        include 'forecast-*.json'
     })
     outputDir = layout.buildDirectory.dir('generated/metFilmTiming')
 }

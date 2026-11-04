@@ -51,12 +51,12 @@
     <string name="a2ui_cancel">Cancel</string>
 
     <!-- Closing card. Bullets and footer are OEM-overridable. -->
-    <string name="a2ui_end_card_title">Why OEMs ship A2UI this way</string>
-    <string name="a2ui_end_card_bullet_1">The vehicle enforces the policy, and fails closed</string>
-    <string name="a2ui_end_card_bullet_2">Any model, with no keys in the car</string>
-    <string name="a2ui_end_card_bullet_3">Stock AAOS hosts</string>
-    <string name="a2ui_end_card_bullet_4">Auditable gates</string>
-    <string name="a2ui_end_card_footer">Built with Muse</string>
+    <string name="a2ui_end_card_title">Any model can design it. The car decides.</string>
+    <string name="a2ui_end_card_bullet_1">Driver screen pruned by the car\'s own rules, fail-closed</string>
+    <string name="a2ui_end_card_bullet_2">Bookings and orders only when parked, with a tap</string>
+    <string name="a2ui_end_card_bullet_3">Muse: cited brief, café research, audio guide</string>
+    <string name="a2ui_end_card_bullet_4">Stock Android Automotive · no model keys in the car</string>
+    <string name="a2ui_end_card_footer">Built with Meta Muse · github.com/dart-technologies/aaos-car-libs</string>
 
     <!-- Passenger display. -->
     <string name="a2ui_passenger_label">Passenger display</string>

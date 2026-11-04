@@ -75,6 +75,86 @@ public class A2uiMetVisitTest {
     }
 
     @Test
+    public void theWeatherRowIsTheBundledNwsForecastForTheVisitDay() {
+        A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        activity.selectCase("met_visit");
+        WeatherFixture.Forecast nws = WeatherFixture.parse(WeatherFixture.readLatest(activity));
+        assertThat(nws).isNotNull();
+        // Derived from the fixture's fields, short enough not to truncate on a card.
+        assertThat(titles(activity)).contains(nws.mTitle);
+        assertThat(nws.mTitle).matches("[A-Z][a-z ]+ · high -?\\d+°F");
+        assertThat(nws.mTitle.length()).isAtMost(32);
+        assertThat(body(row(activity, nws.mTitle))).containsExactly(nws.mDetail);
+        assertThat(String.join(" ", titles(activity))).doesNotContain("Today ·");
+    }
+
+    @Test
+    public void theBriefCardLeadsWithANonAddressLineAndOneCitedSourceRow() {
+        java.util.List<String> lines = java.util.Arrays.asList(
+                "The Met Fifth Avenue · 1000 Fifth Avenue, New York, NY 10028",
+                "Hours · Thursday 10 AM–5 PM, timed entry advised");
+        assertThat(A2uiCarUiActivity.briefBody(lines,
+                java.util.Arrays.asList("Source · metmuseum.org", "Source · metmuseum.org"),
+                "Muse")).containsExactly("Hours · Thursday 10 AM–5 PM, timed entry advised",
+                        "Muse · cited · metmuseum.org").inOrder();
+        // Only an address: it stays rather than leaving the card bare. One row for the hosts.
+        assertThat(A2uiCarUiActivity.briefBody(lines.subList(0, 1),
+                java.util.Arrays.asList("Source · metmuseum.org", "Source · nyc.gov"), "Muse"))
+                .containsExactly(lines.get(0), "Muse · cited · metmuseum.org, nyc.gov")
+                .inOrder();
+        // No sources, no cited row: nothing is invented.
+        assertThat(A2uiCarUiActivity.briefBody(lines, java.util.Collections.emptyList(),
+                "Muse")).containsExactly(lines.get(1));
+        // A brief with no title of its own: the first component's title leads the card, its
+        // subtitle half becomes a last-resort line, and the hours win the line under it.
+        java.util.List<String> untitled = new java.util.ArrayList<>(java.util.Arrays.asList(
+                "The Met Fifth Avenue · Upper East Side bordering Central Park",
+                "Open today Thursday 10 am to 5 pm"));
+        assertThat(A2uiCarUiActivity.briefTitle(untitled, false))
+                .isEqualTo("The Met Fifth Avenue");
+        assertThat(A2uiCarUiActivity.briefBody(untitled,
+                java.util.Collections.singletonList("Source · metmuseum.org"), "Muse"))
+                .containsExactly("Open today Thursday 10 am to 5 pm",
+                        "Muse · cited · metmuseum.org").inOrder();
+        // A titled brief keeps its title whole, a "·" and all.
+        java.util.List<String> titled = new java.util.ArrayList<>(
+                java.util.Collections.singletonList("The Met · this afternoon"));
+        assertThat(A2uiCarUiActivity.briefTitle(titled, true))
+                .isEqualTo("The Met · this afternoon");
+        assertThat(titled).isEmpty();
+        // An entrance by street name is not an address.
+        assertThat(A2uiCarUiActivity.briefBody(
+                java.util.Collections.singletonList("Use the 81st St entrance"),
+                java.util.Collections.emptyList(), "Muse"))
+                .containsExactly("Use the 81st St entrance");
+    }
+
+    @Test
+    public void nwsPeriodsAreReadForTheDayAfterCaptureAndNothingIsAdded() {
+        String json = "{'periods':["
+                + "{'startTime':'2026-11-04T07:00:00-05:00','isDaytime':true,'temperature':75,"
+                + "'temperatureUnit':'F','shortForecast':'Sunny'},"
+                + "{'startTime':'2026-11-04T18:00:00-05:00','isDaytime':false,'temperature':61,"
+                + "'temperatureUnit':'F','shortForecast':'Partly Cloudy'},"
+                + "{'startTime':'2026-11-05T06:00:00-05:00','isDaytime':true,'temperature':74,"
+                + "'temperatureUnit':'F','shortForecast':'Chance Rain Showers'}]}";
+        WeatherFixture.Forecast thursday = WeatherFixture.parse(json);
+        assertThat(thursday.mTitle).isEqualTo("Chance of showers · high 74°F");
+        assertThat(thursday.mDetail).isEqualTo("National Weather Service · Thu Nov 5 forecast");
+        assertThat(WeatherFixture.shorten("Rain Showers Likely")).isEqualTo("Showers likely");
+        assertThat(WeatherFixture.shorten("Slight Chance Rain Showers"))
+                .isEqualTo("Slight chance of showers");
+        assertThat(WeatherFixture.shorten("Partly Cloudy")).isEqualTo("Partly cloudy");
+        // No daytime period after the capture day, or no periods: the case keeps its words.
+        assertThat(WeatherFixture.parse(json.replace("2026-11-05T06", "2026-11-04T06")))
+                .isNull();
+        assertThat(WeatherFixture.parse("{'periods':[]}")).isNull();
+        assertThat(WeatherFixture.parse("{}")).isNull();
+        assertThat(WeatherFixture.parse(null)).isNull();
+        assertThat(WeatherFixture.messagesFor(null)).isEmpty();
+    }
+
+    @Test
     public void thePolicyRemovesMapSourcesAndArtworkInMotion() {
         // The trees themselves, without the host: depth cuts map and citations, type policy the
         // Modal and the Video.
@@ -94,6 +174,15 @@ public class A2uiMetVisitTest {
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
         assertThat(activity.selectCase("met_visit")).isTrue();
         assertThat(activity.visualPanelForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        // The map's baked distance and labels reach its edges: it is fitted, never cropped.
+        assertThat(activity.visualPanelImageForTesting().getScaleType())
+                .isEqualTo(android.widget.ImageView.ScaleType.FIT_CENTER);
+        // Cards start clear of the system's back overlay at the left edge: a start inset well
+        // beyond the list's end padding.
+        assertThat(activity.cardListForTesting().getPaddingStart()).isEqualTo(activity
+                .getResources().getDimensionPixelSize(R.dimen.a2ui_card_list_inset_start));
+        assertThat(activity.cardListForTesting().getPaddingStart())
+                .isAtLeast(2 * activity.cardListForTesting().getPaddingEnd());
         assertThat(body(row(activity, BRIEF))).contains(SOURCE);
         assertThat(titles(activity)).containsAtLeast(ETA, GALLERY, FILM, RESERVE);
 
@@ -141,17 +230,16 @@ public class A2uiMetVisitTest {
         assertGlanceable(ticket);
         assertThat(titles(activity)).doesNotContain(RESERVE);
 
-        int parkedRows = activity.renderedRowsForTesting().size();
         drive(activity, DRIVE);
         assertGlanceable(row(activity, TICKET));
         String expected = ChangeSummary.between(
                 A2uiCarUiActivity.withoutComponent(pruned("met_visit", reading(0)), "reserve"),
                 A2uiCarUiActivity.withoutComponent(pruned("met_visit", reading(DRIVE)),
                         "reserve"),
-                parkedRows, activity.renderedRowsForTesting().size(), false,
+                DriverState.Kind.DRIVING, false,
                 c -> DemoNativeContract.changeLabel("met_visit", c)).text();
         assertThat(activity.changeStripForTesting().getText().toString()).isEqualTo(expected);
-        assertThat(expected).isEqualTo("Map, sources & artwork hidden · 7→5 rows");
+        assertThat(expected).isEqualTo("Put away for the drive: map, sources, artwork");
     }
 
     @Test
@@ -169,8 +257,12 @@ public class A2uiMetVisitTest {
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
         activity.selectCase("met_visit");
         activity.onHeard("reserve entry for two at three");
-        ShadowAlertDialog.getLatestAlertDialog().getButton(AlertDialog.BUTTON_POSITIVE)
-                .performClick();
+        AlertDialog asked = ShadowAlertDialog.getLatestAlertDialog();
+        // Pinned inside the display with a margin each side: both pills show whole.
+        android.util.DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
+        assertThat(asked.getWindow().getAttributes().width).isEqualTo(metrics.widthPixels
+                - 2 * Math.round(A2uiCarUiActivity.DIALOG_MARGIN_DP * metrics.density));
+        asked.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
         drive(activity, DRIVE);
         drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
@@ -178,6 +270,9 @@ public class A2uiMetVisitTest {
         assertThat(activity.mArrived).isTrue();
         assertThat(titles(activity)).contains("Arrived · The Met Fifth Avenue");
         assertThat(activity.visualPanelForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        // The hero is a painting: it fills the panel.
+        assertThat(activity.visualPanelImageForTesting().getScaleType())
+                .isEqualTo(android.widget.ImageView.ScaleType.CENTER_CROP);
     }
 
     @Test

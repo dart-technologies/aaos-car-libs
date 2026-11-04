@@ -460,7 +460,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void confirm(A2uiComponent component, CarUxRestrictionsUtil restrictions,
             Context uiContext) {
         A2uiDisplayBinder binder = binderFor(restrictions, uiContext);
-        new AlertDialogBuilder(uiContext)
+        AlertDialog asked = new AlertDialogBuilder(uiContext)
                 .setTitle(confirmTitle(component))
                 .setMessage(confirmMessage(component))
                 .setNegativeButton(R.string.a2ui_cancel, null)
@@ -487,7 +487,26 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                             Toast.LENGTH_LONG).show();
                 })
                 .show();
+        fitDialog(asked, uiContext);
     }
+
+    /**
+     * car-ui's dialog puts its buttons in a column on the right and can lay out wider than the
+     * display, clipping both pills at the edge. Pinned to the display's width less a margin each
+     * side, the message wraps instead.
+     */
+    @VisibleForTesting
+    static void fitDialog(@NonNull AlertDialog dialog, @NonNull Context uiContext) {
+        android.view.Window window = dialog.getWindow();
+        if (window == null) return;
+        android.util.DisplayMetrics metrics = uiContext.getResources().getDisplayMetrics();
+        int margin = Math.round(DIALOG_MARGIN_DP * metrics.density);
+        window.setLayout(Math.max(0, metrics.widthPixels - 2 * margin),
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    /** Space kept between a confirm dialog and each side edge of its display. */
+    static final int DIALOG_MARGIN_DP = 64;
 
     private CarUxRestrictionsUtil mRestrictions;
     private ToolbarController mToolbar;
@@ -511,6 +530,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @Nullable private DriverState.Kind mBannerKind;
     /** The transient "what changed" line, and what it diffs against. */
     private TextView mChangeStrip;
+    /** The change line holds the header's end; the hint and heading return when it goes. */
+    private boolean mStripShowing;
+    private boolean mVoiceHintWanted;
+    private boolean mSurfaceHeadingWanted = true;
     private final Runnable mHideChangeStrip = this::hideChangeStrip;
     private final Handler mStripHandler = new Handler(Looper.getMainLooper());
     @Nullable private A2uiComponent mLastPrunedTree;
@@ -796,8 +819,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             }
         });
 
-        // Real chargers, when the fixture is bundled, enter through the processor like agent text.
+        // Real chargers, when the fixture is bundled, enter through the processor like agent text;
+        // so does the Met's weather row, from the NWS forecast.
         mProcessor.processAll(ChargerFixture.messages(this));
+        mProcessor.processAll(WeatherFixture.messages(this));
         mCoffee = CoffeeFixture.load(this);
         mEnergy = new VehicleEnergy(pct -> runOnMain(() -> onVehicleBattery(pct)));
 
@@ -1068,7 +1093,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         A2uiDisplayBinder capturedBinder = mActionBinder;
         String capturedSurfaceId = mSurfaceId;
-        new AlertDialogBuilder(this)
+        AlertDialog asked = new AlertDialogBuilder(this)
                 .setTitle(confirmTitle(matched))
                 .setMessage(confirmMessage(matched))
                 .setNegativeButton(R.string.a2ui_cancel, null)
@@ -1108,6 +1133,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                     }
                 })
                 .show();
+        fitDialog(asked, this);
     }
 
     private void refresh() {
@@ -1222,8 +1248,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                     collapsed.add(label);
                 }
             }
-            showChangeStrip(ChangeSummary.between(mLastPrunedTree, pruned, mLastVisibleRows,
-                    visibleRows, audioContinues(allowed), this::changeLabel, collapsed).text());
+            showChangeStrip(ChangeSummary.between(mLastPrunedTree, pruned,
+                    DriverState.kindFor(source, current.getActiveRestrictions()),
+                    audioContinues(allowed), this::changeLabel, collapsed).text());
         }
         mLastHostKeys.clear();
         mLastHostKeys.addAll(hostKeys);
@@ -1253,8 +1280,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mLimitedColumn.setVisibility(comparison ? View.VISIBLE : View.GONE);
         mCardList.setVisibility(comparison ? View.GONE : View.VISIBLE);
         mDemoPill.setVisibility(!comparison && !mShowingAgent ? View.VISIBLE : View.GONE);
-        mVoiceHint.setVisibility(!comparison && mayListen ? View.VISIBLE : View.GONE);
-        mSurfaceHeading.setVisibility(comparison ? View.GONE : View.VISIBLE);
+        mVoiceHintWanted = !comparison && mayListen;
+        mSurfaceHeadingWanted = !comparison;
+        applyHeaderEnd();
         if (!comparison) {
             mSurfaceHeading.setText(themedSurfaceHeading(mSurfaceId));
         }
@@ -1436,19 +1464,22 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mBannerKind = kind;
     }
 
-    /** Shows the line for {@link #CHANGE_STRIP_MS}. Non-interactive; instant at animator scale 0. */
+    /**
+     * Shows the line for {@link #CHANGE_STRIP_MS}, in the header band where the voice hint and
+     * heading were, so it never covers a card. Non-interactive; instant at animator scale 0.
+     */
     private void showChangeStrip(@NonNull String text) {
         mStripHandler.removeCallbacks(mHideChangeStrip);
         mChangeStrip.animate().cancel();
         mChangeStrip.setText(text);
         mChangeStrip.setVisibility(View.VISIBLE);
+        mStripShowing = true;
+        applyHeaderEnd();
         if (animationsEnabled()) {
             mChangeStrip.setAlpha(0f);
-            mChangeStrip.setTranslationY(getResources().getDisplayMetrics().density * 12);
-            mChangeStrip.animate().alpha(1f).translationY(0f).setDuration(220).start();
+            mChangeStrip.animate().alpha(1f).setDuration(220).start();
         } else {
             mChangeStrip.setAlpha(1f);
-            mChangeStrip.setTranslationY(0f);
         }
         mStripHandler.postDelayed(mHideChangeStrip, CHANGE_STRIP_MS);
         Log.i(TAG, "changed: " + text);
@@ -1458,10 +1489,23 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mChangeStrip.animate().cancel();
         if (animationsEnabled()) {
             mChangeStrip.animate().alpha(0f).setDuration(300)
-                    .withEndAction(() -> mChangeStrip.setVisibility(View.GONE)).start();
+                    .withEndAction(this::changeStripGone).start();
         } else {
-            mChangeStrip.setVisibility(View.GONE);
+            changeStripGone();
         }
+    }
+
+    private void changeStripGone() {
+        mChangeStrip.setVisibility(View.GONE);
+        mStripShowing = false;
+        applyHeaderEnd();
+    }
+
+    /** The voice hint and heading, unless the change line holds their place in the header. */
+    private void applyHeaderEnd() {
+        mVoiceHint.setVisibility(mVoiceHintWanted && !mStripShowing ? View.VISIBLE : View.GONE);
+        mSurfaceHeading.setVisibility(!mSurfaceHeadingWanted ? View.GONE
+                : mStripShowing ? View.INVISIBLE : View.VISIBLE);
     }
 
     /** Audio is said to continue only if it is playing and the new reading still allows it. */
@@ -1527,12 +1571,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             String title = journeyData(journey, journey.mConfirmTitle);
             List<String> body = new ArrayList<>();
             for (String pointer : journey.mConfirmBody) body.add(journeyData(journey, pointer));
-            // The real café's name only for the charger it was picked for; the trace's note stays.
+            // The real café's name only for the charger it was picked for. Its one line says the
+            // order was not sent, so the trace's note would only repeat it.
             CoffeeFixture.Pick coffee = journey == HostJourney.forSurface("ev_charge_coffee")
                     ? coffeeNearCharger() : null;
             if (coffee != null && !body.isEmpty()) {
                 title = coffee.pickupTitle();
-                body.set(0, coffee.pickupDetail());
+                body.clear();
+                body.add(coffee.pickupDetail());
             }
             addRow(rows, keys, HostRows.ORDER, HostRows.card(allowed, limits, title, body,
                     null, getDrawable(journey.mConfirmGlyph)));
@@ -1589,14 +1635,16 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (!"ev_charge_coffee".equals(mSurfaceId)) return;
         Integer pct = batteryPct();
         if (mAtCharger && parked) {
-            Integer start = mChargeStartPct != null ? mChargeStartPct : pct;
-            String detail = journeyData(HostJourney.forSurface(mSurfaceId), "/session/detail");
-            addRow(rows, keys, HostRows.SESSION, HostRows.card(allowed, limits,
-                    getString(R.string.a2ui_ev_session_title,
-                            start == null ? "–" : String.valueOf(start),
-                            detail == null ? "" : detail),
-                    Collections.singletonList(chargerName(mChosenCharger)),
-                    null, getDrawable(R.drawable.a2ui_ic_battery)));
+            // Only what is known: the station and the vehicle's reading. No charge rate, so no
+            // target or time to full.
+            String station = chargerName(mChosenCharger);
+            Integer now = pct != null ? pct : mChargeStartPct;
+            if (station != null) {
+                addRow(rows, keys, HostRows.SESSION, HostRows.card(allowed, limits,
+                        now == null ? getString(R.string.a2ui_ev_session_title_no_reading, station)
+                                : getString(R.string.a2ui_ev_session_title, station, now),
+                        Collections.emptyList(), null, getDrawable(R.drawable.a2ui_ic_battery)));
+            }
             return;
         }
         if (!lowBattery(pct)) {
@@ -1699,14 +1747,70 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         List<String> sources = new ArrayList<>();
         collectBriefLines(pruned, true, lines, sources);
         if (lines.isEmpty()) return;
-        String title = lines.remove(0);
-        List<String> body = new ArrayList<>(lines.subList(0, Math.min(1, lines.size())));
-        body.addAll(sources.subList(0, Math.min(2, sources.size())));
+        String rootTitle = pruned.getTitle();
+        String title = briefTitle(lines, pruned.hasChildren() && rootTitle != null
+                && !rootTitle.trim().isEmpty());
+        List<String> body = briefBody(lines, sources, providerLabel(mAgent.provider()));
         String thumb = DemoNativeContract.thumbnailFor(mSurfaceId,
                 new A2uiComponent.Builder(ComponentType.CARD).setId("brief").build());
         int art = thumb == null || !parkedNow() ? 0 : drawableNamed(thumb, 0);
         addRow(rows, keys, HostRows.AGENT_BRIEF, HostRows.card(allowed, limits, title, body,
                 art == 0 ? null : getDrawable(art), getDrawable(R.drawable.a2ui_ic_film)));
+    }
+
+    /** A street address or a ZIP code: "1000 Fifth Avenue", "New York, NY 10028". */
+    private static final java.util.regex.Pattern ADDRESS = java.util.regex.Pattern.compile(
+            "\\b\\d{1,5}\\s+(?:[A-Z][\\w.]*\\s+){0,3}(?:Avenue|Ave|Street|St|Road|Rd|Boulevard"
+                    + "|Blvd|Place|Pl|Drive|Dr|Lane|Ln|Way|Parkway|Pkwy|Broadway|Plaza|Square|Sq)\\b"
+                    + "|\\b[A-Z]{2}\\s+\\d{5}(?:-\\d{4})?\\b");
+
+    /**
+     * Takes the card's title from the front of {@code lines}. A brief with no title of its own
+     * leads with a component's "title · subtitle", too long for a one-line card title: its title
+     * leads, and the subtitle half goes to the back of {@code lines}, a last-resort line.
+     */
+    @VisibleForTesting
+    @NonNull
+    static String briefTitle(@NonNull List<String> lines, boolean titledBrief) {
+        String title = lines.remove(0);
+        int join = titledBrief ? -1 : title.indexOf(" · ");
+        if (join > 0) {
+            lines.add(title.substring(join + " · ".length()));
+            title = title.substring(0, join);
+        }
+        return title;
+    }
+
+    /**
+     * The brief card's lines under its title: the brief's first line that is not just a street
+     * address (the address only when nothing else is there), then one source row naming who cited
+     * what, e.g. "Muse · cited · metmuseum.org".
+     */
+    @VisibleForTesting
+    @NonNull
+    static List<String> briefBody(@NonNull List<String> lines, @NonNull List<String> sources,
+            @NonNull String provider) {
+        List<String> body = new ArrayList<>();
+        String lead = null;
+        for (String line : lines) {
+            if (!ADDRESS.matcher(line).find()) {
+                lead = line;
+                break;
+            }
+        }
+        if (lead == null && !lines.isEmpty()) lead = lines.get(0);
+        if (lead != null) body.add(lead);
+        List<String> hosts = new ArrayList<>();
+        for (String source : sources) {
+            String[] parts = source.split(" · ", 2);
+            String host = parts.length == 2 ? parts[1].trim() : "";
+            if (!host.isEmpty() && !hosts.contains(host)) hosts.add(host);
+        }
+        if (!hosts.isEmpty()) {
+            body.add(provider + " · cited · "
+                    + String.join(", ", hosts.subList(0, Math.min(2, hosts.size()))));
+        }
+        return body;
     }
 
     private static void collectBriefLines(@NonNull A2uiComponent node, boolean root,
@@ -2604,6 +2708,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void updateVisualPanel(@Nullable A2uiComponent pruned,
             @NonNull Set<ComponentType> allowed, boolean parked, boolean comparison) {
         int art = 0;
+        boolean hero = false;
         CharSequence title = null;
         CharSequence caption = null;
         if (!comparison && !mShowingAgent && allowed.contains(ComponentType.IMAGE)) {
@@ -2611,6 +2716,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             A2uiComponent hit = firstPanelComponent(pruned);
             if (journey != null && journey.mHeroArt != 0 && mArrived && parked) {
                 art = journey.mHeroArt;
+                hero = true;
                 title = journeyData(journey, journey.mArrivalTitle);
                 caption = journeyData(journey, journey.mArrivalDetail);
             } else if (hit != null) {
@@ -2623,6 +2729,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         boolean show = art != 0;
         mVisualPanel.setVisibility(show ? View.VISIBLE : View.GONE);
         if (show) {
+            // A map carries baked text (distance, labels) to its edges: fit it whole. Only the
+            // arrival hero, a painting, fills the panel.
+            mVisualPanelImage.setScaleType(hero ? ImageView.ScaleType.CENTER_CROP
+                    : ImageView.ScaleType.FIT_CENTER);
             mVisualPanelImage.setImageResource(art);
             mVisualPanelTitle.setText(title);
             mVisualPanelCaption.setText(caption);
@@ -2630,6 +2740,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         } else {
             mVisualPanelImage.setImageDrawable(null);
         }
+    }
+
+    @VisibleForTesting
+    @NonNull
+    ImageView visualPanelImageForTesting() {
+        return mVisualPanelImage;
     }
 
     /** Pre-order, any depth: the first surviving component with registered panel imagery. */

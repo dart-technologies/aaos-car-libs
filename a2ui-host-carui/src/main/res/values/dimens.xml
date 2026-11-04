@@ -28,6 +28,10 @@
   <dimen name="a2ui_space_m">16dp</dimen>
   <dimen name="a2ui_space_l">24dp</dimen>
   <dimen name="a2ui_space_xl">40dp</dimen>
+  <!-- The card list's start inset. AAOS draws a back-button overlay over the content at the
+       display's left edge (80 px wide on the 1408×792 reference display); cards start clear of
+       it. -->
+  <dimen name="a2ui_card_list_inset_start">64dp</dimen>
 
   <!-- Type scale. -->
   <dimen name="a2ui_type_display">44sp</dimen>
@@ -42,6 +46,6 @@
   <dimen name="a2ui_banner_padding_vertical">10dp</dimen>
   <dimen name="a2ui_banner_radius">16dp</dimen>
   <dimen name="a2ui_banner_dot_size">14dp</dimen>
-  <dimen name="a2ui_strip_text_size">20sp</dimen>
+  <dimen name="a2ui_strip_text_size">17sp</dimen>
   <dimen name="a2ui_card_radius">20dp</dimen>
 </resources>
