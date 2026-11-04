@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  The confirmation, tapped or spoken (A2uiCarUiActivity.showConfirmation): the question and its
+  detail share one left edge, and Cancel and Confirm sit in one row at the bottom right. Every
+  button attribute is explicit, so a vehicle's dialog theme cannot restack or restyle them.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/a2ui_confirm_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/a2ui_dialog_padding">
+
+    <!-- What is being agreed to is never cut: a long question or detail (an agent's own
+         subtitle) scrolls, and the weight shrinks only this part so the buttons stay on screen. -->
+    <ScrollView
+        android:id="@+id/a2ui_confirm_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:fadeScrollbars="false"
+        android:scrollbarStyle="outsideOverlay">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/a2ui_confirm_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/a2ui_brand_on_surface"
+                android:textSize="@dimen/a2ui_dialog_title_text_size" />
+
+            <TextView
+                android:id="@+id/a2ui_confirm_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/a2ui_dialog_message_gap"
+                android:fontFamily="sans-serif"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/a2ui_brand_on_surface_muted"
+                android:textSize="@dimen/a2ui_dialog_message_text_size" />
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:id="@+id/a2ui_confirm_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/a2ui_dialog_buttons_gap"
+        android:gravity="end|center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/a2ui_confirm_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/a2ui_dialog_button_height"
+            android:background="@drawable/a2ui_dialog_button_quiet"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:minWidth="@dimen/a2ui_dialog_button_min_width"
+            android:minHeight="0dp"
+            android:paddingHorizontal="@dimen/a2ui_dialog_button_padding"
+            android:paddingVertical="0dp"
+            android:singleLine="true"
+            android:stateListAnimator="@null"
+            android:text="@string/a2ui_cancel"
+            android:textAllCaps="false"
+            android:textColor="@color/a2ui_brand_on_surface"
+            android:textSize="@dimen/a2ui_dialog_button_text_size" />
+
+        <Button
+            android:id="@+id/a2ui_confirm_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/a2ui_dialog_button_height"
+            android:layout_marginStart="@dimen/a2ui_dialog_button_gap"
+            android:background="@drawable/a2ui_dialog_button_primary"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:minWidth="@dimen/a2ui_dialog_button_min_width"
+            android:minHeight="0dp"
+            android:paddingHorizontal="@dimen/a2ui_dialog_button_padding"
+            android:paddingVertical="0dp"
+            android:singleLine="true"
+            android:stateListAnimator="@null"
+            android:text="@string/a2ui_confirm"
+            android:textAllCaps="false"
+            android:textColor="@color/a2ui_dialog_on_accent"
+            android:textSize="@dimen/a2ui_dialog_button_text_size" />
+    </LinearLayout>
+</LinearLayout>

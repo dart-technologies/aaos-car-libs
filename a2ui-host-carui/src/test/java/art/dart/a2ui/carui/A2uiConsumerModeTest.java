@@ -71,16 +71,62 @@ public class A2uiConsumerModeTest {
     public void engineeringChromeHidesUntilTechnicalDetailsAreAskedFor() {
         mApp.getApplicationInfo().flags |= ApplicationInfo.FLAG_DEBUGGABLE;
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
-        activity.selectCase("poi_discovery_order");
+        activity.selectCase("met_visit");
         assertThat(activity.mProviderItem.isVisible()).isFalse();
         TextView badge = activity.findViewById(R.id.status_badge);
         assertThat(badge.getVisibility()).isEqualTo(View.GONE);
-        assertThat(activity.demoPillForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        // No demo label and no "Ask by voice" line: the microphone says it.
+        assertThat(String.join(" ", texts(activity.getWindow().getDecorView(), true)))
+                .doesNotContainMatch("(?i)demo|ask by voice|not sent");
+        assertThat(activity.toolbarHiddenForTesting()).isTrue();
 
-        // A long-press on the screen's title opens the details, and the chip with them.
-        activity.findViewById(R.id.surface_heading).performLongClick();
+        // A long-press on the vehicle-state chip opens the details, the toolbar and the badge
+        // with them; again closes them.
+        activity.findViewById(R.id.drive_banner).performLongClick();
         assertThat(activity.mProviderItem.isVisible()).isTrue();
         assertThat(badge.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(activity.toolbarHiddenForTesting()).isFalse();
+        activity.findViewById(R.id.drive_banner).performLongClick();
+        assertThat(activity.mProviderItem.isVisible()).isFalse();
+        assertThat(activity.toolbarHiddenForTesting()).isTrue();
+
+        // So do the header row and the context title.
+        activity.findViewById(R.id.presentation_header).performLongClick();
+        assertThat(activity.mProviderItem.isVisible()).isTrue();
+        activity.findViewById(R.id.presentation_header).performLongClick();
+        activity.findViewById(R.id.surface_heading).performLongClick();
+        assertThat(activity.mProviderItem.isVisible()).isTrue();
+    }
+
+    @Test
+    public void aConsumerScreenHidesTheToolbarAndKeepsOneMicrophone() {
+        A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        // The engineering comparison keeps the OEM toolbar and its Speak item.
+        assertThat(activity.toolbarHiddenForTesting()).isFalse();
+        assertThat(activity.mHeaderMic.getVisibility()).isEqualTo(View.GONE);
+        assertThat(activity.mSpeakItem.isVisible()).isTrue();
+
+        activity.selectCase("met_visit");
+        // No app title bar in a car: the toolbar's views go, and its title with them.
+        assertThat(activity.toolbarHiddenForTesting()).isTrue();
+        View title = viewWithText(activity.getWindow().getDecorView(), "The Met, safely");
+        assertThat(title == null || !title.isShown()).isTrue();
+        // One microphone: the header's.
+        assertThat(activity.mHeaderMic.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(activity.mHeaderMic.isEnabled()).isTrue();
+        assertThat(activity.mSpeakItem.isVisible()).isFalse();
+        // The context title, short and in words.
+        assertThat(((TextView) activity.findViewById(R.id.surface_heading)).getText().toString())
+                .isEqualTo("The Met · Thursday");
+
+        // A surface whose search survived keeps the toolbar that carries it.
+        activity.selectCase("poi_discovery_order");
+        assertThat(activity.mSearchItem.isVisible()).isTrue();
+        assertThat(activity.toolbarHiddenForTesting()).isFalse();
+        activity.selectCase("ev_charge_coffee");
+        assertThat(activity.toolbarHiddenForTesting()).isTrue();
+        assertThat(((TextView) activity.findViewById(R.id.surface_heading)).getText().toString())
+                .isEqualTo("Charge · Coffee");
     }
 
     @Test
@@ -89,11 +135,34 @@ public class A2uiConsumerModeTest {
         assertThat(activity.cardListForTesting().getVisibility()).isEqualTo(View.GONE);
         activity.selectCase("poi_discovery_order");
         assertThat(activity.cardListForTesting().getVisibility()).isEqualTo(View.VISIBLE);
-        // The cards read the same rows: no more of them than the rows held.
+        // The cards read the same rows: no more of them than the rows held, and a glance's worth.
         assertThat(activity.cardListForTesting().getAdapter().getItemCount())
-                .isEqualTo(activity.renderedRowsForTesting().size());
+                .isEqualTo(Math.min(activity.renderedRowsForTesting().size(),
+                        A2uiCarUiActivity.MAX_CARDS_PARKED));
         assertThat(activity.findViewById(R.id.limited_column).getVisibility())
                 .isEqualTo(View.GONE);
+    }
+
+    @Test
+    public void cardsAreAGlanceFourParkedThreeMoving() {
+        A2uiCarUiActivity activity = A2uiHostCardsTest.started(
+                A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        activity.selectCase("met_visit");
+        // More rows than the cap, so the cap is what is measured.
+        assertThat(activity.renderedRowsForTesting().size())
+                .isGreaterThan(A2uiCarUiActivity.MAX_CARDS_PARKED);
+        assertThat(activity.cardListForTesting().getAdapter().getItemCount())
+                .isEqualTo(A2uiCarUiActivity.MAX_CARDS_PARKED);
+
+        A2uiHostCardsTest.drive(activity, 0xff);
+        assertThat(activity.renderedRowsForTesting().size())
+                .isGreaterThan(A2uiCarUiActivity.MAX_CARDS_MOVING);
+        assertThat(activity.cardListForTesting().getAdapter().getItemCount())
+                .isEqualTo(A2uiCarUiActivity.MAX_CARDS_MOVING);
+
+        // An untrusted reading is not parked: the moving cap.
+        assertThat(A2uiCarUiActivity.cardCap(false)).isEqualTo(3);
+        assertThat(A2uiCarUiActivity.cardCap(true)).isEqualTo(4);
     }
 
     @Test
@@ -112,13 +181,35 @@ public class A2uiConsumerModeTest {
     }
 
     private static java.util.List<String> texts(View root) {
+        return texts(root, false);
+    }
+
+    /** Every TextView's text under {@code root}; with {@code shownOnly}, only those drawn. */
+    private static java.util.List<String> texts(View root, boolean shownOnly) {
         java.util.List<String> out = new java.util.ArrayList<>();
+        if (shownOnly && root.getVisibility() != View.VISIBLE) return out;
         if (root instanceof TextView) out.add(((TextView) root).getText().toString());
         if (root instanceof android.view.ViewGroup) {
             android.view.ViewGroup group = (android.view.ViewGroup) root;
-            for (int i = 0; i < group.getChildCount(); i++) out.addAll(texts(group.getChildAt(i)));
+            for (int i = 0; i < group.getChildCount(); i++) {
+                out.addAll(texts(group.getChildAt(i), shownOnly));
+            }
         }
         return out;
+    }
+
+    private static View viewWithText(View root, String text) {
+        if (root instanceof TextView && text.contentEquals(((TextView) root).getText())) {
+            return root;
+        }
+        if (root instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = viewWithText(group.getChildAt(i), text);
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     @Test

@@ -109,6 +109,12 @@ public class A2uiVoiceWiringTest {
 
         assertThat(activity.mSpeakItem).isNotNull();
         assertThat(activity.mSpeakItem.isEnabled()).isFalse();
+        // The header's microphone, the same control on consumer screens, is withheld alike...
+        assertThat(activity.mHeaderMic.isEnabled()).isFalse();
+        // ...and a tap that gets through anyway is refused by the vehicle gate it calls.
+        ShadowToast.reset();
+        activity.mHeaderMic.performClick();
+        assertThat(ShadowToast.getTextOfLatestToast()).isEqualTo(A2uiActionBinder.REFUSED_NOTE);
     }
 
     private static CarUxRestrictions reading(int mask) {
@@ -128,6 +134,7 @@ public class A2uiVoiceWiringTest {
                 .setUxRestrictions(reading(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE));
         controller.start();
         assertThat(activity.mSpeakItem.isEnabled()).isTrue();
+        assertThat(activity.mHeaderMic.isEnabled()).isTrue();
 
         activity.startListening();
 
@@ -230,5 +237,6 @@ public class A2uiVoiceWiringTest {
 
         assertThat(activity.mRecognizer).isNull();
         assertThat(activity.mSpeakItem.isEnabled()).isFalse();
+        assertThat(activity.mHeaderMic.isEnabled()).isFalse();
     }
 }

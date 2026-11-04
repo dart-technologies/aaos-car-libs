@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2026 Dart Technologies. Licensed under the Apache License, Version 2.0. -->
+<!-- The header microphone: a round tile with a touch ripple. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33FFFFFF">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/a2ui_brand_glyph_tile" />
+        </shape>
+    </item>
+</ripple>

@@ -21,6 +21,7 @@ import android.app.Presentation;
 import android.car.drivingstate.CarUxRestrictions;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -59,6 +60,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.car.ui.CarUiLayoutInflaterFactory;
+import com.android.car.ui.FocusParkingView;
 import com.android.car.ui.baselayout.Insets;
 import com.android.car.ui.baselayout.InsetsChangedListener;
 import com.android.car.ui.core.CarUi;
@@ -460,11 +462,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void confirm(A2uiComponent component, CarUxRestrictionsUtil restrictions,
             Context uiContext) {
         A2uiDisplayBinder binder = binderFor(restrictions, uiContext);
-        AlertDialog asked = new AlertDialogBuilder(uiContext)
-                .setTitle(confirmTitle(component))
-                .setMessage(confirmMessage(component))
-                .setNegativeButton(R.string.a2ui_cancel, null)
-                .setPositiveButton(R.string.a2ui_confirm, (dialog, which) -> {
+        showConfirmation(uiContext, confirmTitle(component), confirmMessage(component),
+                (dialog, which) -> {
                     int orders = mOrderSeq;
                     A2uiActionPolicy.Decision again;
                     try {
@@ -485,15 +484,53 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                                     ? "Not available now — conditions changed"
                                     : component.getTitle() + " — done",
                             Toast.LENGTH_LONG).show();
-                })
-                .show();
-        fitDialog(asked, uiContext);
+                });
     }
 
     /**
-     * car-ui's dialog puts its buttons in a column on the right and can lay out wider than the
-     * display, clipping both pills at the edge. Pinned to the display's width less a margin each
-     * side, the message wraps instead.
+     * The one confirmation layout, tapped or spoken: the question and its detail on one left edge,
+     * Cancel and Confirm in one row at the bottom right. car-ui's builder offers no custom view
+     * and stacks its buttons in a column at the side, so the dialog's content is replaced whole.
+     * The framework's buttons keep the listeners and the AlertDialog contract; the visible pills
+     * press them, so a press is decided exactly as it was. Replaced, they are in no window: there
+     * is one "Confirm" for touch, rotary and uiautomator.
+     */
+    @VisibleForTesting
+    @NonNull
+    static AlertDialog showConfirmation(@NonNull Context uiContext, @NonNull CharSequence title,
+            @Nullable CharSequence message, @NonNull DialogInterface.OnClickListener onConfirm) {
+        AlertDialog dialog = new AlertDialog.Builder(uiContext)
+                .setNegativeButton(R.string.a2ui_cancel, null)
+                .setPositiveButton(R.string.a2ui_confirm, onConfirm)
+                .create();
+        View content = LayoutInflater.from(dialog.getContext())
+                .inflate(R.layout.a2ui_confirm_dialog, null);
+        ((TextView) content.findViewById(R.id.a2ui_confirm_title)).setText(title);
+        TextView detail = content.findViewById(R.id.a2ui_confirm_message);
+        detail.setText(message);
+        detail.setVisibility(message == null || message.length() == 0 ? View.GONE : View.VISIBLE);
+        dialog.show();
+        // show() installs the framework's layout; this replaces it.
+        dialog.setContentView(content);
+        content.findViewById(R.id.a2ui_confirm_cancel).setOnClickListener(
+                ignored -> dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick());
+        content.findViewById(R.id.a2ui_confirm_ok).setOnClickListener(
+                ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).performClick());
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(R.drawable.a2ui_dialog_background);
+            // As car-ui's builder does: rotary focus parks here instead of wrapping around.
+            ((ViewGroup) window.getDecorView().getRootView())
+                    .addView(new FocusParkingView(dialog.getContext()));
+        }
+        fitDialog(dialog, uiContext);
+        return dialog;
+    }
+
+    /**
+     * A confirmation is a sentence and two buttons: capped at {@link #DIALOG_MAX_WIDTH_DP} and
+     * centred, never wider than the display less {@link #DIALOG_MARGIN_DP} each side, so the
+     * message wraps rather than clipping a button at the edge.
      */
     @VisibleForTesting
     static void fitDialog(@NonNull AlertDialog dialog, @NonNull Context uiContext) {
@@ -501,12 +538,16 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (window == null) return;
         android.util.DisplayMetrics metrics = uiContext.getResources().getDisplayMetrics();
         int margin = Math.round(DIALOG_MARGIN_DP * metrics.density);
-        window.setLayout(Math.max(0, metrics.widthPixels - 2 * margin),
+        int cap = Math.round(DIALOG_MAX_WIDTH_DP * metrics.density);
+        window.setLayout(Math.max(0, Math.min(metrics.widthPixels - 2 * margin, cap)),
                 ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     /** Space kept between a confirm dialog and each side edge of its display. */
     static final int DIALOG_MARGIN_DP = 64;
+
+    /** The widest a confirm dialog grows, on a wide display. */
+    static final int DIALOG_MAX_WIDTH_DP = 720;
 
     private CarUxRestrictionsUtil mRestrictions;
     private ToolbarController mToolbar;
@@ -523,16 +564,30 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @Nullable private com.android.car.ui.toolbar.MenuItem mConsoleItem;
     private UxrContentLimiterImpl mLimiter;
     private TextView mStatusBadge;
-    /** The vehicle-state banner: PARKED, DRIVING, DEMO or SAFE MODE. */
+    /** The vehicle-state chip: Parked, Driving, Simulated or Safe mode. */
     private View mBanner;
+    private View mBannerDotView;
     private TextView mBannerTitle;
     private TextView mBannerDetail;
     @Nullable private DriverState.Kind mBannerKind;
+    /** The chip's fill and dot as last set, where a state change's crossfade starts. */
+    private int mChipFill;
+    private int mChipDot;
+    @Nullable private android.animation.ValueAnimator mChipAnimator;
+    /**
+     * The voice control on consumer screens, where the toolbar (and its Speak item) is hidden.
+     * Withheld by refresh() under the same rule as {@link #mSpeakItem}.
+     */
+    @VisibleForTesting
+    android.widget.ImageButton mHeaderMic;
+    /** The OEM toolbar's views this activity hid, to give back exactly; empty while shown. */
+    private final List<View> mHiddenChrome = new ArrayList<>();
+    /** car-ui-lib's last insets, re-applied when the toolbar hides or returns. */
+    @Nullable private Insets mCarUiInsets;
     /** The transient "what changed" line, and what it diffs against. */
     private TextView mChangeStrip;
-    /** The change line holds the header's end; the hint and heading return when it goes. */
+    /** The change line shows beside the chip; the context title steps aside while it does. */
     private boolean mStripShowing;
-    private boolean mVoiceHintWanted;
     private boolean mSurfaceHeadingWanted = true;
     private final Runnable mHideChangeStrip = this::hideChangeStrip;
     private final Handler mStripHandler = new Handler(Looper.getMainLooper());
@@ -559,10 +614,6 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private RecyclerView mCardList;
     private CardListAdapter mCards;
     private View mLimitedColumn;
-    /** One screen-level label for fixture content. */
-    private TextView mDemoPill;
-    /** The one voice affordance on a consumer screen. */
-    private TextView mVoiceHint;
     /** Large imagery for one surviving component; see {@link #updateVisualPanel}. */
     private View mVisualPanel;
     private ImageView mVisualPanelImage;
@@ -574,6 +625,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     /** The parked-only full-bleed video, or null. Tracked like a dialog, with VIDEO required. */
     @Nullable private VideoView mVideoView;
     @Nullable private OnBackInvokedCallback mVideoBack;
+    /** The open video is driver media in the player: parked-only on top of VIDEO. */
+    private boolean mVideoParkedOnly;
+    private View mVideoTitleOverlay;
+    private TextView mVideoTitle;
+    private TextView mVideoCredit;
+    private final Runnable mFadeVideoTitle = this::fadeVideoTitle;
     @Nullable private DemoAudio mAudio;
     /** Between onStart and onStop. The debug bus outlives that window; sound must not. */
     private boolean mStarted;
@@ -718,6 +775,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
         mStatusBadge = findViewById(R.id.status_badge);
         mBanner = findViewById(R.id.drive_banner);
+        mBannerDotView = findViewById(R.id.drive_banner_dot);
         mBannerTitle = findViewById(R.id.drive_banner_title);
         mBannerDetail = findViewById(R.id.drive_banner_detail);
         mChangeStrip = findViewById(R.id.change_strip);
@@ -730,25 +788,20 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             mStatusBadge.setOnClickListener(ignored -> setDiagnosticsExpanded(
                     !mDiagnosticsExpanded));
             // Consumer screens show no engineering affordance: technical details, the console and
-            // the provider chip sit behind a long-press on the screen's title.
+            // the provider chip sit behind a long-press on the header row, its vehicle-state chip
+            // or its context title (and on the toolbar's title, where the toolbar shows).
             View.OnLongClickListener details = ignored -> {
                 setDiagnosticsExpanded(!mDiagnosticsExpanded);
                 return true;
             };
             mSurfaceHeading.setOnLongClickListener(details);
             mBanner.setOnLongClickListener(details);
+            findViewById(R.id.presentation_header).setOnLongClickListener(details);
             getWindow().getDecorView().post(() -> attachTitleLongPress(details));
         }
-        mDemoPill = findViewById(R.id.demo_pill);
-        mVoiceHint = findViewById(R.id.voice_hint);
-        android.graphics.drawable.Drawable mic = getDrawable(R.drawable.a2ui_ic_mic);
-        if (mic != null) {
-            int size = Math.round(18 * getResources().getDisplayMetrics().density);
-            mic = mic.mutate();
-            mic.setTint(getColor(R.color.a2ui_brand_on_surface_muted));
-            mic.setBounds(0, 0, size, size);
-            mVoiceHint.setCompoundDrawablesRelative(mic, null, null, null);
-        }
+        mHeaderMic = findViewById(R.id.header_mic);
+        // The same entry as the toolbar's Speak item: startListening() asks the vehicle first.
+        mHeaderMic.setOnClickListener(ignored -> startListening());
         mEmptyState = findViewById(R.id.empty_state);
         mLimitedLabel = findViewById(R.id.limited_label);
         mUnlimitedLabel = findViewById(R.id.unlimited_label);
@@ -774,6 +827,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mContentColumns = findViewById(R.id.content_columns);
         mVideoStage = findViewById(R.id.video_stage);
         findViewById(R.id.video_close).setOnClickListener(ignored -> dismissDemoContent());
+        mVideoTitleOverlay = findViewById(R.id.video_title_overlay);
+        mVideoTitle = findViewById(R.id.video_title);
+        mVideoCredit = findViewById(R.id.video_credit);
+        // A tap on the picture brings the player's title back for a moment.
+        mVideoStage.setOnClickListener(ignored -> showVideoTitle());
         mVisualPanel = findViewById(R.id.visual_panel);
         mVisualPanelImage = findViewById(R.id.visual_panel_image);
         mVisualPanelTitle = findViewById(R.id.visual_panel_title);
@@ -938,18 +996,90 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     /** Required by car-ui-lib's base layout; this activity draws edge to edge inside it. */
     @Override
     public void onCarUiInsetsChanged(@NonNull Insets insets) {
+        mCarUiInsets = insets;
+        applyInsets();
+    }
+
+    /**
+     * Pads the content and the full-screen overlays by car-ui-lib's insets, less the share of the
+     * top inset that belonged to a toolbar this activity hid: its views keep their last bounds
+     * while gone, and a toolbar never laid out covered nothing.
+     */
+    private void applyInsets() {
+        Insets insets = mCarUiInsets;
+        if (insets == null) return;
+        int top = insets.getTop();
+        if (!mHiddenChrome.isEmpty()) {
+            int covered = 0;
+            for (View view : mHiddenChrome) covered = Math.max(covered, view.getBottom());
+            top = Math.max(0, top - covered);
+        }
         findViewById(R.id.content_root).setPadding(
-                insets.getLeft(), insets.getTop(), insets.getRight(), insets.getBottom());
+                insets.getLeft(), top, insets.getRight(), insets.getBottom());
         findViewById(R.id.video_stage).setPadding(
-                insets.getLeft(), insets.getTop(), insets.getRight(), insets.getBottom());
-        // Overlays sit below the OEM toolbar, which car-ui-lib draws above the content.
+                insets.getLeft(), top, insets.getRight(), insets.getBottom());
+        // Overlays sit below the OEM toolbar when it shows, which car-ui-lib draws above the
+        // content; without it they take the full height.
         View gallery = findViewById(R.id.gallery_stage);
-        gallery.setPadding(insets.getLeft(), insets.getTop(), insets.getRight(),
-                insets.getBottom());
+        gallery.setPadding(insets.getLeft(), top, insets.getRight(), insets.getBottom());
         View end = findViewById(R.id.end_card);
         int side = Math.round(96 * getResources().getDisplayMetrics().density);
-        end.setPadding(insets.getLeft() + side, insets.getTop(), insets.getRight() + side,
+        end.setPadding(insets.getLeft() + side, top, insets.getRight() + side,
                 insets.getBottom());
+    }
+
+    /** The tag car-ui-lib's base layout puts on the view it insets the content's top by. */
+    private static final String TOP_INSET_TAG = "car_ui_top_inset";
+
+    /**
+     * The OEM toolbar: the base layout's child (beside the content container, which it overlays
+     * and insets) that holds the view tagged {@link #TOP_INSET_TAG}. Only that one view, so
+     * rotary's focus-parking view and any other overlay stay; a layout without the tag (a toolbar
+     * at the side or bottom, an unknown plugin) keeps its toolbar.
+     */
+    @NonNull
+    private List<View> toolbarChrome() {
+        List<View> chrome = new ArrayList<>();
+        View content = findViewById(android.R.id.content);
+        if (content == null || !(content.getParent() instanceof View)) return chrome;
+        View container = (View) content.getParent();
+        if (!(container.getParent() instanceof ViewGroup)) return chrome;
+        ViewGroup base = (ViewGroup) container.getParent();
+        View toolbar = base.findViewWithTag(TOP_INSET_TAG);
+        while (toolbar != null && toolbar.getParent() != base) {
+            toolbar = toolbar.getParent() instanceof View ? (View) toolbar.getParent() : null;
+        }
+        if (toolbar != null && toolbar != container) chrome.add(toolbar);
+        return chrome;
+    }
+
+    /**
+     * A consumer screen gives the toolbar's height to its content: a car has no app title bar.
+     * It shows for the engineering comparison, with the technical details (console, provider),
+     * and while it carries native chrome the surface earned (search, tabs). Only views this
+     * activity hid are shown again, so an OEM layout's own hidden views stay hidden.
+     */
+    private void applyToolbarVisibility(boolean shown) {
+        if (shown) {
+            if (mHiddenChrome.isEmpty()) return;
+            for (View view : mHiddenChrome) view.setVisibility(View.VISIBLE);
+            mHiddenChrome.clear();
+        } else {
+            if (!mHiddenChrome.isEmpty()) return;
+            for (View view : toolbarChrome()) {
+                if (view.getVisibility() == View.VISIBLE) {
+                    view.setVisibility(View.GONE);
+                    mHiddenChrome.add(view);
+                }
+            }
+            if (mHiddenChrome.isEmpty()) return;
+        }
+        applyInsets();
+    }
+
+    @VisibleForTesting
+    boolean toolbarHiddenForTesting() {
+        return !mHiddenChrome.isEmpty();
     }
 
     /**
@@ -1093,11 +1223,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         A2uiDisplayBinder capturedBinder = mActionBinder;
         String capturedSurfaceId = mSurfaceId;
-        AlertDialog asked = new AlertDialogBuilder(this)
-                .setTitle(confirmTitle(matched))
-                .setMessage(confirmMessage(matched))
-                .setNegativeButton(R.string.a2ui_cancel, null)
-                .setPositiveButton(R.string.a2ui_confirm, (dialog, which) -> {
+        showConfirmation(this, confirmTitle(matched), confirmMessage(matched),
+                (dialog, which) -> {
                     // Asked a third time: a dialog can be answered long after the vehicle changed.
                     if (capturedBinder == null || capturedBinder != mActionBinder
                             || !capturedSurfaceId.equals(mSurfaceId)) {
@@ -1131,9 +1258,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                         Toast.makeText(this, "Not available now — conditions changed",
                                 Toast.LENGTH_LONG).show();
                     }
-                })
-                .show();
-        fitDialog(asked, this);
+                });
     }
 
     private void refresh() {
@@ -1147,6 +1272,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         boolean mayListen = allowsListening(source, current);
         if (mSpeakItem != null) {
             mSpeakItem.setEnabled(mayListen);
+        }
+        // The header's microphone is the same control on consumer screens: withheld alike.
+        if (mHeaderMic != null) {
+            mHeaderMic.setEnabled(mayListen);
+            mHeaderMic.setAlpha(mayListen ? 1f : DISABLED_ALPHA);
         }
         // Disabling the control does not stop a session already running; close it.
         if (!mayListen) {
@@ -1178,18 +1308,27 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (pruned != null && embeddedBrief() != null) {
             pruned = withoutComponent(pruned, "brief");
         }
+        // Something to watch while charging, only parked at the charger once the coffee is
+        // ordered: the host withholds it otherwise (less, never more).
+        if (pruned != null && "ev_charge_coffee".equals(mSurfaceId)
+                && !driverMediaOffered(parked)) {
+            pruned = withoutComponent(pruned, DemoNativeContract.EV_DRIVER_MEDIA);
+        }
         // The charging window: what it offers leads; the comparison follows.
         if (pruned != null && mAtCharger && parked && "ev_charge_coffee".equals(mSurfaceId)) {
-            pruned = withChildrenFirst(pruned, "coffee", "tour");
+            pruned = withChildrenFirst(pruned, DemoNativeContract.EV_DRIVER_MEDIA, "coffee",
+                    "tour");
         }
         // Value limits bound the content inside the allowed components.
         A2uiValueLimits limits = limitsFor(source, current);
         if (pruned != null) {
             pruned = A2uiPruner.applyLimits(pruned, limits);
         }
-        // Voice may only reach what is on screen: CarUiRenderer.render draws no grandchildren, and
-        // host rows take the first places in both capped lists, so the tree is cut to the surface
-        // rows still visible after them.
+        // Voice may only reach what the capped lists hold: CarUiRenderer.render draws no
+        // grandchildren, and host rows take the first places in both capped lists, so the tree is
+        // cut to the surface rows the vehicle's content limit leaves after them. The visitor card
+        // list may draw fewer (cardCap, and whole cards only); a row past it stays reachable by
+        // voice, as a row past the screen's height always was.
         List<CarUiListItem> rows = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         addHostRows(rows, keys, allowed, limits, parked, pruned);
@@ -1219,6 +1358,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         // Video pixels exist only while VIDEO is allowed, whatever opened them.
         if (mVideoView != null && !allowed.contains(ComponentType.VIDEO)) {
+            dismissDemoContent();
+        }
+        // Driver media in the player is parked-only on top of that: any other reading takes it.
+        if (mVideoView != null && mVideoParkedOnly && !parked) {
             dismissDemoContent();
         }
 
@@ -1254,7 +1397,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         mLastHostKeys.clear();
         mLastHostKeys.addAll(hostKeys);
-        mCards.setVisibleCount(visibleRows);
+        // The cards are a glance, never the whole list: at most four parked, three otherwise.
+        // Fewer only: the content limit above still decides which rows exist.
+        mCards.setVisibleCount(Math.min(visibleRows, cardCap(parked)));
         mCards.notifyDataSetChanged();
         mLastPrunedTree = pruned;
         mLastVisibleRows = visibleRows;
@@ -1279,8 +1424,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         // Visitor surfaces show cards; the car-ui lists keep counting behind them.
         mLimitedColumn.setVisibility(comparison ? View.VISIBLE : View.GONE);
         mCardList.setVisibility(comparison ? View.GONE : View.VISIBLE);
-        mDemoPill.setVisibility(!comparison && !mShowingAgent ? View.VISIBLE : View.GONE);
-        mVoiceHintWanted = !comparison && mayListen;
+        // One microphone on screen: the header's on consumer screens, else the toolbar's.
+        mHeaderMic.setVisibility(comparison ? View.GONE : View.VISIBLE);
+        if (mSpeakItem != null) {
+            mSpeakItem.setVisible(comparison);
+        }
+        NativeChromePlan chrome = currentChromePlan(mRenderedRoot);
+        applyToolbarVisibility(comparison || mDiagnosticsExpanded || chrome.mShowSearch
+                || chrome.mShowBrowseTabs);
         mSurfaceHeadingWanted = !comparison;
         applyHeaderEnd();
         if (!comparison) {
@@ -1401,6 +1552,19 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mUnlimitedList.setItemAnimator(mUnlimitedAnimator);
     }
 
+    /** The most cards a visitor screen shows on a trusted parked reading. */
+    @VisibleForTesting
+    static final int MAX_CARDS_PARKED = 4;
+    /** The most otherwise (moving, or an untrusted reading): what fit before the slim header. */
+    @VisibleForTesting
+    static final int MAX_CARDS_MOVING = 3;
+
+    /** The visitor card cap for a reading: a presentation limit under the content limit. */
+    @VisibleForTesting
+    static int cardCap(boolean parked) {
+        return parked ? MAX_CARDS_PARKED : MAX_CARDS_MOVING;
+    }
+
     /**
      * Surface rows the capped lists still show once host rows take the first places. The limiter's
      * own rule, as uxr_config.xml sets no per-list override: a cap only under LIMIT_CONTENT, and a
@@ -1444,7 +1608,19 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @VisibleForTesting
     static final long CHANGE_STRIP_MS = 3500;
 
-    /** The banner from the reading the prune used; a change of state pulses once. */
+    /** How long the chip takes to cross from one state's colour and word to the next. */
+    @VisibleForTesting
+    static final long CHIP_CROSSFADE_MS = 280;
+
+    /** A withheld header control's opacity. */
+    private static final float DISABLED_ALPHA = 0.38f;
+
+    /**
+     * The chip from the reading the prune used. Its word changes at once (what the screen says
+     * is never behind the reading); on a change of state the fill and dot cross to the new
+     * state's colours while the word fades in, so the change reads on video. Instant at animator
+     * scale 0.
+     */
     private void updateBanner(@NonNull CarUxRestrictionsUtil.RestrictionsSource source,
             int active) {
         DriverState.Kind kind = DriverState.kindFor(source, active);
@@ -1452,21 +1628,50 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         CharSequence detail = getText(DriverState.detailRes(source, active));
         mBannerTitle.setText(title);
         mBannerDetail.setText(detail);
-        mBanner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
-                getColor(DriverState.colorRes(kind))));
         mBanner.setContentDescription(title + ". " + detail + ".");
-        if (mBannerKind != null && mBannerKind != kind && animationsEnabled()) {
-            mBanner.animate().cancel();
-            mBanner.setScaleX(1.06f);
-            mBanner.setScaleY(1.06f);
-            mBanner.animate().scaleX(1f).scaleY(1f).setDuration(260).start();
+        if (kind == mBannerKind) {
+            return; // already there, or crossing there: a repeat refresh must not cut it short
         }
+        int fill = getColor(DriverState.colorRes(kind));
+        int dot = getColor(DriverState.dotColorRes(kind));
+        if (mChipAnimator != null) {
+            mChipAnimator.cancel();
+            mChipAnimator = null;
+        }
+        mBannerTitle.animate().cancel();
+        if (mBannerKind != null && animationsEnabled()) {
+            final int fromFill = mChipFill;
+            final int fromDot = mChipDot;
+            android.animation.ArgbEvaluator argb = new android.animation.ArgbEvaluator();
+            android.animation.ValueAnimator cross =
+                    android.animation.ValueAnimator.ofFloat(0f, 1f);
+            cross.setDuration(CHIP_CROSSFADE_MS);
+            cross.addUpdateListener(step -> {
+                float f = step.getAnimatedFraction();
+                tintChip((int) argb.evaluate(f, fromFill, fill),
+                        (int) argb.evaluate(f, fromDot, dot));
+            });
+            mChipAnimator = cross;
+            cross.start();
+            mBannerTitle.setAlpha(0f);
+            mBannerTitle.animate().alpha(1f).setDuration(CHIP_CROSSFADE_MS).start();
+        } else {
+            tintChip(fill, dot);
+            mBannerTitle.setAlpha(1f);
+        }
+        mChipFill = fill;
+        mChipDot = dot;
         mBannerKind = kind;
     }
 
+    private void tintChip(int fill, int dot) {
+        mBanner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(fill));
+        mBannerDotView.setBackgroundTintList(android.content.res.ColorStateList.valueOf(dot));
+    }
+
     /**
-     * Shows the line for {@link #CHANGE_STRIP_MS}, in the header band where the voice hint and
-     * heading were, so it never covers a card. Non-interactive; instant at animator scale 0.
+     * Shows the line for {@link #CHANGE_STRIP_MS} in the header row beside the chip, where the
+     * context title was, so it never covers a card. Non-interactive; instant at animator scale 0.
      */
     private void showChangeStrip(@NonNull String text) {
         mStripHandler.removeCallbacks(mHideChangeStrip);
@@ -1501,9 +1706,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         applyHeaderEnd();
     }
 
-    /** The voice hint and heading, unless the change line holds their place in the header. */
+    /** The context title, unless the change line holds its place in the header row. */
     private void applyHeaderEnd() {
-        mVoiceHint.setVisibility(mVoiceHintWanted && !mStripShowing ? View.VISIBLE : View.GONE);
         mSurfaceHeading.setVisibility(!mSurfaceHeadingWanted ? View.GONE
                 : mStripShowing ? View.INVISIBLE : View.VISIBLE);
     }
@@ -1571,8 +1775,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             String title = journeyData(journey, journey.mConfirmTitle);
             List<String> body = new ArrayList<>();
             for (String pointer : journey.mConfirmBody) body.add(journeyData(journey, pointer));
-            // The real café's name only for the charger it was picked for. Its one line says the
-            // order was not sent, so the trace's note would only repeat it.
+            // The real café's name only for the charger it was picked for, with what was ordered
+            // and the walk on its one line.
             CoffeeFixture.Pick coffee = journey == HostJourney.forSurface("ev_charge_coffee")
                     ? coffeeNearCharger() : null;
             if (coffee != null && !body.isEmpty()) {
@@ -1687,10 +1891,20 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void addCoffeeWhyRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
             @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits) {
         if (mShowingAgent || !"ev_charge_coffee".equals(mSurfaceId) || !mAtCharger) return;
+        // Once ordered, the pickup card answers it, and the short to watch takes its place.
+        if (mOrderPlaced) return;
         CoffeeFixture.Pick coffee = coffeeNearCharger();
         if (coffee == null) return;
         addRow(rows, keys, HostRows.WHY, HostRows.card(allowed, limits, coffee.whyTitle(),
                 coffee.whyBody(), null, getDrawable(R.drawable.a2ui_ic_pickup)));
+    }
+
+    /**
+     * The charging window's short to watch is offered only on the corpus surface, parked at the
+     * charger after the coffee order; its player is parked-only besides (showVideoWith).
+     */
+    private boolean driverMediaOffered(boolean parked) {
+        return !mShowingAgent && mOrderPlaced && mAtCharger && parked;
     }
 
     static final long ARRIVAL_ARTWORK_DELAY_MS = 1200;
@@ -1962,12 +2176,6 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         return mCardList;
     }
 
-    @VisibleForTesting
-    @NonNull
-    View demoPillForTesting() {
-        return mDemoPill;
-    }
-
     /** The host journey of the corpus surface on screen, or null (agent surfaces have none). */
     @Nullable
     private HostJourney currentJourney() {
@@ -2082,10 +2290,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             return "FIFTH HOUSE · CITY NOTE";
         }
         if ("met_visit".equals(surfaceId)) {
-            return "THE MET · THURSDAY";
+            return "The Met · Thursday";
         }
         if ("ev_charge_coffee".equals(surfaceId)) {
-            return "CHARGE · COFFEE";
+            return "Charge · Coffee";
         }
         return "A2UI · " + surfaceId.replace('_', ' ').toUpperCase(java.util.Locale.US);
     }
@@ -2579,12 +2787,21 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     private void showVideoWith(@NonNull String componentId,
             @Nullable DemoNativeContract.Media media) {
+        boolean player = media != null && media.mPlayer;
+        if (player && !parkedNow()) {
+            // Asked again at the moment of opening: a tap can race the reading that withdrew it.
+            Log.i(TAG, "driver media refused: the vehicle is not parked");
+            Toast.makeText(this, A2uiActionBinder.REFUSED_NOTE, Toast.LENGTH_LONG).show();
+            return;
+        }
         dismissDemoContent();
-        VideoView video = new VideoView(this);
+        // The player fills the stage edge to edge; other videos keep their whole frame.
+        VideoView video = player ? new CoverVideoView(this) : new VideoView(this);
         mVideoStage.addView(video, 0, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
                 Gravity.CENTER));
         mVideoView = video;
+        mVideoParkedOnly = player;
         mDemoDialogComponentId = componentId;
         mDemoDialogRequiredType = ComponentType.VIDEO;
         mVideoStage.setVisibility(View.VISIBLE);
@@ -2598,10 +2815,64 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         caption.setText(media == null ? getString(R.string.a2ui_brand_video_caption)
                 : media.mCaption);
         caption.setVisibility(caption.getText().length() == 0 ? View.GONE : View.VISIBLE);
+        // The title names only what actually plays: a missing file falls back unnamed.
+        boolean named = media != null && rawNamed(media.mRawName, 0) != 0;
+        bindVideoTitle(named ? media.mTitle : null, named ? media.mCredit : null);
         if (mDemoMedia != null) {
             mDemoMedia.playVideo(video, media == null ? R.raw.demo_placeholder_video
                     : rawNamed(media.mRawName, R.raw.demo_placeholder_video));
         }
+    }
+
+    /** How long a player's title stays up after opening or a tap, before it fades. */
+    @VisibleForTesting
+    static final long VIDEO_TITLE_MS = 3000;
+
+    private void bindVideoTitle(@Nullable String title, @Nullable String credit) {
+        mStripHandler.removeCallbacks(mFadeVideoTitle);
+        mVideoTitleOverlay.animate().cancel();
+        mVideoTitle.setText(title);
+        mVideoCredit.setText(credit);
+        mVideoCredit.setVisibility(credit == null ? View.GONE : View.VISIBLE);
+        mVideoTitleOverlay.setContentDescription(title == null ? null
+                : credit == null ? title : title + ". " + credit);
+        if (title == null) {
+            mVideoTitleOverlay.setVisibility(View.GONE);
+            return;
+        }
+        mVideoTitleOverlay.setAlpha(0f);
+        showVideoTitle();
+    }
+
+    /** Fades the player's title in, then out after {@link #VIDEO_TITLE_MS}; nothing without one. */
+    private void showVideoTitle() {
+        if (mVideoView == null || mVideoTitle.getText().length() == 0) return;
+        mStripHandler.removeCallbacks(mFadeVideoTitle);
+        mVideoTitleOverlay.animate().cancel();
+        mVideoTitleOverlay.setVisibility(View.VISIBLE);
+        if (animationsEnabled()) {
+            mVideoTitleOverlay.animate().alpha(1f).setDuration(200).start();
+        } else {
+            mVideoTitleOverlay.setAlpha(1f);
+        }
+        mStripHandler.postDelayed(mFadeVideoTitle, VIDEO_TITLE_MS);
+    }
+
+    private void fadeVideoTitle() {
+        mVideoTitleOverlay.animate().cancel();
+        if (animationsEnabled()) {
+            mVideoTitleOverlay.animate().alpha(0f).setDuration(400)
+                    .withEndAction(() -> mVideoTitleOverlay.setVisibility(View.GONE)).start();
+        } else {
+            mVideoTitleOverlay.setAlpha(0f);
+            mVideoTitleOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    @VisibleForTesting
+    @NonNull
+    View videoTitleOverlayForTesting() {
+        return mVideoTitleOverlay;
     }
 
     /** A bundled raw resource by name (media other agents may not have landed yet), else fallback. */
@@ -2614,9 +2885,15 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void hideVideoStage() {
         VideoView video = mVideoView;
         mVideoView = null;
+        mVideoParkedOnly = false;
         if (video != null) {
             if (mDemoMedia != null) mDemoMedia.stopVideo();
             mVideoStage.removeView(video);
+        }
+        mStripHandler.removeCallbacks(mFadeVideoTitle);
+        if (mVideoTitleOverlay != null) {
+            mVideoTitleOverlay.animate().cancel();
+            mVideoTitleOverlay.setVisibility(View.GONE);
         }
         if (mVideoStage != null) mVideoStage.setVisibility(View.GONE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && mVideoBack != null) {

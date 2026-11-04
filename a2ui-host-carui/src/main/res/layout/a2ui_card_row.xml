@@ -48,15 +48,21 @@
         android:layout_weight="1"
         android:orientation="vertical">
 
+        <!-- A fixed line height, not wrap_content: autosize measures against the view's height,
+             and a recycled card shrunk once for a long title would otherwise stay small. -->
         <TextView
             android:id="@+id/card_title"
             style="@style/A2uiBrandTitle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/a2ui_card_title_height"
             android:ellipsize="end"
+            android:autoSizeMaxTextSize="23sp"
+            android:autoSizeMinTextSize="18sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textSize="21sp" />
+            android:textSize="23sp" />
 
         <TextView
             android:id="@+id/card_subtitle"
@@ -68,7 +74,7 @@
             android:includeFontPadding="false"
             android:maxLines="2"
             android:textColor="@color/a2ui_brand_on_surface_muted"
-            android:textSize="16sp" />
+            android:textSize="17sp" />
 
         <TextView
             android:id="@+id/card_extra"
@@ -92,7 +98,7 @@
         android:gravity="end"
         android:maxLines="1"
         android:textColor="@color/a2ui_brand_accent"
-        android:textSize="18sp" />
+        android:textSize="19sp" />
 
     <TextView
         android:id="@+id/card_chevron"

@@ -22,9 +22,10 @@ import com.android.car.ui.utils.CarUxRestrictionsUtil;
 import art.dart.a2ui.policy.A2uiRestrictionPolicy;
 
 /**
- * The consumer-facing vehicle state the banner shows, from the same (source, mask) pair the prune
- * uses. Only a delivered reading is PARKED or DRIVING; an injected one says DEMO, and an untrusted
- * one SAFE MODE, so the banner can never claim motion or rest the vehicle did not report.
+ * The consumer-facing vehicle state the header chip shows, from the same (source, mask) pair the
+ * prune uses. Only a delivered reading is Parked or Driving; an injected (DEMO) one says Simulated,
+ * and an untrusted one Safe mode, so the chip can never claim motion or rest the vehicle did not
+ * report.
  */
 final class DriverState {
 
@@ -49,7 +50,7 @@ final class DriverState {
         }
     }
 
-    /** The banner's headline. */
+    /** The chip's word. */
     static int titleRes(@NonNull Kind kind) {
         switch (kind) {
             case PARKED:
@@ -64,7 +65,7 @@ final class DriverState {
         }
     }
 
-    /** The banner's second line. */
+    /** The longer line, spoken with the chip (its content description), not drawn. */
     static int detailRes(@NonNull CarUxRestrictionsUtil.RestrictionsSource source,
             int activeRestrictions) {
         switch (kindFor(source, activeRestrictions)) {
@@ -84,7 +85,7 @@ final class DriverState {
         }
     }
 
-    /** The banner's fill, a brand token per state. */
+    /** The chip's fill, a brand token per state. */
     static int colorRes(@NonNull Kind kind) {
         switch (kind) {
             case PARKED:
@@ -96,6 +97,21 @@ final class DriverState {
             case SAFE_MODE:
             default:
                 return R.color.a2ui_brand_state_safe;
+        }
+    }
+
+    /** The chip's dot: the fill's hue, brighter. */
+    static int dotColorRes(@NonNull Kind kind) {
+        switch (kind) {
+            case PARKED:
+                return R.color.a2ui_brand_state_parked_dot;
+            case DRIVING:
+                return R.color.a2ui_brand_state_driving_dot;
+            case DEMO:
+                return R.color.a2ui_brand_state_demo_dot;
+            case SAFE_MODE:
+            default:
+                return R.color.a2ui_brand_state_safe_dot;
         }
     }
 }

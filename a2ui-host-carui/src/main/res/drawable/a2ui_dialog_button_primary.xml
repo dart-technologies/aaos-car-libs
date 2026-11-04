@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2026 Dart Technologies. Licensed under the Apache License, Version 2.0. -->
+<!-- The emphasised action: a filled accent pill. The ripple also marks rotary focus. -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#40000000">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/a2ui_brand_accent" />
+            <corners android:radius="@dimen/a2ui_dialog_button_radius" />
+        </shape>
+    </item>
+</ripple>

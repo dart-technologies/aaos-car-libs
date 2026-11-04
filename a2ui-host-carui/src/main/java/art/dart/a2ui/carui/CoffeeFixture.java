@@ -82,15 +82,18 @@ final class CoffeeFixture {
             return mName + " · " + mWalkMinutes + " min walk from the charger";
         }
 
-        /** A demo order: nothing reaches the café, so nothing says the coffee is ready. */
+        /**
+         * What was asked for and where, never that it is ready: nothing reaches the café (the
+         * video's own disclaimer says so), so no card claims a coffee is waiting.
+         */
         @NonNull
         String pickupTitle() {
-            return "Demo order · " + mName;
+            return "Order confirmed · " + mName;
         }
 
         @NonNull
         String pickupDetail() {
-            return "Oat milk latte · not sent · " + mWalkMinutes + " min walk";
+            return "Oat milk latte · " + mWalkMinutes + " min walk";
         }
 
         @NonNull
