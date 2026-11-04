@@ -40,5 +40,37 @@
     "-bufsize 4000k -r 30 -g 60 -pass 1|2 (pass 2 adds:)",
     "-af afade=t=in:st=0:d=0.3,afade=t=out:st=18.7:d=0.6 -c:a aac -b:a 128k -ar 48000 -ac 2",
     "-map_metadata -1 -fflags +bitexact -flags:v +bitexact -flags:a +bitexact -movflags +faststart"
-  ]
+  ],
+  "portrait": {
+    "purpose": "Fills the portrait 528x792 (2:3) passenger display without letterboxing.",
+    "record": "a2ui-automotive/demo/fixtures/bbb/SOURCE_PORTRAIT.json",
+    "derivedFrom": {
+      "path": "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4",
+      "sha256": "8ca6121326adfc437ee9eb902344bd27e023f338f69202e4605d10844f6f4609"
+    },
+    "crop": {
+      "width": 480,
+      "height": 720,
+      "y": 0,
+      "x": "Centre-weighted per shot (shot cuts at 3.13, 8.73, 10.63, 12.8 and 14.87 s): 440 for the close-up; in the stroll, 784 (the bunny walks in on the right) moving linearly to 470 between 4.6 and 6.6 s as he comes to the flower; 370 behind him in the meadow, the overhead shot and the flowers; then 221 rising at 72.5 px/s to 477 to keep the butterfly and the bunny in frame.",
+      "filter": "crop=w=480:h=720:x='if(lt(t,3.12),440,if(lt(t,8.72),clip(784-(t-4.6)*157,470,784),if(lt(t,14.85),370,clip(221+(t-14.867)*72.5,221,477))))':y=0:exact=1"
+    },
+    "changes": "Cropped to a 480x720 window of the landscape file and the video re-encoded; the audio track is stream-copied unchanged (same 906 AAC packets, no new fades).",
+    "command": [
+      "ffmpeg -nostdin -i bbb_passenger.mp4 -map 0:v:0 -map 0:a:0",
+      "-vf crop=w=480:h=720:x='if(lt(t,3.12),440,if(lt(t,8.72),clip(784-(t-4.6)*157,470,784),if(lt(t,14.85),370,clip(221+(t-14.867)*72.5,221,477))))':y=0:exact=1,format=yuv420p",
+      "-c:v libx264 -preset slow -tune animation -profile:v high -level:v 4.0 -crf 20 -maxrate 1400k -bufsize 2800k",
+      "-r 30 -fps_mode cfr -g 60 -c:a copy",
+      "-map_metadata -1 -fflags +bitexact -flags:v +bitexact -movflags +faststart bbb_passenger_portrait.mp4"
+    ],
+    "tool": "ffmpeg 8.1 (libx264)",
+    "output": {
+      "path": "a2ui-host-carui/src/main/res/raw/bbb_passenger_portrait.mp4",
+      "sha256": "fe80570672a0be0508453ab93e309c514ad02e98b5d1bafc99b0bfa99b875ce5",
+      "bytes": 2704213,
+      "durationSeconds": 19.3,
+      "video": "H.264 High@4.0 480x720 30 fps CFR, CRF 20 (maxrate 1400k), 0.98 Mbit/s",
+      "audio": "AAC-LC 48 kHz stereo 128 kbit/s, copied from the landscape file"
+    }
+  }
 }
