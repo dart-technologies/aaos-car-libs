@@ -215,6 +215,22 @@ class TimelineTest(unittest.TestCase):
         self.assertIn((70.0, "stop", 2), device.calls)
         self.assertIn((70.0, "car", "park"), device.calls)
 
+    def test_nyc_met_ends_parked_on_big_buck_bunny_without_an_end_card(self):
+        met = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_met")
+        device = FakeDevice(FakeClock())
+        evidence = timeline(met, device, self.tmp)
+        calls = device.calls
+        self.assertEqual([c[2] for c in calls if c[1] == "tap"],
+                         ["Confirm", "Confirm", "Big Buck Bunny"])
+        bunny = next(c for c in calls if c[1:] == ("tap", "Big Buck Bunny"))
+        states = [c for c in calls if c[1] == "car" and c[0] < bunny[0]]
+        self.assertEqual(states[-1][2], "park", "the driver watches only while parked")
+        self.assertFalse([c for c in calls if c[1] == "broadcast"
+                          and c[2] == demo.ACTION_END_CARD])
+        self.assertEqual(evidence["passengerStartSeconds"], 30.5)
+        self.assertIn((float(met["durationSeconds"]), "stop", 2), calls)
+        self.assertIn(("date", "110517152026.00"), [c[2] for c in calls if c[1] == "shell"])
+
     def test_missing_idle_frame_is_reported_not_fatal(self):
         device = FakeDevice(FakeClock(), screencap_ok=False)
         evidence = timeline(DUAL, device, self.tmp)
