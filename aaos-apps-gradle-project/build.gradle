@@ -32,8 +32,11 @@ allprojects {
     }
 
     // Test results are gate evidence: always execute, never restore from the build cache.
-    tasks.withType(Test).configureEach {
+    // Robolectric's SDK 36 sandbox needs Java 21, whatever JDK launched Gradle.
+    tasks.withType(Test).configureEach { t ->
         outputs.cacheIf('tests are gate evidence') { false }
+        t.javaLauncher = t.project.extensions.getByType(JavaToolchainService)
+                .launcherFor { languageVersion = JavaLanguageVersion.of(21) }
     }
 
     // Dart fork note: build output under the repo, not upstream's absolute /tmp path.
