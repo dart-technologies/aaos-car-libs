@@ -644,9 +644,11 @@ class CockpitCompositionTest(unittest.TestCase):
         self.assertTrue(near(pixel(self.out, 12.4, 960, 300), GREY))
         self.assertTrue(near(pixel(self.out, 12.4, *self.driver), GREY))
 
-    def test_rail_disclaimer_fades_out_under_the_closing_card(self):
+    def test_rail_disclaimer_is_gone_before_the_closing_card_fades_in(self):
         note = (960, 28)  # the 300x24 note, centred in the rail band
         self.assertTrue(near(pixel(self.out, self.head + 4.0, *note), WHITE), "over the drive")
+        outro = self.head + 8  # the card starts fading in here, its own note with it
+        self.assertLess(max(pixel(self.out, outro + 0.04, *note)), 120, "no ghosting")
         self.assertTrue(near(pixel(self.out, 12.4, *note), GREY), "the card carries its own")
 
 

@@ -820,12 +820,12 @@ def cockpit_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
         count += 1
     if plan.disclaimer is not None:  # centred in the rail band, clear of title and progress
         _, band_y, _, band_h = lay["railBand"]
-        if plan.outro is not None:  # the closing card carries its own note: fade out under it
-            ends = head + target
-            command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{ends + OUTRO_FADE_S:.3f}",
+        if plan.outro is not None:  # the closing card carries its own note: gone before it
+            ends = head + target    # fades in, so the two lines never ghost over each other
+            command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{ends:.3f}",
                         "-i", str(plan.disclaimer)]
-            filters.append(f"[{count}:v]format=rgba,fade=t=out:st={ends:.3f}:d={OUTRO_FADE_S}:"
-                           f"alpha=1[note];{last}[note]overlay=x=(W-w)/2:"
+            filters.append(f"[{count}:v]format=rgba,fade=t=out:st={ends - OUTRO_FADE_S:.3f}:"
+                           f"d={OUTRO_FADE_S}:alpha=1[note];{last}[note]overlay=x=(W-w)/2:"
                            f"y={band_y}+({band_h}-h)/2:eof_action=pass[noted]")
         else:
             command += ["-i", str(plan.disclaimer)]
