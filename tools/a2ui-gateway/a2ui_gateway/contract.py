@@ -131,9 +131,10 @@ GROUNDED_PROMPT = SYSTEM_PROMPT.replace(_COUNT_RULE, "3 to 9 components per surf
     "others. Write no URLs or source list: the gateway appends the cited sources as rows. Label "
     "anything else sample content DEMO.")
 assert _COUNT_RULE in SYSTEM_PROMPT and _DEMO_RULE in SYSTEM_PROMPT
-SEARCH_PROMPT = ("You research a request from a driver's in-car assistant. Search the web, prefer "
-                 "official sources, and answer in 3 to 6 short factual sentences, citing a source "
-                 "for every fact. Plain prose: no lists, no URLs.")
+SEARCH_PROMPT = ("You research a request from a driver's in-car assistant. Search the web and open "
+                 "the official site first, then one or two other reputable pages. Answer in 3 to 6 "
+                 "short factual sentences, citing a source for every fact. Plain prose: no lists, "
+                 "no URLs.")
 FINDINGS_HEADER = "Web findings (cited; the gateway attaches their sources):"
 SOURCE_ROWS = 3
 SOURCE_PREFIX = "Source · "
