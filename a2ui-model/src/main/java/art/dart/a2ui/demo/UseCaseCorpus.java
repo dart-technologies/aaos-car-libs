@@ -382,7 +382,7 @@ public final class UseCaseCorpus {
                 "Route preview · © OpenStreetMap contributors");
         b.container("brief", "Card", "sources");
         b.put("brief", "title", "Today at The Met");
-        b.put("brief", "subtitle", "Open 10 AM–5 PM · closed Wednesdays · timed entry advised");
+        b.put("brief", "subtitle", "Open 10 AM–5 PM · timed entry advised");
         b.container("sources", "List", "src1", "src2", "src3");
         b.put("sources", "title", "Sources");
         b.text("src1", "Source · metmuseum.org", "Hours and admission");
