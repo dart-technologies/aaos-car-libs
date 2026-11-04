@@ -39,8 +39,8 @@ The gateway reads only these key names and `A2UI_GATEWAY_TOKEN`.
   limits. Anything else is a `gatewayError`: non-2xx, token detail only.
 - Cache: `build/a2ui-gateway-cache/<provider>/<profile>/<sha256(model, prompt)>.json`; an output
   replays only for the model that made it. `quality_cached` replays exactly; `realtime_low_latency`
-  calls live and, past the 10 s deadline or on a vendor error, serves its own earlier output or the quality
-  profile's. Each `surfaceResponse` says which (`source`: `live`, `cache`, `fallback`), and headers
+  calls live and, past the 10 s deadline or on a vendor error, serves its own earlier output or the
+  quality profile's. Each `surfaceResponse` says which (`source`: `live`, `cache`, `fallback`), and headers
   name the output's model, its profile and the live error.
 - `policy.vendorFallback` is false: Anthropic alone offers a server-side model fallback, which would
   credit Claude with another model's output.
@@ -59,6 +59,10 @@ adb shell am broadcast -a art.dart.a2ui.carui.action.AGENT \
 python3 scripts/compare-providers.py         # --replay all; --inject-failure chatgpt=429
 python3 -m unittest discover -s tools/a2ui-gateway -p 'test_*.py'
 ```
+
+Keys on another machine: `scripts/demo-gateway-tunnel.sh ca` once (the worker's CA; only its public
+certificate is copied, into Host B's debug trust; rebuild), then `up` runs the gateway in tmux there
+and forwards `127.0.0.1:8787` here over ssh. `adb reverse` then reaches it; no key leaves the worker.
 
 ## Host B lane (debuggable, non-user builds only)
 
