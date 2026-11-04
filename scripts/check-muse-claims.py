@@ -94,12 +94,12 @@ def check_brief(brief: dict, tally: Tally) -> None:
     shown, content = [], []
     for c in components:
         title = c.get("title")
-        if c.get("component") != "Text" or not isinstance(title, str) or not title.strip():
+        if not isinstance(title, str) or not title.strip():
             continue
-        if title.startswith("Source"):
-            parts = title.split(" · ")  # what Host B shows: "Source · host", never the subtitle
+        if title.startswith("Source"):  # as Host B reads any titled node: "Source · host" only
+            parts = title.split(" · ")
             shown.append(" · ".join(parts[:2]) if len(parts) >= 2 else title)
-        else:
+        elif c.get("component") == "Text":
             content.append(c["id"])
     if not shown:
         tally.fail(name, "shows no Source row")

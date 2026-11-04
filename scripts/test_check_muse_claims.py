@@ -99,6 +99,9 @@ class MuseClaimsTest(unittest.TestCase):
     def test_brief_source_row_that_is_no_citation_fails(self):
         self.assertCaught(lambda d: component(d[BRIEF], "source_2").update(
             title="Source · nytimes.com"), "'Source · nytimes.com' is none of its citations")
+        # Host B reads "Source" off any titled node, not only Text.
+        self.assertCaught(lambda d: component(d[BRIEF], "nav_btn").update(
+            title="Source · example.com"), "'Source · example.com' is none of its citations")
 
     def test_brief_showing_no_source_row_fails(self):
         def drop(d):
