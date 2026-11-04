@@ -41,9 +41,9 @@
 
   <!-- The slim header row: microphone, vehicle-state chip, change note, context title. -->
   <dimen name="a2ui_header_min_height">48dp</dimen>
-  <dimen name="a2ui_header_padding_vertical">6dp</dimen>
-  <dimen name="a2ui_header_mic_size">44dp</dimen>
-  <dimen name="a2ui_header_mic_padding">10dp</dimen>
+  <dimen name="a2ui_header_padding_vertical">4dp</dimen>
+  <dimen name="a2ui_header_mic_size">48dp</dimen>
+  <dimen name="a2ui_header_mic_padding">12dp</dimen>
 
   <!-- Vehicle-state chip (the "banner" names are the OEM-overlayable ones) and change note. -->
   <dimen name="a2ui_chip_height">30dp</dimen>

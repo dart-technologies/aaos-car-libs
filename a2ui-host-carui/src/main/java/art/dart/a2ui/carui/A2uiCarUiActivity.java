@@ -1551,6 +1551,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mBannerTitle.setText(title);
         mBannerDetail.setText(detail);
         mBanner.setContentDescription(title + ". " + detail + ".");
+        if (kind == mBannerKind) {
+            return; // already there, or crossing there: a repeat refresh must not cut it short
+        }
         int fill = getColor(DriverState.colorRes(kind));
         int dot = getColor(DriverState.dotColorRes(kind));
         if (mChipAnimator != null) {
@@ -1558,7 +1561,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             mChipAnimator = null;
         }
         mBannerTitle.animate().cancel();
-        if (mBannerKind != null && mBannerKind != kind && animationsEnabled()) {
+        if (mBannerKind != null && animationsEnabled()) {
             final int fromFill = mChipFill;
             final int fromDot = mChipDot;
             android.animation.ArgbEvaluator argb = new android.animation.ArgbEvaluator();
