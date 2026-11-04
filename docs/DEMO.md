@@ -95,6 +95,17 @@ Post-production, after capture and from the same raw recording, so it always mat
   clips from the closing card, the rest from the device timeline. The video is preamble + timeline +
   outro and must stay within 60–180 s; `durationSeconds` is the device timeline.
 
+A dual recording is composed in a cockpit by default (`--no-cockpit` restores the side-by-side
+canvas): `cards/cockpit-frame.png`, one still frame for the whole video, with the driver (1312×738)
+and passenger (492×738) recordings in its windows at one scale (`cards/cockpit-layout.json`). It
+opens on the Muse2CarUI graffiti and the tagline card on the screens (`cards/nyc_met-intro-*.png`),
+pushing in 2.5% for 3.1 s with a screen glow; from 2.0 s an eased 1.1 s crossfade turns them into
+the first preamble card, which plays inside the driver window, as do the chapter card and the rest
+of the preamble. The closing card covers the whole canvas. Captions (every section, from the real
+speech lengths; a "Passenger" tag on guest lines) and the story rail (beat, progress, Parked or
+Driving) are PNGs from `scripts/demo_overlays.py` (Pillow, in a child process), and the SRT is
+written next to the video. The intro adds 2.0 s: `nyc_met` is 145 s.
+
 `--render-only` composes an earlier capture without a device (`--from-raw <prefix>` names
 `<prefix>.raw.mp4`, `.passenger.raw.mp4`, `.passenger-idle.png`; `--passenger-start` its stream
 start). On the 4 Nov capture: 143.0 s, the ffmpeg pass 10 s, about 30 s with cards and validation.
@@ -126,6 +137,10 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Panel labels, margin disclaimer | `a2ui-automotive/demo/cards/label-*.png`, `nyc_met-disclaimer.png` | yes | `scripts/render-demo-cards.py labels`, `disclaimer` (Pillow; this ffmpeg has no drawtext) | `test_run_nyc_demo.py`, `check-nyc-demo.py` |
 | Preamble and closing cards | next to the output (`<out>.preamble-N.png`, `<out>.outro.png`) | no | `run-nyc-demo.py` → `render-demo-cards.py preamble`, `outro`, from the raw recording's frames | `test_run_nyc_demo.py` |
 | Muse icon, white, 64 px (badge on the closing card) | `demo/cards/brand/muse-icon-white.png` | yes | `magick` from the public Muse icon SVG with its fill set to white | — |
+| Muse icon SVG and 96/256 px PNGs: attribution only ("Built with Muse"), never our logo | `demo/cards/brand/muse-icon*.{svg,png}`, `SOURCE.json` (Wikimedia Commons, public domain, Meta trademark) | yes | `scripts/render-brand-assets.py icon` | — |
+| Muse2CarUI graffiti plate (Muse Image 1.0), intro screens, YouTube thumbnail | `demo/cards/brand/graffiti-3.{webp,json}`, `demo/cards/nyc_met-intro-{driver,passenger}.png`, `docs/media/youtube-thumbnail.jpg` | yes | Muse Image 1.0 (`muse-image-attempts.json` lists every call); `scripts/render-brand-assets.py intro thumbnail` | — |
+| Cockpit frame, intro glow, layout | `demo/cards/cockpit-{frame,glow}.png`, `cockpit-layout.json` | yes | `scripts/demo_overlays.py cockpit` (procedural; the Muse plates had no clean 16:9 window) | `test_demo_overlays.py` (windows are exactly the boxes) |
+| Captions, story rail, intro frames, SRT | next to the output (`<out>.overlays/`, `<out>.srt`) | no | `run-nyc-demo.py` → `demo_overlays.py overlays` | `test_demo_overlays.py`, `test_run_nyc_demo.py` |
 | `nyc_met` route image, 1024×576 | `res/drawable-nodpi/route_met.png` | yes | `scripts/render-met-route.py` from `demo/fixtures/route/` (no map tiles) | `check-demo-assets.py` |
 | Artwork film, 36 s 720p, silent | `res/raw/met_artwork_film.mp4` | yes | `scripts/render-met-artwork-film.py` (six CC0 works; `demo/fixtures/met/FILM.json` has per-work `startMs`) | `check-demo-assets.py` (SHA-256, record) |
 | Artwork film, portrait 720×1080 for the passenger display | `res/raw/met_artwork_film_portrait.mp4` | yes | `render-met-artwork-film.py --orientation portrait` (full-bleed Ken Burns pans, bottom captions; `FILM_PORTRAIT.json`, same `startMs`) | `check-demo-assets.py`, `check-nyc-demo.py` (timing equals `FILM.json`) |
