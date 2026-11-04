@@ -357,7 +357,8 @@
         "The chargers are real OpenStreetMap entries near The Met; availability, price and speed beyond tagged output are unknown and never shown as live.",
         "The café is a real OpenStreetMap listing a 3-minute walk from the first charger, ranked by Muse from cited web sources against open hours, oat milk, reputation and pickup, with walk time and totals computed by script (fixtures/coffee/COFFEE.json).",
         "The preamble and the closing card are composed after capture from frames of the same raw recording, so they always match the UI; the narration never says demo, and one disclaimer line in the canvas margin covers the whole video.",
-        "Big Buck Bunny (CC BY 3.0, Blender Foundation) closes the story because watching video is the clearest parked-only privilege."
+        "Big Buck Bunny (CC BY 3.0, Blender Foundation) closes the story because watching video is the clearest parked-only privilege.",
+        "A silent intermission card ('Later that afternoon', 5:15 PM) is composed over the driver's picture after the Met film; the switch to chapter 2 and the clock jump happen underneath it, so time visibly passes."
       ],
       "doNotClaim": [
         "a real reservation, ticket, coffee order, payment or charging session",
