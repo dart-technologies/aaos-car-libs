@@ -114,13 +114,18 @@ final class DemoMediaController implements AudioManager.OnAudioFocusChangeListen
 
     /** Plays the generated local video fixture in the supplied parked-only native view. */
     void playVideo(@NonNull VideoView video) {
+        playVideo(video, R.raw.demo_placeholder_video);
+    }
+
+    /** Plays a bundled video resource in the supplied parked-only native view. */
+    void playVideo(@NonNull VideoView video, int rawResource) {
         stop();
         activate();
         mVideo = video;
         // This controller owns focus for both modes, so the view must not take its own.
         video.setAudioFocusRequest(AudioManager.AUDIOFOCUS_NONE);
         video.setVideoURI(Uri.parse("android.resource://" + mContext.getPackageName()
-                + "/" + R.raw.demo_placeholder_video));
+                + "/" + rawResource));
         video.setOnPreparedListener(player -> {
             if (mVideo != video || !requestFocus()) {
                 return;

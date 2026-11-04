@@ -45,5 +45,22 @@
                 android:name="distractionOptimized"
                 android:value="true" />
         </activity>
+
+        <!--
+          The passenger display's surface, in its own task so starting it there never moves the
+          driver's. Exported because the system (or `am start - -display <id>`) places it: an app
+          cannot open a window on a private display it is not already on. It shows an idle card
+          unless a debuggable build asks it to play, and decides video by its own display's reading.
+        -->
+        <activity
+            android:name="art.dart.a2ui.carui.A2uiPassengerActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:taskAffinity="art.dart.a2ui.carui.passenger"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <meta-data
+                android:name="distractionOptimized"
+                android:value="true" />
+        </activity>
     </application>
 </manifest>

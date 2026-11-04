@@ -6,7 +6,16 @@
     <color name="a2ui_brand_badge_surface">#E6171717</color>
     <color name="a2ui_brand_accent">#FFC8A96A</color>
     <color name="a2ui_brand_on_surface">#FFFFF8EE</color>
+    <color name="a2ui_brand_on_surface_muted">#B3FFF8EE</color>
     <color name="a2ui_brand_video_stage">#FF000000</color>
+    <!-- Vehicle-state banner fills: one per state, so the state reads before the words do. -->
+    <color name="a2ui_brand_state_parked">#FF1C6B4E</color>
+    <color name="a2ui_brand_state_driving">#FF1F4F9A</color>
+    <color name="a2ui_brand_state_safe">#FF9A3412</color>
+    <color name="a2ui_brand_state_demo">#FF4B4C55</color>
+    <color name="a2ui_brand_strip_surface">#F21B1C20</color>
+    <color name="a2ui_brand_panel_surface">#FF17181B</color>
+    <color name="a2ui_brand_scrim">#B3000000</color>
 
     <string name="a2ui_brand_toolbar_title">Fifth House · NYC Concierge</string>
     <string name="a2ui_brand_pickup_heading">FIFTH HOUSE · PICKUP</string>
@@ -17,6 +26,34 @@
     <string name="a2ui_brand_media_title">Fifth House city note</string>
     <string name="a2ui_brand_media_artist">Fifth House · DEMO</string>
     <string name="a2ui_brand_video_caption">DEMO generated decoder fixture · not Big Buck Bunny media</string>
+
+    <!-- Vehicle-state banner. Consumer words; the exact mask stays in the diagnostics strip. -->
+    <string name="a2ui_state_parked">PARKED</string>
+    <string name="a2ui_state_driving">DRIVING</string>
+    <string name="a2ui_state_safe_mode">SAFE MODE</string>
+    <string name="a2ui_state_demo">DEMO</string>
+    <string name="a2ui_state_parked_detail">Full experience available</string>
+    <string name="a2ui_state_driving_detail">Simplified for the road</string>
+    <string name="a2ui_state_safe_waiting_detail">Waiting for the vehicle · essentials only</string>
+    <string name="a2ui_state_safe_offline_detail">Vehicle signal lost · essentials only</string>
+    <string name="a2ui_state_demo_open_detail">Simulated reading · no limits</string>
+    <string name="a2ui_state_demo_restricted_detail">Simulated reading · restricted</string>
+
+    <!-- Closing card. Bullets and footer are OEM-overridable. -->
+    <string name="a2ui_end_card_title">Why OEMs ship A2UI this way</string>
+    <string name="a2ui_end_card_bullet_1">The vehicle enforces the policy, and fails closed</string>
+    <string name="a2ui_end_card_bullet_2">Any model, with no keys in the car</string>
+    <string name="a2ui_end_card_bullet_3">Stock AAOS hosts</string>
+    <string name="a2ui_end_card_bullet_4">Auditable gates</string>
+    <string name="a2ui_end_card_footer">Built on stock AAOS · any model via the gateway</string>
+
+    <!-- Passenger display. -->
+    <string name="a2ui_passenger_label">Passenger display</string>
+    <string name="a2ui_passenger_idle">Ready when you are</string>
+    <string name="a2ui_passenger_video_credit">Big Buck Bunny © Blender Foundation · CC BY 3.0</string>
+    <string name="a2ui_passenger_held">Video is not available on this screen right now</string>
+    <!-- Shown whenever the passenger screen runs on a simulated zone reading (DEMO). -->
+    <string name="a2ui_passenger_demo_zone">Passenger zone · demo setting</string>
 
     <style name="A2uiBrandStatusBadge">
         <item name="android:background">@drawable/a2ui_status_badge</item>
@@ -34,5 +71,31 @@
         <item name="android:maxLines">1</item>
         <item name="android:textColor">@color/a2ui_brand_on_surface</item>
         <item name="android:textSize">@dimen/a2ui_brand_heading_text_size</item>
+    </style>
+
+    <!-- Type scale: display > title > body > caption, one family. -->
+    <style name="A2uiBrandDisplay">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:textColor">@color/a2ui_brand_on_surface</item>
+        <item name="android:textSize">@dimen/a2ui_type_display</item>
+    </style>
+
+    <style name="A2uiBrandTitle">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/a2ui_brand_on_surface</item>
+        <item name="android:textSize">@dimen/a2ui_type_title</item>
+    </style>
+
+    <style name="A2uiBrandBody">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/a2ui_brand_on_surface</item>
+        <item name="android:textSize">@dimen/a2ui_type_body</item>
+    </style>
+
+    <style name="A2uiBrandCaption">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/a2ui_brand_on_surface_muted</item>
+        <item name="android:textSize">@dimen/a2ui_type_caption</item>
     </style>
 </resources>

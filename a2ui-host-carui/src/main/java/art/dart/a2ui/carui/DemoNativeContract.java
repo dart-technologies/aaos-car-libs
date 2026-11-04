@@ -23,7 +23,9 @@ import java.util.List;
  */
 final class DemoNativeContract {
 
-    enum Kind { CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER }
+    enum Kind {
+        CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER, GALLERY
+    }
 
     static final class Spec {
         final Kind mKind;
@@ -139,6 +141,76 @@ final class DemoNativeContract {
         if ("modal_confirmation".equals(surfaceId) && "modal".equals(id)
                 && component.getType() == ComponentType.MODAL && component.getAction() == null) {
             return Spec.simple(Kind.MODAL, "Buy this album?");
+        }
+        return null;
+    }
+
+    /** Large imagery for the visual panel: a bundled drawable by name, with a bundled fallback. */
+    static final class PanelSpec {
+        @NonNull final String mDrawableName;
+        final int mFallbackDrawable;
+        @Nullable final String mCaption;
+
+        PanelSpec(@NonNull String drawableName, int fallbackDrawable, @Nullable String caption) {
+            mDrawableName = drawableName;
+            mFallbackDrawable = fallbackDrawable;
+            mCaption = caption;
+        }
+    }
+
+    /**
+     * Panel imagery for an exact corpus component, or null. Asked only of components that
+     * survived the prune, and drawn only while the reading allows IMAGE.
+     */
+    @Nullable
+    static PanelSpec panelFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return null;
+    }
+
+    /** A bundled video by raw-resource name, and the caption shown with it. */
+    static final class Media {
+        @NonNull final String mRawName;
+        @NonNull final String mCaption;
+
+        Media(@NonNull String rawName, @NonNull String caption) {
+            mRawName = rawName;
+            mCaption = caption;
+        }
+    }
+
+    /** The video an exact corpus VIDEO component plays, or null for the generated fixture. */
+    @Nullable
+    static Media videoFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return null;
+    }
+
+    /** The bundled artwork for an exact corpus Image inside a gallery, by drawable name. */
+    @Nullable
+    static String artworkFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return null;
+    }
+
+    /** The credit line under every slide of a corpus gallery, or null. */
+    @Nullable
+    static String artworkCredit(@NonNull String surfaceId) {
+        return null;
+    }
+
+    /**
+     * A host-owned noun for the "what changed" line, for exact corpus components only; null falls
+     * back to the type noun. Never agent text.
+     */
+    @Nullable
+    static String changeLabel(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        String id = component.getId();
+        if (id == null) return null;
+        if ("poi_discovery_order".equals(surfaceId)) {
+            if ("field".equals(id)) return "Search";
+            if ("places".equals(id)) return "Places";
+        }
+        if ("big_buck_bunny".equals(surfaceId)) {
+            if ("field".equals(id)) return "Search";
+            if ("results".equals(id)) return "Results";
         }
         return null;
     }

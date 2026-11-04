@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  The passenger display. A VideoView is added per playback and removed on teardown, as on the
+  driver's stage, so a reading that forbids video takes the surface away, not just its pixels.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/a2ui_brand_video_stage">
+
+    <FrameLayout
+        android:id="@+id/passenger_stage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="@color/a2ui_brand_header_surface"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="@dimen/a2ui_space_l"
+        android:paddingVertical="@dimen/a2ui_space_m">
+
+        <View
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginEnd="@dimen/a2ui_space_s"
+            android:background="@drawable/a2ui_dot"
+            android:backgroundTint="@color/a2ui_brand_accent"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/passenger_label"
+            style="@style/A2uiBrandSectionHeading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/a2ui_passenger_label"
+            android:textAllCaps="true" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/passenger_message"
+        style="@style/A2uiBrandTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:paddingHorizontal="@dimen/a2ui_space_l"
+        android:text="@string/a2ui_passenger_idle" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:paddingHorizontal="@dimen/a2ui_space_l"
+        android:paddingVertical="@dimen/a2ui_space_m">
+
+        <TextView
+            android:id="@+id/passenger_credit"
+            style="@style/A2uiBrandCaption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/passenger_zone"
+            style="@style/A2uiBrandCaption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/a2ui_passenger_demo_zone"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

@@ -47,6 +47,39 @@
       <item type="drawable" name="a2ui_ic_thinking"/>
       <item type="style" name="A2uiBrandStatusBadge"/>
       <item type="style" name="A2uiBrandSectionHeading"/>
+      <!-- Vehicle-state banner, change strip, panels, closing card and passenger display. -->
+      <item type="color" name="a2ui_brand_on_surface_muted"/>
+      <item type="color" name="a2ui_brand_state_parked"/>
+      <item type="color" name="a2ui_brand_state_driving"/>
+      <item type="color" name="a2ui_brand_state_safe"/>
+      <item type="color" name="a2ui_brand_state_demo"/>
+      <item type="color" name="a2ui_brand_strip_surface"/>
+      <item type="color" name="a2ui_brand_panel_surface"/>
+      <item type="color" name="a2ui_brand_scrim"/>
+      <item type="string" name="a2ui_state_parked"/>
+      <item type="string" name="a2ui_state_driving"/>
+      <item type="string" name="a2ui_state_safe_mode"/>
+      <item type="string" name="a2ui_state_demo"/>
+      <item type="string" name="a2ui_state_parked_detail"/>
+      <item type="string" name="a2ui_state_driving_detail"/>
+      <item type="string" name="a2ui_end_card_title"/>
+      <item type="string" name="a2ui_end_card_bullet_1"/>
+      <item type="string" name="a2ui_end_card_bullet_2"/>
+      <item type="string" name="a2ui_end_card_bullet_3"/>
+      <item type="string" name="a2ui_end_card_bullet_4"/>
+      <item type="string" name="a2ui_end_card_footer"/>
+      <item type="string" name="a2ui_passenger_label"/>
+      <item type="dimen" name="a2ui_banner_title_text_size"/>
+      <item type="dimen" name="a2ui_banner_detail_text_size"/>
+      <item type="dimen" name="a2ui_strip_text_size"/>
+      <item type="dimen" name="a2ui_card_radius"/>
+      <item type="drawable" name="a2ui_banner_background"/>
+      <item type="drawable" name="a2ui_strip_background"/>
+      <item type="drawable" name="a2ui_panel_background"/>
+      <item type="style" name="A2uiBrandDisplay"/>
+      <item type="style" name="A2uiBrandTitle"/>
+      <item type="style" name="A2uiBrandBody"/>
+      <item type="style" name="A2uiBrandCaption"/>
     </policy>
   </overlayable>
 </resources>

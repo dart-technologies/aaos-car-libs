@@ -145,6 +145,18 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private BroadcastReceiver mHandoffReceiver;
     @Nullable private BroadcastReceiver mCaseReceiver;
     @Nullable private BroadcastReceiver mAgentReceiver;
+    @Nullable private BroadcastReceiver mPassengerReceiver;
+    @Nullable private BroadcastReceiver mEndCardReceiver;
+    /** The closing card: static host text, parked only. */
+    private View mEndCard;
+    /** Re-renders when the passenger surface changes what it plays. */
+    private final PassengerDisplay.Listener mPassengerListener = this::onPassengerChanged;
+
+    private void onPassengerChanged() {
+        runOnMain(() -> {
+            if (mRestrictions != null) refresh();
+        });
+    }
 
     /** The live-agent lane, or null: it exists only where {@link #debugBusAllowed} holds. */
     @Nullable
@@ -490,6 +502,18 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     com.android.car.ui.toolbar.MenuItem mSearchItem;
     private UxrContentLimiterImpl mLimiter;
     private TextView mStatusBadge;
+    /** The vehicle-state banner: PARKED, DRIVING, DEMO or SAFE MODE. */
+    private View mBanner;
+    private TextView mBannerTitle;
+    private TextView mBannerDetail;
+    @Nullable private DriverState.Kind mBannerKind;
+    /** The transient "what changed" line, and what it diffs against. */
+    private TextView mChangeStrip;
+    private final Runnable mHideChangeStrip = this::hideChangeStrip;
+    private final Handler mStripHandler = new Handler(Looper.getMainLooper());
+    @Nullable private A2uiComponent mLastPrunedTree;
+    private int mLastVisibleRows = -1;
+    @Nullable private String mLastSurfaceKey;
     private TextView mSurfaceHeading;
     private TextView mStatus;
     private boolean mDiagnosticsExpanded;
@@ -506,6 +530,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @Nullable private ComponentType mDemoDialogRequiredType;
     private View mContentColumns;
     private FrameLayout mVideoStage;
+    /** Large imagery for one surviving component; see {@link #updateVisualPanel}. */
+    private View mVisualPanel;
+    private ImageView mVisualPanelImage;
+    private TextView mVisualPanelTitle;
+    private TextView mVisualPanelCaption;
+    /** Parked-only artwork, tracked like the video: its component must survive, VIDEO allowed. */
+    private ArtworkSlideshow mSlideshow;
+    @Nullable private OnBackInvokedCallback mGalleryBack;
     /** The parked-only full-bleed video, or null. Tracked like a dialog, with VIDEO required. */
     @Nullable private VideoView mVideoView;
     @Nullable private OnBackInvokedCallback mVideoBack;
@@ -519,6 +551,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     /** Bumped per placed order, so a confirmation can tell the card answered it. */
     private int mOrderSeq;
     private boolean mDroveWithOrder;
+    /** The journey the commitment fields above belong to. */
+    @Nullable private HostJourney mJourney;
     /** Parked again after driving with an order: the arrival moment. */
     @VisibleForTesting
     boolean mArrived;
@@ -611,14 +645,20 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mToolbar.registerSearchCompletedListener(mSearchCompletedListener);
 
         mStatusBadge = findViewById(R.id.status_badge);
+        mBanner = findViewById(R.id.drive_banner);
+        mBannerTitle = findViewById(R.id.drive_banner_title);
+        mBannerDetail = findViewById(R.id.drive_banner_detail);
+        mChangeStrip = findViewById(R.id.change_strip);
         mSurfaceHeading = findViewById(R.id.surface_heading);
         mStatus = findViewById(R.id.status);
         boolean mayShowDiagnostics = debugBusAllowed(getApplicationInfo(), Build.TYPE);
-        mStatusBadge.setClickable(mayShowDiagnostics);
-        mStatusBadge.setFocusable(mayShowDiagnostics);
-        if (mayShowDiagnostics) {
-            mStatusBadge.setOnClickListener(ignored -> setDiagnosticsExpanded(
-                    !mDiagnosticsExpanded));
+        for (View toggle : new View[]{mStatusBadge, mBanner}) {
+            toggle.setClickable(mayShowDiagnostics);
+            toggle.setFocusable(mayShowDiagnostics);
+            if (mayShowDiagnostics) {
+                toggle.setOnClickListener(ignored -> setDiagnosticsExpanded(
+                        !mDiagnosticsExpanded));
+            }
         }
         mEmptyState = findViewById(R.id.empty_state);
         mLimitedLabel = findViewById(R.id.limited_label);
@@ -631,6 +671,20 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mContentColumns = findViewById(R.id.content_columns);
         mVideoStage = findViewById(R.id.video_stage);
         findViewById(R.id.video_close).setOnClickListener(ignored -> dismissDemoContent());
+        mVisualPanel = findViewById(R.id.visual_panel);
+        mVisualPanelImage = findViewById(R.id.visual_panel_image);
+        mVisualPanelTitle = findViewById(R.id.visual_panel_title);
+        mVisualPanelCaption = findViewById(R.id.visual_panel_caption);
+        mVisualPanel.setClipToOutline(true);
+        mSlideshow = new ArtworkSlideshow(findViewById(R.id.gallery_stage),
+                findViewById(R.id.gallery_backdrop), findViewById(R.id.gallery_image),
+                findViewById(R.id.gallery_title), findViewById(R.id.gallery_caption),
+                findViewById(R.id.gallery_credit), findViewById(R.id.gallery_counter),
+                this::animationsEnabled);
+        findViewById(R.id.gallery_close).setOnClickListener(ignored -> dismissDemoContent());
+        mEndCard = findViewById(R.id.end_card);
+        bindEndCardBullets(findViewById(R.id.end_card_bullets));
+        PassengerDisplay.addListener(mPassengerListener);
 
         mRestrictions = CarUxRestrictionsUtil.getInstance(this);
         mLimiter = new UxrContentLimiterImpl(this, R.xml.uxr_config);
@@ -749,6 +803,15 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             unregisterReceiver(mAgentReceiver);
             mAgentReceiver = null;
         }
+        if (mPassengerReceiver != null) {
+            unregisterReceiver(mPassengerReceiver);
+            mPassengerReceiver = null;
+        }
+        if (mEndCardReceiver != null) {
+            unregisterReceiver(mEndCardReceiver);
+            mEndCardReceiver = null;
+        }
+        PassengerDisplay.removeListener(mPassengerListener);
         if (mAgent != null) {
             mShowingAgent = false;
             mAgent.close();
@@ -763,6 +826,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                 insets.getLeft(), insets.getTop(), insets.getRight(), insets.getBottom());
         findViewById(R.id.video_stage).setPadding(
                 insets.getLeft(), insets.getTop(), insets.getRight(), insets.getBottom());
+        // Overlays sit below the OEM toolbar, which car-ui-lib draws above the content.
+        View gallery = findViewById(R.id.gallery_stage);
+        gallery.setPadding(insets.getLeft(), insets.getTop(), insets.getRight(),
+                insets.getBottom());
+        View end = findViewById(R.id.end_card);
+        int side = Math.round(96 * getResources().getDisplayMetrics().density);
+        end.setPadding(insets.getLeft() + side, insets.getTop(), insets.getRight() + side,
+                insets.getBottom());
     }
 
     /**
@@ -969,6 +1040,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             mProviderItem.setEnabled(parked);
         }
         trackJourney(isAuthoritative(source), parked);
+        if (!parked && mEndCard != null && mEndCard.getVisibility() == View.VISIBLE) {
+            hideEndCard();
+        }
 
         // Agent surfaces take this exact path: same provenance gate, prune, limits and binder.
         Set<ComponentType> allowed = allowedFor(source, current);
@@ -988,6 +1062,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         List<CarUiListItem> rows = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         addHostRows(rows, keys, allowed, limits, parked);
+        int hostRowCount = rows.size();
         int surfaceBudget = surfaceRowBudget(current, rows.size());
         mRenderedRoot = A2uiVisibleTree.visibleRoot(pruned, surfaceBudget);
         configureNativeChrome(mRenderedRoot);
@@ -1029,6 +1104,19 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mLastReading = reading;
         applyRows(rows, keys, readingChanged);
 
+        // What changed, from the two trees the policy produced and the rows actually drawn. Only
+        // across a reading change on the same surface: a case switch is not a restriction change.
+        int visibleRows = hostRowCount + Math.min(rendered.size(), Math.max(0, surfaceBudget));
+        String surfaceKey = mRowEpoch + ":" + mSurfaceId;
+        if (readingChanged && surfaceKey.equals(mLastSurfaceKey) && mLastVisibleRows >= 0) {
+            showChangeStrip(ChangeSummary.between(mLastPrunedTree, pruned, mLastVisibleRows,
+                    visibleRows, audioContinues(allowed), this::changeLabel).text());
+        }
+        mLastPrunedTree = pruned;
+        mLastVisibleRows = visibleRows;
+        mLastSurfaceKey = surfaceKey;
+        updateBanner(source, current.getActiveRestrictions());
+
         // An empty surface after a prune is correct but looks like a crash unless it says so. On a
         // dedicated view, because the counts below are read from the adapters. Host cards do not
         // count.
@@ -1048,6 +1136,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (!comparison) {
             mSurfaceHeading.setText(themedSurfaceHeading(mSurfaceId));
         }
+        updateVisualPanel(pruned, allowed, parked, comparison);
         mLimitedLabel.post(() -> {
             String heading = comparison ? getString(R.string.limited_label)
                     : themedSurfaceHeading(mSurfaceId);
@@ -1071,12 +1160,15 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                 + (mShowingAgent && mAgent != null ? "  agent=" + mAgent.provider().wireName()
                         : "");
         mStatus.setText(status);
-        // The agent label leads; restriction provenance is never dropped from the badge.
-        String badge = (mAgentBadge == null ? "" : mAgentBadge + " · ")
-                + compactStatus(source, current.getActiveRestrictions());
-        mStatusBadge.setText(badge);
-        mStatusBadge.setContentDescription(badge + ". "
-                + (mDiagnosticsExpanded ? "Hide" : "Show") + " technical details.");
+        // The banner carries the vehicle state; this chip carries only the agent lane, and the
+        // exact provenance stays in its description and the diagnostics line.
+        String compact = compactStatus(source, current.getActiveRestrictions());
+        mStatusBadge.setText(mAgentBadge == null ? compact : mAgentBadge);
+        mStatusBadge.setVisibility(mAgentBadge != null || mDiagnosticsExpanded
+                ? View.VISIBLE : View.GONE);
+        mStatusBadge.setContentDescription((mAgentBadge == null ? "" : mAgentBadge + " · ")
+                + compact + ". " + (mDiagnosticsExpanded ? "Hide" : "Show")
+                + " technical details.");
         Log.i(TAG, status);
         mLimitedLabel.post(() -> Log.i(TAG, "enforced: limited=" + mLimited.getItemCount()
                 + " unlimited=" + mUnlimited.getItemCount() + " of " + mItems.size()));
@@ -1199,6 +1291,89 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         content.animate().alpha(1f).setDuration(CROSSFADE_MS).start();
     }
 
+    /** How long the "what changed" line stays up. */
+    @VisibleForTesting
+    static final long CHANGE_STRIP_MS = 2400;
+
+    /** The banner from the reading the prune used; a change of state pulses once. */
+    private void updateBanner(@NonNull CarUxRestrictionsUtil.RestrictionsSource source,
+            int active) {
+        DriverState.Kind kind = DriverState.kindFor(source, active);
+        CharSequence title = getText(DriverState.titleRes(kind));
+        CharSequence detail = getText(DriverState.detailRes(source, active));
+        mBannerTitle.setText(title);
+        mBannerDetail.setText(detail);
+        mBanner.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                getColor(DriverState.colorRes(kind))));
+        mBanner.setContentDescription(title + ". " + detail + ".");
+        if (mBannerKind != null && mBannerKind != kind && animationsEnabled()) {
+            mBanner.animate().cancel();
+            mBanner.setScaleX(1.06f);
+            mBanner.setScaleY(1.06f);
+            mBanner.animate().scaleX(1f).scaleY(1f).setDuration(260).start();
+        }
+        mBannerKind = kind;
+    }
+
+    /** Shows the line for {@link #CHANGE_STRIP_MS}. Non-interactive; instant at animator scale 0. */
+    private void showChangeStrip(@NonNull String text) {
+        mStripHandler.removeCallbacks(mHideChangeStrip);
+        mChangeStrip.animate().cancel();
+        mChangeStrip.setText(text);
+        mChangeStrip.setVisibility(View.VISIBLE);
+        if (animationsEnabled()) {
+            mChangeStrip.setAlpha(0f);
+            mChangeStrip.setTranslationY(-getResources().getDisplayMetrics().density * 12);
+            mChangeStrip.animate().alpha(1f).translationY(0f).setDuration(220).start();
+        } else {
+            mChangeStrip.setAlpha(1f);
+            mChangeStrip.setTranslationY(0f);
+        }
+        mStripHandler.postDelayed(mHideChangeStrip, CHANGE_STRIP_MS);
+        Log.i(TAG, "changed: " + text);
+    }
+
+    private void hideChangeStrip() {
+        mChangeStrip.animate().cancel();
+        if (animationsEnabled()) {
+            mChangeStrip.animate().alpha(0f).setDuration(300)
+                    .withEndAction(() -> mChangeStrip.setVisibility(View.GONE)).start();
+        } else {
+            mChangeStrip.setVisibility(View.GONE);
+        }
+    }
+
+    /** Audio is said to continue only if it is playing and the new reading still allows it. */
+    private boolean audioContinues(@NonNull Set<ComponentType> allowed) {
+        return allowed.contains(ComponentType.AUDIO_PLAYER) && mDemoMedia != null
+                && mDemoMedia.getMode() == DemoMediaController.Mode.AUDIO
+                && mDemoMedia.isPlaying();
+    }
+
+    /** Host-owned nouns for exact corpus components; agent surfaces fall back to type nouns. */
+    @Nullable
+    private String changeLabel(@NonNull A2uiComponent component) {
+        return mShowingAgent ? null : DemoNativeContract.changeLabel(mSurfaceId, component);
+    }
+
+    @VisibleForTesting
+    @NonNull
+    TextView changeStripForTesting() {
+        return mChangeStrip;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    TextView bannerTitleForTesting() {
+        return mBannerTitle;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    TextView bannerDetailForTesting() {
+        return mBannerDetail;
+    }
+
     /** Thinking, arrival and pickup, ahead of the surface's rows. Glanceable text, no actions. */
     private void addHostRows(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
             @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits,
@@ -1210,20 +1385,22 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                             providerLabel(mAgent.provider()))),
                     null, getDrawable(R.drawable.a2ui_ic_thinking)));
         }
-        if (mShowingAgent || !isFifthHouse(mSurfaceId)) {
+        HostJourney journey = currentJourney();
+        if (journey == null) {
             return;
         }
         if (mArrived && parked) {
             addRow(rows, keys, HostRows.ARRIVAL, HostRows.card(allowed, limits,
-                    pickupData("/arrival/title"),
-                    Collections.singletonList(pickupData("/arrival/detail")),
-                    getDrawable(R.drawable.demo_media_poster), null));
+                    journeyData(journey, journey.mArrivalTitle),
+                    Collections.singletonList(journeyData(journey, journey.mArrivalDetail)),
+                    getDrawable(journey.mArrivalArt), null));
         }
         if (mOrderPlaced) {
+            List<String> body = new ArrayList<>();
+            for (String pointer : journey.mConfirmBody) body.add(journeyData(journey, pointer));
             addRow(rows, keys, HostRows.ORDER, HostRows.card(allowed, limits,
-                    pickupData("/order/status"),
-                    Arrays.asList(pickupData("/order/eta"), pickupData("/order/pickup")),
-                    null, getDrawable(R.drawable.a2ui_ic_pickup)));
+                    journeyData(journey, journey.mConfirmTitle), body,
+                    null, getDrawable(journey.mConfirmGlyph)));
         }
     }
 
@@ -1235,10 +1412,16 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
     }
 
-    /** A string from the pickup trace's data model, or null. */
+    /** The host journey of the corpus surface on screen, or null (agent surfaces have none). */
     @Nullable
-    private String pickupData(@NonNull String pointer) {
-        A2uiSurface surface = mProcessor.getSurface("poi_discovery_order");
+    private HostJourney currentJourney() {
+        return mShowingAgent ? null : HostJourney.forSurface(mSurfaceId);
+    }
+
+    /** A string from the journey trace's data model, or null. */
+    @Nullable
+    private String journeyData(@NonNull HostJourney journey, @NonNull String pointer) {
+        A2uiSurface surface = mProcessor.getSurface(journey.mDataSurface);
         try {
             Object value = surface == null ? null : surface.readDataModel(pointer);
             return value instanceof String ? (String) value : null;
@@ -1252,9 +1435,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
      * counts as either; an untrusted one ends the arrival and is never "parked".
      */
     private void trackJourney(boolean authoritative, boolean parked) {
-        boolean fifthHouse = !mShowingAgent && isFifthHouse(mSurfaceId);
+        boolean journey = currentJourney() != null;
         if (authoritative && !parked) {
-            if (Boolean.TRUE.equals(mWasParked) && fifthHouse) {
+            if (Boolean.TRUE.equals(mWasParked) && journey) {
                 earcon(DemoAudio.FOCUS);
             }
             mDroveWithOrder |= mOrderPlaced;
@@ -1262,7 +1445,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         } else if (parked && mDroveWithOrder) {
             mDroveWithOrder = false;
             mArrived = true;
-            if (fifthHouse) {
+            if (journey) {
                 earcon(DemoAudio.ARRIVAL);
             }
         } else if (!authoritative) {
@@ -1277,10 +1460,6 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             @NonNull CarUxRestrictions restrictions) {
         return isAuthoritative(source) && restrictions.getActiveRestrictions()
                 == A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE;
-    }
-
-    private static boolean isFifthHouse(@NonNull String surfaceId) {
-        return "poi_discovery_order".equals(surfaceId) || "big_buck_bunny".equals(surfaceId);
     }
 
     /** A confirmed DEMO purchase becomes the pickup card; the card, not a toast, answers it. */
@@ -1298,7 +1477,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (DemoTrace.SURFACE_ID.equals(caseId)) {
             return;
         }
-        if (isFifthHouse(caseId) && (fromSurface == null || !isFifthHouse(fromSurface))) {
+        HostJourney entering = HostJourney.forSurface(caseId);
+        if (entering != null && (fromSurface == null
+                || HostJourney.forSurface(fromSurface) != entering)) {
             earcon(DemoAudio.WELCOME);
         }
         A2uiComponent root = currentProjection();
@@ -1648,6 +1829,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             case VIDEO:
                 showVideo(componentId);
                 break;
+            case GALLERY:
+                showGallery(componentId);
+                break;
             case ORDER:
                 placeOrder();
                 break;
@@ -1774,7 +1958,21 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                     OnBackInvokedDispatcher.PRIORITY_DEFAULT, mVideoBack);
         }
-        if (mDemoMedia != null) mDemoMedia.playVideo(video);
+        A2uiComponent component = findRendered(mRenderedRoot, componentId);
+        DemoNativeContract.Media media = component == null ? null
+                : DemoNativeContract.videoFor(mSurfaceId, component);
+        ((TextView) findViewById(R.id.video_caption)).setText(media == null
+                ? getString(R.string.a2ui_brand_video_caption) : media.mCaption);
+        if (mDemoMedia != null) {
+            mDemoMedia.playVideo(video, media == null ? R.raw.demo_placeholder_video
+                    : rawNamed(media.mRawName, R.raw.demo_placeholder_video));
+        }
+    }
+
+    /** A bundled raw resource by name (media other agents may not have landed yet), else fallback. */
+    int rawNamed(@NonNull String name, int fallback) {
+        int id = getResources().getIdentifier(name, "raw", getPackageName());
+        return id != 0 ? id : fallback;
     }
 
     /** Decoding stops first, then the view and its surface leave the window. Idempotent. */
@@ -1790,12 +1988,21 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(mVideoBack);
             mVideoBack = null;
         }
+        if (mSlideshow != null) mSlideshow.stop();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && mGalleryBack != null) {
+            getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(mGalleryBack);
+            mGalleryBack = null;
+        }
     }
 
     @Override
     @SuppressWarnings("deprecation") // the legacy path, still what an API 35 head unit calls
     public void onBackPressed() {
-        if (mVideoView != null) {
+        if (mEndCard != null && mEndCard.getVisibility() == View.VISIBLE) {
+            hideEndCard();
+            return;
+        }
+        if (mVideoView != null || (mSlideshow != null && mSlideshow.isShowing())) {
             dismissDemoContent();
             return;
         }
@@ -1813,6 +2020,181 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @Nullable
     VideoView videoViewForTesting() {
         return mVideoView;
+    }
+
+    /**
+     * Opens the slideshow for a gallery that survived the prune: its surviving Image children with
+     * a registered artwork, captioned from the pruned tree. Auto-advancing imagery is moving
+     * imagery, so it is tracked as needing VIDEO, like the parked video.
+     */
+    private void showGallery(@NonNull String componentId) {
+        A2uiComponent gallery = findRendered(mLastPrunedTree, componentId);
+        CarUxRestrictionsUtil.RestrictionsSnapshot snapshot =
+                mRestrictions.getRestrictionsSnapshot();
+        Set<ComponentType> allowed = allowedFor(snapshot.getSource(),
+                snapshot.getRestrictions());
+        if (gallery == null || !allowed.contains(ComponentType.VIDEO)
+                || !allowed.contains(ComponentType.IMAGE)) {
+            Toast.makeText(this, A2uiActionBinder.REFUSED_NOTE, Toast.LENGTH_LONG).show();
+            return;
+        }
+        String credit = DemoNativeContract.artworkCredit(mSurfaceId);
+        List<ArtworkSlideshow.Slide> slides = new ArrayList<>();
+        for (A2uiComponent child : gallery.getChildren()) {
+            String name = child.getType() == ComponentType.IMAGE
+                    ? DemoNativeContract.artworkFor(mSurfaceId, child) : null;
+            int art = name == null ? 0 : drawableNamed(name, 0);
+            if (art != 0 && child.getTitle() != null) {
+                slides.add(new ArtworkSlideshow.Slide(art, child.getTitle(), child.getSubtitle(),
+                        credit));
+            }
+        }
+        dismissDemoContent();
+        if (!mSlideshow.show(slides)) return;
+        mDemoDialogComponentId = componentId;
+        mDemoDialogRequiredType = ComponentType.VIDEO;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && mGalleryBack == null) {
+            mGalleryBack = this::dismissDemoContent;
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                    OnBackInvokedDispatcher.PRIORITY_DEFAULT, mGalleryBack);
+        }
+    }
+
+    /**
+     * The visual panel: the journey's arrival hero while parked after a drive, else the first
+     * surviving component with registered panel imagery. Nothing unless the reading allows IMAGE.
+     */
+    private void updateVisualPanel(@Nullable A2uiComponent pruned,
+            @NonNull Set<ComponentType> allowed, boolean parked, boolean comparison) {
+        int art = 0;
+        CharSequence title = null;
+        CharSequence caption = null;
+        if (!comparison && !mShowingAgent && allowed.contains(ComponentType.IMAGE)) {
+            HostJourney journey = currentJourney();
+            A2uiComponent hit = firstPanelComponent(pruned);
+            if (journey != null && journey.mHeroArt != 0 && mArrived && parked) {
+                art = journey.mHeroArt;
+                title = journeyData(journey, journey.mArrivalTitle);
+                caption = journeyData(journey, journey.mArrivalDetail);
+            } else if (hit != null) {
+                DemoNativeContract.PanelSpec spec = DemoNativeContract.panelFor(mSurfaceId, hit);
+                art = drawableNamed(spec.mDrawableName, spec.mFallbackDrawable);
+                title = hit.getTitle();
+                caption = spec.mCaption != null ? spec.mCaption : hit.getSubtitle();
+            }
+        }
+        boolean show = art != 0;
+        mVisualPanel.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (show) {
+            mVisualPanelImage.setImageResource(art);
+            mVisualPanelTitle.setText(title);
+            mVisualPanelCaption.setText(caption);
+            mVisualPanelCaption.setVisibility(caption == null ? View.GONE : View.VISIBLE);
+        } else {
+            mVisualPanelImage.setImageDrawable(null);
+        }
+    }
+
+    /** Pre-order, any depth: the first surviving component with registered panel imagery. */
+    @Nullable
+    private A2uiComponent firstPanelComponent(@Nullable A2uiComponent node) {
+        if (node == null) return null;
+        if (DemoNativeContract.panelFor(mSurfaceId, node) != null) return node;
+        for (A2uiComponent child : node.getChildren()) {
+            A2uiComponent found = firstPanelComponent(child);
+            if (found != null) return found;
+        }
+        return null;
+    }
+
+    /** A bundled drawable by name (assets other agents may not have landed yet), else fallback. */
+    private int drawableNamed(@NonNull String name, int fallback) {
+        int id = getResources().getIdentifier(name, "drawable", getPackageName());
+        return id != 0 ? id : fallback;
+    }
+
+    /**
+     * Hands a PASSENGER request to the passenger display's activity, which decides with its own
+     * display's reading. Without one, the request waits for it to start.
+     */
+    @VisibleForTesting
+    boolean onPassengerRequest(@Nullable String media) {
+        boolean taken = PassengerDisplay.request(media);
+        if (!taken && PassengerMedia.forName(media) != null) {
+            Log.i(TAG, "no passenger surface yet; the request plays when one starts: adb shell am"
+                    + " start --display <passenger display id> -n " + getPackageName() + "/"
+                    + A2uiPassengerActivity.class.getName());
+        }
+        return taken;
+    }
+
+    /** The closing card, only on a trusted parked reading; refresh() takes it away on any other. */
+    @VisibleForTesting
+    boolean showEndCard() {
+        CarUxRestrictionsUtil.RestrictionsSnapshot snapshot =
+                mRestrictions.getRestrictionsSnapshot();
+        if (!isParked(snapshot.getSource(), snapshot.getRestrictions())) {
+            Log.i(TAG, "end card refused: the vehicle is not parked");
+            return false;
+        }
+        dismissDemoContent();
+        mEndCard.animate().cancel();
+        mEndCard.setVisibility(View.VISIBLE);
+        if (animationsEnabled()) {
+            mEndCard.setAlpha(0f);
+            mEndCard.animate().alpha(1f).setDuration(400).start();
+        } else {
+            mEndCard.setAlpha(1f);
+        }
+        return true;
+    }
+
+    private void hideEndCard() {
+        if (mEndCard == null) return;
+        mEndCard.animate().cancel();
+        mEndCard.setVisibility(View.GONE);
+    }
+
+    private void bindEndCardBullets(@NonNull LinearLayout container) {
+        int[] bullets = {R.string.a2ui_end_card_bullet_1, R.string.a2ui_end_card_bullet_2,
+                R.string.a2ui_end_card_bullet_3, R.string.a2ui_end_card_bullet_4};
+        float density = getResources().getDisplayMetrics().density;
+        for (int bullet : bullets) {
+            LinearLayout line = new LinearLayout(this);
+            line.setOrientation(LinearLayout.HORIZONTAL);
+            line.setGravity(Gravity.CENTER_VERTICAL);
+            line.setPadding(0, Math.round(10 * density), 0, Math.round(10 * density));
+            View mark = new View(this);
+            mark.setBackgroundColor(getColor(R.color.a2ui_brand_accent));
+            LinearLayout.LayoutParams markSize = new LinearLayout.LayoutParams(
+                    Math.round(18 * density), Math.round(3 * density));
+            markSize.setMarginEnd(Math.round(20 * density));
+            line.addView(mark, markSize);
+            TextView text = new TextView(this);
+            text.setText(bullet);
+            text.setTextAppearance(R.style.A2uiBrandBody);
+            text.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 28);
+            line.addView(text);
+            container.addView(line);
+        }
+    }
+
+    @VisibleForTesting
+    @NonNull
+    View endCardForTesting() {
+        return mEndCard;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    ArtworkSlideshow slideshowForTesting() {
+        return mSlideshow;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    View visualPanelForTesting() {
+        return mVisualPanel;
     }
 
     private LinearLayout dialogBody() {
@@ -2017,6 +2399,27 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         registerReceiver(mCaseReceiver, new IntentFilter(DebugBroadcasts.ACTION_CASE),
                 Context.RECEIVER_EXPORTED);
 
+        //   adb shell am broadcast --user current -a art.dart.a2ui.carui.action.PASSENGER \
+        //       --es art.dart.a2ui.carui.extra.MEDIA video|stop
+        mPassengerReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                onPassengerRequest(intent.getStringExtra(DebugBroadcasts.EXTRA_MEDIA));
+            }
+        };
+        registerReceiver(mPassengerReceiver, new IntentFilter(DebugBroadcasts.ACTION_PASSENGER),
+                Context.RECEIVER_EXPORTED);
+
+        //   adb shell am broadcast --user current -a art.dart.a2ui.carui.action.END_CARD
+        mEndCardReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                showEndCard();
+            }
+        };
+        registerReceiver(mEndCardReceiver, new IntentFilter(DebugBroadcasts.ACTION_END_CARD),
+                Context.RECEIVER_EXPORTED);
+
         //   adb shell am broadcast -a art.dart.a2ui.carui.action.AGENT \
         //       --es art.dart.a2ui.carui.extra.PROVIDER muse --es art.dart.a2ui.carui.extra.ASK "find coffee"
         if (mAgent != null) {
@@ -2058,11 +2461,21 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void showSurface(@NonNull String surfaceId) {
         stopListening();
         dismissDemoContent();
+        hideEndCard();
         mPendingSearchQuery = null;
         if (mToolbar != null) {
             mToolbar.setSearchMode(SearchMode.DISABLED);
         }
         mSurfaceId = surfaceId;
+        // A commitment belongs to its journey: entering another one starts clean, while leaving
+        // to a surface with none keeps it for the way back.
+        HostJourney next = mShowingAgent ? null : HostJourney.forSurface(surfaceId);
+        if (next != null && next != mJourney) {
+            mOrderPlaced = false;
+            mDroveWithOrder = false;
+            mArrived = false;
+        }
+        if (next != null) mJourney = next;
         mActionBinder = binderFor(mRestrictions, this);
         mRowEpoch++;
         refresh();
