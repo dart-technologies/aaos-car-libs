@@ -64,7 +64,8 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Asset | Where | In git | Made by | Checked by |
 |---|---|---|---|---|
 | Route preview, poster, album art, 8 s MP4, 12 s M4A | `a2ui-host-carui/src/main/res/{drawable-nodpi,raw}/demo_*` | yes | `scripts/generate-a2ui-demo-assets.sh` (ffmpeg, libx264, AAC) | `check-demo-assets.py` (SHA-256) |
-| 19 TTS clips, 6 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits) | `check-nyc-demo.py --require-audio` |
+| 19 TTS clips, 6 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits); `--stt muse` transcribes with Muse Voice Transcribe (`META_API_KEY`) | `check-nyc-demo.py --require-audio` |
+| Met audio guide: 6 narrations with their cited sources | `a2ui-automotive/demo/fixtures/met/AUDIO_GUIDE.json` | yes | `scripts/muse-audio-guide.py` (Muse Spark, `web_search`, `META_API_KEY`, 7 calls) | — |
 | Claude corpus cache | `build/claude-corpus-cache/` | no | `scripts/claude-corpus-tester.py` | gateway schema on replay |
 
 Generated media hold no third-party content (the video is not Big Buck Bunny footage). ElevenLabs licensing
