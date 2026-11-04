@@ -56,7 +56,9 @@ import java.util.Set;
  * cannot place a window on a private display it is not already present on.
  *
  * <p>Video fills the display, centre-cropped and never letterboxed, preferring a bundled portrait
- * cut on a portrait display ({@link PassengerMedia#fileFor}); its credit sits over the picture.
+ * cut on a portrait display ({@link PassengerMedia#fileFor}). Its credit sits at the top over a
+ * soft gradient, clear of the captions films burn in along the bottom, and is left off a film
+ * that carries its own ({@link PassengerMedia#mOwnCredit}).
  */
 // metalava api-lint: ForbiddenSuperClass and ProtectedMember, suppressed as on A2uiCarUiActivity.
 @SuppressWarnings("ForbiddenSuperClass")
@@ -93,6 +95,12 @@ public class A2uiPassengerActivity extends Activity {
         @Override
         public void stopMedia() {
             stopPassengerMedia();
+        }
+
+        @Override
+        public int positionMs() {
+            VideoView video = mVideo;
+            return video != null && video.isPlaying() ? video.getCurrentPosition() : -1;
         }
     };
 
@@ -253,9 +261,11 @@ public class A2uiPassengerActivity extends Activity {
         mVideo = video;
         mMedia = media;
         mIdle.setVisibility(View.GONE);
-        // Credit only what is actually playing: the fallback fixture is not the named film.
-        mCredit.setText(file != null ? getString(media.mCredit) : null);
-        mCredit.setVisibility(file != null ? View.VISIBLE : View.GONE);
+        // Credit only what is actually playing: the fallback fixture is not the named film. A film
+        // that carries its own credit and captions gets none laid over them.
+        boolean credited = file != null && !media.mOwnCredit;
+        mCredit.setText(credited ? getString(media.mCredit) : null);
+        mCredit.setVisibility(credited ? View.VISIBLE : View.GONE);
         PassengerDisplay.report(media.mName, 0);
         mHandler.removeCallbacks(mTick);
         mHandler.postDelayed(mTick, TICK_MS);

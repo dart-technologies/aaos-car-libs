@@ -78,6 +78,87 @@ public class A2uiDriverMediaTest {
     @After
     public void tearDown() {
         shadowOf(Looper.getMainLooper()).idle();
+        PassengerDisplay.resetForTesting();
+    }
+
+    /** A passenger surface reporting {@code media} at a settable live position. */
+    private static PassengerDisplay.Surface passengerAt(int[] positionMs) {
+        return new PassengerDisplay.Surface() {
+            @Override
+            public void play(PassengerMedia media) {
+            }
+
+            @Override
+            public void stopMedia() {
+            }
+
+            @Override
+            public int positionMs() {
+                return positionMs[0];
+            }
+        };
+    }
+
+    @Test
+    public void theDriversCopyStartsWhereThePassengerIsOnlyInTheSameClip() {
+        // The passenger plays Big Buck Bunny (its portrait cut, a crop of this file) at 7.2 s.
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.VIDEO, 7200, "bbb_passenger",
+                19300)).isEqualTo(7200);
+        // Into one loop, as both loop; and as it is while the length is unknown.
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.VIDEO, 19800, "bbb_passenger",
+                19300)).isEqualTo(500);
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.VIDEO, 7200, "bbb_passenger",
+                0)).isEqualTo(7200);
+        // Not playing, another clip, stills or an unknown name: from the top.
+        assertThat(PassengerDisplay.startPositionMs(null, 7200, "bbb_passenger", 19300))
+                .isEqualTo(0);
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.VIDEO, -1, "bbb_passenger",
+                19300)).isEqualTo(0);
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.ARTWORK, 7200,
+                "bbb_passenger", 19300)).isEqualTo(0);
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.SLIDESHOW, 7200, "", 19300))
+                .isEqualTo(0);
+        assertThat(PassengerDisplay.startPositionMs("nope", 7200, "bbb_passenger", 19300))
+                .isEqualTo(0);
+    }
+
+    @Test
+    public void thePassengersPositionIsReadLiveFromItsSurface() {
+        int[] position = {4100};
+        PassengerDisplay.Surface surface = passengerAt(position);
+        assertThat(PassengerDisplay.positionMs()).isEqualTo(-1);
+        PassengerDisplay.attach(surface);
+        // Attached but playing nothing: no position.
+        assertThat(PassengerDisplay.positionMs()).isEqualTo(-1);
+        PassengerDisplay.report(PassengerMedia.VIDEO, 0);
+        assertThat(PassengerDisplay.positionMs()).isEqualTo(4100);
+        position[0] = 4600;
+        assertThat(PassengerDisplay.positionMs()).isEqualTo(4600);
+        PassengerDisplay.detach(surface);
+        assertThat(PassengerDisplay.positionMs()).isEqualTo(-1);
+    }
+
+    @Test
+    public void thePlayerJoinsThePassengersBunnyWhereItIsAndElseStartsFromTheTop() {
+        A2uiCarUiActivity activity = startedDriving().get();
+        atTheCharger(activity);
+        order(activity);
+        int[] position = {7200};
+        PassengerDisplay.Surface surface = passengerAt(position);
+        PassengerDisplay.attach(surface);
+        PassengerDisplay.report(PassengerMedia.VIDEO, 0);
+
+        tap(activity, BBB);
+
+        // Asked when the file is ready, so it reads where the passenger is by then.
+        DemoMediaController.StartAt startAt = activity.mDemoMedia.startAtForTesting();
+        assertThat(startAt).isNotNull();
+        position[0] = 7700;
+        assertThat(startAt.positionMs(19300)).isEqualTo(7700);
+        // The passenger stops: from the top.
+        PassengerDisplay.report(null, -1);
+        assertThat(startAt.positionMs(19300)).isEqualTo(0);
+        PassengerDisplay.detach(surface);
     }
 
     @Test
@@ -139,6 +220,9 @@ public class A2uiDriverMediaTest {
         // Opening is navigation: no confirmation, straight to the player.
         assertThat(ShadowAlertDialog.getLatestAlertDialog()).isNull();
         assertThat(activity.videoViewForTesting()).isInstanceOf(CoverVideoView.class);
+        // No captions burned in: centre-cropped.
+        assertThat(((android.widget.FrameLayout.LayoutParams) activity.videoViewForTesting()
+                .getLayoutParams()).gravity).isEqualTo(android.view.Gravity.CENTER);
         assertThat(activity.videoStageForTesting().getVisibility()).isEqualTo(View.VISIBLE);
         // The player's own title and credit; the fixture caption is not shown.
         View overlay = activity.videoTitleOverlayForTesting();

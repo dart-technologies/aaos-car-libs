@@ -2795,11 +2795,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             return;
         }
         dismissDemoContent();
-        // The player fills the stage edge to edge; other videos keep their whole frame.
-        VideoView video = player ? new CoverVideoView(this) : new VideoView(this);
+        // Players and films fill the stage edge to edge, scaled to cover; other videos keep their
+        // whole frame. A film with captions burned in along its bottom is cropped from the top.
+        boolean fill = media != null && media.mFill;
+        VideoView video = fill ? new CoverVideoView(this) : new VideoView(this);
         mVideoStage.addView(video, 0, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
-                Gravity.CENTER));
+                fill && media.mBottomCaptions ? Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL
+                        : Gravity.CENTER));
         mVideoView = video;
         mVideoParkedOnly = player;
         mDemoDialogComponentId = componentId;
@@ -2819,8 +2822,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         boolean named = media != null && rawNamed(media.mRawName, 0) != 0;
         bindVideoTitle(named ? media.mTitle : null, named ? media.mCredit : null);
         if (mDemoMedia != null) {
+            // The player joins the passenger where it is when both play the same clip, asked
+            // when the file is ready; otherwise it starts from the top.
+            DemoMediaController.StartAt startAt = named && player
+                    ? duration -> PassengerDisplay.startPositionMs(PassengerDisplay.playing(),
+                            PassengerDisplay.positionMs(), media.mRawName, duration)
+                    : null;
             mDemoMedia.playVideo(video, media == null ? R.raw.demo_placeholder_video
-                    : rawNamed(media.mRawName, R.raw.demo_placeholder_video));
+                    : rawNamed(media.mRawName, R.raw.demo_placeholder_video), startAt);
         }
     }
 

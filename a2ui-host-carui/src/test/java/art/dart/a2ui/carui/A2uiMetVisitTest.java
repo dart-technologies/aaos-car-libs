@@ -347,6 +347,16 @@ public class A2uiMetVisitTest {
         gallery.getOnClickListener().onClick(gallery);
         shadowOf(Looper.getMainLooper()).idle();
         assertThat(activity.videoViewForTesting()).isNotNull();
+        // Edge to edge, never letterboxed: covered, and cropped from the top so the captions and
+        // credit the film burns in along its bottom stay in view.
+        assertThat(activity.videoViewForTesting()).isInstanceOf(CoverVideoView.class);
+        assertThat(((android.widget.FrameLayout.LayoutParams) activity.videoViewForTesting()
+                .getLayoutParams()).gravity)
+                .isEqualTo(android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
+        // No host title or caption over the film's own.
+        assertThat(activity.videoTitleOverlayForTesting().getVisibility()).isEqualTo(View.GONE);
+        assertThat(activity.findViewById(R.id.video_caption).getVisibility())
+                .isEqualTo(View.GONE);
 
         drive(activity, DRIVE);
         assertThat(activity.videoViewForTesting()).isNull();

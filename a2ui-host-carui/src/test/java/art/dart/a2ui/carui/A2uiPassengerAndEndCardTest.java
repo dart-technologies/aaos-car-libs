@@ -176,10 +176,13 @@ public class A2uiPassengerAndEndCardTest {
         assertThat(params.height).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
         assertThat(params.gravity).isEqualTo(android.view.Gravity.CENTER);
         assertThat(passenger.idleForTesting().getVisibility()).isEqualTo(View.GONE);
-        // The bundled clip is credited, over the picture.
+        // The bundled clip is credited over the picture, along the top, clear of any captions
+        // a film burns in along its bottom.
         assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.VISIBLE);
         assertThat(passenger.creditForTesting().getText().toString())
                 .isEqualTo(mApp.getString(R.string.a2ui_passenger_video_credit));
+        assertThat(((FrameLayout.LayoutParams) passenger.creditForTesting().getLayoutParams())
+                .gravity).isEqualTo(android.view.Gravity.TOP);
         // No header and no demo wording anywhere on the passenger's screen.
         for (String text : visibleTexts(passenger.getWindow().getDecorView())) {
             assertThat(text.toLowerCase(java.util.Locale.US)).doesNotContain("demo");
@@ -216,6 +219,25 @@ public class A2uiPassengerAndEndCardTest {
         video.measure(width, height);
         assertThat(video.getMeasuredWidth()).isAtLeast(528);
         assertThat(video.getMeasuredHeight()).isAtLeast(792);
+    }
+
+    @Test
+    public void theMetFilmCarriesItsOwnCreditSoNoneIsLaidOverItsCaptions() {
+        mApp.getApplicationInfo().flags |= ApplicationInfo.FLAG_DEBUGGABLE;
+        A2uiCarUiActivity driver = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        A2uiPassengerActivity passenger = Robolectric.buildActivity(
+                A2uiPassengerActivity.class).create().start().get();
+
+        driver.onPassengerRequest(PassengerMedia.ARTWORK);
+
+        // The film plays, its burned-in caption and Met credit alone at the bottom.
+        assertThat(passenger.videoForTesting()).isNotNull();
+        assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.GONE);
+        assertThat(PassengerMedia.forName(PassengerMedia.ARTWORK).mOwnCredit).isTrue();
+        // Big Buck Bunny has none of its own: credited, at the top.
+        driver.onPassengerRequest(PassengerMedia.VIDEO);
+        assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(PassengerMedia.forName(PassengerMedia.VIDEO).mOwnCredit).isFalse();
     }
 
     @Test

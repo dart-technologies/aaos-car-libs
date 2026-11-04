@@ -46,15 +46,21 @@ final class PassengerMedia {
     final boolean mCabinAudio;
     /** Stills shown as a slideshow rather than a video file. */
     final boolean mStills;
+    /**
+     * Whether the file carries its own credit and captions burned in: the host lays no credit of
+     * its own over it, so the two never collide.
+     */
+    final boolean mOwnCredit;
 
     private PassengerMedia(@NonNull String name, @NonNull String rawName, @StringRes int credit,
-            int segments, boolean cabinAudio, boolean stills) {
+            int segments, boolean cabinAudio, boolean stills, boolean ownCredit) {
         mName = name;
         mRawName = rawName;
         mCredit = credit;
         mSegments = segments;
         mCabinAudio = cabinAudio;
         mStills = stills;
+        mOwnCredit = ownCredit;
     }
 
     /**
@@ -74,17 +80,18 @@ final class PassengerMedia {
     static PassengerMedia forName(@Nullable String name) {
         if (VIDEO.equals(name)) {
             return new PassengerMedia(VIDEO, "bbb_passenger", R.string.a2ui_passenger_video_credit,
-                    1, false, false);
+                    1, false, false, false);
         }
         int works = MetArtworks.WORKS.size();
         if (ARTWORK.equals(name)) {
-            // The audio guide is the film's soundtrack: it belongs in the cabin.
+            // The audio guide is the film's soundtrack: it belongs in the cabin. Both cuts burn
+            // in each work's caption and the Met's credit, so the host lays none over them.
             return new PassengerMedia(ARTWORK, "met_artwork_film", R.string.a2ui_met_film_credit,
-                    works, true, false);
+                    works, true, false, true);
         }
         if (SLIDESHOW.equals(name)) {
             return new PassengerMedia(SLIDESHOW, "", R.string.a2ui_met_slides_credit, works, false,
-                    true);
+                    true, false);
         }
         return null;
     }
