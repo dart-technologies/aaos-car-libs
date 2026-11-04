@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "title": "Big Buck Bunny (Sunflower version)",
+  "author": "Blender Foundation",
+  "attribution": "Big Buck Bunny (c) copyright 2008, Blender Foundation / www.bigbuckbunny.org",
+  "license": "CC BY 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "sourceUrl": "https://download.blender.org/demo/movies/BBB/bbb_sunflower_1080p_30fps_normal.mp4.zip",
+  "sourcePage": "https://peach.blender.org/",
+  "fetchedAt": "2026-11-04T15:59:03Z",
+  "sourceChoice": "Smallest .mp4 on download.blender.org at 720p or above; the 320x180 .mp4 is too small for a passenger display.",
+  "source": {
+    "zipSha256": "e320fef389ec749117d0c1583945039266a40f25483881c2ff0d33207e62b362",
+    "zipBytes": 275524128,
+    "file": "bbb_sunflower_1080p_30fps_normal.mp4",
+    "sha256": "ae51005850b0ff757fe60c3dd7a12d754d3cd2397d87d939b55235e457f97658",
+    "bytes": 276134947,
+    "video": "H.264 1920x1080 30 fps",
+    "audio": "MP3 stereo 48 kHz (AC-3 5.1 track not used)"
+  },
+  "segment": {
+    "startSeconds": 65.1,
+    "durationSeconds": 19.3,
+    "content": "Bunny's close-up smile, the flowers, the stroll and the butterfly; cut on scene boundaries, no peril."
+  },
+  "changes": "Trimmed to 19.3 s, scaled to 1280x720, 0.25 s fade-in and 0.4 s fade-out, audio faded and re-encoded to AAC.",
+  "output": {
+    "path": "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4",
+    "sha256": "8ca6121326adfc437ee9eb902344bd27e023f338f69202e4605d10844f6f4609",
+    "bytes": 3596833,
+    "durationSeconds": 19.3,
+    "video": "H.264 High@4.0 1280x720 30 fps, 1.35 Mbit/s two-pass",
+    "audio": "AAC-LC 48 kHz stereo 128 kbit/s"
+  },
+  "tool": "ffmpeg 8.1 (libx264, native aac)",
+  "command": [
+    "ffmpeg -ss 65.1 -t 19.3 -i bbb_sunflower_1080p_30fps_normal.mp4 -map 0:v:0 -map 0:a:0",
+    "-vf scale=1280:720:flags=lanczos,fade=t=in:st=0:d=0.25,fade=t=out:st=18.9:d=0.4,format=yuv420p",
+    "-c:v libx264 -preset slow -tune animation -profile:v high -level:v 4.0 -b:v 1350k -maxrate 2000k",
+    "-bufsize 4000k -r 30 -g 60 -pass 1|2 (pass 2 adds:)",
+    "-af afade=t=in:st=0:d=0.3,afade=t=out:st=18.7:d=0.6 -c:a aac -b:a 128k -ar 48000 -ac 2",
+    "-map_metadata -1 -fflags +bitexact -flags:v +bitexact -flags:a +bitexact -movflags +faststart"
+  ]
+}

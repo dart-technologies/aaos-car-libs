@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Copyright (C) 2026 Dart Technologies
 # Licensed under the Apache License, Version 2.0 — see scripts/check-build-coverage.py.
-"""Static acceptance checks for the modular NYC 60–90 second demo fixtures."""
+"""Static acceptance checks for the modular NYC 60–180 second demo fixtures."""
 
 from __future__ import annotations
 
@@ -13,15 +13,33 @@ import pathlib
 import re
 import subprocess
 import sys
+import urllib.parse
+from datetime import date, datetime, timedelta
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "a2ui-automotive/demo/nyc-scenarios-v1.json"
 AUDIO = ROOT / "a2ui-automotive/demo/audio/elevenlabs"
 CORPUS = ROOT / "a2ui-model/src/main/java/art/dart/a2ui/demo/UseCaseCorpus.java"
-CONTEXT = ROOT / "a2ui-automotive/demo/context/nyc-2026-09-07.json"
+CONTEXTS = ROOT / "a2ui-automotive/demo/context"
+CARDS = ROOT / "a2ui-automotive/demo/cards"
 PROFILES = ROOT / "a2ui-automotive/demo/agent-profiles-v1.json"
 RUNNER = ROOT / "scripts/run-nyc-demo.py"
+# The three original stories and their corpus cases; more may be added beside them.
+CANONICAL = {"nyc_poi_order": "poi_discovery_order", "nyc_curated_video": "big_buck_bunny",
+             "nyc_concierge": "poi_discovery_order", "nyc_met": "met_visit"}
+FILM = ROOT / "a2ui-automotive/demo/fixtures/met/FILM.json"
+# The names other agents implement against; changing one here means changing it there.
+MET_SEQUENCE = ["met_visit", "ev_charge_coffee"]
+MET_UTTERANCES = {"take us to the met this afternoon", "reserve entry for two at three",
+                  "what should we see first", "take me to the first one",
+                  "order my usual coffee"}
+MET_ASK = "Take us to The Met this afternoon"
+ACTIONS = {"speak", "tapText", "carState", "keyEvent", "selectCase", "agent", "passenger",
+           "endCard", "vehicleSignal"}
+PASSENGER_MEDIA = {"video", "artwork", "stop"}
+VEHICLE_ROUTES = {"vhal-set", "vhal-inject", "broadcast"}
+WEATHER_HOSTS = {"forecast.weather.gov", "api.weather.gov"}
 
 
 def normalized(text: str) -> str:
@@ -31,6 +49,114 @@ def normalized(text: str) -> str:
 def fail(message: str) -> None:
     print(f"FAIL: {message}", file=sys.stderr)
     raise SystemExit(1)
+
+
+def timestamp(value: object, what: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(str(value))
+    except ValueError:
+        fail(f"{what} is not an ISO-8601 time")
+    if parsed.tzinfo is None:
+        fail(f"{what} has no UTC offset")
+    return parsed
+
+
+def check_context(scenario_id: str, relative: str) -> None:
+    """Every scenario's context is a dated, curated, non-device snapshot with sources."""
+    path = (ROOT / relative).resolve()
+    if path.parent != CONTEXTS.resolve() or not path.is_file():
+        fail(f"{scenario_id} context {relative!r} is not a file in {CONTEXTS.relative_to(ROOT)}")
+    context = json.loads(path.read_text(encoding="utf-8"))
+    name = path.name
+    if context.get("schemaVersion") != 1 or context.get("mode") != "curated_snapshot":
+        fail(f"{name} must stay a clearly labelled curated snapshot")
+    origin = context.get("origin", {})
+    if origin.get("isDeviceLocation") is not False or origin.get("precision") not in {
+            "neighborhood", "landmark", "city"}:
+        fail(f"{name} origin must be a coarse, non-device location")
+    captured = timestamp(context.get("capturedAt"), f"{name} capturedAt")
+    weather = context.get("weather", {})
+    source = urllib.parse.urlparse(str(weather.get("source", "")))
+    if source.scheme != "https" or source.hostname not in WEATHER_HOSTS:
+        fail(f"{name} weather must cite a weather.gov forecast")
+    timestamp(weather.get("forecastIssuedAt"), f"{name} forecastIssuedAt")
+    if not weather.get("dayForecast"):
+        fail(f"{name} has no forecast text")
+    commerce = context.get("commerce", {})
+    if commerce.get("merchantStatus") not in {"fictional_demo", "none"}:
+        fail(f"{name} merchant is neither explicitly fictional nor absent")
+    if commerce.get("paymentStatus") != "not_connected":
+        fail(f"{name} must not connect a payment")
+    # A story set on a later day uses that day's forecast period and says which day it is.
+    day = captured.date()
+    if weather.get("forecastFor") is not None:
+        try:
+            day = date.fromisoformat(str(weather["forecastFor"]))
+        except ValueError:
+            fail(f"{name} forecastFor is not an ISO date")
+        if not captured.date() <= day <= captured.date() + timedelta(days=6):
+            fail(f"{name} forecastFor is outside the forecast issued at capture")
+    freshness = context.get("freshness", {})
+    label = str(freshness.get("displayLabel", ""))
+    if not label.startswith("CURATED SNAPSHOT") or f"{day:%b} {day.day}".upper() not in label:
+        fail(f"{name} display label must say CURATED SNAPSHOT and the day it describes")
+    if timestamp(freshness.get("liveRefreshRequiredAfter"),
+                 f"{name} liveRefreshRequiredAfter") <= captured or not freshness.get("policy"):
+        fail(f"{name} needs a refresh deadline after capture and a relabelling policy")
+
+
+def driving_at(scenario: dict, at_ms: int) -> bool:
+    """Whether the scripted car state at at_ms is drive (scenarios start parked)."""
+    state = "park"
+    for action in scenario["actions"]:
+        if action.get("type") == "carState" and int(action["atMs"]) <= at_ms:
+            state = action["state"]
+    return state == "drive"
+
+
+def check_met_story(scenario: dict) -> None:
+    """The nyc_met contract shared with the corpus, Host B and audio-guide work."""
+    if scenario.get("corpusSequence") != MET_SEQUENCE:
+        fail(f"nyc_met corpus sequence must be {MET_SEQUENCE}")
+    clips = scenario["clips"]
+    said = {clip["expectedTranscript"] for clip in clips if clip["role"] == "user_utterance"}
+    if said != MET_UTTERANCES:
+        fail(f"nyc_met guest lines drifted: {sorted(said ^ MET_UTTERANCES)}")
+    if any("tomorrow" in clip["text"].casefold() for clip in clips):
+        fail("nyc_met is set on Thursday itself; no line may say 'tomorrow'")
+    jargon = re.compile(r"\b(fixture|emulator|car[ _]service|adb|broadcast|vhal|a2ui)\b", re.I)
+    for clip in clips:
+        if jargon.search(clip["text"]):
+            fail(f"{clip['id']} speaks engineering jargon: {jargon.search(clip['text'])[0]!r}")
+    actions = scenario["actions"]
+    asks = [a for a in actions if a["type"] == "agent"]
+    if [(a.get("provider"), a.get("ask")) for a in asks] != [("muse", MET_ASK)]:
+        fail(f"nyc_met must make exactly one Muse request: {MET_ASK!r}")
+    artwork = [int(a["atMs"]) for a in actions
+               if a["type"] == "passenger" and a.get("media") == "artwork"]
+    if len(artwork) != 1 or not driving_at(scenario, artwork[0]):
+        fail("nyc_met starts the passenger artwork film once, while driving")
+    works = json.loads(FILM.read_text(encoding="utf-8"))["works"]
+    guide = sorted((c for c in clips if c.get("lane") == "audio_guide"), key=lambda c: c["id"])
+    if [c["id"] for c in guide] != [f"met_guide_{n:02d}" for n in range(1, len(works) + 1)]:
+        fail("nyc_met needs one audio-guide clip per film work, met_guide_01..")
+    for clip, work in zip(guide, works):
+        offset = int(clip["atMs"]) - artwork[0]
+        if clip.get("objectID") != work["objectID"] or not (
+                work["startMs"] <= offset <= work["startMs"] + 1500):
+            fail(f"{clip['id']} is not timed to {work['title']} in the film")
+        if not driving_at(scenario, int(clip["atMs"])):
+            fail(f"{clip['id']} plays outside the drive")
+    signals = [int(a["atMs"]) for a in actions if a["type"] == "vehicleSignal"]
+    if not signals or not all(driving_at(scenario, at) for at in signals):
+        fail("nyc_met lowers the battery while driving")
+    ends = [int(a["atMs"]) for a in actions if a["type"] == "endCard"]
+    if len(ends) != 1 or driving_at(scenario, ends[0]):
+        fail("nyc_met shows its end card once, parked")
+
+
+def corpus_ids() -> set[str]:
+    return set(re.findall(r'new Builder\(\s*"([a-z_]+)"', CORPUS.read_text(encoding="utf-8")))
 
 
 def audio_duration(path: pathlib.Path) -> float:
@@ -85,19 +211,20 @@ def main() -> int:
     if None in effects or len(effects) != len(sfx.get("effects", [])):
         fail("sound-effect ids must be unique and non-empty")
     scenarios = data.get("scenarios", [])
-    if {s.get("id") for s in scenarios} != {
-            "nyc_poi_order", "nyc_curated_video", "nyc_concierge"}:
-        fail("the three canonical scenario ids are not exact")
-    if {s.get("corpusCase") for s in scenarios} != {
-            "poi_discovery_order", "big_buck_bunny"}:
-        fail("scenario-to-corpus mapping drifted")
-
-    context = json.loads(CONTEXT.read_text(encoding="utf-8"))
-    if context.get("mode") != "curated_snapshot" or context.get("origin", {}).get(
-            "isDeviceLocation") is not False:
-        fail("context fixture must stay a clearly labelled non-device snapshot")
-    if context.get("commerce", {}).get("merchantStatus") != "fictional_demo":
-        fail("merchant fixture is not explicitly fictional")
+    ids = [s.get("id") for s in scenarios]
+    if len(set(ids)) != len(ids) or not all(re.fullmatch(r"[a-z][a-z0-9_]*", str(i))
+                                            for i in ids):
+        fail("scenario ids must be unique snake_case")
+    by_id = {s["id"]: s for s in scenarios}
+    for scenario_id, case in CANONICAL.items():
+        if by_id.get(scenario_id, {}).get("corpusCase") != case:
+            fail(f"canonical scenario {scenario_id} is missing or no longer maps to {case}")
+    declared = corpus_ids()
+    for scenario in scenarios:
+        for case in [scenario.get("corpusCase"), *scenario.get("corpusSequence", [])]:
+            if case not in declared:
+                fail(f"{scenario['id']} names corpus case {case!r}, which UseCaseCorpus does "
+                     "not declare")
     profiles = json.loads(PROFILES.read_text(encoding="utf-8"))
     if profiles.get("selectors") != ["claude", "chatgpt", "gemini", "grok", "muse"]:
         fail("provider swap selectors drifted")
@@ -116,17 +243,27 @@ def main() -> int:
     clip_ids: set[str] = set()
     clip_texts: dict[str, str] = {}
     tts_chars = 0
+    placeholders = 0
     for scenario in scenarios:
         duration = int(scenario.get("durationSeconds", 0))
-        if not 60 <= duration <= 90:
-            fail(f"{scenario['id']} is outside the 60–90 second target")
+        if not 60 <= duration <= 180:
+            fail(f"{scenario['id']} is outside the 60–180 second target")
         if not scenario.get("doNotClaim"):
             fail(f"{scenario['id']} has no explicit claim boundary")
         if not scenario.get("parameterRationale"):
             fail(f"{scenario['id']} has no parameter rationale")
-        context_path = ROOT / scenario.get("contextSnapshot", "")
-        if context_path != CONTEXT or not context_path.exists():
-            fail(f"{scenario['id']} does not use the accepted context snapshot")
+        check_context(scenario["id"], scenario.get("contextSnapshot", ""))
+        layout = scenario.get("recording", {}).get("layout", "single")
+        if layout not in {"single", "dual"}:
+            fail(f"{scenario['id']} has an unknown recording layout")
+        card = scenario.get("titleCard")
+        if card is not None:
+            image = (ROOT / str(card.get("image", ""))).resolve()
+            if image.parent != CARDS.resolve() or not image.is_file() or \
+                    image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+                fail(f"{scenario['id']} title card is not a PNG in {CARDS.relative_to(ROOT)}")
+            if not 2 <= float(card.get("seconds", 0)) <= 3:
+                fail(f"{scenario['id']} title card must hold for 2–3 s")
         last_action = -1
         clips = {clip["id"]: clip for clip in scenario.get("clips", [])}
         for clip in clips.values():
@@ -139,6 +276,7 @@ def main() -> int:
             if not 0 <= int(clip.get("atMs", -1)) < duration * 1000:
                 fail(f"clip {clip['id']} is outside its scenario timeline")
             tts_chars += len(clip.get("text", ""))
+            placeholders += clip.get("placeholder") is True
             if clip["role"] == "user_utterance" and not clip.get("expectedTranscript"):
                 fail(f"utterance {clip['id']} has no expected transcript")
         for action in scenario.get("actions", []):
@@ -146,18 +284,41 @@ def main() -> int:
             if at < last_action or at >= duration * 1000:
                 fail(f"{scenario['id']} actions are unordered or outside the timeline")
             last_action = at
-            if action.get("type") not in {
-                    "speak", "tapText", "carState", "keyEvent", "selectCase"}:
+            if action.get("type") not in ACTIONS:
                 fail(f"unsupported action {action.get('type')}")
+            if action.get("type") == "agent" and (
+                    action.get("provider") not in profiles["selectors"]
+                    or not str(action.get("ask", "")).strip()):
+                fail(f"agent action needs a known provider and a request: {action}")
+            if action.get("type") == "passenger" and (
+                    layout != "dual" or action.get("media") not in PASSENGER_MEDIA):
+                fail(f"passenger action needs a dual-display recording and known media: {action}")
+            if action.get("type") == "vehicleSignal" and (
+                    action.get("signal") != "battery"
+                    or not 0 <= float(action.get("percent", -1)) <= 100
+                    or not action.get("via") or not set(action["via"]) <= VEHICLE_ROUTES):
+                fail(f"vehicle signal needs battery percent 0–100 and known routes: {action}")
             if action.get("type") == "keyEvent" and action.get("key") != "BACK":
                 fail(f"unsupported key event {action}")
-            if action.get("type") == "speak":
+            if action.get("type") == "speak" or (action.get("type") == "agent"
+                                                 and "clipId" in action):
                 clip = clips.get(action.get("clipId"))
                 if not clip or clip.get("role") != "user_utterance":
-                    fail(f"speak action does not name an utterance: {action}")
+                    fail(f"{action['type']} action does not name an utterance: {action}")
+                if action["type"] == "agent" and normalized(action["ask"]) != normalized(
+                        clip["expectedTranscript"]):
+                    fail(f"agent request is not what the guest says: {action}")
             if action.get("type") == "selectCase" and action.get("caseId") not in scenario.get(
                     "corpusSequence", []):
                 fail(f"case transition is outside the declared sequence: {action}")
+        types = [action.get("type") for action in scenario.get("actions", [])]
+        if layout == "dual" and "passenger" not in types:
+            fail(f"{scenario['id']} records two displays but never addresses the passenger")
+        hold = scenario.get("endCardHoldFromMs")
+        if hold is not None:
+            cards = [int(a["atMs"]) for a in scenario["actions"] if a.get("type") == "endCard"]
+            if not cards or not min(cards) <= int(hold) < duration * 1000:
+                fail(f"{scenario['id']} holds an end card it never shows, or past the end")
         if not scenario.get("soundEffects"):
             fail(f"{scenario['id']} has no sound design cues")
         last_cue = -1
@@ -171,6 +332,7 @@ def main() -> int:
             if not -24 <= float(cue.get("gainDb", 0)) <= -6:
                 fail(f"{scenario['id']} sound effect is not safely below dialogue")
 
+    check_met_story(by_id["nyc_met"])
     estimated_sfx = sum(math.ceil(float(effect["durationSeconds"])
                                   * int(sfx["estimatedCreditsPerSecond"]))
                         for effect in effects.values())
@@ -238,8 +400,11 @@ def main() -> int:
                 fail(f"sound-effect contract drift for {effect_id}")
             if metadata.get("audioSha256") != hashlib.sha256(audio.read_bytes()).hexdigest():
                 fail(f"sound-effect checksum mismatch for {effect_id}")
-    print(f"PASS: 3 NYC scenarios, {tts_chars} TTS characters, "
-          f"{len(clip_ids)} content-addressed clips, {len(effects)} sound effects" +
+    dual = sum(s.get("recording", {}).get("layout") == "dual" for s in scenarios)
+    print(f"PASS: {len(scenarios)} NYC scenarios ({dual} dual-display), {tts_chars} TTS "
+          f"characters, {len(clip_ids)} content-addressed clips"
+          + (f" ({placeholders} with placeholder text)" if placeholders else "")
+          + f", {len(effects)} sound effects" +
           (", audio/STT/SFX cache verified" if args.require_audio else ""))
     return 0
 

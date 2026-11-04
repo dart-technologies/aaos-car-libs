@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "title": "Highlights from The Met's open collection",
+  "license": "CC0 1.0 (inputs); the film adds only motion, layout and captions",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "attribution": "The Met · Open Access (CC0)",
+  "note": "Built from The Met Open Access images only; no Met video is used. Silent: the audio guide (met_guide_01..06) is separate narration timed to startMs.",
+  "renderer": "scripts/render-met-artwork-film.py",
+  "rendererSha256": "a983eac4d937b4b512919a60341eb532d0e2743da60585276a133ae46e0780ae",
+  "encoder": "ffmpeg version 8.1 Copyright (c) 2000-2026 the FFmpeg developers",
+  "captions": "pre-rendered with Pillow (this ffmpeg has no drawtext)",
+  "font": "Avenir Next Medium",
+  "parameters": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "pixelFormat": "yuv420p",
+    "totalSeconds": 36.0,
+    "shotSeconds": 6.6667,
+    "crossfadeSeconds": 0.8,
+    "fadeInSeconds": 0.6,
+    "fadeOutSeconds": 0.8,
+    "zoom": 0.08,
+    "panPixels": 36,
+    "codec": "libx264 high@4.0 crf 23 maxrate 2000k, no audio"
+  },
+  "works": [
+    {
+      "index": 1,
+      "objectID": 436535,
+      "title": "Wheat Field with Cypresses",
+      "move": "zoom in",
+      "startMs": 0,
+      "fullyVisibleMs": 600,
+      "endMs": 6667
+    },
+    {
+      "index": 2,
+      "objectID": 437881,
+      "title": "Young Woman with a Water Pitcher",
+      "move": "zoom out",
+      "startMs": 5867,
+      "fullyVisibleMs": 6667,
+      "endMs": 12533
+    },
+    {
+      "index": 3,
+      "objectID": 437394,
+      "title": "Aristotle with a Bust of Homer",
+      "move": "pan left",
+      "startMs": 11733,
+      "fullyVisibleMs": 12533,
+      "endMs": 18400
+    },
+    {
+      "index": 4,
+      "objectID": 435809,
+      "title": "The Harvesters",
+      "move": "pan right",
+      "startMs": 17600,
+      "fullyVisibleMs": 18400,
+      "endMs": 24267
+    },
+    {
+      "index": 5,
+      "objectID": 436105,
+      "title": "The Death of Socrates",
+      "move": "zoom in",
+      "startMs": 23467,
+      "fullyVisibleMs": 24267,
+      "endMs": 30133
+    },
+    {
+      "index": 6,
+      "objectID": 435868,
+      "title": "The Card Players",
+      "move": "zoom out",
+      "startMs": 29333,
+      "fullyVisibleMs": 30133,
+      "endMs": 36000
+    }
+  ],
+  "inputs": [
+    {
+      "objectID": 436535,
+      "file": "436535.jpg",
+      "sha256": "af0e3486621c210b54932d055294051b5601aa3362af4b84ab97e2831f8163bc",
+      "title": "Wheat Field with Cypresses",
+      "artistDisplayName": "Vincent van Gogh",
+      "objectDate": "1889",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/436535"
+    },
+    {
+      "objectID": 437881,
+      "file": "437881.jpg",
+      "sha256": "13120aa067755f1f50d2b900417807ef9da3f8b2b63a1bbea428fe3f2d8d00a9",
+      "title": "Young Woman with a Water Pitcher",
+      "artistDisplayName": "Johannes Vermeer",
+      "objectDate": "ca. 1662",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/437881"
+    },
+    {
+      "objectID": 437394,
+      "file": "437394.jpg",
+      "sha256": "06e64703d92fed63c6238d15ed32d582792397b238458bf1893530eb8d91e3f4",
+      "title": "Aristotle with a Bust of Homer",
+      "artistDisplayName": "Rembrandt (Rembrandt van Rijn)",
+      "objectDate": "1653",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/437394"
+    },
+    {
+      "objectID": 435809,
+      "file": "435809.jpg",
+      "sha256": "98dc6d6e23c008b23056108d04d9143b8c7f73fe6fa2a940fd09663290135e25",
+      "title": "The Harvesters",
+      "artistDisplayName": "Pieter Bruegel the Elder",
+      "objectDate": "1565",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/435809"
+    },
+    {
+      "objectID": 436105,
+      "file": "436105.jpg",
+      "sha256": "7d8d840424e3747c14b203b67192fff726c897bb05cf9d3f7fa227e1ee4510de",
+      "title": "The Death of Socrates",
+      "artistDisplayName": "Jacques Louis David",
+      "objectDate": "1787",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/436105"
+    },
+    {
+      "objectID": 435868,
+      "file": "435868.jpg",
+      "sha256": "23257f41fb04bd058dd01cb51b2883847fbc877d5409c66b2aa0cfc985de2f71",
+      "title": "The Card Players",
+      "artistDisplayName": "Paul Cézanne",
+      "objectDate": "1890–92",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/435868"
+    }
+  ],
+  "output": {
+    "path": "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4",
+    "sha256": "aa1cbf2b9b919ea3e7f2b12c1992daf6d4d35aca25bcda586658d1a06db37997",
+    "bytes": 5191929,
+    "durationSeconds": 36.0,
+    "width": 1280,
+    "height": 720,
+    "codec": "h264",
+    "profile": "High"
+  }
+}

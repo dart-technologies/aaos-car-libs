@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-11-04T16:23:13+00:00",
+  "generatedAt": "2026-11-04T17:06:50+00:00",
   "generator": "scripts/muse-audio-guide.py",
   "model": "muse-spark-1.3",
   "servedModel": "muse-spark-1.3",
@@ -25,7 +25,7 @@
       "clipId": "met_guide_01",
       "title": "Wheat Field with Cypresses",
       "artist": "Vincent van Gogh",
-      "text": "Wheat Field with Cypresses by Vincent van Gogh was made in Saint-Rémy in the summer heat. He wrote to his brother about it and later made copies for his family.",
+      "text": "Vincent van Gogh painted Wheat Field with Cypresses to celebrate natures vitality in Provence.",
       "sources": [
         {
           "url": "https://www.metmuseum.org/art/collection/search/436535",
@@ -42,7 +42,7 @@
       "clipId": "met_guide_02",
       "title": "Young Woman with a Water Pitcher",
       "artist": "Johannes Vermeer",
-      "text": "Young Woman with a Water Pitcher by Johannes Vermeer is about a washing ritual. It was the first of his works to reach America, honoring sacredness in daily home life.",
+      "text": "Johannes Vermeer created Young Woman with a Water Pitcher to honor everyday ritual.",
       "sources": [
         {
           "url": "https://www.metmuseum.org/art/collection/search/437881",
@@ -55,7 +55,7 @@
       "clipId": "met_guide_03",
       "title": "Aristotle with a Bust of Homer",
       "artist": "Rembrandt (Rembrandt van Rijn)",
-      "text": "Aristotle with a Bust of Homer by Rembrandt van Rijn was for a Sicilian collector who let him choose the subject. It endures as a meditation on fame and wisdom.",
+      "text": "Rembrandt painted Aristotle with a Bust of Homer as a meditation on fame and wisdom.",
       "sources": [
         {
           "url": "https://smarthistory.org/?p=20253",
@@ -72,7 +72,7 @@
       "clipId": "met_guide_04",
       "title": "The Harvesters",
       "artist": "Pieter Bruegel the Elder",
-      "text": "The Harvesters by Pieter Bruegel the Elder was part of a seasons series for a merchant dining room. It honors peasant workers and their harmony with nature and seasonal bounty.",
+      "text": "Pieter Bruegel the Elder made The Harvesters to honor peasants living in harmony with nature.",
       "sources": [
         {
           "url": "https://www.metmuseum.org/art/collection/search/435809",
@@ -85,7 +85,7 @@
       "clipId": "met_guide_05",
       "title": "The Death of Socrates",
       "artist": "Jacques Louis David",
-      "text": "The Death of Socrates by Jacques Louis David is about choosing death over giving up beliefs. It became a landmark call to resist unjust authority before the French Revolution.",
+      "text": "Jacques Louis David painted The Death of Socrates about willingly resisting unjust authority.",
       "sources": [
         {
           "url": "https://www.metmuseum.org/art/collection/search/436105",
@@ -102,7 +102,7 @@
       "clipId": "met_guide_06",
       "title": "The Card Players",
       "artist": "Paul Cézanne",
-      "text": "The Card Players by Paul Cézanne began a series of five paintings. Made with local farmhands who posed for him, it honors Provençal dignity and points toward modernism.",
+      "text": "Paul Cézanne painted The Card Players as a timeless image of Provençal dignity.",
       "sources": [
         {
           "url": "https://www.metmuseum.org/art/collection/search/435868",

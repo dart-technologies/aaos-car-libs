@@ -1,0 +1,90 @@
+{
+  "source": "U.S. National Weather Service (api.weather.gov)",
+  "license": "Public domain (U.S. Government work)",
+  "licenseUrl": "https://www.weather.gov/disclaimer",
+  "point": {
+    "lat": 40.7815,
+    "lon": -73.9868,
+    "reason": "route midpoint",
+    "url": "https://api.weather.gov/points/40.7815,-73.9868",
+    "responseSha256": "c3761fbd7561af9096ac36042ab25ec27bbb0c55bfbd8921fed0bbbb69f78d3c",
+    "gridId": "OKX",
+    "gridX": 33,
+    "gridY": 45
+  },
+  "forecastUrl": "https://api.weather.gov/gridpoints/OKX/33,45/forecast",
+  "fetchedAt": "2026-11-04T16:11:47Z",
+  "responseSha256": "4c2ff2d7d05cc9c50dd6953f52119c8eabe8cdd29852dd75fe6ada9e6fd80838",
+  "generatedAt": "2026-11-04T12:43:48+00:00",
+  "updateTime": "2026-11-04T12:41:18+00:00",
+  "periods": [
+    {
+      "number": 1,
+      "name": "Today",
+      "startTime": "2026-11-04T07:00:00-05:00",
+      "endTime": "2026-11-04T18:00:00-05:00",
+      "isDaytime": true,
+      "temperature": 75,
+      "temperatureUnit": "F",
+      "probabilityOfPrecipitation": {
+        "unitCode": "wmoUnit:percent",
+        "value": 0
+      },
+      "windSpeed": "3 to 10 mph",
+      "windDirection": "S",
+      "shortForecast": "Sunny",
+      "detailedForecast": "Sunny. High near 75, with temperatures falling to around 70 in the afternoon. South wind 3 to 10 mph."
+    },
+    {
+      "number": 2,
+      "name": "Tonight",
+      "startTime": "2026-11-04T18:00:00-05:00",
+      "endTime": "2026-11-05T06:00:00-05:00",
+      "isDaytime": false,
+      "temperature": 61,
+      "temperatureUnit": "F",
+      "probabilityOfPrecipitation": {
+        "unitCode": "wmoUnit:percent",
+        "value": 0
+      },
+      "windSpeed": "5 to 8 mph",
+      "windDirection": "S",
+      "shortForecast": "Partly Cloudy",
+      "detailedForecast": "Partly cloudy, with a low around 61. South wind 5 to 8 mph."
+    },
+    {
+      "number": 3,
+      "name": "Thursday",
+      "startTime": "2026-11-05T06:00:00-05:00",
+      "endTime": "2026-11-05T18:00:00-05:00",
+      "isDaytime": true,
+      "temperature": 74,
+      "temperatureUnit": "F",
+      "probabilityOfPrecipitation": {
+        "unitCode": "wmoUnit:percent",
+        "value": 31
+      },
+      "windSpeed": "6 to 12 mph",
+      "windDirection": "S",
+      "shortForecast": "Chance Rain Showers",
+      "detailedForecast": "A chance of rain showers after 7am. Mostly cloudy. High near 74, with temperatures falling to around 71 in the afternoon. South wind 6 to 12 mph. Chance of precipitation is 30%."
+    },
+    {
+      "number": 4,
+      "name": "Thursday Night",
+      "startTime": "2026-11-05T18:00:00-05:00",
+      "endTime": "2026-11-06T06:00:00-05:00",
+      "isDaytime": false,
+      "temperature": 63,
+      "temperatureUnit": "F",
+      "probabilityOfPrecipitation": {
+        "unitCode": "wmoUnit:percent",
+        "value": 62
+      },
+      "windSpeed": "5 to 8 mph",
+      "windDirection": "S",
+      "shortForecast": "Rain Showers Likely",
+      "detailedForecast": "Rain showers likely. Mostly cloudy, with a low around 63. South wind 5 to 8 mph. Chance of precipitation is 60%. New rainfall amounts between a tenth and quarter of an inch possible."
+    }
+  ]
+}
