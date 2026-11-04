@@ -725,9 +725,9 @@ def cockpit_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
     Driver window: the intro's lead, the preamble cards, then the recording with the chapter
     cards over it at their times (the opening title, the intermission). Passenger window: its
     idle frame until the stream starts. The intro frames lie over both windows from the first
-    frame and ease out as the preamble begins, the
-    frame and the intro glow over those, then the story rail over the device timeline, the
-    closing card over everything, the captions and the disclaimer. All times are output times.
+    frame and ease out as the preamble begins, the frame and the intro glow over those, then
+    the story rail over the device timeline, the closing card over everything, the captions
+    and the disclaimer. All times are output times.
     """
     over = plan.cockpit
     lay = over["layout"]
