@@ -42,7 +42,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.android.car.apps.common.BitmapUtils;
 import com.android.car.apps.common.CrossfadeImageView;
@@ -93,7 +93,7 @@ public class PlaybackFragment extends Fragment {
         mMediaSourceViewModel = MediaSourceViewModel.get(application, MEDIA_SOURCE_MODE_PLAYBACK);
         mAppSelectorIntent = MediaSource.getSourceSelectorIntent(getContext(), true);
 
-        mInnerViewModel = ViewModelProviders.of(activity).get(ViewModel.class);
+        mInnerViewModel = new ViewModelProvider(activity).get(ViewModel.class);
         mInnerViewModel.init(activity, mMediaSourceViewModel, mPlaybackViewModel,
                 MediaItemsRepository.get(application, MEDIA_SOURCE_MODE_PLAYBACK));
 

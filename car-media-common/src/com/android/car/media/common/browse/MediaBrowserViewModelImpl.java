@@ -17,7 +17,6 @@
 package com.android.car.media.common.browse;
 
 import android.os.Bundle;
-import android.support.v4.media.MediaBrowserCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +35,15 @@ import java.util.stream.Collectors;
 /**
  * TODO: rename to MediaBrowserUtils.
  * Provides utility methods for {@link MediaBrowserCompat}.
+ */
+/*
+ * Media3 migration, file 3. These three read ONE thing from the browser — its root extras — so
+ * taking the whole MediaBrowserCompat made them part of the legacy surface for a Bundle. They now
+ * take the Bundle, which a Media3 client can supply just as well (the root LibraryResult carries
+ * its params/extras), so they do not move again at the flip.
+ *
+ * This is an API change for downstream consumers: three of the nine public signatures that leak
+ * legacy types. There are no in-repo callers, so nothing here had to change with them.
  */
 public class MediaBrowserViewModelImpl {
 
@@ -65,12 +73,7 @@ public class MediaBrowserViewModelImpl {
     }
 
 
-    @SuppressWarnings("deprecation")
-    public static boolean getSupportsSearch(@Nullable MediaBrowserCompat mediaBrowserCompat) {
-        if (mediaBrowserCompat == null) {
-            return false;
-        }
-        Bundle extras = mediaBrowserCompat.getExtras();
+    public static boolean getSupportsSearch(@Nullable Bundle extras) {
         if (extras == null) {
             return false;
         }
@@ -83,12 +86,7 @@ public class MediaBrowserViewModelImpl {
         return false;
     }
 
-    @SuppressWarnings("deprecation")
-    public static int getRootBrowsableHint(@Nullable MediaBrowserCompat mediaBrowserCompat) {
-        if (mediaBrowserCompat == null) {
-            return 0;
-        }
-        Bundle extras = mediaBrowserCompat.getExtras();
+    public static int getRootBrowsableHint(@Nullable Bundle extras) {
         if (extras == null) {
             return 0;
         }
@@ -101,12 +99,7 @@ public class MediaBrowserViewModelImpl {
         return 0;
     }
 
-    @SuppressWarnings("deprecation")
-    public static int getRootPlayableHint(@Nullable MediaBrowserCompat mediaBrowserCompat) {
-        if (mediaBrowserCompat == null) {
-            return 0;
-        }
-        Bundle extras = mediaBrowserCompat.getExtras();
+    public static int getRootPlayableHint(@Nullable Bundle extras) {
         if (extras == null) {
             return 0;
         }

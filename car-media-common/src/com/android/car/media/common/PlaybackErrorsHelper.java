@@ -19,7 +19,6 @@ package com.android.car.media.common;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -41,24 +40,24 @@ public abstract class PlaybackErrorsHelper {
 
     static {
         Map<Integer, Integer> map = new HashMap<>();
-        map.put(PlaybackStateCompat.ERROR_CODE_APP_ERROR, R.string.error_code_app_error);
-        map.put(PlaybackStateCompat.ERROR_CODE_NOT_SUPPORTED, R.string.error_code_not_supported);
-        map.put(PlaybackStateCompat.ERROR_CODE_AUTHENTICATION_EXPIRED,
+        map.put(MediaErrorCodes.ERROR_CODE_APP_ERROR, R.string.error_code_app_error);
+        map.put(MediaErrorCodes.ERROR_CODE_NOT_SUPPORTED, R.string.error_code_not_supported);
+        map.put(MediaErrorCodes.ERROR_CODE_AUTHENTICATION_EXPIRED,
                 R.string.error_code_authentication_expired);
-        map.put(PlaybackStateCompat.ERROR_CODE_PREMIUM_ACCOUNT_REQUIRED,
+        map.put(MediaErrorCodes.ERROR_CODE_PREMIUM_ACCOUNT_REQUIRED,
                 R.string.error_code_premium_account_required);
-        map.put(PlaybackStateCompat.ERROR_CODE_CONCURRENT_STREAM_LIMIT,
+        map.put(MediaErrorCodes.ERROR_CODE_CONCURRENT_STREAM_LIMIT,
                 R.string.error_code_concurrent_stream_limit);
-        map.put(PlaybackStateCompat.ERROR_CODE_PARENTAL_CONTROL_RESTRICTED,
+        map.put(MediaErrorCodes.ERROR_CODE_PARENTAL_CONTROL_RESTRICTED,
                 R.string.error_code_parental_control_restricted);
-        map.put(PlaybackStateCompat.ERROR_CODE_NOT_AVAILABLE_IN_REGION,
+        map.put(MediaErrorCodes.ERROR_CODE_NOT_AVAILABLE_IN_REGION,
                 R.string.error_code_not_available_in_region);
-        map.put(PlaybackStateCompat.ERROR_CODE_CONTENT_ALREADY_PLAYING,
+        map.put(MediaErrorCodes.ERROR_CODE_CONTENT_ALREADY_PLAYING,
                 R.string.error_code_content_already_playing);
-        map.put(PlaybackStateCompat.ERROR_CODE_SKIP_LIMIT_REACHED,
+        map.put(MediaErrorCodes.ERROR_CODE_SKIP_LIMIT_REACHED,
                 R.string.error_code_skip_limit_reached);
-        map.put(PlaybackStateCompat.ERROR_CODE_ACTION_ABORTED, R.string.error_code_action_aborted);
-        map.put(PlaybackStateCompat.ERROR_CODE_END_OF_QUEUE, R.string.error_code_end_of_queue);
+        map.put(MediaErrorCodes.ERROR_CODE_ACTION_ABORTED, R.string.error_code_action_aborted);
+        map.put(MediaErrorCodes.ERROR_CODE_END_OF_QUEUE, R.string.error_code_end_of_queue);
         ERROR_CODE_MESSAGES_MAP = Collections.unmodifiableMap(map);
     }
 
@@ -122,12 +121,12 @@ public abstract class PlaybackErrorsHelper {
             return state.getErrorMessage().toString();
         }
         // ERROR_CODE_UNKNOWN_ERROR means there is no error in PlaybackState.
-        if (state.getErrorCode() != PlaybackStateCompat.ERROR_CODE_UNKNOWN_ERROR) {
+        if (state.getErrorCode() != MediaErrorCodes.ERROR_CODE_UNKNOWN_ERROR) {
             Integer messageId = ERROR_CODE_MESSAGES_MAP.get(state.getErrorCode());
             return messageId != null ? ctx.getString(messageId) : ctx.getString(
                     R.string.default_error_message);
         }
-        if (state.getState() == PlaybackStateCompat.STATE_ERROR) {
+        if (state.getState() == MediaErrorCodes.STATE_ERROR) {
             return ctx.getString(R.string.default_error_message);
         }
         return null;

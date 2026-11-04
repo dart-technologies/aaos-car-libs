@@ -18,7 +18,7 @@ package com.android.car.media.common.source;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.robolectric.RuntimeEnvironment.application;
+import static org.robolectric.RuntimeEnvironment.getApplication;
 import static org.robolectric.Shadows.shadowOf;
 
 import android.content.Intent;
@@ -42,7 +42,6 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.shadows.ShadowApplication;
 import org.robolectric.shadows.ShadowPackageManager;
 
 import java.util.ArrayList;
@@ -71,13 +70,13 @@ public class MediaSourcesProviderTest {
 
     @Before
     public void setUp() {
-        mMediaSources = MediaSourcesProvider.createForTesting(application);
+        mMediaSources = MediaSourcesProvider.createForTesting(getApplication());
 
         mActivityIntent = new Intent(Intent.ACTION_MAIN, null);
         mActivityIntent.addCategory(Intent.CATEGORY_APP_MUSIC);
 
         mServiceIntent = new Intent(MediaBrowserService.SERVICE_INTERFACE);
-        ShadowPackageManager packageManager = shadowOf(application.getPackageManager());
+        ShadowPackageManager packageManager = shadowOf(getApplication().getPackageManager());
 
         List<ResolveInfo> activityResolveInfo = buildActivityResolveInfo();
         List<ResolveInfo> allActivityResolveInfo = new ArrayList<>(activityResolveInfo);
@@ -121,10 +120,10 @@ public class MediaSourcesProviderTest {
         setPackageManagerResolveInfos(activityResolveInfo, serviceResolveInfo);
 
         Intent packageAdded = new Intent(Intent.ACTION_PACKAGE_ADDED);
-        ShadowApplication.getInstance().getRegisteredReceivers().stream()
+        shadowOf(getApplication()).getRegisteredReceivers().stream()
                 .filter(wrapper -> wrapper.intentFilter.hasAction(Intent.ACTION_PACKAGE_ADDED))
                 .map(wrapper -> wrapper.broadcastReceiver)
-                .forEach(broadcastReceiver -> broadcastReceiver.onReceive(application,
+                .forEach(broadcastReceiver -> broadcastReceiver.onReceive(getApplication(),
                         packageAdded));
 
         List<MediaSource> observedValue = mMediaSources.getList();
@@ -144,11 +143,11 @@ public class MediaSourcesProviderTest {
         setPackageManagerResolveInfos(activityResolveInfo, serviceResolveInfo);
 
         Intent packageRemoved = new Intent(Intent.ACTION_PACKAGE_REMOVED);
-        ShadowApplication.getInstance().getRegisteredReceivers().stream()
+        shadowOf(getApplication()).getRegisteredReceivers().stream()
                 .filter(wrapper -> wrapper.intentFilter.hasAction(Intent.ACTION_PACKAGE_REMOVED))
                 .map(wrapper -> wrapper.broadcastReceiver)
                 .forEach(broadcastReceiver ->
-                        broadcastReceiver.onReceive(application, packageRemoved));
+                        broadcastReceiver.onReceive(getApplication(), packageRemoved));
 
         List<MediaSource> observedValue = mMediaSources.getList();
         assertThat(observedValue).isNotNull();
@@ -177,7 +176,7 @@ public class MediaSourcesProviderTest {
 
     private void setPackageManagerResolveInfos(List<ResolveInfo> activityResolveInfo,
             List<ResolveInfo> serviceResolveInfo) {
-        ShadowPackageManager packageManager = shadowOf(application.getPackageManager());
+        ShadowPackageManager packageManager = shadowOf(getApplication().getPackageManager());
         packageManager.removeResolveInfosForIntent(mActivityIntent, TEST_ACTIVITY_PACKAGE_1);
         packageManager.removeResolveInfosForIntent(mActivityIntent, TEST_ACTIVITY_PACKAGE_2);
         packageManager.removeResolveInfosForIntent(mServiceIntent, TEST_SERVICE_PACKAGE_1);

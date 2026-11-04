@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.Observer;
 
 import com.android.car.apps.common.testutils.CaptureObserver;
 import com.android.car.apps.common.testutils.InstantTaskExecutorRule;
@@ -71,7 +72,15 @@ public class ProgressLiveDataTest {
         when(mPlaybackState.getPosition()).thenReturn(START_PROGRESS);
         when(mPlaybackState.getPlaybackSpeed()).thenReturn(1F);
         when(mPlaybackState.getState()).thenReturn(PlaybackStateCompat.STATE_PLAYING);
-        mProgressLiveData = new ProgressLiveData(mPlaybackState, MAX_PROGRESS,
+        // Wrapped, not replaced: the mock is still the thing mutated between ticks, so the
+        // existing cases keep pinning that positionAdvances() reads THROUGH rather than freezing.
+        //
+        // They do NOT pin keepsTicking() — the PAUSED and STOPPED cases assert the progress VALUE
+        // and never that the update loop stopped. Mutation testing found that: freezing
+        // keepsTicking() left every one of them green. testPausingStopsTheUpdateLoop below covers
+        // it, because "the timer keeps running forever after pause" is worth a test on its own
+        // terms, not only as mutation bait.
+        mProgressLiveData = new ProgressLiveData(PlaybackTiming.from(mPlaybackState), MAX_PROGRESS,
                 this::getCurrentElapsedTime);
     }
 
@@ -145,6 +154,36 @@ public class ProgressLiveDataTest {
         assertThat(progressObserver.hasBeenNotified()).isTrue();
         assertThat(progressObserver.getObservedValue().getProgress()).isEqualTo(
                 START_PROGRESS);
+    }
+
+    @Test
+    public void testPausingStopsTheUpdateLoop() {
+        // Distinct from testDoesntMoveForwardWhenPaused, which asserts the VALUE. This asserts the
+        // LOOP: after pausing, updateProgress must stop re-posting rather than keep firing with an
+        // unchanged number. Counted over several intervals, because a single interval cannot tell
+        // "posted once more then stopped" from "still posting".
+        CountingObserver observer = new CountingObserver();
+        mProgressLiveData.observe(mLifecycleOwner, observer);
+        when(mPlaybackState.getState()).thenReturn(PlaybackStateCompat.STATE_PAUSED);
+
+        // One tick to deliver the paused state, then let plenty more time pass.
+        advanceElapsedTime(ProgressLiveData.UPDATE_INTERVAL_MS);
+        int afterPauseDelivered = observer.mCount;
+        advanceElapsedTime(ProgressLiveData.UPDATE_INTERVAL_MS * 5);
+
+        // A live keepsTicking() stops the loop, so nothing further arrives. A frozen one keeps
+        // posting every interval — five more notifications carrying the same value.
+        assertThat(observer.mCount).isEqualTo(afterPauseDelivered);
+    }
+
+    /** Counts notifications; CaptureObserver only records the latest value. */
+    private static final class CountingObserver implements Observer<PlaybackProgress> {
+        int mCount;
+
+        @Override
+        public void onChanged(PlaybackProgress value) {
+            mCount++;
+        }
     }
 
     @Test

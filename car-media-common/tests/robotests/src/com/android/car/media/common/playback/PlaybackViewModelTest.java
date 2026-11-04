@@ -21,46 +21,60 @@ import static com.android.car.media.common.MediaTestUtils.newFakeMediaSource;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.robolectric.RuntimeEnvironment.application;
+import static org.robolectric.RuntimeEnvironment.getApplication;
 
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaDescriptionCompat;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaControllerCompat;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.MutableLiveData;
+import androidx.media3.common.FlagSet;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.MediaMetadata;
+import androidx.media3.common.PlaybackParameters;
+import androidx.media3.common.Player;
+import androidx.media3.common.Timeline;
+import androidx.media3.session.MediaBrowser;
+import androidx.media3.session.SessionCommands;
 
 import com.android.car.apps.common.testutils.CaptureObserver;
 import com.android.car.apps.common.testutils.InstantTaskExecutorRule;
 import com.android.car.apps.common.testutils.TestLifecycleOwner;
+import com.android.car.media.common.Media3Adapters;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.source.MediaBrowserConnector.BrowsingState;
 import com.android.car.media.common.source.MediaBrowserConnector.ConnectionStatus;
 import com.android.car.media.common.source.MediaSource;
 
+import com.google.common.collect.ImmutableList;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.robolectric.RobolectricTestRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * Media3 port note — how the seam moved.
+ *
+ * <p>The legacy version fed the view model by capturing the {@code MediaControllerCompat.Callback}
+ * it registered and calling that callback directly. That is still the shape here, but the callback
+ * is a {@link Player.Listener} and the view model registers it on the controller Media3 already
+ * gave it, so there is no {@code InputFactory} to stub: the {@link BrowsingState} carries the mock
+ * controller and the view model takes it from there.
+ *
+ * <p>The one assertion form that could NOT be carried over is identity on a
+ * {@code PlaybackStateCompat}. Media3 has no such object to hand in — the view model DERIVES the
+ * legacy-shaped state from the player, which is the whole point of {@code Media3PlaybackState}. So
+ * where the old tests asserted "the exact state object I supplied came back out", these assert "the
+ * state the controller reports came back out, correctly translated". That is weaker on identity and
+ * stronger on meaning: it would fail against an implementation that published a constant.
+ */
 @RunWith(RobolectricTestRunner.class)
 public class PlaybackViewModelTest {
 
@@ -73,76 +87,125 @@ public class PlaybackViewModelTest {
 
     private final MediaSource mMediaSource = newFakeMediaSource("test", "test");
 
-    @Mock
-    public MediaBrowserCompat mMediaBrowser;
-    @Mock
-    public MediaControllerCompat mMediaController;
-    @Mock
-    public MediaMetadataCompat mMediaMetadata;
-    @Mock
-    public MediaDescriptionCompat mMediaDescriptionCompat;
-    @Mock
-    public PlaybackStateCompat mPlaybackState;
-    @Captor
-    private ArgumentCaptor<MediaControllerCompat.Callback> mCapturedCallback;
+    private MediaBrowser mMediaController;
 
     private PlaybackViewModel mPlaybackViewModel;
 
     private MutableLiveData<BrowsingState> mBrowsingStateLD;
 
-    private Map<MediaBrowserCompat, MediaControllerCompat> mBrowserToController = new HashMap<>();
+    /**
+     * A controller stubbed just enough to be read.
+     *
+     * <p>Media3's {@code Player} surface is wide and a bare mock answers null for the value types
+     * the state conversion reads, so the few that are dereferenced unconditionally are given real
+     * values here. Everything a test actually asserts on is stubbed by that test.
+     */
+    private static MediaBrowser newController() {
+        MediaBrowser controller = mock(MediaBrowser.class);
+        when(controller.isConnected()).thenReturn(true);
+        when(controller.getPlaybackParameters()).thenReturn(PlaybackParameters.DEFAULT);
+        when(controller.getMediaMetadata()).thenReturn(MediaMetadata.EMPTY);
+        when(controller.getPlaylistMetadata()).thenReturn(MediaMetadata.EMPTY);
+        when(controller.getCurrentTimeline()).thenReturn(Timeline.EMPTY);
+        when(controller.getCustomLayout()).thenReturn(ImmutableList.of());
+        // Non-null like the rest: media3 returns SessionCommands.EMPTY for "none", never null,
+        // and toLegacyActions(MediaController) reads it to answer ACTION_SET_RATING.
+        when(controller.getAvailableSessionCommands()).thenReturn(SessionCommands.EMPTY);
+        return controller;
+    }
 
     @Before
     public void setUp() {
-        mBrowserToController.put(mMediaBrowser, mMediaController);
-        doNothing().when(mMediaController).registerCallback(mCapturedCallback.capture());
+        mMediaController = newController();
         mBrowsingStateLD = dataOf(
-                new BrowsingState(mMediaSource, mMediaBrowser, ConnectionStatus.CONNECTED));
-        mPlaybackViewModel = new PlaybackViewModel(application, mBrowsingStateLD,
-                browser -> mBrowserToController.get(browser));
+                new BrowsingState(mMediaSource, mMediaController, ConnectionStatus.CONNECTED));
+        mPlaybackViewModel = new PlaybackViewModel(getApplication(), mBrowsingStateLD);
+    }
+
+    /** The listener the view model registered on the controller it was given. */
+    private Player.Listener listener() {
+        return mPlaybackViewModel.getPlayerListener();
     }
 
     @Test
     public void testGetMetadata() {
-        when(mMediaMetadata.getDescription()).thenReturn(mMediaDescriptionCompat);
+        MediaMetadata metadata = new MediaMetadata.Builder().setTitle("a title").build();
         CaptureObserver<MediaItemMetadata> observer = new CaptureObserver<>();
         mPlaybackViewModel.getMetadata().observe(mLifecycleOwner, observer);
         observer.reset();
 
-        assertThat(mCapturedCallback.getValue()).isNotNull();
-        mCapturedCallback.getValue().onMetadataChanged(mMediaMetadata);
+        assertThat(listener()).isNotNull();
+        listener().onMediaMetadataChanged(metadata);
 
         assertThat(observer.hasBeenNotified()).isTrue();
         MediaItemMetadata observedValue = observer.getObservedValue();
         assertThat(observedValue).isNotNull();
-        assertThat(observedValue).isEqualTo(new MediaItemMetadata(mMediaMetadata));
+        assertThat(observedValue).isEqualTo(Media3Adapters.fromMedia3(null, metadata));
     }
 
+    /**
+     * Media3 reports "nothing playing" as MediaMetadata.EMPTY rather than as null. The view model
+     * collapses that onto null so the rest of the code has one "nothing playing" case — the same
+     * collapse the legacy version did against an empty MediaMetadata, and worth pinning because
+     * dropping it would publish an all-null MediaItemMetadata instead of no metadata at all.
+     */
+    @Test
+    public void testGetMetadata_emptyIsTreatedAsNone() {
+        CaptureObserver<MediaItemMetadata> observer = new CaptureObserver<>();
+        mPlaybackViewModel.getMetadata().observe(mLifecycleOwner, observer);
+        listener().onMediaMetadataChanged(
+                new MediaMetadata.Builder().setTitle("a title").build());
+        observer.reset();
+
+        listener().onMediaMetadataChanged(MediaMetadata.EMPTY);
+
+        assertThat(observer.hasBeenNotified()).isTrue();
+        assertThat(observer.getObservedValue()).isNull();
+        assertThat(mPlaybackViewModel.getMediaMetadata()).isNull();
+    }
+
+    /**
+     * The legacy test asserted the wrapper carried back the exact PlaybackStateCompat it was fed.
+     * There is no such object to feed any more; what is asserted instead is that the state the
+     * CONTROLLER reports reaches the wrapper, through the READY-plus-playWhenReady fan-in that is
+     * the single most likely thing to get wrong in this migration.
+     */
     @Test
     public void testGetPlaybackState() {
         CaptureObserver<PlaybackViewModel.PlaybackStateWrapper> observer = new CaptureObserver<>();
         mPlaybackViewModel.getPlaybackStateWrapper().observe(mLifecycleOwner, observer);
         observer.reset();
 
-        assertThat(mCapturedCallback.getValue()).isNotNull();
-        mCapturedCallback.getValue().onMetadataChanged(mMediaMetadata);
-        mCapturedCallback.getValue().onPlaybackStateChanged(mPlaybackState);
+        when(mMediaController.getPlaybackState()).thenReturn(Player.STATE_READY);
+        when(mMediaController.getPlayWhenReady()).thenReturn(true);
+        listener().onEvents(mMediaController, events(Player.EVENT_PLAYBACK_STATE_CHANGED));
 
         assertThat(observer.hasBeenNotified()).isTrue();
-        assertThat(observer.getObservedValue().getStateCompat()).isEqualTo(mPlaybackState);
+        assertThat(observer.getObservedValue().getStateCompat().getState())
+                .isEqualTo(PlaybackStateCompat.STATE_PLAYING);
+        assertThat(observer.getObservedValue().isPlaying()).isTrue();
+
+        // ...and READY on its own is NOT playing. Without this second half the assertion above
+        // would also pass against an implementation that ignored playWhenReady.
+        observer.reset();
+        when(mMediaController.getPlayWhenReady()).thenReturn(false);
+        listener().onEvents(mMediaController, events(Player.EVENT_PLAY_WHEN_READY_CHANGED));
+
+        assertThat(observer.getObservedValue().getStateCompat().getState())
+                .isEqualTo(PlaybackStateCompat.STATE_PAUSED);
     }
 
     @Test
     public void testGetSanitizedQueue() {
         String title = "title";
-        int queueId = 1;
-        MediaSessionCompat.QueueItem queueItem = createQueueItem(title, queueId);
-        List<MediaSessionCompat.QueueItem> queue = Collections.singletonList(queueItem);
+        int queueId = 0;
+        setQueue(mMediaController, queueItem(title));
         CaptureObserver<List<MediaItemMetadata>> observer = new CaptureObserver<>();
         mPlaybackViewModel.getQueue().observe(mLifecycleOwner, observer);
         observer.reset();
 
-        mCapturedCallback.getValue().onQueueChanged(queue);
+        listener().onTimelineChanged(
+                Timeline.EMPTY, Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED);
 
         assertThat(observer.hasBeenNotified()).isTrue();
         List<MediaItemMetadata> observedValue = observer.getObservedValue();
@@ -154,15 +217,40 @@ public class PlaybackViewModelTest {
         assertThat(observedItem.getQueueId()).isEqualTo(queueId);
     }
 
+    /** Items with no title at all are dropped, as they were on the legacy path. */
     @Test
-    public void testGetHasQueue_null() {
-        CaptureObserver<Boolean> observer = new CaptureObserver<>();
-        mPlaybackViewModel.hasQueue().observe(mLifecycleOwner, observer);
-        mCapturedCallback.getValue().onQueueChanged(
-                Collections.singletonList(createQueueItem("title", 1)));
+    public void testGetSanitizedQueue_dropsUntitledItems() {
+        setQueue(mMediaController, queueItem("kept"),
+                new MediaItem.Builder().setMediaId("untitled").build());
+        CaptureObserver<List<MediaItemMetadata>> observer = new CaptureObserver<>();
+        mPlaybackViewModel.getQueue().observe(mLifecycleOwner, observer);
         observer.reset();
 
-        mCapturedCallback.getValue().onQueueChanged(null);
+        listener().onTimelineChanged(
+                Timeline.EMPTY, Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED);
+
+        assertThat(observer.getObservedValue()).hasSize(1);
+        assertThat(observer.getObservedValue().get(0).getTitle()).isEqualTo("kept");
+    }
+
+    /**
+     * The legacy counterpart was {@code onQueueChanged(null)}. Media3 has no null queue — a session
+     * that stops having one reports zero items — but the case the legacy test was really covering
+     * is the controller going away, which is what this drives: a SUSPENDED connection, after which
+     * there is no queue at all.
+     */
+    @Test
+    public void testGetHasQueue_null() {
+        setQueue(mMediaController, queueItem("title1"), queueItem("title2"));
+        CaptureObserver<Boolean> observer = new CaptureObserver<>();
+        mPlaybackViewModel.hasQueue().observe(mLifecycleOwner, observer);
+        listener().onTimelineChanged(
+                Timeline.EMPTY, Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED);
+        assertThat(observer.getObservedValue()).isTrue();
+        observer.reset();
+
+        mBrowsingStateLD.setValue(
+                new BrowsingState(mMediaSource, mMediaController, ConnectionStatus.SUSPENDED));
 
         assertThat(observer.hasBeenNotified()).isTrue();
         assertThat(observer.getObservedValue()).isEqualTo(false);
@@ -170,14 +258,13 @@ public class PlaybackViewModelTest {
 
     @Test
     public void testGetHasQueue_empty() {
-        List<MediaSessionCompat.QueueItem> queue = Collections.emptyList();
+        setQueue(mMediaController);
         CaptureObserver<Boolean> observer = new CaptureObserver<>();
         mPlaybackViewModel.hasQueue().observe(mLifecycleOwner, observer);
-        mCapturedCallback.getValue().onQueueChanged(
-                Collections.singletonList(createQueueItem("title", 1)));
         observer.reset();
 
-        mCapturedCallback.getValue().onQueueChanged(queue);
+        listener().onTimelineChanged(
+                Timeline.EMPTY, Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED);
 
         assertThat(observer.hasBeenNotified()).isTrue();
         assertThat(observer.getObservedValue()).isEqualTo(false);
@@ -185,41 +272,42 @@ public class PlaybackViewModelTest {
 
     @Test
     public void testGetHasQueue_true() {
-        List<MediaSessionCompat.QueueItem> queue =
-                Arrays.asList(createQueueItem("title1", 1), createQueueItem("title2", 2));
+        setQueue(mMediaController, queueItem("title1"), queueItem("title2"));
         CaptureObserver<Boolean> observer = new CaptureObserver<>();
         mPlaybackViewModel.hasQueue().observe(mLifecycleOwner, observer);
         observer.reset();
 
-        mCapturedCallback.getValue().onQueueChanged(queue);
+        listener().onTimelineChanged(
+                Timeline.EMPTY, Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED);
 
         assertThat(observer.hasBeenNotified()).isTrue();
         assertThat(observer.getObservedValue()).isEqualTo(true);
     }
 
+    /**
+     * Values published while a source is switching must belong to the controller they came from.
+     *
+     * <p>Same assertion as the legacy test, restated in Media3's terms: the metadata identity check
+     * is against the Media3 MediaMetadata, and the state check is against the state each controller
+     * reports rather than against a supplied state object.
+     */
     @Test
     public void testChangeMediaSource_consistentController() {
-        deliverValuesToCallbacks(mCapturedCallback, mMediaMetadata, mPlaybackState);
+        MediaMetadata metadata = new MediaMetadata.Builder().setTitle("first").build();
+        when(mMediaController.getPlaybackState()).thenReturn(Player.STATE_READY);
+        when(mMediaController.getPlayWhenReady()).thenReturn(true);
+        listener().onMediaMetadataChanged(metadata);
 
-        // Create new MediaBrowser, new MediaController and associated callback captor
-        MediaBrowserCompat newMediaBrowser = mock(MediaBrowserCompat.class);
-        MediaControllerCompat newController = mock(MediaControllerCompat.class);
-        mBrowserToController.put(newMediaBrowser, newController);
-
-        ArgumentCaptor<MediaControllerCompat.Callback> newCallbackCaptor =
-                ArgumentCaptor.forClass(MediaControllerCompat.Callback.class);
-        doNothing().when(newController).registerCallback(newCallbackCaptor.capture());
-
-        // Wire up new data for new MediaController
-        MediaMetadataCompat newMetadata = mock(MediaMetadataCompat.class);
-        PlaybackStateCompat newPlaybackState = mock(PlaybackStateCompat.class);
+        MediaBrowser newController = newController();
+        when(newController.getPlaybackState()).thenReturn(Player.STATE_BUFFERING);
+        MediaMetadata newMetadata = new MediaMetadata.Builder().setTitle("second").build();
 
         // Ensure that all values are coming from the correct MediaController.
         mPlaybackViewModel.getMetadata().observe(mLifecycleOwner, mediaItemMetadata -> {
             if (mPlaybackViewModel.getMediaMetadata() == newMetadata) {
                 assertThat(mPlaybackViewModel.getMediaController()).isSameInstanceAs(newController);
             }
-            if (mPlaybackViewModel.getMediaMetadata() == mMediaMetadata) {
+            if (mPlaybackViewModel.getMediaMetadata() == metadata) {
                 assertThat(mPlaybackViewModel.getMediaController())
                         .isSameInstanceAs(mMediaController);
             }
@@ -228,34 +316,43 @@ public class PlaybackViewModelTest {
         mPlaybackViewModel.getPlaybackStateWrapper().observe(mLifecycleOwner, state -> {
             if (state == null) return;
 
-            if (state.getStateCompat() == newPlaybackState) {
+            if (state.getStateCompat().getState() == PlaybackStateCompat.STATE_BUFFERING) {
                 assertThat(mPlaybackViewModel.getMediaController()).isSameInstanceAs(newController);
             }
-            if (state.getStateCompat() == mPlaybackState) {
+            if (state.getStateCompat().getState() == PlaybackStateCompat.STATE_PLAYING) {
                 assertThat(mPlaybackViewModel.getMediaController())
                         .isSameInstanceAs(mMediaController);
             }
         });
 
         mBrowsingStateLD.setValue(
-                new BrowsingState(mMediaSource, newMediaBrowser, ConnectionStatus.CONNECTED));
-        deliverValuesToCallbacks(newCallbackCaptor, newMetadata, newPlaybackState);
+                new BrowsingState(mMediaSource, newController, ConnectionStatus.CONNECTED));
+
+        assertThat(mPlaybackViewModel.getMediaController()).isSameInstanceAs(newController);
+        mPlaybackViewModel.getPlayerListener().onMediaMetadataChanged(newMetadata);
+        assertThat(mPlaybackViewModel.getMediaMetadata()).isSameInstanceAs(newMetadata);
     }
 
-    private void deliverValuesToCallbacks(
-            ArgumentCaptor<MediaControllerCompat.Callback> callbackCaptor,
-            MediaMetadataCompat metadata,
-            PlaybackStateCompat playbackState) {
-        for (MediaControllerCompat.Callback callback : callbackCaptor.getAllValues()) {
-            callback.onMetadataChanged(metadata);
-            callback.onPlaybackStateChanged(playbackState);
+    private static Player.Events events(int... flags) {
+        FlagSet.Builder builder = new FlagSet.Builder();
+        for (int flag : flags) {
+            builder.add(flag);
+        }
+        return new Player.Events(builder.build());
+    }
+
+    private static void setQueue(@NonNull MediaBrowser controller, MediaItem... items) {
+        when(controller.getMediaItemCount()).thenReturn(items.length);
+        for (int i = 0; i < items.length; i++) {
+            when(controller.getMediaItemAt(i)).thenReturn(items[i]);
         }
     }
 
     @NonNull
-    private MediaSessionCompat.QueueItem createQueueItem(String title, int queueId) {
-        MediaDescriptionCompat description =
-                new MediaDescriptionCompat.Builder().setTitle(title).build();
-        return new MediaSessionCompat.QueueItem(description, queueId);
+    private static MediaItem queueItem(String title) {
+        return new MediaItem.Builder()
+                .setMediaId(title)
+                .setMediaMetadata(new MediaMetadata.Builder().setTitle(title).build())
+                .build();
     }
 }
