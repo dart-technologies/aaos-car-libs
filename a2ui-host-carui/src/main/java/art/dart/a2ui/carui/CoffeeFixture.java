@@ -41,13 +41,15 @@ final class CoffeeFixture {
     /** The script's cap, one way; a fixture claiming more is not this demo's. */
     static final int MAX_WALK_MINUTES = 6;
     private static final Pattern PRICE = Pattern.compile("\\$\\d{1,2}(\\.\\d{2})?");
+    /** The only lead-ins a source line may have: a cited host, or the café that came second. */
+    private static final String[] SOURCE_PREFIXES = {"Source · ", "Runner-up: "};
 
     static final class Pick {
         @NonNull final String mName;
         final int mWalkMinutes;
-        /** "Muse picked it · open till 7 · oat milk · 2 min walk": cited fields only. */
+        /** "Muse compared 15 cafés · open till 7 · oat milk · 3 min walk": cited fields only. */
         @NonNull final String mWhy;
-        /** "Source · host" for the citation behind the opening hours. */
+        /** "Source · host" for the citation behind the hours, or "Runner-up: name". */
         @NonNull final String mSource;
         /** A menu price the research cited, or null: no price is ever made up. */
         @Nullable final String mPrice;
@@ -80,14 +82,15 @@ final class CoffeeFixture {
             return mName + " · " + mWalkMinutes + " min walk from the charger";
         }
 
+        /** A demo order: nothing reaches the café, so nothing says the coffee is ready. */
         @NonNull
         String pickupTitle() {
-            return "Coffee ready at " + mName;
+            return "Demo order · " + mName;
         }
 
         @NonNull
         String pickupDetail() {
-            return "Oat milk latte · " + mWalkMinutes + " min walk";
+            return "Oat milk latte · not sent · " + mWalkMinutes + " min walk";
         }
 
         @NonNull
@@ -123,7 +126,7 @@ final class CoffeeFixture {
             String charger = display.getString("charger").trim();
             String price = display.isNull("price") ? null : display.getString("price").trim();
             if (name.isEmpty() || why.isEmpty() || charger.isEmpty()
-                    || !source.startsWith("Source · ") || walk < 1 || walk > MAX_WALK_MINUTES) {
+                    || !knownSource(source) || walk < 1 || walk > MAX_WALK_MINUTES) {
                 return null;
             }
             return new Pick(name, walk, why, source,
@@ -131,5 +134,15 @@ final class CoffeeFixture {
         } catch (JSONException malformed) {
             return null;
         }
+    }
+
+    /** A known lead-in with something after it; anything else drops the card (fail closed). */
+    private static boolean knownSource(@NonNull String source) {
+        for (String prefix : SOURCE_PREFIXES) {
+            if (source.startsWith(prefix) && !source.substring(prefix.length()).trim().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

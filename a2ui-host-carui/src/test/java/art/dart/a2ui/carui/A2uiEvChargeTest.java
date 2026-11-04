@@ -56,7 +56,8 @@ public class A2uiEvChargeTest {
 
     private static final int DRIVE = 0xff;
     private static final String SUGGESTION_20 = "Battery 20% · 3 chargers on your way";
-    private static final String SESSION = "Charging · 20% → 80% · about 22 min";
+    /** The station and the vehicle's reading only: ChargePoint tags no kW, so no rate or ETA. */
+    private static final String SESSION = "Charging at ChargePoint · 20%";
     private static final String CREDIT = " · © OpenStreetMap";
     private static final String COFFEE = "Coffee ready at the counter";
     private static final String NOTE = "Demo · nothing sent to the café";
@@ -142,6 +143,8 @@ public class A2uiEvChargeTest {
 
         assertThat(activity.mAtCharger).isTrue();
         assertGlanceable(row(activity, SESSION));
+        assertThat(body(row(activity, SESSION))).isEmpty();
+        assertThat(String.join(" ", titles(activity))).doesNotContain("80%");
         assertThat(titles(activity)).doesNotContain(SUGGESTION_20);
         assertThat(titles(activity)).contains("Finish the Met tour");
         // Parked at the charger it was picked for: why this café, and where that came from.
@@ -158,11 +161,13 @@ public class A2uiEvChargeTest {
                 cafe.mName + " · " + cafe.mWalkMinutes + " min walk from the charger");
         confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
-        String pickup = "Coffee ready at " + cafe.mName;
+        // A demo order, never sent: nothing on the card says the coffee is ready.
+        String pickup = "Demo order · " + cafe.mName;
         assertGlanceable(row(activity, pickup));
         assertThat(body(row(activity, pickup))).containsExactly(
-                "Oat milk latte · " + cafe.mWalkMinutes + " min walk", NOTE).inOrder();
+                "Oat milk latte · not sent · " + cafe.mWalkMinutes + " min walk");
         assertThat(titles(activity)).doesNotContain(COFFEE);
+        assertThat(String.join(" ", titles(activity))).doesNotContain("ready");
         assertThat(titles(activity)).contains(cafe.whyTitle());
 
         drive(activity, DRIVE);
@@ -205,8 +210,11 @@ public class A2uiEvChargeTest {
         // Measured from the charger "take me to the first one" picks: the nearest Host B draws.
         assertThat(cafe.mCharger).isEqualTo("ChargePoint");
         assertThat(cafe.mWalkMinutes).isAtMost(CoffeeFixture.MAX_WALK_MINUTES);
-        assertThat(cafe.mWhy).startsWith("Muse picked it · ");
+        assertThat(cafe.mWhy.startsWith("Muse picked it · ")
+                || cafe.mWhy.startsWith("Muse compared ")).isTrue();
         assertThat(cafe.mWhy).endsWith(" · " + cafe.mWalkMinutes + " min walk");
+        assertThat(cafe.mSource.startsWith("Source · ")
+                || cafe.mSource.startsWith("Runner-up: ")).isTrue();
     }
 
     @Test
@@ -217,8 +225,8 @@ public class A2uiEvChargeTest {
         assertThat(pick).isNotNull();
         assertThat(pick.confirmTitle()).isEqualTo("Order your usual: oat milk latte?");
         assertThat(pick.confirmDetail()).isEqualTo("Cafe · 2 min walk from the charger");
-        assertThat(pick.pickupTitle()).isEqualTo("Coffee ready at Cafe");
-        assertThat(pick.pickupDetail()).isEqualTo("Oat milk latte · 2 min walk");
+        assertThat(pick.pickupTitle()).isEqualTo("Demo order · Cafe");
+        assertThat(pick.pickupDetail()).isEqualTo("Oat milk latte · not sent · 2 min walk");
         assertThat(pick.whyBody()).containsExactly("Muse picked it · 2 min walk", "Source · a.com")
                 .inOrder();
         assertThat(pick.isNear("ChargePoint")).isTrue();
@@ -231,6 +239,14 @@ public class A2uiEvChargeTest {
         assertThat(CoffeeFixture.parse(ok.replace("'walkMinutes':2", "'walkMinutes':7")))
                 .isNull();
         assertThat(CoffeeFixture.parse(ok.replace("Source · ", ""))).isNull();
+        // The runner-up may stand in for the source line; any other lead-in fails closed.
+        assertThat(CoffeeFixture.parse(ok.replace("Source · a.com", "Runner-up: Other Cafe"))
+                .whyBody()).containsExactly("Muse picked it · 2 min walk",
+                        "Runner-up: Other Cafe").inOrder();
+        assertThat(CoffeeFixture.parse(ok.replace("Source · a.com", "Runner-up: "))).isNull();
+        assertThat(CoffeeFixture.parse(ok.replace("Source · a.com", "Source · "))).isNull();
+        assertThat(CoffeeFixture.parse(ok.replace("Source · a.com", "Rated: Other Cafe")))
+                .isNull();
         assertThat(CoffeeFixture.parse(ok.replace("'name':'Cafe'", "'name':' '"))).isNull();
         assertThat(CoffeeFixture.parse("{}")).isNull();
         assertThat(CoffeeFixture.parse("nope")).isNull();

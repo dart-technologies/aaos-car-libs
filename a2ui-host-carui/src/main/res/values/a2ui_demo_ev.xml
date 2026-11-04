@@ -13,6 +13,8 @@
     <string name="a2ui_ev_chargers_credit">© OpenStreetMap</string>
     <!-- %1$s the chosen charger. -->
     <string name="a2ui_ev_navigating">Navigating to %1$s</string>
-    <!-- %1$s percent at arrival, %2$s time to 80%. -->
-    <string name="a2ui_ev_session_title">Charging · %1$s%% → 80%% · %2$s</string>
+    <!-- %1$s the charger, %2$d the vehicle's battery percent. No rate is known, so no ETA. -->
+    <string name="a2ui_ev_session_title">Charging at %1$s · %2$d%%</string>
+    <!-- %1$s the charger, before the vehicle reports a battery reading. -->
+    <string name="a2ui_ev_session_title_no_reading">Charging at %1$s</string>
 </resources>

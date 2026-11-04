@@ -1527,12 +1527,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             String title = journeyData(journey, journey.mConfirmTitle);
             List<String> body = new ArrayList<>();
             for (String pointer : journey.mConfirmBody) body.add(journeyData(journey, pointer));
-            // The real café's name only for the charger it was picked for; the trace's note stays.
+            // The real café's name only for the charger it was picked for. Its one line says the
+            // order was not sent, so the trace's note would only repeat it.
             CoffeeFixture.Pick coffee = journey == HostJourney.forSurface("ev_charge_coffee")
                     ? coffeeNearCharger() : null;
             if (coffee != null && !body.isEmpty()) {
                 title = coffee.pickupTitle();
-                body.set(0, coffee.pickupDetail());
+                body.clear();
+                body.add(coffee.pickupDetail());
             }
             addRow(rows, keys, HostRows.ORDER, HostRows.card(allowed, limits, title, body,
                     null, getDrawable(journey.mConfirmGlyph)));
@@ -1589,14 +1591,16 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (!"ev_charge_coffee".equals(mSurfaceId)) return;
         Integer pct = batteryPct();
         if (mAtCharger && parked) {
-            Integer start = mChargeStartPct != null ? mChargeStartPct : pct;
-            String detail = journeyData(HostJourney.forSurface(mSurfaceId), "/session/detail");
-            addRow(rows, keys, HostRows.SESSION, HostRows.card(allowed, limits,
-                    getString(R.string.a2ui_ev_session_title,
-                            start == null ? "–" : String.valueOf(start),
-                            detail == null ? "" : detail),
-                    Collections.singletonList(chargerName(mChosenCharger)),
-                    null, getDrawable(R.drawable.a2ui_ic_battery)));
+            // Only what is known: the station and the vehicle's reading. No charge rate, so no
+            // target or time to full.
+            String station = chargerName(mChosenCharger);
+            Integer now = pct != null ? pct : mChargeStartPct;
+            if (station != null) {
+                addRow(rows, keys, HostRows.SESSION, HostRows.card(allowed, limits,
+                        now == null ? getString(R.string.a2ui_ev_session_title_no_reading, station)
+                                : getString(R.string.a2ui_ev_session_title, station, now),
+                        Collections.emptyList(), null, getDrawable(R.drawable.a2ui_ic_battery)));
+            }
             return;
         }
         if (!lowBattery(pct)) {
