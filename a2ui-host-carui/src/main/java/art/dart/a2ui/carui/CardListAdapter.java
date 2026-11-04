@@ -52,6 +52,8 @@ final class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.Holder>
     /** A subtitle that leads with a distance. */
     private static final Pattern SUBTITLE_DISTANCE =
             Pattern.compile("^(\\d+(\\.\\d+)?\\s?mi)\\s·\\s(.+)$");
+    /** A subtitle that is only a distance. */
+    private static final Pattern SUBTITLE_ONLY_DISTANCE = Pattern.compile("^\\d+(\\.\\d+)?\\s?mi$");
     /** A subtitle that ends with a position, e.g. "(3/6)". */
     private static final Pattern SUBTITLE_POSITION = Pattern.compile("^(.*\\S)\\s\\((\\d+/\\d+)\\)$");
     private static final String VOICE_HINT_PREFIX = "say “";
@@ -129,6 +131,9 @@ final class CardListAdapter extends RecyclerView.Adapter<CardListAdapter.Holder>
             if (d.matches()) {
                 meta = d.group(1);
                 subtitle = d.group(3);
+            } else if (SUBTITLE_ONLY_DISTANCE.matcher(subtitle).matches()) {
+                meta = subtitle;
+                subtitle = lines.isEmpty() ? null : lines.remove(0);
             } else if (p.matches()) {
                 meta = p.group(2);
                 subtitle = p.group(1);
