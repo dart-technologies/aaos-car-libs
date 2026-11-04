@@ -23,8 +23,8 @@ captured Nov 4 (`demo/context/nyc-met-2026-11-05.json`), an OSRM route and OSM c
 CC0 images, and a real OSM café near the first charger that Muse picked from cited sources; its
 ticket and coffee order are demos and nothing is booked, sent or paid. Its narration never says
 "demo" or claims a transaction (`check-nyc-demo.py` enforces both); one low-contrast line in the
-canvas margin says so for the whole video: "Simulated drive on the Android Automotive emulator ·
-demo data · no affiliation with places shown".
+canvas margin says so for the whole video, in the same words as the closing card's top line:
+"Simulated demo drive on Android Automotive OS emulator".
 
 ## Corpus (`UseCaseCorpus`: 10 cases, all 18 catalog types)
 

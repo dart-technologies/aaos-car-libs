@@ -311,7 +311,7 @@
       "titleCard": {"image": "a2ui-automotive/demo/cards/nyc_met-title.png", "seconds": 2.5},
       "disclaimer": {
         "image": "a2ui-automotive/demo/cards/nyc_met-disclaimer.png",
-        "text": "Simulated drive on the Android Automotive emulator · demo data · no affiliation with places shown"
+        "text": "Simulated demo drive on Android Automotive OS emulator"
       },
       "preamble": [
         {"style": "unsafe", "frameAtMs": 12000, "seconds": 4.8, "chip": "Driving · 40 mph", "clipId": "pre_narration_01"},

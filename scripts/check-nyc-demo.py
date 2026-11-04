@@ -46,6 +46,9 @@ PREAMBLE_STYLES = ["unsafe", "useless", "answer"]
 # Spoken lines never call the story a demo, nor claim a booking or order went anywhere; the
 # margin disclaimer carries the demo's nature for the whole video.
 NEVER_SAID = re.compile(r"\b(demo|sent|booked|paid|placed|ordered)\b", re.I)
+# One disclaimer, word for word, wherever a disclaimer or a card's top line appears: the margin
+# line for the whole video and the closing card's note.
+DISCLAIMER = "Simulated demo drive on Android Automotive OS emulator"
 
 
 def preamble_seconds(scenario: dict) -> float:
@@ -219,9 +222,8 @@ def check_met_story(scenario: dict) -> None:
     if image.parent != CARDS.resolve() or not image.is_file() or \
             image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
         fail(f"nyc_met disclaimer is not a PNG in {CARDS.relative_to(ROOT)}")
-    if not all(word in str(note.get("text", "")) for word in (
-            "emulator", "demo data", "no affiliation")):
-        fail("nyc_met disclaimer must say simulated on the emulator, demo data, no affiliation")
+    if note.get("text") != DISCLAIMER:
+        fail(f"nyc_met disclaimer must read exactly {DISCLAIMER!r}")
     check_preamble(scenario)
     check_outro(scenario)
     portrait = json.loads(FILM_PORTRAIT.read_text(encoding="utf-8"))
@@ -297,8 +299,8 @@ def check_outro(scenario: dict) -> None:
     if any(len(box) != 1 or not set(box) <= {"badge", "title"} for box in boxes):
         fail("closing card's architecture boxes are titles only: one badge or title each")
     note = outro.get("note", "")
-    if not re.search(r"\bsimulated\b", note, re.I) or not re.search(r"\bemulator\b", note, re.I):
-        fail("closing card's note says the drive is simulated on the emulator")
+    if note != DISCLAIMER:
+        fail(f"closing card's note is the one disclaimer, {DISCLAIMER!r}")
     if "footer" in outro:
         fail("closing card has no tagline or footer: its narration carries the line")
     words = [note, *outro.get("places", []), *(b["label"] for b in beats),
