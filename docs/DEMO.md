@@ -81,16 +81,18 @@ Post-production, after capture and from the same raw recording, so it always mat
 
 - `preamble`: cards prepended before the timeline. Each names a `style` (`unsafe`: the frame tinted
   red under a red "Driving · 40 mph" chip; `useless`: greyed under a lock and `lockText`; `answer`:
-  untouched), the `frameAtMs` of the raw driver frame it wraps, `seconds`, a `caption` and its
-  narration `clipId`. `nyc_met`: unsafe and useless wrap the parked brief at 12 s, answer the pruned
+  untouched), the `frameAtMs` of the raw driver frame it wraps, `seconds` and its narration
+  `clipId`. No caption is baked in: the burned-in captions carry the narration. `nyc_met`: unsafe and useless wrap the parked brief at 12 s, answer the pruned
   driving screen at 26 s; 4.8 + 3.3 + 5.4 s, each dipping to the background.
-- `outro`: a closing card after the timeline, fading in over its held last frame. The journey as
-  vehicle-state segments from the `carState` actions (green parked, blue driving, labelled with
-  `places`), a real thumbnail at each `beats` time (driver above, passenger below the driving
-  segments; a placeholder tile if a frame cannot be extracted), the `architecture` boxes (Muse's with
-  a "Muse · Meta" text badge and the Muse icon in white), and the `footer`. `nyc_met`: 8.5 s, one
+- `outro`: a closing card after the timeline, fading in over its held last frame. A calm `note`
+  on top, the journey as vehicle-state segments from the `carState` actions (green parked, blue
+  driving, labelled with `places`), a real thumbnail at each `beats` time (driver above, passenger
+  below the driving segments; a placeholder tile if a frame cannot be extracted), and the
+  `architecture` as title-only boxes (Muse's is the "Muse · Meta" badge with the Muse icon in
+  white, the card's only Muse mention). It ends above the caption band. `nyc_met`: 8.5 s, one
   narration line then 2 s of silence.
-- `disclaimer`: a PNG line in the canvas margin, outside both panels, for the whole video.
+- `disclaimer`: a PNG line in the canvas margin, outside both panels, for the whole video. In the
+  cockpit it sits in the rail band and is gone before the closing card fades in.
 - Clips take an optional `section`: `preamble` clips count from the start of the video, `outro`
   clips from the closing card, the rest from the device timeline. The video is preamble + timeline +
   outro and must stay within 60–180 s; `durationSeconds` is the device timeline.

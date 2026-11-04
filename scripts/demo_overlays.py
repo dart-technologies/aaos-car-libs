@@ -89,7 +89,7 @@ MIN_SHOWN_S = 1.2
 MAX_CPS = 20.0                # never faster than 20 characters a second, whatever the audio
 GAP_S = 0.08                  # captions never touch: the next one starts after this gap
 SPEAKERS = {"user_utterance": "Passenger"}
-# The closing card's footer sits just above the caption band: one-line captions there.
+# The closing card ends just above the caption band: one-line captions there.
 SECTION_MAX_LINES = {"outro": 1}
 LANES = {"audio_guide": "Audio guide"}
 
