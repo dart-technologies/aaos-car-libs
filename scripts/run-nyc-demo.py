@@ -34,6 +34,7 @@ AUDIO_DIR = ROOT / "a2ui-automotive/demo/audio/elevenlabs"
 CARDS = ROOT / "a2ui-automotive/demo/cards"
 PACKAGE = "art.dart.a2ui.carui"
 ACTIVITY = "art.dart.a2ui.carui.A2uiCarUiActivity"
+PASSENGER_ACTIVITY = "art.dart.a2ui.carui.A2uiPassengerActivity"
 ACTION_SET = "art.dart.a2ui.demo.action.SET"
 EXTRA_ACTIVE = "art.dart.a2ui.demo.extra.ACTIVE"
 ACTION_CASE = "art.dart.a2ui.carapp.action.CASE"
@@ -111,12 +112,15 @@ def set_car_state(state: str) -> None:
         raise DemoFailure(f"car_service could not enter {state}; refusing to substitute DEMO UXR")
 
 
-def launch() -> None:
+def launch(passenger_launch_display: str | None = None) -> None:
     # Reset retained Activity state so every recording begins on the same base surface. Selecting
     # the scenario happens only after screenrecord starts; otherwise Android may use the first
     # interaction 10–15 seconds later as PTS zero and silently truncate the narration timeline.
     adb_shell("am", "force-stop", "--user", "current", PACKAGE)
     adb("shell", "am", "start", "--user", "current", "-n", f"{PACKAGE}/{ACTIVITY}")
+    if passenger_launch_display:  # force-stop took the passenger surface down too
+        adb("shell", "am", "start", "--user", "current", "--display", passenger_launch_display,
+            "-n", f"{PACKAGE}/{PASSENGER_ACTIVITY}")
     time.sleep(3)
     # Clear an old synthetic override while the base surface is visible.
     broadcast(ACTION_SET, "--ei", EXTRA_ACTIVE, "-1")
@@ -749,6 +753,8 @@ def main() -> int:
                         help="driver physical SurfaceFlinger display id; never inferred")
     parser.add_argument("--passenger-display-id",
                         help="passenger physical display id, for dual-layout scenarios")
+    parser.add_argument("--passenger-launch-display", default="2",
+                        help="logical display id the passenger activity starts on (dual layout)")
     parser.add_argument("--require-avd", default="AAOS_35_1408p_GoogleAPIs")
     parser.add_argument("--audio-dir", type=pathlib.Path, default=AUDIO_DIR,
                         help="content-addressed TTS/STT cache (defaults to the ElevenLabs cache)")
@@ -773,7 +779,7 @@ def main() -> int:
     if any(action["type"] == "vehicleSignal" for action in scenario["actions"]):
         # Host B reads EV_BATTERY_LEVEL only with this runtime permission (VehicleEnergy).
         adb_shell("pm", "grant", PACKAGE, "android.car.permission.CAR_ENERGY", check=False)
-    launch()
+    launch(args.passenger_launch_display if layout == "dual" else None)
     if dual:
         broadcast(ACTION_PASSENGER, "--es", EXTRA_MEDIA, "stop")
     adb("shell", "rm", "-f", DEVICE_VIDEO, DEVICE_PASSENGER_VIDEO, check=False)
