@@ -314,16 +314,16 @@
         "text": "Simulated drive on the Android Automotive emulator · demo data · no affiliation with places shown"
       },
       "preamble": [
-        {"style": "unsafe", "frameAtMs": 12000, "seconds": 4.8, "chip": "Driving · 40 mph", "caption": "A model can't see the road.", "clipId": "pre_narration_01"},
-        {"style": "useless", "frameAtMs": 12000, "seconds": 3.3, "chip": "Driving · 40 mph", "lockText": "Not available while driving", "caption": "So most cars lock you out.", "clipId": "pre_narration_02"},
-        {"style": "answer", "frameAtMs": 26000, "seconds": 5.4, "chip": "Driving", "caption": "Muse designs it. The car decides what fits the moment.", "clipId": "pre_narration_03"}
+        {"style": "unsafe", "frameAtMs": 12000, "seconds": 4.8, "chip": "Driving · 40 mph", "clipId": "pre_narration_01"},
+        {"style": "useless", "frameAtMs": 12000, "seconds": 3.3, "chip": "Driving · 40 mph", "lockText": "Not available while driving", "clipId": "pre_narration_02"},
+        {"style": "answer", "frameAtMs": 26000, "seconds": 5.4, "chip": "Driving", "clipId": "pre_narration_03"}
       ],
       "outro": {
         "seconds": 8.5,
         "clipId": "outro_narration_01",
         "places": ["Hudson Yards", "The Met", "charging"],
         "beats": [
-          {"atMs": 12000, "display": "driver", "label": "Muse brief"},
+          {"atMs": 12000, "display": "driver", "label": "Cited brief"},
           {"atMs": 22000, "display": "driver", "label": "Ticket confirmed"},
           {"atMs": 40000, "display": "driver", "label": "Audio guide"},
           {"atMs": 71000, "display": "driver", "label": "Film, parked"},
@@ -333,15 +333,15 @@
           {"atMs": 45000, "display": "passenger", "label": "Passenger · film"},
           {"atMs": 86000, "display": "passenger", "label": "Passenger · Big Buck Bunny"}
         ],
+        "note": "Simulated demo drive on Android Automotive OS emulator",
         "badgeIcon": "a2ui-automotive/demo/cards/brand/muse-icon-white.png",
         "architecture": [
-          {"badge": "Muse · Meta", "tag": "cloud", "lines": ["Cited web search", "Café research", "Audio guide"]},
-          {"title": "Dev gateway", "lines": ["Any model", "A2UI catalog-constrained JSON", "Citations kept"]},
-          {"title": "A2UI host", "lines": ["On stock Android Automotive"]},
-          {"title": "Vehicle policy", "lines": ["Driving state", "Fail-closed", "Per display"]},
-          {"title": "Displays", "lines": ["Driver", "Passenger"]}
-        ],
-        "footer": ["Any model can design the screen. The car decides.", "Built with Meta Muse · github.com/dart-technologies/aaos-car-libs"]
+          {"badge": "Muse · Meta"},
+          {"title": "Dev gateway"},
+          {"title": "A2UI host"},
+          {"title": "Vehicle policy"},
+          {"title": "Driver & passenger displays"}
+        ]
       },
       "premise": "Why it matters first: three cards built from this recording's own frames show a model-designed screen that cannot see the road, the lockout most cars use instead, and the pruned driving screen. Then Thursday afternoon at Hudson Yards. Parked, Muse gives a cited brief, and timed entry waits for a parked confirmation. In drive the driver's screen simplifies while the passenger's screen plays the artwork film and Muse's audio guide plays for everyone; parked at The Met, the film moves to the driver's screen. After the visit a low battery brings up three nearby chargers; parked and charging, Muse's cited café pick backs the usual coffee, and the driver opens Big Buck Bunny, which the car allows only while parked. A closing card maps the journey and the architecture.",
       "parameterRationale": [

@@ -10,7 +10,7 @@ before. Either may open on a title card and hold its end card.
 
 Post-production, all built from the same recording so it always matches the UI:
   preamble    problem cards rendered around frames of the raw driver recording, prepended;
-  outro       a closing card (the journey with real thumbnails, the architecture, the footer)
+  outro       a closing card (a one-line note, the journey with real thumbnails, the architecture)
               shown after the timeline over its held last frame;
   disclaimer  one small line in the canvas margin for the whole video.
 durationSeconds is the device timeline; the output is preamble + timeline + outro (60–180 s).
@@ -819,9 +819,18 @@ def cockpit_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
         last = f"[s{n}]"
         count += 1
     if plan.disclaimer is not None:  # centred in the rail band, clear of title and progress
-        command += ["-i", str(plan.disclaimer)]
         _, band_y, _, band_h = lay["railBand"]
-        filters.append(f"{last}[{count}:v]overlay=x=(W-w)/2:y={band_y}+({band_h}-h)/2[noted]")
+        if plan.outro is not None:  # the closing card carries its own note: gone before it
+            ends = head + target    # fades in, so the two lines never ghost over each other
+            command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{ends:.3f}",
+                        "-i", str(plan.disclaimer)]
+            filters.append(f"[{count}:v]format=rgba,fade=t=out:st={ends - OUTRO_FADE_S:.3f}:"
+                           f"d={OUTRO_FADE_S}:alpha=1[note];{last}[note]overlay=x=(W-w)/2:"
+                           f"y={band_y}+({band_h}-h)/2:eof_action=pass[noted]")
+        else:
+            command += ["-i", str(plan.disclaimer)]
+            filters.append(f"{last}[{count}:v]overlay=x=(W-w)/2:y={band_y}+({band_h}-h)/2"
+                           f"[noted]")
         last = "[noted]"
         count += 1
     filters.append(f"{last}format=yuv420p[v]")
@@ -917,8 +926,7 @@ def build_preamble(scenario: dict, raw_video: pathlib.Path,
         frame = extract_frame(raw_video, int(entry["frameAtMs"]) / 1000,
                               prefix.with_name(f"{prefix.name}.preamble-{n}.frame.png"))
         card = prefix.with_name(f"{prefix.name}.preamble-{n}.png")
-        args = ["preamble", "--style", entry["style"], "--caption", entry["caption"],
-                "--out", str(card)]
+        args = ["preamble", "--style", entry["style"], "--out", str(card)]
         if frame is not None:
             args += ["--frame", str(frame)]
         if entry.get("chip"):
@@ -974,7 +982,7 @@ def outro_spec(scenario: dict, frames: dict[int, pathlib.Path | None]) -> dict:
 
     icon = ROOT / outro["badgeIcon"] if outro.get("badgeIcon") else None
     return {"segments": spec_segments, "driver": lane("driver"), "passenger": lane("passenger"),
-            "architecture": outro.get("architecture", []), "footer": outro.get("footer", []),
+            "architecture": outro.get("architecture", []), "note": outro.get("note", ""),
             "icon": str(icon) if icon is not None and icon.is_file() else None}
 
 
