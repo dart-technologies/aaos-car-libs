@@ -83,8 +83,24 @@ def check_context(scenario_id: str, relative: str) -> None:
     if not weather.get("dayForecast"):
         fail(f"{name} has no forecast text")
     commerce = context.get("commerce", {})
-    if commerce.get("merchantStatus") not in {"fictional_demo", "none"}:
-        fail(f"{name} merchant is neither explicitly fictional nor absent")
+    status = commerce.get("merchantStatus")
+    if status not in {"fictional_demo", "none", "real_listing_no_order"}:
+        fail(f"{name} merchant is neither fictional, absent, nor a real listing with no order")
+    if status == "real_listing_no_order":
+        # A real place may be named, located and explained, never ordered from.
+        merchant = commerce.get("merchant", {})
+        listing = urllib.parse.urlparse(str(merchant.get("source", "")))
+        fixture = ROOT / str(merchant.get("fixture", ""))
+        if commerce.get("orderStatus") != "demo_not_sent":
+            fail(f"{name} names a real merchant, so its order must be a demo that is never sent")
+        if (listing.scheme != "https" or listing.hostname != "www.openstreetmap.org"
+                or "OpenStreetMap" not in str(merchant.get("attribution", ""))):
+            fail(f"{name} real merchant must cite and credit its OpenStreetMap listing")
+        if not merchant.get("name") or not fixture.is_file() or fixture.suffix != ".json":
+            fail(f"{name} real merchant needs a name and its curated fixture")
+        record = json.loads(fixture.read_text(encoding="utf-8"))
+        if record.get("display", {}).get("name") != merchant["name"]:
+            fail(f"{name} merchant is not the one {merchant['fixture']} picked")
     if commerce.get("paymentStatus") != "not_connected":
         fail(f"{name} must not connect a payment")
     # A story set on a later day uses that day's forecast period and says which day it is.
