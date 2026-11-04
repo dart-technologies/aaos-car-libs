@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<resources>
+    <string name="app_name">A2UI Showcase (car-ui-lib)</string>
+    <string name="status_placeholder">waiting for a restriction reading…</string>
+    <string name="status_badge_waiting">Safe mode · waiting</string>
+    <string name="status_badge_description">Restriction state. Tap to show or hide technical details.</string>
+    <string name="limited_label">ContentLimiting — opt-in, needs start()</string>
+    <string name="unlimited_label">ItemCap — automatic, silent</string>
+    <string name="handoff_label">handed-off surface</string>
+</resources>

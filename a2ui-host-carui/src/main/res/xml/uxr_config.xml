@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Per-list content-limit overrides for UxrContentLimiterImpl. Root is Mapping; children are
+  ListConfig. Deliberately empty of overrides: with no entry for a2ui_list the limiter falls back to
+  CarUxRestrictions.getMaxCumulativeContentItems(), the vehicle's own number, which is the case
+  worth demonstrating. An override here would show this app's opinion rather than the platform's.
+
+  NOTE: this comment block may be load-bearing. CarUxRestrictionsAppConfigParser opens with two bare
+  parser.next() calls, annotated "skip over the xml version tag" and "skip over the copyright comment
+  block", before it requires the root element — so the number of parser events preceding Mapping is
+  effectively part of the file format. Whether aapt2 preserves comments in compiled XML decides
+  whether that holds; verified on device rather than assumed. See README.md.
+-->
+<Mapping />

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Required: without the templates host nothing can render this app. -->
+    <uses-feature
+        android:name="android.software.car.templates_host"
+        android:required="true" />
+
+    <!-- Reading UX restrictions needs no permission; car-ui-lib's CarUxRestrictionsUtil binds to
+         car service, which any app may do for the restriction service. -->
+
+    <!-- For SpeechRecognizerBinding; requested at first use via CarContext.requestPermissions
+         (there is no app Activity). Without the declaration checkSelfPermission can never be
+         GRANTED. `adb shell pm grant art.dart.a2ui.carapp android.permission.RECORD_AUDIO` also
+         works. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@android:drawable/ic_media_play"
+        android:appCategory="audio">
+
+        <!-- The level the code needs, not the newest: the host refuses to bind an app declaring a
+             level it cannot serve. -->
+        <meta-data
+            android:name="androidx.car.app.minCarApiLevel"
+            android:value="7" />
+
+        <!-- The host's entire view of this app's styling: two accent colours. See themes.xml. -->
+        <meta-data
+            android:name="androidx.car.app.theme"
+            android:resource="@style/CarAppTheme" />
+
+        <service
+            android:name="art.dart.a2ui.carapp.A2uiCarAppService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.car.app.CarAppService" />
+                <category android:name="androidx.car.app.category.POI" />
+            </intent-filter>
+        </service>
+
+        <!-- From androidx.car.app:app-automotive: the AAOS launcher entry, binding to the on-device
+             templates host. The same CarAppService serves Android Auto. -->
+        <activity
+            android:name="androidx.car.app.activity.CarAppActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Without this the launcher hides the app while the vehicle moves. -->
+            <meta-data
+                android:name="distractionOptimized"
+                android:value="true" />
+        </activity>
+    </application>
+</manifest>

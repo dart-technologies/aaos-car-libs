@@ -1,0 +1,85 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Host A of the A2UI showcase: androidx.car.app. It renders through the stock templates host
+// (com.google.android.apps.automotive.templates.host), which validates what it is handed and
+// rejects templates over its limits, so a loosely modelled surface cannot pass here.
+
+apply plugin: 'com.android.application'
+
+android {
+    namespace = 'art.dart.a2ui.carapp'
+    compileSdk = gradle.ext.aaosLatestSDK
+
+
+    defaultConfig {
+        applicationId "art.dart.a2ui.carapp"
+        // 30, not the repo-wide 28: the templates host requires 30, so lower would install where
+        // nothing can render it.
+        minSdk = 30
+        targetSdk = gradle.ext.aaosTargetSDK
+        versionCode 1
+        versionName "1.0"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            // Matches every other module: android.jar / android.car.jar are stub
+            // jars whose methods throw RuntimeException("Stub!").
+            returnDefaultValues = true
+        }
+    }
+
+    // For android.car.drivingstate.CarUxRestrictions, read through car-ui-lib's
+    // CarUxRestrictionsUtil rather than re-derived here.
+    useLibrary 'android.car'
+}
+
+dependencies {
+    // Shared verbatim with :a2ui-host-carui; neither host depends on the other.
+    implementation project(':a2ui-model')
+
+    // 1.7.0, the newest stable: this is the demo artifact, so no alpha or beta.
+    implementation libs.androidx.carapp.app
+    // The AAOS half: CarAppActivity, which binds to the on-device templates host.
+    implementation libs.androidx.carapp.automotive
+
+    // For CarUxRestrictionsUtil, whose readings carry provenance (delivered / never delivered /
+    // disconnected) that the conformance format cannot express.
+    implementation project(':car-ui-lib')
+
+    // Explicit guava pin: androidx.car.app brings 31.1-android, inside CVE-2023-2976.
+    // 33.2.1-android matches car-telephony-common; re-verified against the real templates host.
+    implementation libs.guava
+
+    api libs.androidx.annotation
+
+    testImplementation libs.junit
+    testImplementation libs.truth
+    testImplementation libs.mockito.core
+
+    // Robolectric's ShadowSpeechRecognizer drives SpeechRecognizerBinding's success path (a Bundle
+    // cannot be populated against the stub android.jar). app-testing's TestCarContext exposes
+    // getLastPermissionRequestInfo() for the microphone request flow.
+    testImplementation libs.robolectric
+    testImplementation libs.androidx.carapp.testing
+}

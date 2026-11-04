@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Unlike Host A: no templates host to negotiate with; this renders in process. car-ui-lib
+         resolves the OEM's views at runtime through CarUiInstaller, a ContentProvider its manifest
+         contributes, and negotiates the plugin version silently in PluginFactoryAdapterV2. -->
+
+    <!-- Voice capture: requested on first use, not at launch. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@android:drawable/ic_menu_sort_by_size">
+
+        <!--
+          Required: CarUiInstaller acts only on activities whose theme sets carUiActivity, and
+          without its factory the CarUiRecyclerView tag (an interface) fails to inflate.
+          Theme.CarUi.WithToolbar also adds the OEM-supplied toolbar.
+        -->
+        <activity
+            android:name="art.dart.a2ui.carui.A2uiCarUiActivity"
+            android:exported="true"
+            android:theme="@style/Theme.CarUi.WithToolbar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Without this the launcher hides the app while the vehicle moves. -->
+            <meta-data
+                android:name="distractionOptimized"
+                android:value="true" />
+        </activity>
+    </application>
+</manifest>

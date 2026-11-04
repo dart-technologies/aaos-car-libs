@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+  Licensed under the Apache License, Version 2.0.
+
+  The OEM-swappable surface of THIS package. See a2ui-host-carapp's equivalent for why each package
+  needs its own: an RRO targets a package, and a statically-linked library has none of its own.
+
+  Host B's A2UI content is deliberately absent from this list. It is rendered by the OEM plugin's
+  own views, so its appearance is already the OEM's and overlaying it here would be a second,
+  competing route to the same thing.
+-->
+<!--
+  In res/values/: Gradle here declares no res-overlayable/ directory, so a file there would ship
+  nothing silently. scripts/check-overlayable-packaged.py checks the APK.
+-->
+<resources>
+  <overlayable name="A2uiHostCarUi">
+    <policy type="public">
+      <item type="dimen" name="a2ui_diagnostic_padding_horizontal"/>
+      <item type="dimen" name="a2ui_diagnostic_padding_vertical"/>
+      <item type="dimen" name="a2ui_diagnostic_text_size"/>
+      <item type="dimen" name="a2ui_status_badge_padding_horizontal"/>
+      <item type="dimen" name="a2ui_status_badge_padding_vertical"/>
+      <item type="dimen" name="a2ui_status_badge_text_size"/>
+      <item type="dimen" name="a2ui_status_badge_radius"/>
+      <item type="dimen" name="a2ui_diagnostic_detail_margin_top"/>
+      <item type="dimen" name="a2ui_brand_heading_text_size"/>
+      <item type="dimen" name="a2ui_brand_heading_margin_horizontal"/>
+      <!-- Central brand tokens affect only app-owned demo chrome, never OEM plugin widgets. -->
+      <item type="color" name="a2ui_brand_header_surface"/>
+      <item type="color" name="a2ui_brand_badge_surface"/>
+      <item type="color" name="a2ui_brand_accent"/>
+      <item type="color" name="a2ui_brand_on_surface"/>
+      <item type="color" name="a2ui_brand_video_stage"/>
+      <item type="string" name="a2ui_brand_toolbar_title"/>
+      <item type="string" name="a2ui_brand_pickup_heading"/>
+      <item type="string" name="a2ui_brand_city_note_heading"/>
+      <item type="string" name="a2ui_brand_thinking_title"/>
+      <item type="string" name="a2ui_brand_thinking_body"/>
+      <item type="string" name="a2ui_brand_media_title"/>
+      <item type="string" name="a2ui_brand_media_artist"/>
+      <item type="string" name="a2ui_brand_video_caption"/>
+      <item type="drawable" name="a2ui_status_badge"/>
+      <item type="drawable" name="a2ui_ic_umbrella"/>
+      <item type="drawable" name="a2ui_ic_pickup"/>
+      <item type="drawable" name="a2ui_ic_thinking"/>
+      <item type="style" name="A2uiBrandStatusBadge"/>
+      <item type="style" name="A2uiBrandSectionHeading"/>
+    </policy>
+  </overlayable>
+</resources>
