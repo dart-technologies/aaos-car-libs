@@ -16,9 +16,10 @@ disqualified, not guessed.
 
   scripts/muse-curate-coffee.py [--research-effort low] [--scoring-effort medium] [--refresh]
 
-The Overpass response and the research are cached in build/muse-curate-coffee/, so a rerun repeats
-only the scoring call. Writes fixtures/coffee/{COFFEE,SOURCE}.json. The key is read from
-META_API_KEY only and never printed; every request carries a neutral User-Agent.
+The Overpass response, the research and the scoring answer are cached in build/muse-curate-coffee/:
+a rerun repeats only the scoring call, and --reuse-scores rebuilds the fixture with no call at all.
+Writes fixtures/coffee/{COFFEE,SOURCE}.json. The key is read from META_API_KEY only and never
+printed; every request carries a neutral User-Agent.
 """
 
 from __future__ import annotations
@@ -424,8 +425,18 @@ def host(url: str) -> str:
     return name[4:] if name.startswith("www.") else name
 
 
-def display(pick: dict, charger: dict) -> dict:
-    """What Host B shows, built from the pick's cited fields only."""
+STREET_WORDS = {"Avenue": "Ave", "Street": "St", "East": "E", "West": "W", "Place": "Pl"}
+
+
+def label(pick: dict, cafes: list[dict]) -> str:
+    """The OSM name, plus its OSM address when another café in range has the same name."""
+    twins = [c for c in cafes if c["name"] == pick["name"] and c["osmId"] != pick["osmId"]]
+    where = " ".join(STREET_WORDS.get(w, w) for w in (pick.get("address") or "").split())
+    return f"{pick['name']}, {where}" if twins and where else pick["name"]
+
+
+def display(pick: dict, charger: dict, cafes: list[dict]) -> dict:
+    """What Host B shows, built from the pick's cited fields and OSM's name and address."""
     s = pick["scores"]
     parts = ["Muse picked it"]
     if s["open"]["closes"]:
@@ -434,7 +445,8 @@ def display(pick: dict, charger: dict) -> dict:
         parts.append("oat milk")
     parts.append(f"{pick['walkMinutes']} min walk")
     source = (s["open"]["sources"] or s["oatMilkLatte"]["sources"])[0]
-    return {"name": pick["name"], "walkMinutes": pick["walkMinutes"], "why": " · ".join(parts),
+    return {"name": label(pick, cafes), "walkMinutes": pick["walkMinutes"],
+            "why": " · ".join(parts),
             "source": f"Source · {host(source['url'])}", "sourceUrl": source["url"],
             "price": s["price"]["price"] if s["price"] else None,
             "charger": charger["hostLabel"]}
@@ -448,6 +460,9 @@ def main() -> int:
     parser.add_argument("--refresh", action="store_true", help="research again, ignoring the cache")
     parser.add_argument("--refresh-osm", action="store_true", help="query Overpass again")
     parser.add_argument("--osm-only", action="store_true", help="list candidates; no Muse call")
+    parser.add_argument("--reuse-scores", action="store_true",
+                        help="rebuild the fixture from the cached research and scoring answer; "
+                             "no Muse call and no key")
     parser.add_argument("--chargers", type=pathlib.Path,
                         default=FIXTURES / "chargers/chargers.json")
     parser.add_argument("--out", type=pathlib.Path, default=OUT)
@@ -475,7 +490,7 @@ def main() -> int:
     if args.osm_only:
         return 0
     key = os.environ.get("META_API_KEY", "").strip()
-    if not key:
+    if not key and not args.reuse_scores:
         print("META_API_KEY is not set; no request was made", file=sys.stderr)
         return 2
     eligible = [c for c in cafes if c["name"] and c["walkMinutes"] <= WALK_CAP_MIN]
@@ -500,8 +515,16 @@ def main() -> int:
         scorable = [c for c in eligible if found.get(c["osmId"], {}).get("sources")]
         if not scorable:
             raise RuntimeError("no café has cited findings")
-        shops, meta_scoring = score(key, scorable, found, args.scoring_effort)
-        calls.append({"stage": "scoring", "ms": meta_scoring["ms"], "cafes": len(scorable)})
+        if args.reuse_scores:
+            meta_scoring = json.loads((CACHE / f"scores-{args.scoring_effort}.json")
+                                      .read_text(encoding="utf-8"))
+            shops = meta_scoring["shops"]
+            if sorted(s["id"] for s in shops) != sorted(c["osmId"] for c in scorable):
+                raise RuntimeError("the cached scores are for other cafés; score again")
+        else:
+            shops, meta_scoring = score(key, scorable, found, args.scoring_effort)
+        calls.append({"stage": "scoring", "ms": meta_scoring["ms"], "cafes": len(scorable),
+                      "cached": args.reuse_scores})
         print(f"scoring: {len(scorable)} cafés, {meta_scoring['ms']} ms")
     except adapters.AdapterError as error:
         print(f"FAIL: Muse call failed: {error}", file=sys.stderr)
@@ -546,7 +569,7 @@ def main() -> int:
                                  "6:30 pm 4, 6 pm 3; without one the model's score, at most 3",
                     "uncited": "a criterion without a valid citation scores 0",
                     "tieBreak": "total, then shorter walk, then nearer, then OSM id"},
-        "calls": calls, "display": display(pick, charger), "pick": pick["osmId"],
+        "calls": calls, "display": display(pick, charger, cafes), "pick": pick["osmId"],
         "ranked": ranked, "disqualified": disqualified, "osm": osm,
         "attribution": {"osm": "© OpenStreetMap contributors (ODbL 1.0)",
                         "citedSources": cited_urls},
@@ -562,7 +585,8 @@ def main() -> int:
         "caveat": "Locations and names are OpenStreetMap's; hours, menu and reputation come from "
                   "the cited pages on the generation date and are not live. No order is placed.",
     }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"pick: {pick['name']} · {display(pick, charger)['why']}")
+    shown = display(pick, charger, cafes)
+    print(f"pick: {shown['name']} · {shown['why']}")
     print(f"wrote {args.out / 'COFFEE.json'}: {len(ranked)} ranked, {len(disqualified)} out")
     return 0
 

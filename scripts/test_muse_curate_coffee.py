@@ -170,8 +170,8 @@ class Scoring(unittest.TestCase):
     def test_display_says_only_what_is_cited(self):
         ranked = self.rank()[0]
         top = copy.deepcopy(ranked[0])
-        shown = coffee.display(top, self.charger)
-        self.assertEqual(shown["name"], top["name"])
+        shown = coffee.display(top, self.charger, self.cafes)
+        self.assertEqual(shown["name"], top["name"])     # no namesake in the sample
         self.assertTrue(shown["why"].startswith("Muse picked it · "))
         self.assertTrue(shown["why"].endswith(f" · {top['walkMinutes']} min walk"))
         if top["scores"]["open"]["closes"]:
@@ -182,15 +182,29 @@ class Scoring(unittest.TestCase):
         self.assertEqual(shown["charger"], "ChargePoint")
         self.assertIsNone(shown["price"])
         top["scores"]["oatMilkLatte"]["score"] = 0
-        self.assertNotIn("oat milk", coffee.display(top, self.charger)["why"])
+        self.assertNotIn("oat milk", coffee.display(top, self.charger, self.cafes)["why"])
         shops = copy.deepcopy(self.shops)
         self.shop(SAMPLE["pick"], shops)["price"] = {"price": "$6.25", "sources": [1]}
         priced = next(r for r in self.rank(shops)[0] if r["osmId"] == SAMPLE["pick"])
-        self.assertEqual(coffee.display(priced, self.charger)["price"], "$6.25")
+        self.assertEqual(coffee.display(priced, self.charger, self.cafes)["price"], "$6.25")
         for price in ({"price": "$6.25", "sources": []}, {"price": "about six", "sources": [1]}):
             self.shop(SAMPLE["pick"], shops)["price"] = price
             unpriced = next(r for r in self.rank(shops)[0] if r["osmId"] == SAMPLE["pick"])
-            self.assertIsNone(coffee.display(unpriced, self.charger)["price"])
+            self.assertIsNone(coffee.display(unpriced, self.charger, self.cafes)["price"])
+
+    def test_a_namesake_in_range_adds_the_osm_address(self):
+        top = self.rank()[0][0]
+        twin = dict(next(c for c in self.cafes if c["osmId"] != top["osmId"]),
+                    name=top["name"], osmId="node/1")
+        cafes = self.cafes + [twin]
+        where = " ".join(coffee.STREET_WORDS.get(w, w) for w in top["address"].split())
+        self.assertEqual(coffee.label(top, cafes), f"{top['name']}, {where}")
+        self.assertEqual(coffee.display(top, self.charger, cafes)["name"],
+                         f"{top['name']}, {where}")
+        self.assertEqual(coffee.label(dict(top, address="226 East 83rd Street"), cafes),
+                         f"{top['name']}, 226 E 83rd St")
+        self.assertEqual(coffee.label(dict(top, address=None), cafes), top["name"])
+        self.assertEqual(coffee.label(top, self.cafes), top["name"])
 
     def test_the_charger_is_the_first_row_host_b_draws(self):
         charger = coffee.first_charger(coffee.FIXTURES / "chargers/chargers.json")
