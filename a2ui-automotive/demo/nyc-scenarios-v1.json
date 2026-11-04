@@ -331,8 +331,8 @@
           {"atMs": 22000, "display": "driver", "label": "Met entry confirmed"},
           {"atMs": 40000, "display": "driver", "label": "Met audio guide"},
           {"atMs": 71000, "display": "driver", "label": "Met video overview"},
-          {"atMs": 95000, "display": "driver", "label": "Chargers near The Met"},
-          {"atMs": 116000, "display": "driver", "label": "Café pick + usual coffee"},
+          {"atMs": 95000, "display": "driver", "label": "3 chargers nearby"},
+          {"atMs": 116000, "display": "driver", "label": "Café pick + coffee"},
           {"atMs": 125000, "display": "driver", "label": "Big Buck Bunny"},
           {"atMs": 45000, "display": "passenger", "label": "Passenger · Met video overview"},
           {"atMs": 94000, "display": "passenger", "label": "Passenger · Big Buck Bunny"}
