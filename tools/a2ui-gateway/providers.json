@@ -68,10 +68,10 @@
       "keyEnv": ["META_API_KEY"],
       "verifiedAt": "2026-11-03",
       "source": "https://dev.meta.ai/docs/models (muse-spark-1.3 recommended for new work; 1.1 still listed)",
-      "note": "Meta lists no faster Spark tier, so both profiles use muse-spark-1.3 and differ only by reasoning_effort.",
+      "note": "Meta lists no faster Spark tier, so both profiles use muse-spark-1.3 and differ only by reasoning_effort. Realtime is minimal, the lowest effort Spark accepts (none is a 400): 9.5, 7.2 and 6.2 s on three corpus prompts, all valid, against a ~15 s median at low (measured 2026-11-04).",
       "profiles": {
         "quality_cached": { "model": "muse-spark-1.3", "effort": "high", "maxTokens": 16000 },
-        "realtime_low_latency": { "model": "muse-spark-1.3", "effort": "low", "maxTokens": 8000 }
+        "realtime_low_latency": { "model": "muse-spark-1.3", "effort": "minimal", "maxTokens": 8000 }
       }
     }
   }
