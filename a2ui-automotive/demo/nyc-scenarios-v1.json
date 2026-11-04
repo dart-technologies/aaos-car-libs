@@ -136,9 +136,9 @@
       "actions": [
         {"atMs": 16300, "type": "speak", "clipId": "poi_utterance_search"},
         {"atMs": 33000, "type": "tapText", "text": "Preview pickup route"},
-        {"atMs": 35500, "type": "tapText", "text": "OK"},
+        {"atMs": 35500, "type": "tapText", "text": "Confirm"},
         {"atMs": 37500, "type": "speak", "clipId": "poi_utterance_order"},
-        {"atMs": 40000, "type": "tapText", "text": "OK"},
+        {"atMs": 40000, "type": "tapText", "text": "Confirm"},
         {"atMs": 56500, "type": "carState", "state": "drive"}
       ],
       "soundEffects": [
@@ -284,7 +284,7 @@
       ],
       "actions": [
         {"atMs": 16300, "type": "speak", "clipId": "concierge_utterance_order"},
-        {"atMs": 18500, "type": "tapText", "text": "OK"},
+        {"atMs": 18500, "type": "tapText", "text": "Confirm"},
         {"atMs": 35000, "type": "selectCase", "caseId": "big_buck_bunny"},
         {"atMs": 38000, "type": "tapText", "text": "Play audio / pause"},
         {"atMs": 51000, "type": "carState", "state": "drive"},
@@ -492,7 +492,7 @@
       "actions": [
         {"atMs": 13000, "type": "agent", "provider": "muse", "ask": "Take us to The Met this afternoon", "clipId": "met_utterance_visit"},
         {"atMs": 27500, "type": "speak", "clipId": "met_utterance_reserve"},
-        {"atMs": 30000, "type": "tapText", "text": "OK"},
+        {"atMs": 30000, "type": "tapText", "text": "Confirm"},
         {"atMs": 44000, "type": "carState", "state": "drive"},
         {"atMs": 52300, "type": "speak", "clipId": "met_utterance_first"},
         {"atMs": 54000, "type": "passenger", "media": "artwork"},
@@ -504,7 +504,7 @@
         {"atMs": 125500, "type": "speak", "clipId": "ev_utterance_first"},
         {"atMs": 131000, "type": "carState", "state": "park"},
         {"atMs": 137500, "type": "speak", "clipId": "ev_utterance_coffee"},
-        {"atMs": 140000, "type": "tapText", "text": "OK"},
+        {"atMs": 140000, "type": "tapText", "text": "Confirm"},
         {"atMs": 150000, "type": "carState", "state": "drive"},
         {"atMs": 162500, "type": "carState", "state": "park"},
         {"atMs": 165000, "type": "endCard"}

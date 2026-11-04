@@ -203,7 +203,7 @@ class TimelineTest(unittest.TestCase):
         self.assertFalse([c for c in device.calls if c[1] == "screencap"
                           or (c[1] == "broadcast" and c[2] == demo.ACTION_PASSENGER)])
         self.assertEqual([c[2] for c in device.calls if c[1] == "tap"],
-                         ["Preview pickup route", "OK", "OK"])
+                         ["Preview pickup route", "Confirm", "Confirm"])
         self.assertEqual(device.calls[-2:], [(78.0, "stop", 1), (78.0, "car", "park")])
         self.assertIsNone(evidence["passengerStartSeconds"])
 
