@@ -2804,6 +2804,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         // Back to the corpus first: the lane is about to replace the surface on screen.
         if (mShowingAgent) selectCase(mCorpusSurfaceId);
         A2uiMessageProcessor.RestrictionReading reading = readerFor(mRestrictions).currentReading();
+        // Parked: the cached, cited lane. Moving: the low-latency one, minimal effort.
+        CarUxRestrictionsUtil.RestrictionsSnapshot state = mRestrictions.getRestrictionsSnapshot();
+        mAgent.selectProfile(isParked(state.getSource(), state.getRestrictions())
+                ? art.dart.a2ui.agent.AgentExecutionProfile.QUALITY_CACHED
+                : art.dart.a2ui.agent.AgentExecutionProfile.REALTIME_LOW_LATENCY);
         try {
             mAgent.ask(text.trim(), mRestrictions.getDisplayId(), reading);
         } catch (IllegalArgumentException unencodable) {
