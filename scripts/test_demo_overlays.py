@@ -113,6 +113,35 @@ class LayoutTest(unittest.TestCase):
                 self.assertEqual(list(image.size), lay["sources"][name], name)
 
 
+class IntroTest(unittest.TestCase):
+    def test_frames_push_in_and_ease_out_frame_exactly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            info = ov.intro_frames(tmp, hold_s=0.2, fade_s=0.4, zoom=0.03, fps=10)
+            self.assertEqual((info["frames"], info["fps"]), (6, 10))
+            lay = ov.layout()
+            for name in ("driver", "passenger"):
+                alphas = []
+                for i in range(info["frames"]):
+                    with Image.open(info[name] % i) as image:
+                        self.assertEqual((image.size, image.mode),
+                                         (tuple(lay[name][2:]), "RGBA"))
+                        alphas.append(image.getchannel("A").getextrema()[0])
+                # smoothstep: hold, then 1 - ease(0, .25, .5, .75)
+                self.assertEqual(alphas, [255, 255, 255, 215, 128, 40], name)
+                self.assertFalse((pathlib.Path(tmp) / f"{name}-0006.png").exists())
+
+    def test_push_in_box_shrinks_smoothly_about_the_centre(self):
+        sizes = [ov.push_box((1408, 792), 1 + 0.025 * ov.ease(i / 92)) for i in range(93)]
+        widths = [b[2] - b[0] for b in sizes]
+        self.assertEqual(widths[0], 1408)
+        self.assertAlmostEqual(widths[-1], 1408 / 1.025, places=6)
+        self.assertTrue(all(a >= b for a, b in zip(widths, widths[1:])))
+        self.assertLess(max(a - b for a, b in zip(widths, widths[1:])), 1.0, "no visible step")
+        for box in sizes:
+            self.assertAlmostEqual((box[0] + box[2]) / 2, 704, places=6)
+            self.assertAlmostEqual(box[2] / box[3], 1408 / 792, places=2)
+
+
 class TimingTest(unittest.TestCase):
     def test_mp3_duration_counts_frames_after_an_id3_tag(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -613,6 +613,53 @@ def screen_glow() -> Image.Image:
     return glow
 
 
+def ease(p: float) -> float:
+    """Smoothstep: zero velocity at both ends."""
+    p = min(1.0, max(0.0, p))
+    return p * p * (3 - 2 * p)
+
+
+def push_box(size: tuple[int, int], zoom: float) -> tuple[float, float, float, float]:
+    """The centred source region a push-in of `zoom` (1.0 = none) shows; fractional on purpose."""
+    w, h = size
+    half_w, half_h = w / (2 * zoom), h / (2 * zoom)
+    return (w / 2 - half_w, h / 2 - half_h, w / 2 + half_w, h / 2 + half_h)
+
+
+def intro_alpha(t: float, hold_s: float, fade_s: float) -> float:
+    return 1.0 if t < hold_s else 1.0 - ease((t - hold_s) / fade_s)
+
+
+def intro_frames(out_dir: pathlib.Path, *, hold_s: float = 2.0, fade_s: float = 1.1,
+                 zoom: float = 0.025, fps: int = 30) -> dict:
+    """The intro screens as box-sized RGBA frame sequences, push-in and crossfade baked in.
+
+    Frame i is video time i/fps: the graffiti and passenger card push in by `zoom` (eased) over
+    hold_s + fade_s, and over the last fade_s their alpha eases from 1 to 0, so the recording
+    underneath "turns on". Overlay each sequence at its box, above the recording and below the
+    frame, with `-framerate {fps} -i <pattern>` and overlay's eof_action=pass: frame-exact, no
+    xfade timeline shift, and the cockpit frame never moves. Sub-pixel crops keep the push-in
+    free of the integer-step jitter of ffmpeg's zoompan."""
+    out_dir = pathlib.Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    total = hold_s + fade_s
+    count = round(total * fps)
+    boxes = {"driver": DRIVER_BOX, "passenger": PASSENGER_BOX}
+    sources = {"driver": INTRO_DRIVER, "passenger": INTRO_PASSENGER}
+    for name, box in boxes.items():
+        with Image.open(sources[name]) as opened:
+            source = opened.convert("RGB")
+        for i in range(count):
+            t = i / fps
+            frame = source.resize(box[2:], Image.LANCZOS,
+                                  box=push_box(source.size, 1 + zoom * ease(t / total)))
+            frame.putalpha(round(255 * intro_alpha(t, hold_s, fade_s)))
+            frame.save(out_dir / f"{name}-{i:04d}.png", format="PNG", compress_level=3)
+    return {"driver": str(out_dir / "driver-%04d.png"),
+            "passenger": str(out_dir / "passenger-%04d.png"),
+            "frames": count, "fps": fps, "fadeStartS": hold_s, "endS": count / fps}
+
+
 def cockpit_layout_record(approach: dict) -> dict:
     return {
         "schemaVersion": 1,
@@ -701,6 +748,11 @@ def main(argv: list[str] | None = None) -> int:
     srt.add_argument("--offset", type=float, default=0.0)
     srt.add_argument("--out", type=pathlib.Path)
     sub.add_parser("cockpit", help="re-render cockpit-frame.png and cockpit-layout.json")
+    frames = sub.add_parser("intro-frames", help="write the intro screens' frame sequences")
+    frames.add_argument("--out", type=pathlib.Path, required=True)
+    frames.add_argument("--hold", type=float, default=2.0)
+    frames.add_argument("--fade", type=float, default=1.1)
+    frames.add_argument("--zoom", type=float, default=0.025)
     prev = sub.add_parser("preview", help="compose one still from raw recordings")
     prev.add_argument("scenario")
     prev.add_argument("--driver", type=pathlib.Path, required=True)
@@ -717,6 +769,9 @@ def main(argv: list[str] | None = None) -> int:
                                   encoding="utf-8")
         for path in (COCKPIT_FRAME, COCKPIT_GLOW, COCKPIT_LAYOUT):
             print(f"wrote {path.relative_to(ROOT)}")
+    elif args.command == "intro-frames":
+        print(json.dumps(intro_frames(args.out, hold_s=args.hold, fade_s=args.fade,
+                                      zoom=args.zoom), indent=2))
     elif args.command == "preview":
         out = preview(load_scenario(args.scenario), args.driver, args.passenger, args.at,
                       args.out, args.audio_dir, args.passenger_at)
