@@ -53,7 +53,7 @@ import java.util.Set;
  */
 // metalava api-lint: ForbiddenSuperClass and ProtectedMember, suppressed as on A2uiCarUiActivity.
 @SuppressWarnings("ForbiddenSuperClass")
-public class A2uiPassengerActivity extends Activity implements PassengerDisplay.Surface {
+public class A2uiPassengerActivity extends Activity {
 
     private static final String TAG = "A2uiPassenger";
     /** String extra on the launch intent, debuggable builds only: a media name to play at once. */
@@ -75,6 +75,18 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
     private final Runnable mTick = this::tick;
     private final CarUxRestrictionsUtil.OnUxRestrictionsChangedListener mListener =
             ignored -> mHandler.post(this::enforce);
+    /** What PassengerDisplay talks to; kept off this public class's API. */
+    private final PassengerDisplay.Surface mSurface = new PassengerDisplay.Surface() {
+        @Override
+        public void play(@NonNull PassengerMedia media) {
+            playMedia(media);
+        }
+
+        @Override
+        public void stopMedia() {
+            stopPassengerMedia();
+        }
+    };
 
     @Override
     @SuppressWarnings("ProtectedMember")
@@ -105,7 +117,7 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
     protected void onStart() {
         super.onStart();
         mRestrictions.register(mListener);
-        PassengerDisplay.attach(this);
+        PassengerDisplay.attach(mSurface);
         String launched = getIntent().getStringExtra(EXTRA_MEDIA);
         if (launched != null
                 && A2uiCarUiActivity.debugBusAllowed(getApplicationInfo(), Build.TYPE)) {
@@ -118,13 +130,12 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
     protected void onStop() {
         teardownVideo();
         clearDemoZone();
-        PassengerDisplay.detach(this);
+        PassengerDisplay.detach(mSurface);
         mRestrictions.unregister(mListener);
         super.onStop();
     }
 
-    @Override
-    public void play(@NonNull PassengerMedia media) {
+    void playMedia(@NonNull PassengerMedia media) {
         Set<ComponentType> allowed = allowedHere();
         if (!allowed.contains(ComponentType.VIDEO) && mayUseDemoZone()) {
             applyDemoZone();
@@ -140,8 +151,7 @@ public class A2uiPassengerActivity extends Activity implements PassengerDisplay.
         startVideo(media);
     }
 
-    @Override
-    public void stopMedia() {
+    void stopPassengerMedia() {
         teardownVideo();
         clearDemoZone();
         showMessage(R.string.a2ui_passenger_idle);
