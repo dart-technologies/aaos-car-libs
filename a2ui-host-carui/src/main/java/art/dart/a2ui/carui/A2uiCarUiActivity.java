@@ -819,8 +819,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             }
         });
 
-        // Real chargers, when the fixture is bundled, enter through the processor like agent text.
+        // Real chargers, when the fixture is bundled, enter through the processor like agent text;
+        // so does the Met's weather row, from the NWS forecast.
         mProcessor.processAll(ChargerFixture.messages(this));
+        mProcessor.processAll(WeatherFixture.messages(this));
         mCoffee = CoffeeFixture.load(this);
         mEnergy = new VehicleEnergy(pct -> runOnMain(() -> onVehicleBattery(pct)));
 

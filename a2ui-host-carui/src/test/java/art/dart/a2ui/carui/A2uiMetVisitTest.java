@@ -75,6 +75,45 @@ public class A2uiMetVisitTest {
     }
 
     @Test
+    public void theWeatherRowIsTheBundledNwsForecastForTheVisitDay() {
+        A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        activity.selectCase("met_visit");
+        WeatherFixture.Forecast nws = WeatherFixture.parse(WeatherFixture.readLatest(activity));
+        assertThat(nws).isNotNull();
+        // Derived from the fixture's fields, short enough not to truncate on a card.
+        assertThat(titles(activity)).contains(nws.mTitle);
+        assertThat(nws.mTitle).matches("[A-Z][a-z ]+ · high -?\\d+°F");
+        assertThat(nws.mTitle.length()).isAtMost(32);
+        assertThat(body(row(activity, nws.mTitle))).containsExactly(nws.mDetail);
+        assertThat(String.join(" ", titles(activity))).doesNotContain("Today ·");
+    }
+
+    @Test
+    public void nwsPeriodsAreReadForTheDayAfterCaptureAndNothingIsAdded() {
+        String json = "{'periods':["
+                + "{'startTime':'2026-11-04T07:00:00-05:00','isDaytime':true,'temperature':75,"
+                + "'temperatureUnit':'F','shortForecast':'Sunny'},"
+                + "{'startTime':'2026-11-04T18:00:00-05:00','isDaytime':false,'temperature':61,"
+                + "'temperatureUnit':'F','shortForecast':'Partly Cloudy'},"
+                + "{'startTime':'2026-11-05T06:00:00-05:00','isDaytime':true,'temperature':74,"
+                + "'temperatureUnit':'F','shortForecast':'Chance Rain Showers'}]}";
+        WeatherFixture.Forecast thursday = WeatherFixture.parse(json);
+        assertThat(thursday.mTitle).isEqualTo("Chance of showers · high 74°F");
+        assertThat(thursday.mDetail).isEqualTo("National Weather Service · Thu Nov 5 forecast");
+        assertThat(WeatherFixture.shorten("Rain Showers Likely")).isEqualTo("Showers likely");
+        assertThat(WeatherFixture.shorten("Slight Chance Rain Showers"))
+                .isEqualTo("Slight chance of showers");
+        assertThat(WeatherFixture.shorten("Partly Cloudy")).isEqualTo("Partly cloudy");
+        // No daytime period after the capture day, or no periods: the case keeps its words.
+        assertThat(WeatherFixture.parse(json.replace("2026-11-05T06", "2026-11-04T06")))
+                .isNull();
+        assertThat(WeatherFixture.parse("{'periods':[]}")).isNull();
+        assertThat(WeatherFixture.parse("{}")).isNull();
+        assertThat(WeatherFixture.parse(null)).isNull();
+        assertThat(WeatherFixture.messagesFor(null)).isEmpty();
+    }
+
+    @Test
     public void thePolicyRemovesMapSourcesAndArtworkInMotion() {
         // The trees themselves, without the host: depth cuts map and citations, type policy the
         // Modal and the Video.
