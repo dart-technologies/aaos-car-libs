@@ -310,7 +310,7 @@
       "recording": {"layout": "dual"},
       "chapterCards": [
         {"image": "a2ui-automotive/demo/cards/nyc_met-title.png", "atMs": 0, "seconds": 2.5},
-        {"image": "a2ui-automotive/demo/cards/nyc_met-intermission.png", "atMs": 82500, "seconds": 3.3,
+        {"image": "a2ui-automotive/demo/cards/nyc_met-intermission.png", "atMs": 82500, "seconds": 3.5,
          "fadeIn": 0.7, "fadeOut": 0.7}
       ],
       "disclaimer": {
@@ -545,9 +545,9 @@
         {"atMs": 30500, "type": "passenger", "media": "artwork"},
         {"atMs": 67000, "type": "carState", "state": "park"},
         {"atMs": 67500, "type": "passenger", "media": "stop"},
-        {"atMs": 83500, "type": "selectCase", "caseId": "ev_charge_coffee"},
-        {"atMs": 84000, "type": "wallClock", "local": "2026-11-05T17:15"},
-        {"atMs": 86000, "type": "carState", "state": "drive"},
+        {"atMs": 83300, "type": "selectCase", "caseId": "ev_charge_coffee"},
+        {"atMs": 83600, "type": "wallClock", "local": "2026-11-05T17:15"},
+        {"atMs": 84500, "type": "carState", "state": "drive"},
         {"atMs": 86500, "type": "passenger", "media": "video"},
         {"atMs": 90600, "type": "vehicleSignal", "signal": "battery", "percent": 18, "via": ["vhal-set", "vhal-inject", "broadcast"], "capacityWhFallback": 150000},
         {"atMs": 97000, "type": "speak", "clipId": "ev_utterance_first"},
