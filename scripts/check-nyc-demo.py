@@ -264,8 +264,9 @@ def check_preamble(scenario: dict) -> None:
 
 
 def check_outro(scenario: dict) -> None:
-    """The closing card: one narration line then a silent hold, the journey's beats taken from
-    the recording at the right car state, the architecture, and the footer."""
+    """The closing card: one narration line then a silent hold, a calm note on what the drive
+    was, the journey's beats taken from the recording at the right car state, and the
+    architecture as title-only boxes. No tagline or footer, and Muse is named once."""
     outro = scenario.get("outro") or {}
     if not 5 <= outro_seconds(scenario) <= 10:
         fail("nyc_met closing card holds 5–10 s")
@@ -290,11 +291,21 @@ def check_outro(scenario: dict) -> None:
     if last["label"] != "Big Buck Bunny" or driving_at(scenario, int(last["atMs"])) or \
             not bunny or int(last["atMs"]) < bunny[0] + 3000:
         fail("closing card's last driver beat is Big Buck Bunny playing, parked")
-    if len([b for b in outro.get("architecture", []) if b.get("badge")]) != 1 or not \
-            4 <= len(outro.get("architecture", [])) <= 5:
+    boxes = outro.get("architecture", [])
+    if len([b for b in boxes if b.get("badge")]) != 1 or not 4 <= len(boxes) <= 5:
         fail("closing card's architecture is 4–5 boxes with one Muse badge")
-    if len(outro.get("footer", [])) != 2:
-        fail("closing card's footer is the line and the credit")
+    if any(len(box) != 1 or not set(box) <= {"badge", "title"} for box in boxes):
+        fail("closing card's architecture boxes are titles only: one badge or title each")
+    note = outro.get("note", "")
+    if not re.search(r"\bsimulated\b", note, re.I) or not re.search(r"\bemulator\b", note, re.I):
+        fail("closing card's note says the drive is simulated on the emulator")
+    if "footer" in outro:
+        fail("closing card has no tagline or footer: its narration carries the line")
+    words = [note, *outro.get("places", []), *(b["label"] for b in beats),
+             *(text for box in boxes for text in box.values())]
+    if sum("Muse" in text for text in words) != 1 or "Muse" not in next(
+            (b["badge"] for b in boxes if b.get("badge")), ""):
+        fail("closing card names Muse once, on its architecture badge")
 
 
 def corpus_ids() -> set[str]:

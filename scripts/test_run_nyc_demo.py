@@ -644,6 +644,11 @@ class CockpitCompositionTest(unittest.TestCase):
         self.assertTrue(near(pixel(self.out, 12.4, 960, 300), GREY))
         self.assertTrue(near(pixel(self.out, 12.4, *self.driver), GREY))
 
+    def test_rail_disclaimer_fades_out_under_the_closing_card(self):
+        note = (960, 28)  # the 300x24 note, centred in the rail band
+        self.assertTrue(near(pixel(self.out, self.head + 4.0, *note), WHITE), "over the drive")
+        self.assertTrue(near(pixel(self.out, 12.4, *note), GREY), "the card carries its own")
+
 
 OUTRO = {
     "id": "t_outro", "durationSeconds": 6,
@@ -654,15 +659,15 @@ OUTRO = {
                         {"atMs": 4500, "display": "driver", "label": "Two"},
                         {"atMs": 100000, "display": "driver", "label": "Last"},
                         {"atMs": 3000, "display": "passenger", "label": "Film"}],
-              "architecture": [{"badge": "Muse · Meta", "tag": "cloud", "lines": ["Research"]},
-                               {"title": "Gateway", "lines": ["Any model"]}],
-              "footer": ["The line.", "The credit."]},
+              "note": "Simulated demo drive",
+              "architecture": [{"badge": "Muse · Meta"}, {"title": "Gateway"}]},
     "preamble": [{"style": "unsafe", "frameAtMs": 1000, "seconds": 3,
                   "chip": "Driving · 40 mph"},
                  {"style": "answer", "frameAtMs": 100000, "seconds": 3}],
 }
-THUMB_CENTRES = [(384, 177), (960, 177), (1536, 177)]  # one slot per segment, 232x130 tiles
+THUMB_CENTRES = [(363, 228), (960, 228), (1557, 228)]  # one slot per segment, 256x144 tiles
 FRAME_CENTRE = (960, 575)  # render-demo-cards.py FRAME_BOX
+OUTRO_BOTTOM = 900  # render-demo-cards.py: the closing card draws nothing below this
 
 
 @unittest.skipUnless(FFMPEG and PILLOW, "ffmpeg/ffprobe or Pillow not installed")
@@ -701,6 +706,20 @@ class CardsFromTheRecordingTest(unittest.TestCase):
         self.assertEqual([s["label"] for s in spec["segments"]],
                          ["Parked · Here", "Driving", "Parked · There"])
         self.assertIsNone(spec["passenger"][0]["image"])
+        self.assertEqual(spec["note"], "Simulated demo drive")
+        self.assertNotIn("footer", spec)
+
+    def test_closing_card_leaves_the_caption_band_clear_and_carries_its_note(self):
+        (card, _), _ = demo.build_outro(
+            OUTRO, self.tmp / "driver.mp4", None, 0.0, None, self.tmp / "clear")
+        from PIL import Image
+        with Image.open(card) as source:
+            image = source.convert("RGB")
+        for y in range(OUTRO_BOTTOM + 4, 1080, 8):  # only the backdrop: each row is one colour
+            row = [sum(image.getpixel((x, y))) for x in range(0, 1920, 16)]
+            self.assertLessEqual(max(row) - min(row), 3, f"row {y} is clear")
+        note = [image.getpixel((x, y)) for y in range(28, 64, 2) for x in range(760, 1160, 2)]
+        self.assertGreater(max(min(p) for p in note), 90, "the note is drawn at the top")
 
     def test_closing_card_draws_a_placeholder_for_a_missing_frame(self):
         spec = demo.outro_spec(OUTRO, {1: self.tmp / "nowhere.png"})

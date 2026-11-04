@@ -41,6 +41,9 @@ LABELS = {"driver": ("Driver", (90, 169, 255)), "passenger": ("Passenger", (227,
 # The preamble frame: the driver display at 1280x720, centred with the chip above it. No caption
 # is baked in: the recorder's burned-in captions carry the narration below the window.
 FRAME_BOX = (320, 215, 1280, 720)
+# The closing card stops here: the recorder draws its caption pill in the band below
+# (scripts/demo_overlays.py CAPTION_BAND, one line for the outro).
+OUTRO_BOTTOM = 900
 
 
 def font(size: int, face: str) -> ImageFont.FreeTypeFont:
@@ -245,12 +248,24 @@ def preamble_card(style: str, frame_path: str | None, chip_text: str,
     return image
 
 
+def middle(draw: ImageDraw.ImageDraw, x: float, cy: float, text: str, size: int, face: str,
+           fill) -> None:
+    """text drawn from x, vertically centred on cy."""
+    for chunk, chunk_font in runs(text, font(size, face), size):
+        draw.text((x, cy), chunk, font=chunk_font, fill=fill, anchor="lm")
+        x += draw.textlength(chunk, font=chunk_font)
+
+
 def outro_card(spec: dict) -> Image.Image:
-    """The closing card: the journey as vehicle-state segments with real thumbnails of each beat
-    (driver above, passenger below the driving segments), the architecture, and the footer."""
+    """The closing card: one calm line on what the drive was, the journey as vehicle-state
+    segments with real thumbnails of each beat (driver above, passenger below the driving
+    segments), and the architecture as titled boxes. Nothing is drawn below OUTRO_BOTTOM: the
+    recorder's caption band is beneath it."""
     image = backdrop()
     draw = ImageDraw.Draw(image)
-    left, right = 96, W - 96
+    left, right = 64, W - 64
+    if spec.get("note"):
+        centred(draw, W / 2, 30, spec["note"], 24, "medium", FAINT)
     segments = spec["segments"]
     slots = sum(max(1, int(s.get("slots", 1))) for s in segments)
     slot = (right - left) / slots
@@ -260,10 +275,11 @@ def outro_card(spec: dict) -> Image.Image:
         spans.append((cursor, cursor + width))
         cursor += width
 
-    draw_text(draw, (left, 70), spec.get("journeyTitle", "THE DRIVE"), 20, "demi", GOLD)
-    thumb_w = min(232, int(slot) - 24)
+    draw_text(draw, (left, 108), spec.get("journeyTitle", "THE DRIVE"), 24, "demi", GOLD)
+    thumb_w = min(256, int(slot) - 18)
     thumb_h = round(thumb_w * 9 / 16)
-    thumbs_top, strip_top = 112, 296
+    thumbs_top = 156
+    strip_top, strip_h = thumbs_top + thumb_h + 66, 52
     by_segment: dict[int, list[dict]] = {}
     for beat in spec.get("driver", []):
         by_segment.setdefault(int(beat["segment"]), []).append(beat)
@@ -274,71 +290,67 @@ def outro_card(spec: dict) -> Image.Image:
             cx = start + step * (n + 0.5)
             tile = open_frame(beat.get("image"), (thumb_w, thumb_h)) or placeholder(
                 (thumb_w, thumb_h))
-            framed(image, tile, (round(cx - thumb_w / 2), thumbs_top), 10)
-            centred(draw, cx, thumbs_top + thumb_h + 12, beat["label"], 20, "medium", MUTED)
+            framed(image, tile, (round(cx - thumb_w / 2), thumbs_top), 12)
+            centred(draw, cx, thumbs_top + thumb_h + 14, beat["label"], 24, "medium", MUTED)
     for (start, end), segment in zip(spans, segments):
         fill = PARKED if segment["state"] == "park" else DRIVING
-        draw.rounded_rectangle((start + 3, strip_top, end - 3, strip_top + 44), 22, fill=fill)
-        centred(draw, (start + end) / 2, strip_top + 9, segment["label"], 20, "demi", TEXT)
-    pas_w, pas_h = 72, 108
+        draw.rounded_rectangle((start + 4, strip_top, end - 4, strip_top + strip_h),
+                               strip_h // 2, fill=fill)
+        text = segment["label"]
+        middle(draw, (start + end) / 2 - text_width(draw, text, 24, "demi") / 2,
+               strip_top + strip_h / 2, text, 24, "demi", TEXT)
+    pas_w, pas_h = 96, 144
+    py = strip_top + strip_h + 22
     for beat in spec.get("passenger", []):
         start, end = spans[int(beat["segment"])]
         text = beat["label"]
-        total = pas_w + 14 + text_width(draw, text, 20, "medium")
+        total = pas_w + 18 + text_width(draw, text, 24, "medium")
         px = round((start + end) / 2 - total / 2)
-        py = strip_top + 44 + 18
         tile = open_frame(beat.get("image"), (pas_w, pas_h)) or placeholder((pas_w, pas_h))
-        framed(image, tile, (px, py), 8)
-        draw_text(draw, (px + pas_w + 14, py + pas_h / 2 - 14), text, 20, "medium", MUTED)
+        framed(image, tile, (px, py), 10)
+        middle(draw, px + pas_w + 18, py + pas_h / 2, text, 24, "medium", MUTED)
 
-    draw_text(draw, (left, 540), spec.get("architectureTitle", "THE ARCHITECTURE"), 20, "demi",
-              GOLD)
+    arch_top = py + pas_h + 76
+    draw_text(draw, (left, arch_top), spec.get("architectureTitle", "THE ARCHITECTURE"), 24,
+              "demi", GOLD)
     boxes = spec.get("architecture", [])
-    gap = 64
+    gap, pad = 56, 22
     box_w = ((right - left) - gap * (len(boxes) - 1)) / max(1, len(boxes))
-    box_top, box_h, pad = 580, 214, 22
+    box_top = arch_top + 48
+    box_h = OUTRO_BOTTOM - box_top
     icon = None
     if spec.get("icon") and pathlib.Path(spec["icon"]).is_file():
         with Image.open(spec["icon"]) as source:
-            icon = source.convert("RGBA").resize((24, 24), Image.LANCZOS)
+            icon = source.convert("RGBA").resize((30, 30), Image.LANCZOS)
+    mid = box_top + box_h / 2
     for n, box in enumerate(boxes):
         bx = left + n * (box_w + gap)
-        draw.rounded_rectangle((bx, box_top, bx + box_w, box_top + box_h), 16, fill=PANEL,
+        cx = bx + box_w / 2
+        draw.rounded_rectangle((bx, box_top, bx + box_w, box_top + box_h), 18, fill=PANEL,
                                outline=EDGE, width=2)
-        ty = box_top + pad
         if box.get("badge"):
-            face = font(22, "demi")
-            inner = (34 if icon else 0) + draw.textlength(box["badge"], font=face)
-            draw.rounded_rectangle((bx + pad, ty, bx + pad + inner + 28, ty + 40), 20, fill=MUSE)
-            tx = bx + pad + 14
+            face = font(28, "demi")
+            inner = (40 if icon else 0) + draw.textlength(box["badge"], font=face)
+            pill_w, pill_h = inner + 40, 52
+            x0 = cx - pill_w / 2
+            draw.rounded_rectangle((x0, mid - pill_h / 2, x0 + pill_w, mid + pill_h / 2),
+                                   pill_h // 2, fill=MUSE)
+            tx = x0 + 20
             if icon:
-                image.paste(icon, (round(tx), ty + 8), icon)
-                tx += 34
-            draw.text((tx, ty + 20), box["badge"], font=face, fill=TEXT, anchor="lm")
-            if box.get("tag"):
-                draw_text(draw, (bx + pad + inner + 40, ty + 6), box["tag"], 20, "medium",
-                          MUTED)
-            ty += 56
-        if box.get("title"):
-            for line in wrap(draw, box["title"], 25, "demi", box_w - 2 * pad):
-                draw_text(draw, (bx + pad, ty), line, 25, "demi", TEXT)
-                ty += 32
-            ty += 8
-        for item in box.get("lines", []):
-            for line in wrap(draw, item, 20, "medium", box_w - 2 * pad):
-                draw_text(draw, (bx + pad, ty), line, 20, "medium", MUTED)
-                ty += 27
+                image.paste(icon, (round(tx), round(mid - 15)), icon)
+                tx += 40
+            draw.text((tx, mid), box["badge"], font=face, fill=TEXT, anchor="lm")
+        elif box.get("title"):
+            lines = wrap(draw, box["title"], 30, "demi", box_w - 2 * pad)
+            ty = mid - 40 * len(lines) / 2 + 20
+            for line in lines:
+                middle(draw, cx - text_width(draw, line, 30, "demi") / 2, ty, line, 30, "demi",
+                       TEXT)
+                ty += 40
         if n < len(boxes) - 1:
-            ay = box_top + box_h / 2
-            ax0, ax1 = bx + box_w + 12, bx + box_w + gap - 12
-            draw.line([(ax0, ay), (ax1 - 10, ay)], fill=FAINT, width=3)
-            draw.polygon([(ax1, ay), (ax1 - 14, ay - 8), (ax1 - 14, ay + 8)], fill=FAINT)
-
-    footer = spec.get("footer", [])
-    if footer:
-        draw_text(draw, (left, 872), footer[0], 46, "bold", TEXT)
-    if len(footer) > 1:
-        draw_text(draw, (left + 2, 944), footer[1], 26, "medium", MUTED)
+            ax0, ax1 = bx + box_w + 10, bx + box_w + gap - 10
+            draw.line([(ax0, mid), (ax1 - 10, mid)], fill=FAINT, width=3)
+            draw.polygon([(ax1, mid), (ax1 - 14, mid - 8), (ax1 - 14, mid + 8)], fill=FAINT)
     return image
 
 
