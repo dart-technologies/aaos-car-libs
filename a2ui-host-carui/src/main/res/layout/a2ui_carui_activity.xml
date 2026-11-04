@@ -277,7 +277,7 @@
             android:layout_height="match_parent"
             android:layout_marginVertical="@dimen/a2ui_space_m"
             android:layout_marginEnd="@dimen/a2ui_space_l"
-            android:layout_weight="0.62"
+            android:layout_weight="0.55"
             android:background="@drawable/a2ui_panel_background"
             android:visibility="gone">
 

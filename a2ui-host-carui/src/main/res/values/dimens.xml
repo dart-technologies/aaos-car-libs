@@ -31,7 +31,7 @@
   <!-- The card list's start inset. AAOS draws a back-button overlay over the content at the
        display's left edge (80 px wide on the 1408×792 reference display); cards start clear of
        it. -->
-  <dimen name="a2ui_card_list_inset_start">72dp</dimen>
+  <dimen name="a2ui_card_list_inset_start">64dp</dimen>
 
   <!-- Type scale. -->
   <dimen name="a2ui_type_display">44sp</dimen>
