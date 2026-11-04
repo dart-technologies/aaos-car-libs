@@ -917,8 +917,7 @@ def build_preamble(scenario: dict, raw_video: pathlib.Path,
         frame = extract_frame(raw_video, int(entry["frameAtMs"]) / 1000,
                               prefix.with_name(f"{prefix.name}.preamble-{n}.frame.png"))
         card = prefix.with_name(f"{prefix.name}.preamble-{n}.png")
-        args = ["preamble", "--style", entry["style"], "--caption", entry["caption"],
-                "--out", str(card)]
+        args = ["preamble", "--style", entry["style"], "--out", str(card)]
         if frame is not None:
             args += ["--frame", str(frame)]
         if entry.get("chip"):

@@ -657,12 +657,12 @@ OUTRO = {
               "architecture": [{"badge": "Muse · Meta", "tag": "cloud", "lines": ["Research"]},
                                {"title": "Gateway", "lines": ["Any model"]}],
               "footer": ["The line.", "The credit."]},
-    "preamble": [{"style": "unsafe", "frameAtMs": 1000, "seconds": 3, "caption": "Unsafe.",
+    "preamble": [{"style": "unsafe", "frameAtMs": 1000, "seconds": 3,
                   "chip": "Driving · 40 mph"},
-                 {"style": "answer", "frameAtMs": 100000, "seconds": 3, "caption": "Answer."}],
+                 {"style": "answer", "frameAtMs": 100000, "seconds": 3}],
 }
 THUMB_CENTRES = [(384, 177), (960, 177), (1536, 177)]  # one slot per segment, 232x130 tiles
-FRAME_CENTRE = (960, 492)  # render-demo-cards.py FRAME_BOX
+FRAME_CENTRE = (960, 575)  # render-demo-cards.py FRAME_BOX
 
 
 @unittest.skipUnless(FFMPEG and PILLOW, "ffmpeg/ffprobe or Pillow not installed")

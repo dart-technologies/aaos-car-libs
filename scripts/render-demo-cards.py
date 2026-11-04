@@ -11,8 +11,8 @@ committed under a2ui-automotive/demo/cards/; preamble and outro cards are render
   render-demo-cards.py labels
   render-demo-cards.py disclaimer --text T --out disclaimer.png
   render-demo-cards.py title --title T --subtitle S [--footer F] --out card.png
-  render-demo-cards.py preamble --style unsafe|useless|answer --caption C [--frame F]
-                                [--chip X] [--lock-text L] --out card.png
+  render-demo-cards.py preamble --style unsafe|useless|answer [--frame F] [--chip X]
+                                [--lock-text L] --out card.png
   render-demo-cards.py outro --spec spec.json --out card.png
 """
 
@@ -38,9 +38,9 @@ PARKED, DRIVING, ALERT = (38, 133, 84), (36, 87, 168), (205, 48, 48)  # the slim
 PANEL, EDGE = (21, 27, 35), (44, 53, 64)
 MUSE = (24, 119, 242)  # the text badge's accent; no logo artwork is drawn
 LABELS = {"driver": ("Driver", (90, 169, 255)), "passenger": ("Passenger", (227, 179, 65))}
-# The preamble frame: the driver display at 1280x720, centred, with room for a chip above it and
-# the caption below; the canvas's bottom-left corner stays free for the recorder's disclaimer.
-FRAME_BOX = (320, 132, 1280, 720)
+# The preamble frame: the driver display at 1280x720, centred with the chip above it. No caption
+# is baked in: the recorder's burned-in captions carry the narration below the window.
+FRAME_BOX = (320, 215, 1280, 720)
 
 
 def font(size: int, face: str) -> ImageFont.FreeTypeFont:
@@ -213,7 +213,7 @@ def lock(draw: ImageDraw.ImageDraw, cx: float, cy: float, fill=(236, 239, 242)) 
     draw.rectangle((cx - 4, cy + 24, cx + 4, cy + 46), fill=(40, 44, 50))
 
 
-def preamble_card(style: str, caption: str, frame_path: str | None, chip_text: str,
+def preamble_card(style: str, frame_path: str | None, chip_text: str,
                   lock_text: str) -> Image.Image:
     """One problem-statement card around a real driver-display frame.
 
@@ -242,10 +242,6 @@ def preamble_card(style: str, caption: str, frame_path: str | None, chip_text: s
             centred(draw, x + w / 2, y + h / 2 + 52, lock_text, 40, "medium", TEXT)
     if chip_text:
         chip(draw, (x, y - 70), chip_text, chip_fill)
-    size = 56
-    while size > 36 and text_width(draw, caption, size, "bold") > W - 240:
-        size -= 2
-    centred(draw, W / 2, y + h + 64 + (56 - size) // 2, caption, size, "bold", TEXT)
     return image
 
 
@@ -361,7 +357,6 @@ def main() -> int:
     title.add_argument("--out", type=pathlib.Path, required=True)
     pre = sub.add_parser("preamble")
     pre.add_argument("--style", required=True, choices=["unsafe", "useless", "answer"])
-    pre.add_argument("--caption", required=True)
     pre.add_argument("--frame", help="driver-display frame; a dark panel stands in if unreadable")
     pre.add_argument("--chip", default="")
     pre.add_argument("--lock-text", default="")
@@ -382,7 +377,7 @@ def main() -> int:
     elif args.command == "title":
         image = title_card(args.title, args.subtitle, args.footer)
     elif args.command == "preamble":
-        image = preamble_card(args.style, args.caption, args.frame, args.chip, args.lock_text)
+        image = preamble_card(args.style, args.frame, args.chip, args.lock_text)
     else:
         image = outro_card(json.loads(args.spec.read_text(encoding="utf-8")))
     image.save(args.out, format="PNG", optimize=True)

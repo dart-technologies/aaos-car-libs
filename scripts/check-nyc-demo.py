@@ -242,8 +242,11 @@ def check_preamble(scenario: dict) -> None:
     start = 0
     for card in cards:
         at = int(card.get("frameAtMs", -1))
-        if not 0 <= at < int(scenario["durationSeconds"]) * 1000 or not card.get("caption"):
-            fail(f"preamble {card['style']} needs a caption and a frame inside the timeline")
+        if not 0 <= at < int(scenario["durationSeconds"]) * 1000:
+            fail(f"preamble {card['style']} needs a frame inside the timeline")
+        if "caption" in card:
+            fail(f"preamble {card['style']} bakes in no caption: the burned-in captions carry "
+                 "its narration")
         if driving_at(scenario, at) != (card["style"] == "answer"):
             fail(f"preamble {card['style']} frame must be "
                  + ("a driving" if card["style"] == "answer" else "the parked full") + " screen")

@@ -314,9 +314,9 @@
         "text": "Simulated drive on the Android Automotive emulator · demo data · no affiliation with places shown"
       },
       "preamble": [
-        {"style": "unsafe", "frameAtMs": 12000, "seconds": 4.8, "chip": "Driving · 40 mph", "caption": "A model can't see the road.", "clipId": "pre_narration_01"},
-        {"style": "useless", "frameAtMs": 12000, "seconds": 3.3, "chip": "Driving · 40 mph", "lockText": "Not available while driving", "caption": "So most cars lock you out.", "clipId": "pre_narration_02"},
-        {"style": "answer", "frameAtMs": 26000, "seconds": 5.4, "chip": "Driving", "caption": "Muse designs it. The car decides what fits the moment.", "clipId": "pre_narration_03"}
+        {"style": "unsafe", "frameAtMs": 12000, "seconds": 4.8, "chip": "Driving · 40 mph", "clipId": "pre_narration_01"},
+        {"style": "useless", "frameAtMs": 12000, "seconds": 3.3, "chip": "Driving · 40 mph", "lockText": "Not available while driving", "clipId": "pre_narration_02"},
+        {"style": "answer", "frameAtMs": 26000, "seconds": 5.4, "chip": "Driving", "clipId": "pre_narration_03"}
       ],
       "outro": {
         "seconds": 8.5,
