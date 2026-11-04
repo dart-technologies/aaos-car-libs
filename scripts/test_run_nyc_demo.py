@@ -319,21 +319,21 @@ class CompositionTest(unittest.TestCase):
         self.assertTrue(near(pixel(self.out, 2.5, 960, 540), RED))
 
     def test_panels_background_and_labels(self):
-        driver, passenger = (656, 540), (1600, 351)
+        driver, passenger = (696, 564), (1644, 564)  # the panel centres
         self.assertTrue(near(pixel(self.out, 2.5, *driver), RED))
         self.assertTrue(near(pixel(self.out, 2.5, *passenger), YELLOW), "idle frame first")
         self.assertTrue(near(pixel(self.out, 4.5, *driver), BLUE))
         self.assertTrue(near(pixel(self.out, 4.5, *passenger), GREEN), "stream at its start")
         self.assertTrue(near(pixel(self.out, 4.5, 10, 10), BG, 12))
-        label = [pixel(self.out, 4.5, x, 160) for x in range(40, 200, 4)]
+        label = [pixel(self.out, 4.5, x, 160) for x in range(30, 200, 4)]
         self.assertGreater(max(max(p) for p in label), 150, "driver label is drawn")
-        label = [pixel(self.out, 4.5, x, 160) for x in range(1320, 1530, 4)]
+        label = [pixel(self.out, 4.5, x, 160) for x in range(1400, 1600, 4)]
         self.assertGreater(max(max(p) for p in label), 150, "passenger label is drawn")
 
     def test_end_card_hold_freezes_both_panels(self):
         # Without the hold the driver panel would show the magenta tail at 7 s.
-        self.assertTrue(near(pixel(self.out, 7.0, 656, 540), BLUE))
-        self.assertTrue(near(pixel(self.out, 7.5, 1600, 351), GREEN))
+        self.assertTrue(near(pixel(self.out, 7.0, 696, 564), BLUE))
+        self.assertTrue(near(pixel(self.out, 7.5, 1644, 564), GREEN))
 
     def test_audio_is_placed_on_the_manifest_timeline(self):
         self.assertLess(max_volume(self.out, 0.0, 0.4), -60)

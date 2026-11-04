@@ -60,8 +60,8 @@ MIN_S, MAX_S = 60, 180
 FPS = 30
 # Side-by-side canvas, both panels 16:9: driver larger on the left, passenger on the right.
 CANVAS = (1920, 1080)
-DRIVER_BOX = (32, 189, 1248, 702)
-PASSENGER_BOX = (1312, 189, 576, 324)
+DRIVER_BOX = (24, 186, 1344, 756)  # 16:9 driver and 2:3 passenger, same height
+PASSENGER_BOX = (1392, 186, 504, 756)
 LABEL_GAP = 12
 BACKGROUND = "0x0b0f14"
 LABELS = {"driver": CARDS / "label-driver.png", "passenger": CARDS / "label-passenger.png"}
