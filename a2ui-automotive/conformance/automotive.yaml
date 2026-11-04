@@ -1,0 +1,637 @@
+# Copyright 2026 Dart Technologies
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# ---------------------------------------------------------------------------
+# Automotive driver-distraction conformance suite.
+#
+# Each AAOS restriction level (android.car.drivingstate.CarUxRestrictions) is
+# one `action: prune` case against the v1.0 basic catalog's 18 components.
+# Constants are the platform values, read from android.car.jar (API 34) with
+# javap -constants; FULLY_RESTRICTED is a composite of the nine bits:
+#
+#   UX_RESTRICTIONS_BASELINE                 0x0
+#   UX_RESTRICTIONS_NO_DIALPAD               0x1
+#   UX_RESTRICTIONS_NO_FILTERING             0x2
+#   UX_RESTRICTIONS_LIMIT_STRING_LENGTH      0x4
+#   UX_RESTRICTIONS_NO_KEYBOARD              0x8
+#   UX_RESTRICTIONS_NO_VIDEO                 0x10
+#   UX_RESTRICTIONS_LIMIT_CONTENT            0x20
+#   UX_RESTRICTIONS_NO_SETUP                 0x40
+#   UX_RESTRICTIONS_NO_TEXT_MESSAGE          0x80
+#   UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION   0x100
+#   UX_RESTRICTIONS_FULLY_RESTRICTED         0x1ff   <- composite
+#
+# Scope note 1: `prune` constrains which components appear, not values (list
+# length, string length, nesting depth). See README.md.
+#
+# Scope note 2: each case states its restriction level as an input, with no
+# provenance, so a renderer deriving allowed_components from a stale or
+# never-delivered reading still conforms. Provenance (delivered /
+# never-delivered / disconnected) is the renderer's job; see car-uxr-flutter's
+# RestrictionsSource.
+#
+# These are the first v1.0 prune cases; upstream has 0.8 and 0.9 only.
+# ---------------------------------------------------------------------------
+
+- name: test_automotive_baseline_allows_full_catalog
+  description: >-
+    UX_RESTRICTIONS_BASELINE (0x0). Vehicle parked, or a display with no
+    restrictions applied. Nothing is pruned.
+  catalog: &automotive_catalog
+    version: "1.0"
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Video"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Tabs"
+            - $ref: "#/components/Modal"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+            - $ref: "#/components/TextField"
+            - $ref: "#/components/CheckBox"
+            - $ref: "#/components/ChoicePicker"
+            - $ref: "#/components/Slider"
+            - $ref: "#/components/DateTimeInput"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        Video: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Tabs: {}
+        Modal: {}
+        Divider: {}
+        Button: {}
+        TextField: {}
+        CheckBox: {}
+        ChoicePicker: {}
+        Slider: {}
+        DateTimeInput: {}
+  action: prune
+  args:
+    allowed_components:
+      [Text, Image, Icon, Video, AudioPlayer, Row, Column, List, Card, Tabs,
+       Modal, Divider, Button, TextField, CheckBox, ChoicePicker, Slider,
+       DateTimeInput]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Video"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Tabs"
+            - $ref: "#/components/Modal"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+            - $ref: "#/components/TextField"
+            - $ref: "#/components/CheckBox"
+            - $ref: "#/components/ChoicePicker"
+            - $ref: "#/components/Slider"
+            - $ref: "#/components/DateTimeInput"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        Video: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Tabs: {}
+        Modal: {}
+        Divider: {}
+        Button: {}
+        TextField: {}
+        CheckBox: {}
+        ChoicePicker: {}
+        Slider: {}
+        DateTimeInput: {}
+
+- name: test_automotive_no_video_drops_video_only
+  description: >-
+    UX_RESTRICTIONS_NO_VIDEO (0x10). Moving vehicle, driver display. Video is
+    illegal; AudioPlayer deliberately survives, because audio is not a visual
+    distraction and muting it is not what this restriction asks for.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components:
+      [Text, Image, Icon, AudioPlayer, Row, Column, List, Card, Tabs, Modal,
+       Divider, Button, TextField, CheckBox, ChoicePicker, Slider,
+       DateTimeInput]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Tabs"
+            - $ref: "#/components/Modal"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+            - $ref: "#/components/TextField"
+            - $ref: "#/components/CheckBox"
+            - $ref: "#/components/ChoicePicker"
+            - $ref: "#/components/Slider"
+            - $ref: "#/components/DateTimeInput"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Tabs: {}
+        Modal: {}
+        Divider: {}
+        Button: {}
+        TextField: {}
+        CheckBox: {}
+        ChoicePicker: {}
+        Slider: {}
+        DateTimeInput: {}
+
+- name: test_automotive_no_keyboard_drops_text_entry
+  description: >-
+    UX_RESTRICTIONS_NO_KEYBOARD (0x8). Free text entry is illegal while moving,
+    so TextField and DateTimeInput are pruned. Button and ChoicePicker survive:
+    bounded selection is not keyboard entry.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components:
+      [Text, Image, Icon, Video, AudioPlayer, Row, Column, List, Card, Tabs,
+       Modal, Divider, Button, CheckBox, ChoicePicker, Slider]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Video"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Tabs"
+            - $ref: "#/components/Modal"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+            - $ref: "#/components/CheckBox"
+            - $ref: "#/components/ChoicePicker"
+            - $ref: "#/components/Slider"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        Video: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Tabs: {}
+        Modal: {}
+        Divider: {}
+        Button: {}
+        CheckBox: {}
+        ChoicePicker: {}
+        Slider: {}
+
+- name: test_automotive_no_filtering_drops_search_affordances
+  description: >-
+    UX_RESTRICTIONS_NO_FILTERING (0x2). The occupant may not narrow a result
+    set while moving, so the components that express filtering -- TextField as
+    a search box, ChoicePicker as a facet selector -- are pruned. List stays:
+    browsing a pre-composed list is allowed, filtering it is not.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components:
+      [Text, Image, Icon, Video, AudioPlayer, Row, Column, List, Card, Tabs,
+       Modal, Divider, Button, CheckBox, Slider, DateTimeInput]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Video"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Tabs"
+            - $ref: "#/components/Modal"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+            - $ref: "#/components/CheckBox"
+            - $ref: "#/components/Slider"
+            - $ref: "#/components/DateTimeInput"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        Video: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Tabs: {}
+        Modal: {}
+        Divider: {}
+        Button: {}
+        CheckBox: {}
+        Slider: {}
+        DateTimeInput: {}
+
+- name: test_automotive_no_setup_drops_configuration_components
+  description: >-
+    UX_RESTRICTIONS_NO_SETUP (0x40). Multi-step configuration is illegal while
+    moving. Every component whose purpose is committing a setting is pruned;
+    Button survives because a single glanceable action is not setup.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components:
+      [Text, Image, Icon, Video, AudioPlayer, Row, Column, List, Card, Tabs,
+       Modal, Divider, Button]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Video"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Tabs"
+            - $ref: "#/components/Modal"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        Video: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Tabs: {}
+        Modal: {}
+        Divider: {}
+        Button: {}
+
+- name: test_automotive_limit_content_drops_deep_navigation
+  description: >-
+    UX_RESTRICTIONS_LIMIT_CONTENT (0x20). Caps how much can be presented. The
+    component-level half is expressible: Tabs and Modal introduce navigable
+    depth, and Video is unbounded-duration content, so all three are pruned.
+    The VALUE half -- getMaxCumulativeContentItems() capping List length -- is
+    NOT expressible with `prune`; see README.md.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components:
+      [Text, Image, Icon, AudioPlayer, Row, Column, List, Card, Divider,
+       Button, TextField, CheckBox, ChoicePicker, Slider, DateTimeInput]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+            - $ref: "#/components/TextField"
+            - $ref: "#/components/CheckBox"
+            - $ref: "#/components/ChoicePicker"
+            - $ref: "#/components/Slider"
+            - $ref: "#/components/DateTimeInput"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Divider: {}
+        Button: {}
+        TextField: {}
+        CheckBox: {}
+        ChoicePicker: {}
+        Slider: {}
+        DateTimeInput: {}
+
+- name: test_automotive_fully_restricted_prunes_to_glanceable_set
+  description: >-
+    UX_RESTRICTIONS_FULLY_RESTRICTED (0x1ff). Moving vehicle, driver display.
+    Prunes to the minimal glanceable set: text, a label icon, one-tap actions,
+    and the layout primitives needed to arrange them. No media, no lists, no
+    input, no navigable depth. This is the composite of all nine restriction
+    bits, so it is a superset of every case above -- never test it by equality
+    on the whole restrictions field.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components: [Text, Icon, Row, Column, Divider, Button]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+      components:
+        Text: {}
+        Icon: {}
+        Row: {}
+        Column: {}
+        Divider: {}
+        Button: {}
+
+- name: test_automotive_driving_state_unknown_fails_closed
+  description: >-
+    DRIVING_STATE_UNKNOWN. The platform treats an unknown driving state exactly
+    like MOVING, and a renderer that has never received a restriction event must
+    fail CLOSED. A default-false boolean is byte-identical to a genuine "parked"
+    reading, so absence of signal must prune to the same set as
+    FULLY_RESTRICTED, not to BASELINE. This is the case that catches broken
+    implementations.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components: [Text, Icon, Row, Column, Divider, Button]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+      components:
+        Text: {}
+        Icon: {}
+        Row: {}
+        Column: {}
+        Divider: {}
+        Button: {}
+
+- name: test_automotive_passenger_display_unrestricted_while_moving
+  description: >-
+    Per-display legality. Same moving vehicle as
+    test_automotive_fully_restricted_prunes_to_glanceable_set, but the front
+    passenger display is at BASELINE, so Video is legal there. Restrictions are
+    a per-display concept, not a vehicle-wide one; a catalog that binds to
+    vehicle state alone gets this wrong and needlessly blanks the passenger
+    screen.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components:
+      [Text, Image, Icon, Video, AudioPlayer, Row, Column, List, Card, Tabs,
+       Modal, Divider, Button, TextField, CheckBox, ChoicePicker, Slider,
+       DateTimeInput]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Video"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Tabs"
+            - $ref: "#/components/Modal"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+            - $ref: "#/components/TextField"
+            - $ref: "#/components/CheckBox"
+            - $ref: "#/components/ChoicePicker"
+            - $ref: "#/components/Slider"
+            - $ref: "#/components/DateTimeInput"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        Video: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Tabs: {}
+        Modal: {}
+        Divider: {}
+        Button: {}
+        TextField: {}
+        CheckBox: {}
+        ChoicePicker: {}
+        Slider: {}
+        DateTimeInput: {}
+
+- name: test_automotive_surface_repruned_for_destination_display
+  description: >-
+    A surface composed on the passenger display at BASELINE -- with Video and a
+    full List -- and then sent to the DRIVER display must be re-pruned for its
+    destination, not rendered with the restrictions it was composed under. The
+    target display's restrictions always win. Getting this wrong turns a
+    share-to-driver feature into a distraction delivery mechanism.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components: [Text, Icon, Row, Column, Divider, Button]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+      components:
+        Text: {}
+        Icon: {}
+        Row: {}
+        Column: {}
+        Divider: {}
+        Button: {}
+
+- name: test_automotive_rear_display_allows_video_with_audio
+  description: >-
+    Rear seat entertainment. A rear display is never subject to driver
+    distraction rules, so the full catalog is legal there regardless of vehicle
+    state. Included so an implementation cannot pass the suite by pruning
+    everything whenever the vehicle is moving.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components:
+      [Text, Image, Icon, Video, AudioPlayer, Row, Column, List, Card, Tabs,
+       Modal, Divider, Button, TextField, CheckBox, ChoicePicker, Slider,
+       DateTimeInput]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Image"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Video"
+            - $ref: "#/components/AudioPlayer"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/List"
+            - $ref: "#/components/Card"
+            - $ref: "#/components/Tabs"
+            - $ref: "#/components/Modal"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+            - $ref: "#/components/TextField"
+            - $ref: "#/components/CheckBox"
+            - $ref: "#/components/ChoicePicker"
+            - $ref: "#/components/Slider"
+            - $ref: "#/components/DateTimeInput"
+      components:
+        Text: {}
+        Image: {}
+        Icon: {}
+        Video: {}
+        AudioPlayer: {}
+        Row: {}
+        Column: {}
+        List: {}
+        Card: {}
+        Tabs: {}
+        Modal: {}
+        Divider: {}
+        Button: {}
+        TextField: {}
+        CheckBox: {}
+        ChoicePicker: {}
+        Slider: {}
+        DateTimeInput: {}
+
+- name: test_automotive_out_of_catalog_component_is_not_reintroduced
+  description: >-
+    An agent will eventually propose a component the restriction level does not
+    permit. Pruning is the enforcement boundary: asking for Video on a
+    FULLY_RESTRICTED surface must not reintroduce it. Requesting a component
+    that is not in the pruned set yields the pruned set, never a superset.
+  catalog: *automotive_catalog
+  action: prune
+  args:
+    allowed_components: [Text, Icon, Row, Column, Divider, Button]
+  expect:
+    catalogSchema:
+      catalogId: automotive
+      $defs:
+        anyComponent:
+          oneOf:
+            - $ref: "#/components/Text"
+            - $ref: "#/components/Icon"
+            - $ref: "#/components/Row"
+            - $ref: "#/components/Column"
+            - $ref: "#/components/Divider"
+            - $ref: "#/components/Button"
+      components:
+        Text: {}
+        Icon: {}
+        Row: {}
+        Column: {}
+        Divider: {}
+        Button: {}

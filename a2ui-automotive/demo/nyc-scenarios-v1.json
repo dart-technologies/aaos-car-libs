@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "creditBudget": 10000,
+  "tts": {
+    "modelId": "eleven_multilingual_v2",
+    "outputFormat": "mp3_44100_128",
+    "defaultVoiceId": "21m00Tcm4TlvDq8ikWAM",
+    "personas": {
+      "navigator": {
+        "role": "narration",
+        "displayName": "Fifth House Navigator",
+        "voiceName": "Sarah",
+        "voiceId": "EXAVITQu4vr4xnSDxMaL",
+        "genderPresentation": "female",
+        "accentIntent": "American English",
+        "direction": "Warm, poised hospitality concierge; measured and useful, never salesy.",
+        "voiceSettings": {
+          "stability": 0.66,
+          "similarity_boost": 0.72,
+          "style": 0.05,
+          "use_speaker_boost": true,
+          "speed": 0.96
+        }
+      },
+      "guest": {
+        "role": "user_utterance",
+        "displayName": "NYC Guest",
+        "voiceName": "George",
+        "voiceId": "JBFqnCBsd6RMkjVDRZzb",
+        "genderPresentation": "male",
+        "accentIntent": "British English",
+        "direction": "Natural visitor speaking short, decisive requests with no announcer cadence.",
+        "voiceSettings": {
+          "stability": 0.56,
+          "similarity_boost": 0.72,
+          "style": 0.03,
+          "use_speaker_boost": true,
+          "speed": 1.04
+        }
+      }
+    }
+  },
+  "stt": {
+    "modelId": "scribe_v2",
+    "languageCode": "eng"
+  },
+  "sfx": {
+    "modelId": "eleven_text_to_sound_v2",
+    "outputFormat": "mp3_44100_128",
+    "estimatedCreditsPerSecond": 20,
+    "effects": [
+      {
+        "id": "fifth_house_welcome",
+        "prompt": "A restrained two-note hospitality welcome chime for a premium modern electric vehicle interface, airy glass and soft felt mallet, warm and elegant, no voice, no music bed, clean studio sound.",
+        "durationSeconds": 1.2,
+        "promptInfluence": 0.55
+      },
+      {
+        "id": "fifth_house_confirmed",
+        "prompt": "A concise warm confirmation sound for a premium automotive interface, two soft wooden and glass notes resolving upward, confident but discreet, no voice, no alarm, clean studio sound.",
+        "durationSeconds": 1.0,
+        "promptInfluence": 0.58
+      },
+      {
+        "id": "fifth_house_focus",
+        "prompt": "A single subtle descending glass tone that communicates an automotive interface becoming quieter and more focused, calm and reassuring, no voice, no warning alarm, clean studio sound.",
+        "durationSeconds": 1.0,
+        "promptInfluence": 0.58
+      },
+      {
+        "id": "fifth_house_arrival",
+        "prompt": "A gentle premium arrival chime for a modern electric vehicle interface, three light glass notes with a soft optimistic finish, elegant and understated, no voice, no music bed, clean studio sound.",
+        "durationSeconds": 1.3,
+        "promptInfluence": 0.55
+      }
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "nyc_poi_order",
+      "title": "Coffee pickup from Hudson Yards to Brooklyn Museum",
+      "corpusCase": "poi_discovery_order",
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-astra-2026-09-07.json",
+      "durationSeconds": 78,
+      "premise": "A parked driver chooses a fictional demo pickup along a recognizable NYC route. Once the vehicle enters drive, discovery and purchase disappear or refuse while the route remains.",
+      "parameterRationale": [
+        "Hudson Yards is a recognizable neighborhood-level origin and avoids pretending the emulator has device location.",
+        "Brooklyn Museum creates a legible cross-borough interval long enough to show parked, driving, and arrival policy changes.",
+        "The fictional Fifth House merchant avoids live inventory, payment, trademark, and fulfillment claims.",
+        "The dated NWS snapshot makes weather useful and auditable rather than silently stale."
+      ],
+      "doNotClaim": [
+        "real merchant inventory, price, payment, map data, or navigation guidance",
+        "that a DEMO restriction preset represents vehicle motion"
+      ],
+      "clips": [
+        {
+          "id": "poi_narration_01",
+          "role": "narration",
+          "atMs": 1000,
+          "text": "We are parked at Hudson Yards, heading to the Brooklyn Museum. This A2UI surface offers coffee discovery, a route preview, and ordering in one host-native flow. Both merchants are clearly marked as fictional demo venues."
+        },
+        {
+          "id": "poi_utterance_search",
+          "role": "user_utterance",
+          "atMs": 16800,
+          "text": "Find coffee along the route.",
+          "expectedTranscript": "find coffee along the route"
+        },
+        {
+          "id": "poi_narration_02",
+          "role": "narration",
+          "atMs": 19000,
+          "text": "The result combines a place list with a synthetic route preview. The visual is intentionally not a live map. Host-owned action identifiers, never the labels, decide what may navigate or spend money."
+        },
+        {
+          "id": "poi_utterance_order",
+          "role": "user_utterance",
+          "atMs": 38000,
+          "text": "Order ahead.",
+          "expectedTranscript": "order ahead"
+        },
+        {
+          "id": "poi_narration_03",
+          "role": "narration",
+          "atMs": 43000,
+          "text": "The consequential order requires a parked confirmation and is re-decided when the confirmation is answered. Now the emulator changes through the real car service from park to drive."
+        },
+        {
+          "id": "poi_narration_04",
+          "role": "narration",
+          "atMs": 61000,
+          "text": "The same surface is projected again using current restrictions. Search and ordering are no longer available, but glanceable pickup and route context remain. This proves enforcement, not live commerce or turn-by-turn navigation."
+        }
+      ],
+      "actions": [
+        {"atMs": 16300, "type": "speak", "clipId": "poi_utterance_search"},
+        {"atMs": 33000, "type": "tapText", "text": "Preview pickup route"},
+        {"atMs": 35500, "type": "tapText", "text": "OK"},
+        {"atMs": 37500, "type": "speak", "clipId": "poi_utterance_order"},
+        {"atMs": 40000, "type": "tapText", "text": "OK"},
+        {"atMs": 56500, "type": "carState", "state": "drive"}
+      ],
+      "soundEffects": [
+        {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
+        {"atMs": 40500, "effectId": "fifth_house_confirmed", "gainDb": -12},
+        {"atMs": 57000, "effectId": "fifth_house_focus", "gainDb": -14}
+      ]
+    },
+    {
+      "id": "nyc_curated_video",
+      "title": "Curated short while waiting in Long Island City",
+      "corpusCase": "big_buck_bunny",
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-astra-2026-09-07.json",
+      "durationSeconds": 78,
+      "premise": "A parked driver opens the repository's generated video placeholder from a curated selection. Entering drive removes video decoding and pixels; a separate safe audio control remains.",
+      "parameterRationale": [
+        "Long Island City is a plausible parked waiting context where a short visual session has a clear end.",
+        "The title is recognizable, while repository-generated bytes keep the recorded baseline deterministic and rights claims explicit.",
+        "A separate audio control demonstrates useful continuity without treating video as safe in motion."
+      ],
+      "doNotClaim": [
+        "that placeholder pixels are Big Buck Bunny footage or licensed catalogue media",
+        "that video remains visible in motion"
+      ],
+      "clips": [
+        {
+          "id": "media_narration_01",
+          "role": "narration",
+          "atMs": 1000,
+          "text": "We are parked in Long Island City, waiting for a passenger. The curated media surface can be searched while parked and exposes a real host-native video view backed by a generated offline decoder fixture."
+        },
+        {
+          "id": "media_utterance_search",
+          "role": "user_utterance",
+          "atMs": 15000,
+          "text": "Find curated short films.",
+          "expectedTranscript": "find curated short films"
+        },
+        {
+          "id": "media_narration_02",
+          "role": "narration",
+          "atMs": 18000,
+          "text": "The title is Big Buck Bunny, but the picture and sound are repository-generated placeholders, clearly labeled demo. That keeps the walkthrough offline, deterministic, and free of catalogue or rights claims."
+        },
+        {
+          "id": "media_utterance_open",
+          "role": "user_utterance",
+          "atMs": 33500,
+          "text": "Open Big Buck Bunny.",
+          "expectedTranscript": "open big buck bunny"
+        },
+        {
+          "id": "media_narration_03",
+          "role": "narration",
+          "atMs": 39000,
+          "text": "Video is available only in the parked state. Before leaving, the driver closes the picture and switches to the separate audio control. Now the emulator enters drive through the real car service."
+        },
+        {
+          "id": "media_narration_04",
+          "role": "narration",
+          "atMs": 59000,
+          "text": "The driver can still use the separate audio-only control. Audio continues through a local media session while video stays absent. This is the intended split: useful listening in motion, never moving pictures for the driver."
+        }
+      ],
+      "actions": [
+        {"atMs": 14500, "type": "speak", "clipId": "media_utterance_search"},
+        {"atMs": 33000, "type": "speak", "clipId": "media_utterance_open"},
+        {"atMs": 51000, "type": "tapText", "text": "Cancel"},
+        {"atMs": 53000, "type": "tapText", "text": "Play audio / pause"},
+        {"atMs": 56500, "type": "carState", "state": "drive"}
+      ],
+      "soundEffects": [
+        {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
+        {"atMs": 57000, "effectId": "fifth_house_focus", "gainDb": -14}
+      ]
+    },
+    {
+      "id": "nyc_astra_concierge",
+      "title": "Fifth House concierge: order, listen en route, watch on arrival",
+      "corpusCase": "poi_discovery_order",
+      "corpusSequence": ["poi_discovery_order", "big_buck_bunny"],
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-astra-2026-09-07.json",
+      "agentProfiles": "a2ui-automotive/demo/agent-profiles-v1.json",
+      "durationSeconds": 90,
+      "premise": "One calm hospitality story joins contextual pickup, parked confirmation, branded audio continuity in motion, and parked visual content. A fast foreground turn may use Sonnet low effort; a separately staged Astra job prepares evidence-backed concierge updates without controlling the car.",
+      "parameterRationale": [
+        "The order and media chapters reuse independently accepted corpus surfaces, so the combined story does not bypass their policy tests.",
+        "Fifth House is explicitly fictional and provides one visual and editorial thread across the handoff between surfaces.",
+        "The public Astra event supplies real NYC date and time context; its street venue and the user's attendance are intentionally not inferred.",
+        "Audio starts while parked and continues in drive; visual content opens only after returning to park."
+      ],
+      "doNotClaim": [
+        "live device location, live weather, event admission, event street venue, merchant inventory, payment, or fulfillment",
+        "that this pre-existing repository is an eligible hackathon submission",
+        "that Big Buck Bunny footage or any partner-branded asset is present in the generated placeholder",
+        "that the optional foreground or background provider call is required for the deterministic replay",
+        "that a background agent can publish actions or driver-visible content without gateway and host validation"
+      ],
+      "clips": [
+        {
+          "id": "concierge_narration_01",
+          "role": "narration",
+          "atMs": 1000,
+          "text": "Good afternoon from Hudson Yards. Fifth House is a fictional concierge for this demo. The dated New York forecast is warm with a chance of showers after two, so it suggests a cold pickup and a discreet umbrella reminder before the Thursday Astra event."
+        },
+        {
+          "id": "concierge_utterance_order",
+          "role": "user_utterance",
+          "atMs": 16800,
+          "text": "Order ahead.",
+          "expectedTranscript": "order ahead"
+        },
+        {
+          "id": "concierge_narration_02",
+          "role": "narration",
+          "atMs": 20000,
+          "text": "The order is a fixture, but the confirmation is real policy. It is allowed only while parked and is decided again when OK is pressed. The concierge now offers a short Fifth House city note from the curated media surface."
+        },
+        {
+          "id": "concierge_narration_03",
+          "role": "narration",
+          "atMs": 36000,
+          "text": "Audio begins before departure. As the emulator enters drive through car service, video and search leave the surface while the local media session continues. The experience gets quieter rather than simply going blank."
+        },
+        {
+          "id": "concierge_narration_04",
+          "role": "narration",
+          "atMs": 55000,
+          "text": "On arrival we return to park. The richer visual chapter becomes available again. This transition is the centerpiece: one journey, one brand voice, and different native UI at the safe moment for each mode."
+        },
+        {
+          "id": "concierge_utterance_open",
+          "role": "user_utterance",
+          "atMs": 70000,
+          "text": "Open Big Buck Bunny.",
+          "expectedTranscript": "open big buck bunny"
+        },
+        {
+          "id": "concierge_narration_05",
+          "role": "narration",
+          "atMs": 72500,
+          "text": "A low-effort Sonnet turn is the optional fast path. In parallel, GPT-6 Astra can prepare a longer evidence-backed arrival brief through the gateway. Its suggestions remain staged until freshness, restrictions, and host-owned actions are checked."
+        }
+      ],
+      "actions": [
+        {"atMs": 16300, "type": "speak", "clipId": "concierge_utterance_order"},
+        {"atMs": 18500, "type": "tapText", "text": "OK"},
+        {"atMs": 35000, "type": "selectCase", "caseId": "big_buck_bunny"},
+        {"atMs": 38000, "type": "tapText", "text": "Play audio / pause"},
+        {"atMs": 51000, "type": "carState", "state": "drive"},
+        {"atMs": 69000, "type": "carState", "state": "park"},
+        {"atMs": 69500, "type": "speak", "clipId": "concierge_utterance_open"},
+        {"atMs": 88500, "type": "keyEvent", "key": "BACK"}
+      ],
+      "soundEffects": [
+        {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
+        {"atMs": 19000, "effectId": "fifth_house_confirmed", "gainDb": -12},
+        {"atMs": 51500, "effectId": "fifth_house_focus", "gainDb": -14},
+        {"atMs": 69200, "effectId": "fifth_house_arrival", "gainDb": -13}
+      ]
+    }
+  ]
+}
