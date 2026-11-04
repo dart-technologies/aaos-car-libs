@@ -460,9 +460,10 @@ class VehicleSignalTest(unittest.TestCase):
             ("broadcast", demo.ACTION_VEHICLE, ("--ei", demo.EXTRA_BATTERY_PCT, "18")),
         ])
         stop = device.calls.index((70.0, "stop", 2))
-        self.assertEqual(device.calls[stop + 1], (70.0, "shell", (
-            "dumpsys", demo.VHAL_SERVICE, "--set", SET, "-f", "120000")))
-        self.assertEqual(device.calls[stop + 2], (70.0, "car", "park"))
+        self.assertEqual(device.calls[stop + 1:stop + 4], [
+            (70.0, "shell", ("dumpsys", demo.VHAL_SERVICE, "--set", SET, "-f", "120000")),
+            (70.0, "broadcast", demo.ACTION_VEHICLE, ("--ei", demo.EXTRA_BATTERY_PCT, "-1")),
+            (70.0, "car", "park")])
 
     def test_unreadable_capacity_falls_back_and_broadcast_only_never_restores(self):
         scenario = dict(DUAL, actions=DUAL["actions"] + [dict(BATTERY, via=["broadcast"])])

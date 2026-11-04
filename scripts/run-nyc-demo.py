@@ -350,12 +350,15 @@ def vehicle_signal(device, action: dict) -> dict:
 
 
 def restore_vehicle(device, signals: list[dict]) -> None:
-    """Put back the stored battery level the first vhal-set replaced (best effort)."""
+    """Put back the stored battery level the first vhal-set replaced, and hand Host B back to
+    the vehicle's reading after a broadcast override (best effort)."""
     stored = [s for s in signals if s.get("previousWh") is not None
               and any(r["via"] == "vhal-set" and r["ok"] for r in s["routes"])]
     if stored:
         device.shell("dumpsys", VHAL_SERVICE, "--set", hex(EV_BATTERY_LEVEL),
                      "-f", f"{stored[0]['previousWh']:g}")
+    if any(r["via"] == "broadcast" for s in signals for r in s["routes"]):
+        device.broadcast(ACTION_VEHICLE, "--ei", EXTRA_BATTERY_PCT, "-1")
 
 
 def run_timeline(scenario: dict, device, clock, *, driver_display: str,
@@ -762,6 +765,9 @@ def main() -> int:
     still = args.output.with_name(args.output.stem + ".passenger-idle.png")
 
     set_car_state("park")
+    if any(action["type"] == "vehicleSignal" for action in scenario["actions"]):
+        # Host B reads EV_BATTERY_LEVEL only with this runtime permission (VehicleEnergy).
+        adb_shell("pm", "grant", PACKAGE, "android.car.permission.CAR_ENERGY", check=False)
     launch()
     if dual:
         broadcast(ACTION_PASSENGER, "--es", EXTRA_MEDIA, "stop")
