@@ -23,6 +23,10 @@
     <!-- Voice capture: requested on first use, not at launch. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- State of charge (EV_BATTERY_LEVEL, a runtime grant) over capacity (CAR_INFO). -->
+    <uses-permission android:name="android.car.permission.CAR_ENERGY" />
+    <uses-permission android:name="android.car.permission.CAR_INFO" />
+
     <application
         android:label="@string/app_name"
         android:icon="@android:drawable/ic_menu_sort_by_size">

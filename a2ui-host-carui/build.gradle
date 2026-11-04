@@ -134,6 +134,10 @@ abstract class BundleMetFilmTiming extends DefaultTask {
     @PathSensitive(PathSensitivity.NAME_ONLY)
     abstract ConfigurableFileCollection getTiming()
 
+    @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract ConfigurableFileCollection getChargers()
+
     @OutputDirectory
     abstract DirectoryProperty getOutputDir()
 
@@ -144,12 +148,17 @@ abstract class BundleMetFilmTiming extends DefaultTask {
     void bundle() {
         fs.sync { spec ->
             spec.from(timing) { into 'met' }
+            spec.from(chargers) { into 'chargers' }
             spec.into(outputDir)
         }
     }
 }
 def bundleMetFilmTiming = tasks.register('bundleMetFilmTiming', BundleMetFilmTiming) {
     timing.from(fileTree(file('../a2ui-automotive/demo/fixtures/met')) { include 'FILM.json' })
+    // And the chargers (OSM) for ev_charge_coffee, as assets/chargers/chargers.json.
+    chargers.from(fileTree(file('../a2ui-automotive/demo/fixtures/chargers')) {
+        include 'chargers.json'
+    })
     outputDir = layout.buildDirectory.dir('generated/metFilmTiming')
 }
 androidComponents {

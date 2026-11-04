@@ -123,7 +123,8 @@ public final class UseCaseCorpus {
             handoffToDriver(),
             poiDiscoveryOrder(),
             bigBuckBunny(),
-            metVisit()));
+            metVisit(),
+            evChargeCoffee()));
 
     @NonNull
     public static List<UseCase> all() {
@@ -366,8 +367,8 @@ public final class UseCaseCorpus {
      */
     private static UseCase metVisit() {
         Builder b = new Builder("met_visit",
-                "Plan tomorrow at The Met from Hudson Yards: a cited brief, reserve timed entry "
-                        + "while parked, preview the route, then artwork on arrival",
+                "Take us to The Met this afternoon, from Hudson Yards: a cited brief, reserve "
+                        + "timed entry while parked, preview the route, then artwork on arrival",
                 "BASELINE shows sources, map and artwork; motion's depth limit and type policy "
                         + "remove them while the ETA, brief and audio guide stay");
         b.container("root", "Column", "route", "brief", "weather", "reserve", "audio", "gallery",
@@ -380,15 +381,15 @@ public final class UseCaseCorpus {
         b.component("map", "Image", "Hudson Yards → The Met",
                 "Route preview · © OpenStreetMap contributors");
         b.container("brief", "Card", "sources");
-        b.put("brief", "title", "Thursday at The Met");
+        b.put("brief", "title", "Today at The Met");
         b.put("brief", "subtitle", "Open 10 AM–5 PM · closed Wednesdays · timed entry advised");
         b.container("sources", "List", "src1", "src2", "src3");
         b.put("sources", "title", "Sources");
         b.text("src1", "Source · metmuseum.org", "Hours and admission");
         b.text("src2", "Source · metmuseum.org", "Exhibitions on view");
         b.text("src3", "Source · metmuseum.org", "Accessibility and entrances");
-        b.text("weather", "Thursday · Mostly cloudy, chance of showers · high 72°F",
-                "National Weather Service · Central Park forecast for Nov 5");
+        b.text("weather", "Today · Mostly cloudy, chance of showers · high 72°F",
+                "National Weather Service · Central Park · Thu Nov 5 forecast");
         b.action("reserve", "Button", "Reserve entry for two at 3 PM",
                 "DEMO booking · confirm while parked", "reserve");
         b.put("reserve", "voicePhrase", "reserve entry for two at three");
@@ -422,6 +423,62 @@ public final class UseCaseCorpus {
         b.templates(TemplateCapability.ROUTE_PREVIEW, TemplateCapability.MAP_WITH_CONTENT,
                 TemplateCapability.MODAL, TemplateCapability.VIDEO,
                 TemplateCapability.MEDIA_PLAYBACK);
+        return b.build();
+    }
+
+    /**
+     * Charge and a coffee: the vehicle starts it (low battery), the surface is a utility
+     * comparison, and a parked charging window opens richer content. Charger rows bind to the data
+     * model so a fixture (OSM) can replace the DEMO defaults through the processor. Choosing a
+     * charger is navigation, allowed in motion; the reorder is a purchase, parked and confirmed.
+     */
+    private static UseCase evChargeCoffee() {
+        Builder b = new Builder("ev_charge_coffee",
+                "Low battery on the way: compare fast chargers, choose one by voice, then reorder "
+                        + "coffee and finish the Met tour while charging",
+                "BASELINE adds the parked reorder and tour; motion keeps the glanceable charger "
+                        + "comparison and navigation, refuses the purchase, removes the tour");
+        b.container("root", "Column", "c1", "c2", "c3", "coffee", "tour");
+        b.put("root", "title", "Charge and a coffee");
+        String[] ordinals = {"first", "second", "third"};
+        for (int i = 0; i < 3; i++) {
+            String id = "c" + (i + 1);
+            b.action(id, "Card", null, null, "navigate");
+            b.put(id, "title", ptr("/chargers/" + i + "/name"));
+            b.put(id, "subtitle", ptr("/chargers/" + i + "/detail"));
+            b.put(id, "voicePhrase", "take me to the " + ordinals[i] + " one");
+        }
+        b.action("coffee", "Button", "Reorder cold brew + bagel",
+                "Fifth House · DEMO order · confirm while parked", "purchase");
+        b.put("coffee", "voicePhrase", "reorder my coffee");
+        b.container("tour", "Modal", "met_436535", "met_437881", "met_437394", "met_435809",
+                "met_436105", "met_435868", "film");
+        b.put("tour", "title", "Finish the Met tour");
+        b.put("tour", "subtitle", "Film or slideshow · parked only");
+        b.put("tour", "action", "open");
+        b.put("tour", "voicePhrase", "finish the tour");
+        b.component("met_436535", "Image", "Wheat Field with Cypresses",
+                "Vincent van Gogh · 1889");
+        b.component("met_437881", "Image", "Young Woman with a Water Pitcher",
+                "Johannes Vermeer · ca. 1662");
+        b.component("met_437394", "Image", "Aristotle with a Bust of Homer",
+                "Rembrandt (Rembrandt van Rijn) · 1653");
+        b.component("met_435809", "Image", "The Harvesters", "Pieter Bruegel the Elder · 1565");
+        b.component("met_436105", "Image", "The Death of Socrates", "Jacques Louis David · 1787");
+        b.component("met_435868", "Image", "The Card Players", "Paul Cézanne · 1890–92");
+        b.component("film", "Video", "Artwork film", "Six works, slowly · parked only");
+        // DEMO defaults; a bundled chargers.json (OSM) replaces them through updateDataModel.
+        b.data("/chargers/0/name", "Fast charger A · DEMO");
+        b.data("/chargers/0/detail", "0.6 mi · 150 kW · est. wait 4 min");
+        b.data("/chargers/1/name", "Fast charger B · DEMO");
+        b.data("/chargers/1/detail", "1.1 mi · 250 kW · est. wait 9 min");
+        b.data("/chargers/2/name", "Fast charger C · DEMO");
+        b.data("/chargers/2/detail", "1.9 mi · 120 kW · est. wait 2 min");
+        b.data("/session/detail", "about 22 min · DEMO");
+        b.data("/order/status", "Coffee ready at the counter");
+        b.data("/order/pickup", "Fifth House Coffee Atelier · DEMO order");
+        b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
+                TemplateCapability.MODAL, TemplateCapability.VIDEO);
         return b.build();
     }
 

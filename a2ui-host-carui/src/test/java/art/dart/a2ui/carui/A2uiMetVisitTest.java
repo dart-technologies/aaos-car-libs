@@ -54,7 +54,7 @@ public class A2uiMetVisitTest {
 
     private static final int DRIVE = 0xff;
     private static final String ETA = "Arrive 2:41 PM · 19 min";
-    private static final String BRIEF = "Thursday at The Met";
+    private static final String BRIEF = "Today at The Met";
     private static final String GALLERY = "Artwork highlights";
     private static final String FILM = "Film · Slideshow";
     private static final String RESERVE = "Reserve entry for two at 3 PM";
@@ -245,7 +245,7 @@ public class A2uiMetVisitTest {
         assertThat(VoicePhrase.canonical("Show the highlights, please!"))
                 .isEqualTo("show the highlights");
         // Words are not invented or dropped beyond clock suffixes and courtesy.
-        assertThat(VoicePhrase.canonical("reserve entry for two at 3 tomorrow"))
-                .isEqualTo("reserve entry for two at three tomorrow");
+        assertThat(VoicePhrase.canonical("reserve entry for two at 3 today"))
+                .isEqualTo("reserve entry for two at three today");
     }
 }

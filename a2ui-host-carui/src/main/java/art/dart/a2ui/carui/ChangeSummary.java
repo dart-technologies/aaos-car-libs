@@ -46,14 +46,17 @@ final class ChangeSummary {
 
     final List<String> mHidden;
     final List<String> mRestored;
+    /** Host cards that left with the change, by host noun. */
+    final List<String> mCollapsed;
     final int mRowsBefore;
     final int mRowsAfter;
     final boolean mAudioContinues;
 
-    private ChangeSummary(List<String> hidden, List<String> restored, int rowsBefore,
-            int rowsAfter, boolean audioContinues) {
+    private ChangeSummary(List<String> hidden, List<String> restored, List<String> collapsed,
+            int rowsBefore, int rowsAfter, boolean audioContinues) {
         mHidden = hidden;
         mRestored = restored;
+        mCollapsed = collapsed;
         mRowsBefore = rowsBefore;
         mRowsAfter = rowsAfter;
         mAudioContinues = audioContinues;
@@ -66,8 +69,18 @@ final class ChangeSummary {
     @NonNull
     static ChangeSummary between(@Nullable A2uiComponent before, @Nullable A2uiComponent after,
             int rowsBefore, int rowsAfter, boolean audioContinues, @NonNull Labeler labeler) {
+        return between(before, after, rowsBefore, rowsAfter, audioContinues, labeler,
+                new ArrayList<>());
+    }
+
+    /** As above, plus the host cards (pickup, charging) the change took away. */
+    @NonNull
+    static ChangeSummary between(@Nullable A2uiComponent before, @Nullable A2uiComponent after,
+            int rowsBefore, int rowsAfter, boolean audioContinues, @NonNull Labeler labeler,
+            @NonNull List<String> collapsedHostCards) {
         return new ChangeSummary(topmostMissing(before, after, labeler),
-                topmostMissing(after, before, labeler), rowsBefore, rowsAfter, audioContinues);
+                topmostMissing(after, before, labeler), new ArrayList<>(collapsedHostCards),
+                rowsBefore, rowsAfter, audioContinues);
     }
 
     /** The one-line text, e.g. "Map & sources hidden · 7→3 rows · Audio continues". */
@@ -75,6 +88,10 @@ final class ChangeSummary {
     String text() {
         List<String> parts = new ArrayList<>();
         if (!mHidden.isEmpty()) parts.add(join(mHidden) + " hidden");
+        if (!mCollapsed.isEmpty()) {
+            parts.add(join(mCollapsed) + (mCollapsed.size() == 1 ? " card" : " cards")
+                    + " collapsed");
+        }
         if (!mRestored.isEmpty()) parts.add(join(mRestored) + " back");
         if (parts.isEmpty()) parts.add("Nothing hidden");
         parts.add(mRowsBefore + "→" + mRowsAfter + (mRowsAfter == 1 ? " row" : " rows"));

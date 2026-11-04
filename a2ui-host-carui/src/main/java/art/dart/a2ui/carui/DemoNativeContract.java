@@ -25,7 +25,7 @@ final class DemoNativeContract {
 
     enum Kind {
         CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER, GALLERY,
-        TOGGLE
+        TOGGLE, CHARGER
     }
 
     static final class Spec {
@@ -110,6 +110,10 @@ final class DemoNativeContract {
             Spec met = metSpec(id, component);
             if (met != null) return met;
         }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            Spec ev = evSpec(id, component);
+            if (ev != null) return ev;
+        }
         if (matches(surfaceId, id, component, "poi_discovery_order", "order",
                 ComponentType.BUTTON, "purchase")) {
             return Spec.simple(Kind.ORDER, "DEMO pickup order");
@@ -190,7 +194,7 @@ final class DemoNativeContract {
     /** The video an exact corpus VIDEO component plays, or null for the generated fixture. */
     @Nullable
     static Media videoFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
-        if ("met_visit".equals(surfaceId) && "film".equals(component.getId())
+        if (isMetArtSurface(surfaceId) && "film".equals(component.getId())
                 && component.getType() == ComponentType.VIDEO) {
             return new Media("met_artwork_film", MET_CREDIT);
         }
@@ -201,7 +205,7 @@ final class DemoNativeContract {
     @Nullable
     static String artworkFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
         String id = component.getId();
-        if ("met_visit".equals(surfaceId) && id != null && MET_WORKS.contains(id)
+        if (isMetArtSurface(surfaceId) && id != null && MET_WORKS.contains(id)
                 && component.getType() == ComponentType.IMAGE) {
             return id; // met_<objectID>.jpg, bundled
         }
@@ -211,7 +215,11 @@ final class DemoNativeContract {
     /** The credit line under every slide of a corpus gallery, or null. */
     @Nullable
     static String artworkCredit(@NonNull String surfaceId) {
-        return "met_visit".equals(surfaceId) ? MET_CREDIT : null;
+        return isMetArtSurface(surfaceId) ? MET_CREDIT : null;
+    }
+
+    private static boolean isMetArtSurface(@NonNull String surfaceId) {
+        return "met_visit".equals(surfaceId) || "ev_charge_coffee".equals(surfaceId);
     }
 
     /** The id of an exact corpus card's citation list, drawn as lines under it, or null. */
@@ -227,6 +235,23 @@ final class DemoNativeContract {
     /** The six bundled works, in gallery order. */
     static final List<String> MET_WORKS = Collections.unmodifiableList(Arrays.asList(
             "met_436535", "met_437881", "met_437394", "met_435809", "met_436105", "met_435868"));
+
+    @Nullable
+    private static Spec evSpec(@NonNull String id, @NonNull A2uiComponent component) {
+        ComponentType type = component.getType();
+        String action = component.getAction();
+        if (("c1".equals(id) || "c2".equals(id) || "c3".equals(id))
+                && type == ComponentType.CARD && "navigate".equals(action)) {
+            return Spec.simple(Kind.CHARGER, "Charger");
+        }
+        if ("coffee".equals(id) && type == ComponentType.BUTTON && "purchase".equals(action)) {
+            return Spec.simple(Kind.ORDER, "DEMO coffee reorder");
+        }
+        if ("tour".equals(id) && type == ComponentType.MODAL && "open".equals(action)) {
+            return Spec.simple(Kind.GALLERY, "Finish the Met tour");
+        }
+        return null;
+    }
 
     @Nullable
     private static Spec metSpec(@NonNull String id, @NonNull A2uiComponent component) {
@@ -269,6 +294,11 @@ final class DemoNativeContract {
         if ("big_buck_bunny".equals(surfaceId)) {
             if ("field".equals(id)) return "Search";
             if ("results".equals(id)) return "Results";
+        }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            if ("tour".equals(id)) return "Artwork";
+            if (id.startsWith("c") && id.length() == 2) return "Chargers";
+            if ("coffee".equals(id)) return "Order";
         }
         if ("met_visit".equals(surfaceId)) {
             if ("map".equals(id) || "preview".equals(id)) return "Map";
