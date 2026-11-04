@@ -306,9 +306,13 @@
       "corpusSequence": ["met_visit", "ev_charge_coffee"],
       "contextSnapshot": "a2ui-automotive/demo/context/nyc-met-2026-11-05.json",
       "agentProfiles": "a2ui-automotive/demo/agent-profiles-v1.json",
-      "durationSeconds": 121,
+      "durationSeconds": 129,
       "recording": {"layout": "dual"},
-      "titleCard": {"image": "a2ui-automotive/demo/cards/nyc_met-title.png", "seconds": 2.5},
+      "chapterCards": [
+        {"image": "a2ui-automotive/demo/cards/nyc_met-title.png", "atMs": 0, "seconds": 2.5},
+        {"image": "a2ui-automotive/demo/cards/nyc_met-intermission.png", "atMs": 82500, "seconds": 3.3,
+         "fadeIn": 0.7, "fadeOut": 0.7}
+      ],
       "disclaimer": {
         "image": "a2ui-automotive/demo/cards/nyc_met-disclaimer.png",
         "text": "Simulated demo drive on Android Automotive OS emulator"
@@ -323,15 +327,15 @@
         "clipId": "outro_narration_01",
         "places": ["Hudson Yards", "The Met", "charging"],
         "beats": [
-          {"atMs": 12000, "display": "driver", "label": "Cited brief"},
-          {"atMs": 22000, "display": "driver", "label": "Ticket confirmed"},
-          {"atMs": 40000, "display": "driver", "label": "Audio guide"},
-          {"atMs": 71000, "display": "driver", "label": "Film, parked"},
-          {"atMs": 87000, "display": "driver", "label": "Chargers"},
-          {"atMs": 108000, "display": "driver", "label": "Café pick + order"},
-          {"atMs": 117000, "display": "driver", "label": "Big Buck Bunny"},
-          {"atMs": 45000, "display": "passenger", "label": "Passenger · film"},
-          {"atMs": 86000, "display": "passenger", "label": "Passenger · Big Buck Bunny"}
+          {"atMs": 12000, "display": "driver", "label": "Cited Met brief"},
+          {"atMs": 22000, "display": "driver", "label": "Met entry confirmed"},
+          {"atMs": 40000, "display": "driver", "label": "Met audio guide"},
+          {"atMs": 71000, "display": "driver", "label": "Met video overview"},
+          {"atMs": 95000, "display": "driver", "label": "Chargers near The Met"},
+          {"atMs": 116000, "display": "driver", "label": "Café pick + usual coffee"},
+          {"atMs": 125000, "display": "driver", "label": "Big Buck Bunny"},
+          {"atMs": 45000, "display": "passenger", "label": "Passenger · Met video overview"},
+          {"atMs": 94000, "display": "passenger", "label": "Passenger · Big Buck Bunny"}
         ],
         "note": "Simulated demo drive on Android Automotive OS emulator",
         "badgeIcon": "a2ui-automotive/demo/cards/brand/muse-icon-white.png",
@@ -482,45 +486,45 @@
         {
           "id": "ev_narration_01",
           "role": "narration",
-          "atMs": 79000,
+          "atMs": 87000,
           "text": "Back on the road, the car keeps watch so you don't have to."
         },
         {
           "id": "ev_narration_02",
           "role": "narration",
-          "atMs": 83600,
+          "atMs": 91600,
           "text": "It noticed the battery running low and found chargers on your way."
         },
         {
           "id": "ev_utterance_first",
           "role": "user_utterance",
-          "atMs": 88000,
+          "atMs": 96000,
           "text": "Take me to the first one.",
           "expectedTranscript": "take me to the first one"
         },
         {
           "id": "ev_narration_03",
           "role": "narration",
-          "atMs": 93500,
+          "atMs": 101500,
           "text": "Parked at the charger. Muse already checked 15 cafés within a short walk, each claim backed by a source."
         },
         {
           "id": "ev_utterance_coffee",
           "role": "user_utterance",
-          "atMs": 101300,
+          "atMs": 109300,
           "text": "Order my usual coffee.",
           "expectedTranscript": "order my usual coffee"
         },
         {
           "id": "ev_narration_04",
           "role": "narration",
-          "atMs": 106000,
+          "atMs": 114000,
           "text": "Your usual is set for pickup, a three-minute walk away."
         },
         {
           "id": "ev_narration_05",
           "role": "narration",
-          "atMs": 111200,
+          "atMs": 119200,
           "text": "And while it charges, the driver can watch too. Parked, the car allows it."
         },
         {
@@ -540,25 +544,25 @@
         {"atMs": 30500, "type": "passenger", "media": "artwork"},
         {"atMs": 67000, "type": "carState", "state": "park"},
         {"atMs": 67500, "type": "passenger", "media": "stop"},
-        {"atMs": 75500, "type": "selectCase", "caseId": "ev_charge_coffee"},
-        {"atMs": 76000, "type": "wallClock", "local": "2026-11-05T17:15"},
-        {"atMs": 78000, "type": "carState", "state": "drive"},
-        {"atMs": 78500, "type": "passenger", "media": "video"},
-        {"atMs": 82600, "type": "vehicleSignal", "signal": "battery", "percent": 18, "via": ["vhal-set", "vhal-inject", "broadcast"], "capacityWhFallback": 150000},
-        {"atMs": 89000, "type": "speak", "clipId": "ev_utterance_first"},
-        {"atMs": 92500, "type": "carState", "state": "park"},
-        {"atMs": 102300, "type": "speak", "clipId": "ev_utterance_coffee"},
-        {"atMs": 104800, "type": "tapText", "text": "Confirm"},
-        {"atMs": 110200, "type": "tapText", "text": "Big Buck Bunny"}
+        {"atMs": 83500, "type": "selectCase", "caseId": "ev_charge_coffee"},
+        {"atMs": 84000, "type": "wallClock", "local": "2026-11-05T17:15"},
+        {"atMs": 86000, "type": "carState", "state": "drive"},
+        {"atMs": 86500, "type": "passenger", "media": "video"},
+        {"atMs": 90600, "type": "vehicleSignal", "signal": "battery", "percent": 18, "via": ["vhal-set", "vhal-inject", "broadcast"], "capacityWhFallback": 150000},
+        {"atMs": 97000, "type": "speak", "clipId": "ev_utterance_first"},
+        {"atMs": 100500, "type": "carState", "state": "park"},
+        {"atMs": 110300, "type": "speak", "clipId": "ev_utterance_coffee"},
+        {"atMs": 112800, "type": "tapText", "text": "Confirm"},
+        {"atMs": 118200, "type": "tapText", "text": "Big Buck Bunny"}
       ],
       "soundEffects": [
         {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
         {"atMs": 20300, "effectId": "fifth_house_confirmed", "gainDb": -12},
         {"atMs": 23000, "effectId": "fifth_house_focus", "gainDb": -14},
         {"atMs": 67300, "effectId": "fifth_house_arrival", "gainDb": -13},
-        {"atMs": 78500, "effectId": "fifth_house_focus", "gainDb": -14},
-        {"atMs": 92800, "effectId": "fifth_house_arrival", "gainDb": -13},
-        {"atMs": 105300, "effectId": "fifth_house_confirmed", "gainDb": -12}
+        {"atMs": 86500, "effectId": "fifth_house_focus", "gainDb": -14},
+        {"atMs": 100800, "effectId": "fifth_house_arrival", "gainDb": -13},
+        {"atMs": 113300, "effectId": "fifth_house_confirmed", "gainDb": -12}
       ]
     }
   ]

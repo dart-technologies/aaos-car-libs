@@ -81,7 +81,8 @@ LABEL_GAP = 12
 BACKGROUND = "0x0b0f14"
 LABELS = {"driver": CARDS / "label-driver.png", "passenger": CARDS / "label-passenger.png"}
 DISCLAIMER_POS = (24, 18)  # x from the left edge, margin above the bottom edge
-TITLE_FADE_S = 0.4
+TITLE_FADE_S = 0.4  # a chapter card's default fade out (the opening card)
+CHAPTER_SECONDS = (2.0, 3.5)  # every chapter card holds this long, fades included
 PREAMBLE_FADE_S = 0.25  # each preamble card dips to the background; the story fades in after
 OUTRO_FADE_S = 0.5
 STILL_LEAD_MS = 3000  # capture the idle passenger frame this long before its stream starts
@@ -493,6 +494,17 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
     return evidence
 
 
+@dataclass(frozen=True)
+class ChapterCard:
+    """A full card over the driver's picture at a time on the device timeline: the opening title,
+    or an intermission that hides a case switch and a clock jump between chapters."""
+    image: pathlib.Path
+    at: float = 0.0  # seconds on the device timeline
+    seconds: float = 2.5
+    fade_in: float = 0.0  # 0 cuts in: the opening card lies over the recording's first frame
+    fade_out: float = TITLE_FADE_S
+
+
 @dataclass
 class RenderPlan:
     duration: int
@@ -502,8 +514,7 @@ class RenderPlan:
     passenger_raw: pathlib.Path | None = None
     passenger_start: float = 0.0
     passenger_still: pathlib.Path | None = None
-    title: pathlib.Path | None = None
-    title_seconds: float = 0.0
+    chapters: list = field(default_factory=list)  # [ChapterCard], in time order
     hold_from: float | None = None
     audio_dir: pathlib.Path | None = None  # None renders silently
     clips: list = field(default_factory=list)  # atMs on the output timeline (placed_clips)
@@ -521,7 +532,7 @@ class RenderPlan:
 
 
 def legacy(plan: RenderPlan) -> bool:
-    return (plan.layout == "single" and plan.title is None and plan.hold_from is None
+    return (plan.layout == "single" and not plan.chapters and plan.hold_from is None
             and not plan.preamble and plan.outro is None and plan.disclaimer is None)
 
 
@@ -529,6 +540,19 @@ def card_fit(width: int, height: int) -> str:
     """A full-canvas card or title image, fitted to the canvas without distortion."""
     return (f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
             f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:color={BACKGROUND}")
+
+
+def chapter_stream(index: int, card: ChapterCard, width: int, height: int, out: str) -> str:
+    """A chapter card as an RGBA stream starting at its time. Its fades ease: a fade with
+    alpha=1 multiplies the alpha it is given, so each one runs twice, a quadratic ease-in (p²)
+    into the card and an ease-out ((1-p)²) from it into what follows."""
+    fades = []
+    if card.fade_in > 0:
+        fades += [f"fade=t=in:st=0:d={card.fade_in:.3f}:alpha=1"] * 2
+    fades += [f"fade=t=out:st={card.seconds - card.fade_out:.3f}:d={card.fade_out:.3f}:"
+              "alpha=1"] * 2
+    return (f"[{index}:v]{card_fit(width, height)},format=rgba,{','.join(fades)},"
+            f"trim=duration={card.seconds:.3f},setpts=PTS-STARTPTS+{card.at:.3f}/TB{out}")
 
 
 def fit(source: str, box: tuple[int, int, int, int], out: str) -> str:
@@ -570,7 +594,7 @@ def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
     elif plan.layout == "single":
         width, height = plan.driver_size or (0, 0)
         if not width or not height:
-            raise DemoFailure("a single-display title card needs the recording's size")
+            raise DemoFailure("a single-display chapter card needs the recording's size")
         filters.append(stream(0, span, plan.hold_from) + "[base]")
         last = "[base]"
     else:
@@ -615,14 +639,13 @@ def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
         width, height = CANVAS
         last = "[base]"
     if not legacy(plan):
-        if plan.title is not None:
-            seconds = plan.title_seconds
-            command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{seconds:.3f}",
-                        "-i", str(plan.title)]
-            filters.append(f"[{count}:v]{card_fit(width, height)},format=rgba,fade=t=out:"
-                           f"st={seconds - TITLE_FADE_S:.3f}:d={TITLE_FADE_S}:alpha=1[title]")
-            filters.append(f"{last}[title]overlay=0:0:eof_action=pass:repeatlast=0[titled]")
-            last = "[titled]"
+        for n, card in enumerate(plan.chapters):
+            command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{card.seconds:.3f}",
+                        "-i", str(card.image)]
+            filters.append(chapter_stream(count, card, width, height, f"[title{n}]"))
+            filters.append(f"{last}[title{n}]overlay=0:0:eof_action=pass:repeatlast=0"
+                           f"[titled{n}]")
+            last = f"[titled{n}]"
             count += 1
         if plan.outro is not None:
             card, seconds = plan.outro
@@ -700,8 +723,9 @@ def cockpit_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
     """The cockpit composition: one still frame for the whole video, the screens in its windows.
 
     Driver window: the intro's lead, the preamble cards, then the recording with the chapter
-    card over its opening. Passenger window: its idle frame until the stream starts. The intro
-    frames lie over both windows from the first frame and ease out as the preamble begins, the
+    cards over it at their times (the opening title, the intermission). Passenger window: its
+    idle frame until the stream starts. The intro frames lie over both windows from the first
+    frame and ease out as the preamble begins, the
     frame and the intro glow over those, then the story rail over the device timeline, the
     closing card over everything, the captions and the disclaimer. All times are output times.
     """
@@ -740,14 +764,13 @@ def cockpit_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
     if plan.preamble:  # the story fades in after the last card's dip
         filters.append(f"{rec}fade=t=in:st=0:d={PREAMBLE_FADE_S}:color={BACKGROUND}[drecf]")
         rec = "[drecf]"
-    if plan.title is not None:
-        seconds = plan.title_seconds
-        command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{seconds:.3f}",
-                    "-i", str(plan.title)]
-        filters.append(f"[{count}:v]{card_fit(dw, dh)},format=rgba,fade=t=out:"
-                       f"st={seconds - TITLE_FADE_S:.3f}:d={TITLE_FADE_S}:alpha=1[dtitle]")
-        filters.append(f"{rec}[dtitle]overlay=0:0:eof_action=pass:repeatlast=0,{flat}[drect]")
-        rec = "[drect]"
+    for n, card in enumerate(plan.chapters):  # in the driver window; the frame stays still
+        command += ["-loop", "1", "-framerate", str(FPS), "-t", f"{card.seconds:.3f}",
+                    "-i", str(card.image)]
+        filters.append(chapter_stream(count, card, dw, dh, f"[dtitle{n}]"))
+        filters.append(f"{rec}[dtitle{n}]overlay=0:0:eof_action=pass:repeatlast=0,{flat}"
+                       f"[drect{n}]")
+        rec = f"[drect{n}]"
         count += 1
     parts.append(rec)
     filters.append("".join(parts) + f"concat=n={len(parts)}:v=1:a=0[dwin]")
@@ -1155,17 +1178,30 @@ def source_state_evidence() -> dict:
     }
 
 
-def title_card(scenario: dict) -> tuple[pathlib.Path | None, float]:
-    card = scenario.get("titleCard")
-    if not card:
-        return None, 0.0
-    path = ROOT / card["image"]
-    seconds = float(card["seconds"])
-    if not path.is_file() or path.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
-        raise DemoFailure(f"title card {card['image']} is missing or not a PNG")
-    if not 2 <= seconds <= 3:
-        raise DemoFailure("a title card holds for 2–3 s")
-    return path, seconds
+def chapter_cards(scenario: dict) -> list[ChapterCard]:
+    """The scenario's chapter cards, in time order, each a PNG held 2–3.5 s inside the device
+    timeline, its fades inside its hold, none overlapping the next."""
+    if "titleCard" in scenario:
+        raise DemoFailure("titleCard is now the first of chapterCards")
+    cards = []
+    for spec in scenario.get("chapterCards", []):
+        path = ROOT / spec["image"]
+        card = ChapterCard(image=path, at=int(spec.get("atMs", 0)) / 1000,
+                           seconds=float(spec["seconds"]),
+                           fade_in=float(spec.get("fadeIn", 0)),
+                           fade_out=float(spec.get("fadeOut", TITLE_FADE_S)))
+        if not path.is_file() or path.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+            raise DemoFailure(f"chapter card {spec['image']} is missing or not a PNG")
+        if not CHAPTER_SECONDS[0] <= card.seconds <= CHAPTER_SECONDS[1]:
+            raise DemoFailure("a chapter card holds for 2–3.5 s")
+        if card.fade_in < 0 or card.fade_out <= 0 or card.fade_in + card.fade_out >= card.seconds:
+            raise DemoFailure(f"chapter card {spec['image']} fades outside its hold")
+        if cards and card.at < cards[-1].at + cards[-1].seconds:
+            raise DemoFailure("chapter cards are in time order and never overlap")
+        if card.at + card.seconds > int(scenario["durationSeconds"]):
+            raise DemoFailure(f"chapter card {spec['image']} runs past the device timeline")
+        cards.append(card)
+    return cards
 
 
 def post_production(scenario: dict, *, layout: str, output: pathlib.Path,
@@ -1176,7 +1212,7 @@ def post_production(scenario: dict, *, layout: str, output: pathlib.Path,
     """The render plan for raw recordings already on disk: preamble and outro cards built from
     their frames, the disclaimer, and every clip and cue placed on the output timeline. Also
     re-renders an earlier capture without the device (scripts/run-nyc-demo.py --render-only)."""
-    title, title_seconds = title_card(scenario)
+    chapters = chapter_cards(scenario)
     hold_ms = scenario.get("endCardHoldFromMs")
     prefix = output.with_name(output.stem)
     preamble, preamble_evidence = build_preamble(scenario, raw_video, prefix)
@@ -1195,7 +1231,7 @@ def post_production(scenario: dict, *, layout: str, output: pathlib.Path,
     plan = RenderPlan(
         duration=int(scenario["durationSeconds"]), layout=layout, driver_raw=raw_video,
         passenger_raw=passenger_raw, passenger_start=passenger_start,
-        passenger_still=passenger_still, title=title, title_seconds=title_seconds,
+        passenger_still=passenger_still, chapters=chapters,
         hold_from=hold_ms / 1000 if hold_ms is not None else None, audio_dir=audio_dir,
         clips=clips, cues=placed_cues(scenario, lead_ms), preamble=preamble,
         outro=outro, disclaimer=note, cockpit=overlays, lead=lead)
@@ -1317,7 +1353,7 @@ def main() -> int:
         parser.error("--display-id is required to record")
     layout = resolve_layout(scenario, args.passenger_display_id)
     dual = layout == "dual"
-    title, title_seconds = title_card(scenario)
+    chapters = chapter_cards(scenario)
     hold_ms = scenario.get("endCardHoldFromMs")
     avd_name = verify_preconditions(args.require_avd)
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -1395,8 +1431,10 @@ def main() -> int:
                 "passenger": probe_duration(passenger_raw)
                 if evidence["passengerStartSeconds"] is not None else None},
         } if dual else None,
-        "titleCard": {"image": scenario["titleCard"]["image"], "sha256": sha256(title),
-                      "seconds": title_seconds} if title else None,
+        "chapterCards": [{"image": spec["image"], "sha256": sha256(card.image),
+                          "atMs": round(card.at * 1000), "seconds": card.seconds,
+                          "fadeIn": card.fade_in, "fadeOut": card.fade_out}
+                         for spec, card in zip(scenario.get("chapterCards", []), chapters)],
         "endCardHoldFromMs": hold_ms,
         "postProduction": post,
         "restrictionSource": "live car_service park→drive (no DEMO substitution)",

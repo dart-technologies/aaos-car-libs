@@ -308,7 +308,8 @@ class CompositionTest(unittest.TestCase):
         cls.plan = demo.RenderPlan(
             duration=8, layout="dual", driver_raw=tmp / "driver.mp4",
             passenger_raw=tmp / "passenger.mp4", passenger_start=3.0,
-            passenger_still=tmp / "idle.png", title=tmp / "title.png", title_seconds=2.0,
+            passenger_still=tmp / "idle.png",
+            chapters=[demo.ChapterCard(tmp / "title.png", seconds=2.0)],
             hold_from=5.0, audio_dir=tmp / "audio",
             clips=[{"id": "n1", "atMs": 500}, {"id": "n2", "atMs": 3000}],
             cues=[{"effectId": "chime", "atMs": 6000, "gainDb": -12}])
@@ -360,7 +361,7 @@ class CompositionTest(unittest.TestCase):
 
     def test_single_display_title_card(self):
         plan = demo.RenderPlan(duration=6, driver_raw=self.tmp / "driver.mp4",
-                               title=self.tmp / "title.png", title_seconds=2.0)
+                               chapters=[demo.ChapterCard(self.tmp / "title.png", seconds=2.0)])
         out = self.tmp / "single.mp4"
         demo.render(plan, out)
         self.assertEqual(plan.driver_size, (1408, 792))
@@ -530,6 +531,7 @@ class CockpitCompositionTest(unittest.TestCase):
         still(tmp / "pre1.png", "cyan", "1920x1080")
         still(tmp / "pre2.png", "0xff8000", "1920x1080")
         still(tmp / "title.png", "white", "1920x1080")
+        still(tmp / "later.png", "0x8000ff", "1920x1080")
         still(tmp / "outro.png", "0x808080", "1920x1080")
         still(tmp / "note.png", "white", "300x24")
         lead_ms = round(cls.HOLD * 1000)
@@ -545,7 +547,10 @@ class CockpitCompositionTest(unittest.TestCase):
         cls.plan = demo.RenderPlan(
             duration=8, layout="dual", driver_raw=tmp / "driver.mp4",
             passenger_raw=tmp / "passenger.mp4", passenger_start=3.0,
-            passenger_still=tmp / "idle.png", title=tmp / "title.png", title_seconds=2.0,
+            passenger_still=tmp / "idle.png",
+            chapters=[demo.ChapterCard(tmp / "title.png", seconds=2.0),
+                      demo.ChapterCard(tmp / "later.png", at=5.2, seconds=1.6, fade_in=0.4,
+                                       fade_out=0.4)],
             hold_from=5.0, preamble=[(tmp / "pre1.png", 1.5), (tmp / "pre2.png", 1.0)],
             outro=(tmp / "outro.png", 2.0), disclaimer=tmp / "note.png",
             cockpit=cls.overlays, lead=cls.HOLD, clips=cls.clips)
@@ -609,6 +614,19 @@ class CockpitCompositionTest(unittest.TestCase):
         self.assertTrue(near(pixel(self.out, head + 4.5, *self.driver), BLUE))
         self.assertTrue(near(pixel(self.out, head + 4.5, *self.passenger), GREEN))
         self.assertTrue(near(pixel(self.out, head + 7.0, *self.driver), BLUE), "held")
+
+    def test_intermission_eases_over_the_driver_window_alone(self):
+        head = self.head
+        purple = (128, 0, 255)
+        self.assertTrue(near(pixel(self.out, head + 5.1, *self.driver), BLUE), "before it")
+        # Half-way into its 0.4 s fade the card is at a quarter, not half: eased, not linear.
+        mid = pixel(self.out, head + 5.4, *self.driver)
+        self.assertLess(sum(abs(a - b) for a, b in zip(mid, BLUE)),
+                        sum(abs(a - b) for a, b in zip(mid, purple)), "eased in")
+        self.assertTrue(near(pixel(self.out, head + 6.0, *self.driver), purple), "covers")
+        self.assertTrue(near(pixel(self.out, head + 6.0, *self.passenger), GREEN),
+                        "the passenger window and the frame stay as they are")
+        self.assertTrue(near(pixel(self.out, head + 6.9, *self.driver), BLUE), "after it")
 
     def test_rail_shows_only_over_the_device_timeline(self):
         from PIL import Image
@@ -812,7 +830,7 @@ class LegacyTest(unittest.TestCase):
         tmp = pathlib.Path(tempfile.mkdtemp())
         try:
             for scenario in MANIFEST["scenarios"]:
-                if demo.layout_of(scenario) != "single" or scenario.get("titleCard") \
+                if demo.layout_of(scenario) != "single" or scenario.get("chapterCards") \
                         or scenario.get("endCardHoldFromMs") is not None:
                     continue
                 audio = tmp / scenario["id"]

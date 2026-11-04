@@ -49,6 +49,8 @@ NEVER_SAID = re.compile(r"\b(demo|sent|booked|paid|placed|ordered)\b", re.I)
 # One disclaimer, word for word, wherever a disclaimer or a card's top line appears: the margin
 # line for the whole video and the closing card's note.
 DISCLAIMER = "Simulated demo drive on Android Automotive OS emulator"
+TITLE_FADE_S = 0.4  # a chapter card's default fade out (run-nyc-demo.py)
+CHAPTER_SECONDS = (2.0, 3.5)
 
 
 def preamble_seconds(scenario: dict) -> float:
@@ -225,11 +227,75 @@ def check_met_story(scenario: dict) -> None:
     if note.get("text") != DISCLAIMER:
         fail(f"nyc_met disclaimer must read exactly {DISCLAIMER!r}")
     check_preamble(scenario)
+    check_intermission(scenario)
     check_outro(scenario)
     portrait = json.loads(FILM_PORTRAIT.read_text(encoding="utf-8"))
     if [(w["objectID"], w["startMs"]) for w in portrait["works"]] != [
             (w["objectID"], w["startMs"]) for w in works]:
         fail("the portrait film's per-work startMs drifted from FILM.json; the guide would slip")
+
+
+def card_window_ms(card: dict) -> tuple[int, int, int, int]:
+    """(start, fully covering from, covering until, end) of a chapter card, in timeline ms."""
+    at = int(card.get("atMs", -1))
+    seconds = round(float(card.get("seconds", 0)) * 1000)
+    fade_in = round(float(card.get("fadeIn", 0)) * 1000)
+    fade_out = round(float(card.get("fadeOut", TITLE_FADE_S)) * 1000)
+    return at, at + fade_in, at + seconds - fade_out, at + seconds
+
+
+def check_chapter_cards(scenario: dict) -> None:
+    """Chapter cards: the first opens the timeline, each a PNG in the cards directory held
+    2–3.5 s with its fades inside the hold, in time order, never overlapping, inside the
+    device timeline."""
+    if "titleCard" in scenario:
+        fail(f"{scenario['id']} titleCard is now the first of chapterCards")
+    cards = scenario.get("chapterCards", [])
+    previous_end = 0
+    for n, card in enumerate(cards):
+        image = (ROOT / str(card.get("image", ""))).resolve()
+        if image.parent != CARDS.resolve() or not image.is_file() or \
+                image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+            fail(f"{scenario['id']} chapter card is not a PNG in {CARDS.relative_to(ROOT)}")
+        if not CHAPTER_SECONDS[0] <= float(card.get("seconds", 0)) <= CHAPTER_SECONDS[1]:
+            fail(f"{scenario['id']} chapter card must hold for 2–3.5 s")
+        start, covered, uncovered, end = card_window_ms(card)
+        if not start <= covered < uncovered <= end:
+            fail(f"{scenario['id']} chapter card fades outside its hold")
+        if (n == 0) != (start == 0) or start < previous_end or \
+                end > int(scenario.get("durationSeconds", 0)) * 1000:
+            fail(f"{scenario['id']} chapter cards open the timeline, then follow in order "
+                 "without overlapping, inside it")
+        previous_end = end
+
+
+def check_intermission(scenario: dict) -> None:
+    """Between the Met and chapter 2, one intermission card: it eases in after the film has
+    had the driver's screen at least 13 s, the case switch and the clock jump happen while it
+    fully covers the picture, no line starts over it, and the drive that opens the rail's next
+    chapter comes during or after it (spoken lengths are checked with --require-audio)."""
+    cards = scenario.get("chapterCards", [])
+    if len(cards) != 2:
+        fail("nyc_met has two chapter cards: the opening title and the intermission")
+    card = cards[1]
+    start, covered, uncovered, end = card_window_ms(card)
+    if not 3000 <= end - start <= 3500 or covered == start or uncovered == end:
+        fail("nyc_met intermission holds 3–3.5 s and eases in and out")
+    actions = scenario["actions"]
+    switch = [int(a["atMs"]) for a in actions if a["type"] in {"selectCase", "wallClock"}]
+    if len(switch) != 2 or not all(covered <= at <= uncovered for at in switch):
+        fail("nyc_met intermission covers chapter 2's selectCase and wallClock")
+    parks = [int(a["atMs"]) for a in actions
+             if a["type"] == "carState" and a.get("state") == "park"]
+    if not parks or start - parks[0] < 13000 or driving_at(scenario, start):
+        fail("nyc_met intermission follows at least 13 s of the Met film, parked")
+    drives = [int(a["atMs"]) for a in actions if a["type"] == "carState"
+              and a.get("state") == "drive" and int(a["atMs"]) > parks[0]]
+    if not drives or not start <= drives[0]:
+        fail("nyc_met's chapter-2 drive comes during or after the intermission")
+    if any(start <= int(c["atMs"]) < end for c in scenario["clips"]
+           if c.get("section", "timeline") == "timeline"):
+        fail("nyc_met intermission is silent: no line starts over it")
 
 
 def check_preamble(scenario: dict) -> None:
@@ -413,14 +479,7 @@ def main() -> int:
         layout = scenario.get("recording", {}).get("layout", "single")
         if layout not in {"single", "dual"}:
             fail(f"{scenario['id']} has an unknown recording layout")
-        card = scenario.get("titleCard")
-        if card is not None:
-            image = (ROOT / str(card.get("image", ""))).resolve()
-            if image.parent != CARDS.resolve() or not image.is_file() or \
-                    image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
-                fail(f"{scenario['id']} title card is not a PNG in {CARDS.relative_to(ROOT)}")
-            if not 2 <= float(card.get("seconds", 0)) <= 3:
-                fail(f"{scenario['id']} title card must hold for 2–3 s")
+        check_chapter_cards(scenario)
         last_action = -1
         clips = {clip["id"]: clip for clip in scenario.get("clips", [])}
         for clip in clips.values():
@@ -555,6 +614,13 @@ def main() -> int:
                 if end_ms > section_end_ms:
                     fail(f"dialogue extends past its section of the recording at {clip['id']}")
                 previous_end_ms = end_ms
+            for card in scenario.get("chapterCards", [])[1:]:
+                offset, _ = section_bounds_ms(scenario, "timeline")
+                start, _, _, end = card_window_ms(card)
+                for start_ms, _, clip in placed:
+                    clip_end = start_ms + audio_duration(AUDIO / f"{clip['id']}.mp3") * 1000
+                    if start_ms < offset + end and clip_end > offset + start:
+                        fail(f"{clip['id']} is spoken over the chapter card at {start} ms")
             card_start = 0.0
             for card in scenario.get("preamble", []):
                 clip = next(c for c in scenario["clips"] if c["id"] == card["clipId"])
