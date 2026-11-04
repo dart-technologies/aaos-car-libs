@@ -46,7 +46,7 @@
   "commerce": {
     "merchantStatus": "real_listing_no_order",
     "merchant": {
-      "name": "Starbucks",
+      "name": "Starbucks, 1488 3rd Ave",
       "address": "1488 3rd Avenue",
       "source": "https://www.openstreetmap.org/node/2620513899",
       "attribution": "© OpenStreetMap contributors (ODbL)",
