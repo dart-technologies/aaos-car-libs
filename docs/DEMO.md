@@ -4,6 +4,9 @@ Host B (`art.dart.a2ui.carui`) on `AAOS_35_1408p_GoogleAPIs`. Stories are data
 (`a2ui-automotive/demo/nyc-scenarios-v1.json`), speech is prerecorded, and motion is a live car-service
 transition (`cmd car_service emulate-driving-state park|drive`), never a synthetic mask.
 
+No keys needed to check it: the brief, audio guide and café pick are committed with their citations, and the
+gateway, ranking and recorder tests replay them offline (commands in the README).
+
 ## NYC stories
 
 | Scenario | s | Corpus case | Story | Proves |
