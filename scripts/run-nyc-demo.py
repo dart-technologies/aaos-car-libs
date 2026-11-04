@@ -253,7 +253,10 @@ class Adb:
                                 capture_output=True, timeout=30)
         if result.returncode or not result.stdout.startswith(b"\x89PNG\r\n\x1a\n"):
             return False
-        path.write_bytes(result.stdout)
+        # exec-out also carries the device's stderr (e.g. a FORTIFY warning) after IEND, which
+        # makes ffmpeg's looped PNG decode spin forever; keep only the image.
+        end = result.stdout.find(b"IEND")
+        path.write_bytes(result.stdout[:end + 8] if end >= 0 else result.stdout)
         return True
 
     def shell(self, *args: str) -> subprocess.CompletedProcess[str]:
