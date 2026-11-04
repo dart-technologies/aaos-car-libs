@@ -483,6 +483,7 @@
         {"atMs": 82400, "type": "carState", "state": "park"},
         {"atMs": 82900, "type": "passenger", "media": "stop"},
         {"atMs": 91000, "type": "selectCase", "caseId": "ev_charge_coffee"},
+        {"atMs": 91500, "type": "wallClock", "local": "2026-11-05T17:15"},
         {"atMs": 93500, "type": "carState", "state": "drive"},
         {"atMs": 94000, "type": "passenger", "media": "video"},
         {"atMs": 98100, "type": "vehicleSignal", "signal": "battery", "percent": 18, "via": ["vhal-set", "vhal-inject", "broadcast"], "capacityWhFallback": 150000},

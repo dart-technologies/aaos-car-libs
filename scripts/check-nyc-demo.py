@@ -36,7 +36,7 @@ MET_UTTERANCES = {"take us to the met this afternoon", "reserve entry for two at
                   "order my usual coffee"}
 MET_ASK = "Take us to The Met this afternoon"
 ACTIONS = {"speak", "tapText", "carState", "keyEvent", "selectCase", "agent", "passenger",
-           "endCard", "vehicleSignal"}
+           "endCard", "vehicleSignal", "wallClock"}
 PASSENGER_MEDIA = {"video", "artwork", "stop"}
 VEHICLE_ROUTES = {"vhal-set", "vhal-inject", "broadcast"}
 WEATHER_HOSTS = {"forecast.weather.gov", "api.weather.gov"}
@@ -314,6 +314,9 @@ def main() -> int:
                     or not 0 <= float(action.get("percent", -1)) <= 100
                     or not action.get("via") or not set(action["via"]) <= VEHICLE_ROUTES):
                 fail(f"vehicle signal needs battery percent 0–100 and known routes: {action}")
+            if action.get("type") == "wallClock" and not re.fullmatch(
+                    r"\d{4}-\d\d-\d\dT\d\d:\d\d", str(action.get("local", ""))):
+                fail(f"wall clock needs local YYYY-MM-DDTHH:MM: {action}")
             if action.get("type") == "keyEvent" and action.get("key") != "BACK":
                 fail(f"unsupported key event {action}")
             if action.get("type") == "speak" or (action.get("type") == "agent"

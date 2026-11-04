@@ -13,6 +13,7 @@ manifest's duration (60–180 s).
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import hashlib
 import json
 import math
@@ -423,6 +424,10 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
                 device.broadcast(ACTION_END_CARD)
             elif step.kind == "vehicleSignal":
                 evidence["vehicleSignals"].append(vehicle_signal(device, action))
+            elif step.kind == "wallClock":
+                # The status bar's time follows the story (needs root adbd and auto_time off).
+                when = dt.datetime.strptime(action["local"], "%Y-%m-%dT%H:%M")
+                device.shell("date", when.strftime("%m%d%H%M%Y.00"))
             else:
                 raise DemoFailure(f"unknown action type {step.kind}")
             evidence["steps"].append({"atMs": step.at_ms, "type": step.kind,

@@ -431,6 +431,17 @@ class VhalDevice(FakeDevice):
         return subprocess.CompletedProcess(args, 0, "", "")
 
 
+class WallClockTest(unittest.TestCase):
+    def test_sets_the_device_clock_to_the_story_time(self):
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        clock = {"atMs": 40000, "type": "wallClock", "local": "2026-11-05T17:15"}
+        device = FakeDevice(FakeClock())
+        timeline(dict(DUAL, actions=DUAL["actions"] + [clock]), device, tmp)
+        self.assertIn(("date", "110517152026.00"),
+                      [c[2] for c in device.calls if c[1] == "shell"])
+
+
 class VehicleSignalTest(unittest.TestCase):
     def setUp(self):
         self.tmp = pathlib.Path(tempfile.mkdtemp())
