@@ -39,8 +39,8 @@
       "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
       "keyEnv": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
       "cli": { "adapter": "antigravity_cli", "command": "agy",
-               "profiles": { "quality_cached": { "model": "gemini-3.8-flash" }, "realtime_low_latency": { "model": "gemini-3.8-flash", "effort": "low" } },
-               "why": "Subscription baseline without a Gemini key: agy print mode on the Google login, Flash 3.8. Unverified until agy is signed in." },
+               "profiles": { "quality_cached": { "model": "gemini-3.8-flash", "effort": "low" }, "realtime_low_latency": { "model": "gemini-3.8-flash", "effort": "low" } },
+               "why": "Subscription baseline without a Gemini key: agy print mode, Flash 3.8 at low effort for both profiles. With thinking on, agy returns an empty response (verified 2026-11-04)." },
       "verifiedAt": "2026-11-03",
       "source": "https://aistudio.google.com/docs/models/gemini-4-argon and /gemini-3.8-flash",
       "profiles": {
