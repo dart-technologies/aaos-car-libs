@@ -364,7 +364,7 @@ class OtherCliAdapterTest(FakeCli, unittest.TestCase):
         result, argv = self.run_cli("antigravity_cli", (
             "schema = sys.argv[sys.argv.index('--json-schema') + 1]\n"
             "assert '\"\"' not in schema, 'empty enum value reached agy'\n"
-            "print(json.dumps({'status': 'success', 'response': json.dumps("
+            "print(json.dumps({'status': 'SUCCESS', 'error': '', 'response': json.dumps("
             "{'surfaces': [{'components': [{'id': 'a', 'action': 'none'}, "
             "{'id': 'b', 'action': 'play'}]}]})}))\n"), model="gemini-3.8-flash")
         actions = [c["action"] for c in json.loads(result.text)["surfaces"][0]["components"]]
@@ -376,6 +376,10 @@ class OtherCliAdapterTest(FakeCli, unittest.TestCase):
             model="gemini-3.8-flash")
         self.assertEqual(json.loads(result.text), {"ok": 1})
         self.assertEqual(argv[argv.index("--model") + 1], "gemini-3.8-flash")
+        fenced, _ = self.run_cli("antigravity_cli", (
+            "print(json.dumps({'status': 'SUCCESS', 'response': "
+            "'```json\\n' + json.dumps({'ok': 2}) + '\\n```'}))\n"))
+        self.assertEqual(json.loads(fenced.text), {"ok": 2})
         for error, expected in [("authentication failed or timed out", "not_signed_in"),
                                 ("Individual quota reached. Resets in 2h.", "quota_exhausted"),
                                 ("model x is not recognized as a known model", "unknown_model")]:

@@ -42,6 +42,7 @@ ANTHROPIC_FALLBACK_BETA = "server-side-fallback-2026-07-01"
 
 _TOKEN = re.compile(r"^[A-Za-z0-9_.:-]{1,48}$")
 _MODEL = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+_FENCE = re.compile(r"^```(?:json)?\s*|\s*```$")
 _CODEX_MODEL = re.compile(r"^model:\s*([A-Za-z0-9._-]+)\s*$", re.M)
 
 
@@ -373,7 +374,8 @@ def antigravity_cli(base_url, model, effort, max_tokens, key, system, user, sche
         command += ["--effort", effort]
     with tempfile.TemporaryDirectory(prefix="a2ui-cli-") as cwd:
         wrapper = _cli_wrapper(_run_cli(command, cwd, timeout_s + 5))
-    if wrapper.get("error") or wrapper.get("status") not in (None, "success", "completed"):
+    status = str(wrapper.get("status") or "success").lower()  # agy reports "SUCCESS" / "ERROR"
+    if wrapper.get("error") or status not in ("success", "completed"):
         message = str(wrapper.get("error") or "").lower()
         reason = ("quota_exhausted" if "quota" in message
                   else "unknown_model" if "not recognized" in message
@@ -382,7 +384,10 @@ def antigravity_cli(base_url, model, effort, max_tokens, key, system, user, sche
         raise AdapterError("upstream", reason)
     usage = wrapper.get("usage")
     served = usage.get("model") if isinstance(usage, dict) else None
-    output = json.loads(_structured(wrapper.get("response")))
+    response = wrapper.get("response")
+    if isinstance(response, str):
+        response = _FENCE.sub("", response.strip())  # tolerate a ```json fenced reply
+    output = json.loads(_structured(response))
     return Completion(json.dumps(_restore_empty_action(output)), _token(served))
 
 
