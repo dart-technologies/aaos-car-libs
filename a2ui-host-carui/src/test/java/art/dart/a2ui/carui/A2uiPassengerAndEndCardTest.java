@@ -157,6 +157,40 @@ public class A2uiPassengerAndEndCardTest {
     }
 
     @Test
+    public void theIdleScreenNamesItselfThePassengerScreenAboveItsLine() {
+        mApp.getApplicationInfo().flags |= ApplicationInfo.FLAG_DEBUGGABLE;
+        A2uiCarUiActivity driver = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        A2uiPassengerActivity passenger = Robolectric.buildActivity(
+                A2uiPassengerActivity.class).create().start().get();
+        TextView label = passenger.findViewById(R.id.passenger_idle_label);
+        LinearLayout idle = (LinearLayout) passenger.idleForTesting();
+        // At rest, two lines: the small name, then the calm line under it, in that order.
+        assertThat(idle.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(label.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(label.getText().toString()).isEqualTo("Passenger screen");
+        assertThat(passenger.messageForTesting().getText().toString())
+                .isEqualTo("Ready when you are");
+        assertThat(idle.indexOfChild(label))
+                .isLessThan(idle.indexOfChild(passenger.messageForTesting()));
+        assertThat(label.getTextSize())
+                .isLessThan(passenger.messageForTesting().getTextSize());
+
+        // Playing, the picture alone: the name goes with the idle card.
+        driver.onPassengerRequest("video");
+        assertThat(passenger.videoForTesting()).isNotNull();
+        assertThat(idle.getVisibility()).isEqualTo(View.GONE);
+        assertThat(visibleTexts(passenger.getWindow().getDecorView()))
+                .doesNotContain("Passenger screen");
+
+        // Stopped, it is back with the same line.
+        driver.onPassengerRequest(PassengerDisplay.STOP);
+        assertThat(idle.getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(label.getText().toString()).isEqualTo("Passenger screen");
+        assertThat(passenger.messageForTesting().getText().toString())
+                .isEqualTo(mApp.getString(R.string.a2ui_passenger_idle));
+    }
+
+    @Test
     public void passengerVideoFillsTheScreenWithItsCreditOverItAndNoChrome() {
         mApp.getApplicationInfo().flags |= ApplicationInfo.FLAG_DEBUGGABLE;
         A2uiCarUiActivity driver = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);

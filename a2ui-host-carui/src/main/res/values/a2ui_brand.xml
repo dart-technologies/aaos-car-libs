@@ -63,6 +63,8 @@
 
     <!-- Passenger display. The label is the screen's accessibility name; no header draws it. -->
     <string name="a2ui_passenger_label">Passenger display</string>
+    <!-- Idle: a small name above the line, so a viewer knows whose screen this is. -->
+    <string name="a2ui_passenger_idle_label">Passenger screen</string>
     <string name="a2ui_passenger_idle">Ready when you are</string>
     <string name="a2ui_passenger_video_credit">Big Buck Bunny © Blender Foundation · CC BY 3.0</string>
     <string name="a2ui_passenger_held">Video is not available on this screen right now</string>

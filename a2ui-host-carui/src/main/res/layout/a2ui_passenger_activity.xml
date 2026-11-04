@@ -107,7 +107,8 @@
             android:layout_margin="@dimen/a2ui_space_m" />
     </FrameLayout>
 
-    <!-- Idle or held: one muted line, centred under a short accent rule. -->
+    <!-- Idle or held: a small "Passenger screen" label over one muted line, centred under a
+         short accent rule. -->
     <LinearLayout
         android:id="@+id/passenger_idle"
         android:layout_width="match_parent"
@@ -124,6 +125,19 @@
             android:alpha="0.7"
             android:background="@color/a2ui_brand_accent"
             android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/passenger_idle_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/a2ui_space_s"
+            android:alpha="0.8"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:letterSpacing="0.08"
+            android:text="@string/a2ui_passenger_idle_label"
+            android:textColor="@color/a2ui_brand_on_surface_muted"
+            android:textSize="15sp" />
 
         <TextView
             android:id="@+id/passenger_message"
