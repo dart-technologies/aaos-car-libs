@@ -371,6 +371,22 @@ def _restore_empty_action(node):
     return node
 
 
+def _first_object(reply):
+    """agy's reply can wrap the JSON in a fence or prose; take the first complete object."""
+    if not isinstance(reply, str):
+        return reply
+    text = _FENCE.sub("", reply.strip())
+    decoder = json.JSONDecoder()
+    for start in (i for i, ch in enumerate(text) if ch == "{"):
+        try:
+            value, _ = decoder.raw_decode(text, start)
+        except ValueError:
+            continue
+        if isinstance(value, dict):
+            return value
+    return text
+
+
 def antigravity_cli(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s):
     """Google Antigravity ``agy`` print mode on the Google login. model "default" omits -m."""
     del key, max_tokens
@@ -393,10 +409,7 @@ def antigravity_cli(base_url, model, effort, max_tokens, key, system, user, sche
         raise AdapterError("upstream", reason)
     usage = wrapper.get("usage")
     served = usage.get("model") if isinstance(usage, dict) else None
-    response = wrapper.get("response")
-    if isinstance(response, str):
-        response = _FENCE.sub("", response.strip())  # tolerate a ```json fenced reply
-    output = json.loads(_structured(response))
+    output = json.loads(_structured(_first_object(wrapper.get("response"))))
     return Completion(json.dumps(_restore_empty_action(output)), _token(served))
 
 

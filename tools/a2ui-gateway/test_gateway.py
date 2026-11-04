@@ -380,6 +380,10 @@ class OtherCliAdapterTest(FakeCli, unittest.TestCase):
             "print(json.dumps({'status': 'SUCCESS', 'response': "
             "'```json\\n' + json.dumps({'ok': 2}) + '\\n```'}))\n"))
         self.assertEqual(json.loads(fenced.text), {"ok": 2})
+        prose, _ = self.run_cli("antigravity_cli", (
+            "print(json.dumps({'status': 'SUCCESS', 'response': "
+            "'Here is the surface: ' + json.dumps({'ok': 3}) + ' Done.'}))\n"))
+        self.assertEqual(json.loads(prose.text), {"ok": 3})
         for error, expected in [("authentication failed or timed out", "not_signed_in"),
                                 ("Individual quota reached. Resets in 2h.", "quota_exhausted"),
                                 ("model x is not recognized as a known model", "unknown_model")]:
