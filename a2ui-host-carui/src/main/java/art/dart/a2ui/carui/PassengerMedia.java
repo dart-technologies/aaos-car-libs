@@ -84,9 +84,10 @@ final class PassengerMedia {
         }
         int works = MetArtworks.WORKS.size();
         if (ARTWORK.equals(name)) {
-            // The audio guide is the film's soundtrack: it belongs in the cabin.
+            // The audio guide is the film's soundtrack: it belongs in the cabin. Both cuts burn
+            // in each work's caption and the Met's credit, so the host lays none over them.
             return new PassengerMedia(ARTWORK, "met_artwork_film", R.string.a2ui_met_film_credit,
-                    works, true, false, false);
+                    works, true, false, true);
         }
         if (SLIDESHOW.equals(name)) {
             return new PassengerMedia(SLIDESHOW, "", R.string.a2ui_met_slides_credit, works, false,

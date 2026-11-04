@@ -238,8 +238,8 @@ final class DemoNativeContract {
     static Media videoFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
         if (isMetArtSurface(surfaceId) && "film".equals(component.getId())
                 && component.getType() == ComponentType.VIDEO) {
-            // The film carries its own captions and credit.
-            return new Media("met_artwork_film", "");
+            // The film carries its own captions and credit, along its bottom.
+            return Media.film("met_artwork_film");
         }
         if (isDriverMedia(surfaceId, component)) {
             // The landscape cut the passenger display also plays, in the parked-only player.
