@@ -54,6 +54,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
+            android:autoSizeMaxTextSize="23sp"
+            android:autoSizeMinTextSize="18sp"
+            android:autoSizeStepGranularity="1sp"
+            android:autoSizeTextType="uniform"
             android:includeFontPadding="false"
             android:maxLines="1"
             android:textSize="23sp" />

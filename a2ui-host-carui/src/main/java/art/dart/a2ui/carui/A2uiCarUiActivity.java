@@ -1392,7 +1392,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         mLastHostKeys.clear();
         mLastHostKeys.addAll(hostKeys);
-        mCards.setVisibleCount(visibleRows);
+        // The cards are a glance, never the whole list: at most four parked, three otherwise.
+        // Fewer only: the content limit above still decides which rows exist.
+        mCards.setVisibleCount(Math.min(visibleRows, cardCap(parked)));
         mCards.notifyDataSetChanged();
         mLastPrunedTree = pruned;
         mLastVisibleRows = visibleRows;
@@ -1543,6 +1545,19 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mUnlimitedAnimator = animate ? itemAnimator() : null;
         mLimitedList.setItemAnimator(mLimitedAnimator);
         mUnlimitedList.setItemAnimator(mUnlimitedAnimator);
+    }
+
+    /** The most cards a visitor screen shows on a trusted parked reading. */
+    @VisibleForTesting
+    static final int MAX_CARDS_PARKED = 4;
+    /** The most otherwise (moving, or an untrusted reading): what fit before the slim header. */
+    @VisibleForTesting
+    static final int MAX_CARDS_MOVING = 3;
+
+    /** The visitor card cap for a reading: a presentation limit under the content limit. */
+    @VisibleForTesting
+    static int cardCap(boolean parked) {
+        return parked ? MAX_CARDS_PARKED : MAX_CARDS_MOVING;
     }
 
     /**

@@ -135,11 +135,34 @@ public class A2uiConsumerModeTest {
         assertThat(activity.cardListForTesting().getVisibility()).isEqualTo(View.GONE);
         activity.selectCase("poi_discovery_order");
         assertThat(activity.cardListForTesting().getVisibility()).isEqualTo(View.VISIBLE);
-        // The cards read the same rows: no more of them than the rows held.
+        // The cards read the same rows: no more of them than the rows held, and a glance's worth.
         assertThat(activity.cardListForTesting().getAdapter().getItemCount())
-                .isEqualTo(activity.renderedRowsForTesting().size());
+                .isEqualTo(Math.min(activity.renderedRowsForTesting().size(),
+                        A2uiCarUiActivity.MAX_CARDS_PARKED));
         assertThat(activity.findViewById(R.id.limited_column).getVisibility())
                 .isEqualTo(View.GONE);
+    }
+
+    @Test
+    public void cardsAreAGlanceFourParkedThreeMoving() {
+        A2uiCarUiActivity activity = A2uiHostCardsTest.started(
+                A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        activity.selectCase("met_visit");
+        // More rows than the cap, so the cap is what is measured.
+        assertThat(activity.renderedRowsForTesting().size())
+                .isGreaterThan(A2uiCarUiActivity.MAX_CARDS_PARKED);
+        assertThat(activity.cardListForTesting().getAdapter().getItemCount())
+                .isEqualTo(A2uiCarUiActivity.MAX_CARDS_PARKED);
+
+        A2uiHostCardsTest.drive(activity, 0xff);
+        assertThat(activity.renderedRowsForTesting().size())
+                .isGreaterThan(A2uiCarUiActivity.MAX_CARDS_MOVING);
+        assertThat(activity.cardListForTesting().getAdapter().getItemCount())
+                .isEqualTo(A2uiCarUiActivity.MAX_CARDS_MOVING);
+
+        // An untrusted reading is not parked: the moving cap.
+        assertThat(A2uiCarUiActivity.cardCap(false)).isEqualTo(3);
+        assertThat(A2uiCarUiActivity.cardCap(true)).isEqualTo(4);
     }
 
     @Test
