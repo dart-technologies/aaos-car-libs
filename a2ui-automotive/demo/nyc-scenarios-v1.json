@@ -383,54 +383,48 @@
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 436535,
-          "placeholder": true,
           "atMs": 54500,
-          "text": "Start with van Gogh's Wheat Field with Cypresses, and its swirling sky."
+          "text": "Vincent van Gogh painted Wheat Field with Cypresses to celebrate natures vitality in Provence."
         },
         {
           "id": "met_guide_02",
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 437881,
-          "placeholder": true,
           "atMs": 60367,
-          "text": "Next, Vermeer's Young Woman with a Water Pitcher, lit by quiet window light."
+          "text": "Johannes Vermeer created Young Woman with a Water Pitcher to honor everyday ritual."
         },
         {
           "id": "met_guide_03",
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 437394,
-          "placeholder": true,
           "atMs": 66233,
-          "text": "Rembrandt's Aristotle rests a hand on a bust of Homer. Watch the gold chain."
+          "text": "Rembrandt painted Aristotle with a Bust of Homer as a meditation on fame and wisdom."
         },
         {
           "id": "met_guide_04",
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 435809,
-          "placeholder": true,
           "atMs": 72100,
-          "text": "In Bruegel's The Harvesters, find the workers resting under the pear tree."
+          "text": "Pieter Bruegel the Elder made The Harvesters to honor peasants living in harmony with nature."
         },
         {
           "id": "met_guide_05",
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 436105,
-          "placeholder": true,
           "atMs": 77967,
-          "text": "David's Death of Socrates: the philosopher reaches for the cup, mid-sentence."
+          "text": "Jacques Louis David painted The Death of Socrates about willingly resisting unjust authority."
         },
         {
           "id": "met_guide_06",
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 435868,
-          "placeholder": true,
           "atMs": 83833,
-          "text": "End with Cézanne's Card Players, a simple game turned into pure focus."
+          "text": "Paul Cézanne painted The Card Players as a timeless image of Provençal dignity."
         },
         {
           "id": "met_narration_06",

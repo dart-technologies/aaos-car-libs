@@ -43,13 +43,14 @@ RESEARCH = ("You research an artwork for an in-car audio guide. Search the web: 
             "factual sentences on its story, how it was made and why it matters, citing a source "
             "for every fact. Plain prose: no lists, no URLs.")
 NARRATION = ("You write an audio guide heard in a car on the way to The Met. For each work write "
-             "2 or 3 short spoken sentences, 20 to 30 words in all, in warm, natural, "
+             "1 or 2 short spoken sentences, 12 to 16 words in all (one film shot, about 5 "
+             "seconds aloud), in warm, natural, "
              "conversational English that is easy to follow by ear: simple sentences, one idea "
              "each; leave facts out rather than cram them in. Use only the findings given. The "
              "listener cannot see the work: never ask them to look, and describe nothing that "
              "needs eyes; tell its story, its people and why it matters. Name the work and the "
-             "artist once. No URLs, lists or quotation marks.")
-WORDS = (18, 34)  # "about 20 to 30"
+             "artist once; the title is optional. No URLs, lists or quotation marks.")
+WORDS = (10, 18)  # "12 to 16": each line fits a 5.9 s film shot
 VISUAL = re.compile(r"\b(look(ing)? at|you(?:'ll| will| can)? see|notice|glance|pictured|"
                     r"on (the )?screen|in this (image|picture))\b", re.I)
 
@@ -111,7 +112,7 @@ def problems(text: str) -> list[str]:
     if not WORDS[0] <= words <= WORDS[1]:
         found.append(f"{words} words")
     sentences = len(re.findall(r"[.!?](\s|$)", text))
-    if not 2 <= sentences <= 3:
+    if not 1 <= sentences <= 2:
         found.append(f"{sentences} sentences")
     if VISUAL.search(text):
         found.append(f"visual phrase '{VISUAL.search(text).group(0)}'")
@@ -171,7 +172,7 @@ def main() -> int:
         "webSearch": WEB_SEARCH,
         "works": "SOURCE.json (The Met Open Access, CC0); text written by Muse from cited findings",
         "guide": guide}, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"wrote {args.out.relative_to(ROOT)}: {len(guide)} narrations")
+    print(f"wrote {args.out}: {len(guide)} narrations")
     return 0
 
 
