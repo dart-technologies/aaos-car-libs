@@ -51,6 +51,7 @@ second device. Ledgers are re-recorded only from green runs (`record-gate-counts
 | `check-gate-sensitivity.py` | Each registered mutation (≥125) turns its named test red; each gated module has a mutation or an exemption | weekly, before release |
 | `check-instrumented-run.py` | Executed ≥ expected; failures and skips within ceiling | gate, CI |
 | `check-license-headers.py` | Added files carry Apache headers; no header lost from a modified file | CI |
+| `check-muse-claims.py` | Muse's committed brief, coffee ranking and audio guide: every claim cited, every Source row a citation, the pick and its strings follow from the ranking; prints `citation coverage: N/N` | gate, CI |
 | `check-nyc-demo.py` | Scenario timing (60–90 s), action vocabulary, corpus mapping, 10k-credit ceiling; `--require-audio` | gate, CI |
 | `check-overlayable-packaged.py` | Each `<overlayable>` reaches its own module's artifact | gate, CI |
 | `check-screenshot-evidence.py` | `docs/screenshots/`: PNG structure, inventory, sidecar checksum and provenance | gate, CI |
