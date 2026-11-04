@@ -14,7 +14,7 @@ import re
 import subprocess
 import sys
 import urllib.parse
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -79,11 +79,19 @@ def check_context(scenario_id: str, relative: str) -> None:
         fail(f"{name} merchant is neither explicitly fictional nor absent")
     if commerce.get("paymentStatus") != "not_connected":
         fail(f"{name} must not connect a payment")
+    # A story set on a later day uses that day's forecast period and says which day it is.
+    day = captured.date()
+    if weather.get("forecastFor") is not None:
+        try:
+            day = date.fromisoformat(str(weather["forecastFor"]))
+        except ValueError:
+            fail(f"{name} forecastFor is not an ISO date")
+        if not captured.date() <= day <= captured.date() + timedelta(days=6):
+            fail(f"{name} forecastFor is outside the forecast issued at capture")
     freshness = context.get("freshness", {})
     label = str(freshness.get("displayLabel", ""))
-    if not label.startswith("CURATED SNAPSHOT") or f"{captured:%b} {captured.day}".upper() \
-            not in label:
-        fail(f"{name} display label must say CURATED SNAPSHOT and the capture date")
+    if not label.startswith("CURATED SNAPSHOT") or f"{day:%b} {day.day}".upper() not in label:
+        fail(f"{name} display label must say CURATED SNAPSHOT and the day it describes")
     if timestamp(freshness.get("liveRefreshRequiredAfter"),
                  f"{name} liveRefreshRequiredAfter") <= captured or not freshness.get("policy"):
         fail(f"{name} needs a refresh deadline after capture and a relabelling policy")
