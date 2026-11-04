@@ -53,7 +53,7 @@ public class A2uiEvChargeTest {
     private static final int DRIVE = 0xff;
     private static final String SUGGESTION_20 = "Battery 20% · 3 chargers on your way";
     private static final String SESSION = "Charging · 20% → 80% · about 22 min";
-    private static final String CREDIT = "Chargers © OpenStreetMap contributors";
+    private static final String CREDIT = " · © OpenStreetMap";
     private static final String COFFEE = "Coffee ready at the counter";
 
     private Application mApp;
@@ -99,7 +99,7 @@ public class A2uiEvChargeTest {
         assertThat(activity.renderedRowsForTesting().get(0))
                 .isSameInstanceAs(row(activity, SUGGESTION_20));
         assertThat(body(row(activity, SUGGESTION_20)))
-                .containsExactly("From the vehicle · low battery", CREDIT).inOrder();
+                .containsExactly("From the vehicle · low battery" + CREDIT);
         assertGlanceable(row(activity, SUGGESTION_20));
         // No station is called fast unless OSM tags its output; nothing here says "fast".
         assertThat(String.join(" ", titles(activity))).doesNotContain("fast");
@@ -121,7 +121,7 @@ public class A2uiEvChargeTest {
         assertThat(ShadowAlertDialog.getLatestAlertDialog()).isNull();
         assertThat(activity.mChosenCharger).isEqualTo(0);
         assertThat(body(row(activity, SUGGESTION_20)))
-                .containsExactly("Navigating to ChargePoint", CREDIT).inOrder();
+                .containsExactly("Navigating to ChargePoint" + CREDIT);
     }
 
     @Test
@@ -167,7 +167,7 @@ public class A2uiEvChargeTest {
         mApp.sendBroadcast(vehicle(18));
         shadowOf(Looper.getMainLooper()).idle();
         assertThat(body(row(debug, "Battery 18% · 3 chargers on your way")))
-                .contains("From the vehicle · low battery");
+                .containsExactly("From the vehicle · low battery" + CREDIT);
     }
 
     @Test

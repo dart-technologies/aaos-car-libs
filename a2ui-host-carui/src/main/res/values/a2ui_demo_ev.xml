@@ -10,7 +10,7 @@
         <item quantity="other">Battery %1$d%% · %2$d chargers on your way</item>
     </plurals>
     <string name="a2ui_ev_from_vehicle">From the vehicle · low battery</string>
-    <string name="a2ui_ev_chargers_credit">Chargers © OpenStreetMap contributors</string>
+    <string name="a2ui_ev_chargers_credit">© OpenStreetMap</string>
     <!-- %1$s the chosen charger. -->
     <string name="a2ui_ev_navigating">Navigating to %1$s</string>
     <!-- %1$s percent at arrival, %2$s time to 80%. -->

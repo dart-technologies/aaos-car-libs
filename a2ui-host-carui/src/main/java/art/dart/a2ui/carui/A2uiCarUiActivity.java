@@ -1601,7 +1601,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         addRow(rows, keys, HostRows.SUGGEST, HostRows.card(allowed, limits,
                 getResources().getQuantityString(R.plurals.a2ui_ev_suggestion, chargers, pct,
                         chargers),
-                Arrays.asList(line, getString(R.string.a2ui_ev_chargers_credit)), null,
+                Collections.singletonList(line + " · " + getString(
+                        R.string.a2ui_ev_chargers_credit)), null,
                 getDrawable(R.drawable.a2ui_ic_battery)));
     }
 
@@ -1680,8 +1681,13 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             @NonNull List<String> lines, @NonNull List<String> sources) {
         String title = node.getTitle();
         if (title != null && !title.trim().isEmpty() && !(root && node.hasChildren())) {
-            String line = node.getSubtitle() == null ? title : title + " · " + node.getSubtitle();
-            (title.startsWith("Source") ? sources : lines).add(line);
+            if (title.startsWith("Source")) {
+                // "Source · host" alone: the page title is the link's business, not the card's.
+                String[] parts = title.split(" · ");
+                sources.add(parts.length >= 2 ? parts[0] + " · " + parts[1] : title);
+            } else {
+                lines.add(node.getSubtitle() == null ? title : title + " · " + node.getSubtitle());
+            }
         } else if (root && title != null && !title.trim().isEmpty()) {
             lines.add(title);
         }
