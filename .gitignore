@@ -45,3 +45,6 @@ a2ui-automotive/demo/audio/elevenlabs/
 
 # Local agent state (worktrees, per-machine permissions).
 .claude/
+
+# Browser automation logs.
+.playwright-mcp/

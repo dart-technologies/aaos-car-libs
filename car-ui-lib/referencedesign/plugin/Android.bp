@@ -1,3 +1,5 @@
+//
+// Modified by Dart Technologies, 2026; see FORK.md.
 package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }

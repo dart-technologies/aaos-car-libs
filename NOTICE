@@ -35,3 +35,14 @@ inherited from upstream. Files added by Dart Technologies carry their own
 Apache-2.0 headers identifying Dart Technologies as copyright holder.
 
 See FORK.md for what has diverged from upstream and why.
+
+Third-party content:
+- A2UI conformance schemas (a2ui-automotive/upstream-schemas/), from a2ui-project/a2ui,
+  Apache License 2.0.
+- car-ui-lib-plugin-apis 1.5.0 (car-ui-lib/oem-apis/prebuilts/), from Google Maven,
+  Apache License 2.0.
+- Demo media and data (demo only, not part of the libraries):
+  Big Buck Bunny (c) copyright 2008, Blender Foundation, www.bigbuckbunny.org, CC BY 3.0;
+  route data (c) OpenStreetMap contributors, ODbL 1.0;
+  artworks from The Metropolitan Museum of Art Open Access, CC0 1.0;
+  weather from the U.S. National Weather Service, public domain.
