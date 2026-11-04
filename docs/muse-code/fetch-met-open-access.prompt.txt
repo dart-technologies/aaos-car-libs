@@ -1,0 +1,17 @@
+In this repository, create the file scripts/fetch-met-open-access.py. Do not modify any other file.
+
+Purpose: fetch a small, deterministic set of public-domain artworks from The Metropolitan Museum of Art Collection API (https://collectionapi.metmuseum.org/public/collection/v1/) for an in-car demo slideshow.
+
+Requirements:
+- Python 3 standard library only (urllib, json, hashlib, argparse, pathlib). No third-party packages.
+- Start the file with exactly these two comment lines after the shebang:
+  # Copyright (C) 2026 Dart Technologies
+  # Licensed under the Apache License, Version 2.0.
+- Arguments: --count (default 6), --out (default a2ui-automotive/demo/fixtures/met), --ids (optional comma-separated objectIDs that override the search).
+- Without --ids: query /search?isHighlight=true&hasImages=true&departmentId=11&q=painting, sort the returned objectIDs ascending, then fetch /objects/<id> one by one and keep only objects with isPublicDomain true and a non-empty primaryImageSmall, until --count are collected.
+- For each kept object, download primaryImageSmall to <out>/<objectID>.jpg.
+- Write <out>/SOURCE.json: {"source": "The Metropolitan Museum of Art Open Access", "license": "CC0 1.0", "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/", "fetchedAt": <ISO UTC>, "objects": [{"objectID", "title", "artistDisplayName", "objectDate", "galleryNumber", "objectURL", "imageUrl", "file", "sha256"}]}.
+- Send a descriptive User-Agent ("a2ui-automotive-demo/1.0"), use a 20 second timeout per request, sleep 0.2 s between requests, and exit non-zero with a short message if fewer than --count objects qualify.
+- Keep comments brief.
+
+When done, run: python3 -m py_compile scripts/fetch-met-open-access.py and report the result. Do not run the script itself.
