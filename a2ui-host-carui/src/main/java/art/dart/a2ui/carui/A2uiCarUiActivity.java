@@ -1684,7 +1684,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             if (title.startsWith("Source")) {
                 // "Source · host" alone: the page title is the link's business, not the card's.
                 String[] parts = title.split(" · ");
-                sources.add(parts.length >= 2 ? parts[0] + " · " + parts[1] : title);
+                String source = parts.length >= 2 ? parts[0] + " · " + parts[1] : title;
+                if (!sources.contains(source)) sources.add(source);
             } else {
                 lines.add(node.getSubtitle() == null ? title : title + " · " + node.getSubtitle());
             }
