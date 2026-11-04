@@ -32,7 +32,7 @@ set -- "${_argv[@]}"
 LABEL=${1:-unlabelled}
 shift 2>/dev/null
 EXPECTED=("$@")
-export ANDROID_HOME=${ANDROID_HOME:-/Users/michow/Library/Android/sdk}
+export ANDROID_HOME=${ANDROID_HOME:-$HOME/Library/Android/sdk}
 BASELINE_FAILSET=$REPO/docs/baseline-failset.txt
 INTERMITTENT=$REPO/docs/intermittent-tests.txt
 rc=0
@@ -255,6 +255,11 @@ if [[ -n $COMMITTED_ROWS ]] && (( COMMITTED_ROWS > 0 )); then
     decision, and the ledgers regenerate from this file, so nothing downstream would say so."
 fi
 
+# Clear old results first: a run that fails before testing must not be counted from stale XML.
+while IFS=$'\t' read -r project builddir; do
+  [[ "$project" == \#* || -z "$builddir" ]] && continue
+  rm -rf $GP/build/$builddir/test-results/testDebugUnitTest
+done < $REPO/scripts/gate-modules.tsv
 if ! ( cd $GP && ./gradlew "${JVM_TASKS[@]}" --rerun-tasks -q ) >/dev/null 2>&1; then
   fail "a JVM test task returned non-zero"
 fi
