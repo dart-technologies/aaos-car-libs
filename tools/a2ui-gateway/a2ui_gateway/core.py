@@ -83,6 +83,10 @@ def load_config(path: pathlib.Path = DEFAULT_PROVIDERS) -> dict:
             raise ValueError(f"{name}: baseUrl must be https")
         if set(provider.get("profiles", {})) != set(contract.PROFILES):
             raise ValueError(f"{name}: configure both {contract.PROFILES}")
+        for profile in provider["profiles"].values():
+            mode = provider.get("modes", {}).get(profile.get("mode", ""))
+            if "mode" in profile and (mode is None or mode.get("adapter") not in adapters.ADAPTERS):
+                raise ValueError(f"{name}: profile mode must name a mode with a known adapter")
     if set(config.get("profiles", {})) != set(contract.PROFILES):
         raise ValueError("providers.json must define both execution profiles")
     if not isinstance(config.get("policy", {}).get("vendorFallback"), bool):
@@ -194,8 +198,31 @@ class Gateway:
     def model(self, provider: str, profile: str) -> str:
         return self.settings(provider, profile)["model"]
 
+    def mode(self, provider: str, profile: str) -> dict | None:
+        """The profile's API mode from providers.json "modes" (Muse's cited brief), else None.
+        Keyless counts as API, so an offline replay finds the entry a keyed run cached."""
+        name = self.settings(provider, profile).get("mode")
+        if not name or self.transport(provider) == "cli":
+            return None
+        return self.config["providers"][provider]["modes"][name]
+
+    def search(self, provider: str, profile: str) -> dict | None:
+        """What a web-search mode sends besides the prompt; part of the cache key."""
+        mode = self.mode(provider, profile)
+        if not mode or "webSearch" not in mode:
+            return None
+        return {"tool": {"type": "web_search", **mode["webSearch"]},
+                "effort": mode.get("searchEffort"), "instructions": contract.SEARCH_PROMPT,
+                "findings": contract.FINDINGS_HEADER}
+
+    def prompt(self, provider: str, profile: str, request: dict) -> tuple[str, str]:
+        return contract.build_prompt(request["inputText"], request["display"],
+                                     grounded=self.search(provider, profile) is not None)
+
     def cache_key(self, provider: str, profile: str, system: str, user: str) -> str:
-        return contract.cache_key(self.model(provider, profile), system, user)
+        search = self.search(provider, profile)
+        return contract.cache_key(self.model(provider, profile), system, user,
+                                  None if search is None else contract.canonical(search))
 
     def handle(self, request: Any) -> Response:
         started = self._clock()
@@ -219,7 +246,7 @@ class Gateway:
 
     def _turn(self, request: dict, started: float) -> Response:
         provider, profile = request["provider"], request["executionProfile"]
-        system, user = contract.build_prompt(request["inputText"], request["display"])
+        system, user = self.prompt(provider, profile, request)
         own = self.cache_key(provider, profile, system, user)
         ids = {"request": request, "started": started}
         key = self._key(provider)
@@ -238,11 +265,12 @@ class Gateway:
             return self._serve(entry, "live", **ids)
 
         def cached():
-            # This profile's own earlier output first, then the quality profile's. Either is
-            # served as a labelled fallback; the Response names whose output it is.
+            # This profile's own earlier output first, then the quality profile's (keyed by its
+            # own prompt). Either is served as a labelled fallback; the Response names whose.
+            quality = self.prompt(provider, "quality_cached", request)
             return (self.cache.get(provider, profile, own)
                     or self.cache.get(provider, "quality_cached",
-                                      self.cache_key(provider, "quality_cached", system, user)))
+                                      self.cache_key(provider, "quality_cached", *quality)))
 
         if self.offline or key is None:
             entry = cached()
@@ -280,17 +308,23 @@ class Gateway:
         timing = self.config["profiles"][profile]
         began = self._clock()
         adapter, base_url = settings["adapter"], settings["baseUrl"]
+        mode, extra = self.mode(provider, profile), {}
         if key == CLI_KEY:
             adapter, base_url = settings["cli"]["adapter"], settings["cli"]["command"]
+        elif mode is not None:
+            adapter = mode["adapter"]
+            if self.search(provider, profile) is not None:
+                extra["search"] = self.search(provider, profile)
         completion = self._complete(
             adapter, base_url, chosen["model"], chosen.get("effort"),
             int(chosen.get("maxTokens", 8000)), key, system, user, contract.GENERATION_SCHEMA,
             timing["timeoutMs"] / 1000,
-            vendor_fallback=self.config["policy"]["vendorFallback"])
+            vendor_fallback=self.config["policy"]["vendorFallback"], **extra)
         elapsed = self._ms(began)
         generated = contract.parse_json(completion.text)
         contract.validate_generated(generated)
         output = contract.normalize(generated)
+        contract.add_sources(output, completion.citations)
         # Validated before it is cached, with placeholder identity; re-validated when served.
         contract.validate_envelope(contract.envelope(output, provider, "cache", "cache"),
                                    self.schema)
@@ -300,6 +334,10 @@ class Gateway:
                  "cacheKey": key_hash, "elapsedMs": elapsed,
                  "createdAt": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                  "output": output}
+        if mode is not None and key != CLI_KEY:
+            entry["mode"] = self.settings(provider, profile)["mode"]
+            # Every page the answer cited, for audit; the output shows at most SOURCE_ROWS.
+            entry["citations"] = [{"url": u, "title": t} for u, t in completion.citations[:10]]
         self.cache.put(provider, profile, key_hash, entry)
         return entry
 

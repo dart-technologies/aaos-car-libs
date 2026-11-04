@@ -69,8 +69,19 @@
       "verifiedAt": "2026-11-03",
       "source": "https://dev.meta.ai/docs/models (muse-spark-1.3 recommended for new work; 1.1 still listed)",
       "note": "Meta lists no faster Spark tier, so both profiles use muse-spark-1.3 and differ only by reasoning_effort. Realtime is minimal, the lowest effort Spark accepts (none is a 400): 9.5, 7.2 and 6.2 s on three corpus prompts, all valid, against a ~15 s median at low (measured 2026-11-04).",
+      "modes": {
+        "brief": {
+          "adapter": "meta_responses",
+          "searchEffort": "low",
+          "webSearch": {
+            "search_context_size": "low",
+            "user_location": { "type": "approximate", "city": "New York", "region": "New York", "country": "US", "timezone": "America/New_York" }
+          },
+          "why": "Cited local brief (https://dev.meta.ai/docs/search-grounding): a Responses API web_search call biased to New York answers in cited prose, then a structured call shapes it; up to 3 url_citation pages become 'Source · host' rows. web_search and text.format combine, but the JSON then carries no annotations (verified 2026-11-04), hence two calls. compare-providers.py drops modes so the scoreboard stays like-for-like."
+        }
+      },
       "profiles": {
-        "quality_cached": { "model": "muse-spark-1.3", "effort": "high", "maxTokens": 16000 },
+        "quality_cached": { "model": "muse-spark-1.3", "effort": "high", "maxTokens": 16000, "mode": "brief" },
         "realtime_low_latency": { "model": "muse-spark-1.3", "effort": "minimal", "maxTokens": 8000 }
       }
     }

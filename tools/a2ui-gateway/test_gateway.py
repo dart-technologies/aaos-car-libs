@@ -521,6 +521,127 @@ class AdapterShapeTest(unittest.TestCase):
         self.assertIsNone(adapters._NoRedirect().redirect_request(None, None, 302, "", {}, "x"))
 
 
+CITED = [("https://www.metmuseum.org/visit/plan-your-visit", "Plan Your Visit | The Met"),
+         ("https://en.wikipedia.org/wiki/Metropolitan_Museum_of_Art", "Metropolitan Museum of Art")]
+LOCATION = {"type": "approximate", "city": "New York", "region": "New York", "country": "US",
+            "timezone": "America/New_York"}
+
+
+def meta_reply(text, cited=(), commentary=True):
+    """A Meta Responses body: commentary and a search call first when ``commentary``."""
+    output = [{"type": "message", "phase": "commentary", "role": "assistant", "content": [
+        {"type": "output_text", "text": "I'll look that up.", "annotations": []}]},
+        {"type": "web_search_call", "status": "completed",
+         "action": {"type": "search", "query": "met hours"}}] if commentary else []
+    output.append({"type": "message", "role": "assistant", "content": [{
+        "type": "output_text", "text": text, "annotations": [
+            {"type": "url_citation", "url": url, "title": title, "start_index": 0,
+             "end_index": 4} for url, title in cited]}]})
+    return {"id": "resp_1", "status": "completed", "model": "muse-spark-1.3", "output": output}
+
+
+class MuseBriefTest(GatewayCase):
+    def post(self, *replies):
+        sent, queue = [], list(replies)
+
+        def fake_post(url, headers, body, timeout_s):
+            sent.append({"url": url, "headers": headers, "body": body})
+            return queue.pop(0)
+        return sent, mock.patch.object(adapters, "_post", side_effect=fake_post)
+
+    def test_search_then_structure_keeps_the_citations(self):
+        search = {"tool": {"type": "web_search", "search_context_size": "low",
+                           "user_location": LOCATION},
+                  "effort": "low", "instructions": "SEARCH", "findings": "FINDINGS:"}
+        sent, patch = self.post(meta_reply("Open 10 to 5.", CITED + CITED[:1]),
+                                meta_reply(json.dumps(GOOD), commentary=False))
+        with patch:
+            result = adapters.complete("meta_responses", "https://api.meta.ai/v1",
+                                       "muse-spark-1.3", "high", 100, KEY, "SYS", "USR",
+                                       contract.GENERATION_SCHEMA, 30, search=search)
+        self.assertEqual([s["url"] for s in sent], ["https://api.meta.ai/v1/responses"] * 2)
+        first, second = sent[0]["body"], sent[1]["body"]
+        self.assertEqual((first["tools"], first["instructions"], first["reasoning"]),
+                         ([search["tool"]], "SEARCH", {"effort": "low"}))
+        self.assertNotIn("text", first)
+        self.assertNotIn("tools", second)
+        self.assertTrue(second["text"]["format"]["strict"])
+        self.assertEqual((second["instructions"], second["reasoning"]), ("SYS", {"effort": "high"}))
+        self.assertEqual(second["input"][0]["content"], "USR\n\nFINDINGS:\nOpen 10 to 5.")
+        self.assertIs(first["store"], False)
+        self.assertEqual(sent[0]["headers"], {"Authorization": f"Bearer {KEY}"})
+        self.assertEqual(json.loads(result.text), GOOD)  # commentary is not the answer
+        self.assertEqual(result.citations, tuple(CITED))  # each page once, in order
+
+    def test_muse_quality_is_a_cited_brief_replayed_from_the_cache(self):
+        sent, patch = self.post(meta_reply("Open 10 to 5.", CITED),
+                                meta_reply(json.dumps(GOOD), commentary=False))
+        with patch:
+            live = self.gateway(adapters.complete, env={"META_API_KEY": KEY}).handle(
+                turn(provider="muse", text="Visit The Met today"))
+        self.assertEqual((live.status, live.source), (200, "live"))
+        tool = sent[0]["body"]["tools"][0]
+        self.assertEqual((tool["type"], tool["search_context_size"], tool["user_location"]),
+                         ("web_search", "low", LOCATION))
+        self.assertIn("web findings", sent[1]["body"]["instructions"])  # the grounded prompt
+        components = live.body["messages"][1]["updateComponents"]["components"]
+        rows = [c for c in components if c["id"].startswith("source_")]
+        self.assertEqual([(r["component"], r["title"], r["subtitle"]) for r in rows], [
+            ("Text", "Source · metmuseum.org", "Plan Your Visit | The Met"),
+            ("Text", "Source · en.wikipedia.org", "Metropolitan Museum of Art")])
+        root = next(c for c in components if c["id"] == "root")
+        self.assertEqual(root["children"][-2:], ["source_1", "source_2"])  # cut first by a limit
+        entry = json.loads(next(pathlib.Path(self.tmp.name).rglob("*.json")).read_text())
+        self.assertEqual((entry["mode"], entry["citations"][0]["url"]), ("brief", CITED[0][0]))
+        # Replays exactly with no key and no vendor: the mode, not the key, sets the cache key.
+        replay = self.gateway(FakeVendor(error=AssertionError("called")), env={},
+                              offline=True).handle(
+            turn(provider="muse", text="Visit The Met today", turn_id="t2"))
+        self.assertEqual((replay.status, replay.source), (200, "cache"))
+        self.assertEqual(replay.body["messages"], live.body["messages"])
+
+    def test_plain_prompt_and_keys_hold_and_realtime_is_minimal_without_search(self):
+        system, user = contract.build_prompt("find coffee", turn()["display"])
+        self.assertIs(system, contract.SYSTEM_PROMPT)
+        self.assertNotEqual(contract.GROUNDED_PROMPT, contract.SYSTEM_PROMPT)
+        import hashlib
+        self.assertEqual(contract.cache_key("m", system, user), hashlib.sha256(b"\0".join((
+            b"m", system.encode(), user.encode(),
+            contract.canonical(contract.GENERATION_SCHEMA)))).hexdigest())
+        vendor = FakeVendor()
+        self.gateway(vendor, env={"META_API_KEY": KEY}).handle(
+            turn(provider="muse", profile="realtime_low_latency"))
+        call = vendor.calls[0]  # FakeVendor takes no search argument: none was passed
+        self.assertEqual((call["adapter"], call["model"], call["effort"]),
+                         ("openai_chat", "muse-spark-1.3", "minimal"))
+
+    def test_source_rows_are_bounded_unique_and_new_hosts_first(self):
+        rows = contract.source_rows([
+            ("https://www.metmuseum.org/visit", "Plan Your Visit"),
+            ("https://metmuseum.org/visit#hours", "Plan Your Visit"),  # the same row: once
+            ("https://www.metmuseum.org/exhibitions", "Exhibitions"),
+            ("ftp://example.org/x", "not web"), ("javascript:alert(1)", "x"),
+            ("https://en.wikipedia.org/wiki/Met", "Metropolitan\n Museum\tof Art"),
+            ("https://nyc.gov/met", "")])
+        self.assertEqual(rows, [("Source · metmuseum.org", "Plan Your Visit"),
+                                ("Source · en.wikipedia.org", "Metropolitan Museum of Art"),
+                                ("Source · nyc.gov", "")])
+        long_host = "https://" + ".".join(["abcdefghij"] * 7) + ".org/"  # labels under 64
+        (title, subtitle), = contract.source_rows([(long_host, "é" * 90)])
+        for text in (title, subtitle):
+            self.assertEqual(contract._utf16_len(text), contract.VALUE_LIMIT)
+            self.assertTrue(text.endswith("…"))
+        taken = copy.deepcopy(GOOD)
+        taken["surfaces"][0]["components"][1]["id"] = "source_1"
+        taken["surfaces"][0]["components"][0]["children"][0] = "source_1"
+        output = contract.normalize(taken)
+        self.assertEqual(contract.add_sources(output, CITED[:1]), 1)
+        ids = [c["id"] for c in output["messages"][1]["updateComponents"]["components"]]
+        self.assertEqual(ids[-1], "source_1_2")
+        contract.validate_envelope(contract.envelope(output, "muse", "s", "t"),
+                                   contract.load_gateway_schema())
+
+
 class CompareTest(GatewayCase):
     """scripts/compare-providers.py: what each row says produced it, on the real gateway."""
 

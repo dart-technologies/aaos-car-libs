@@ -25,6 +25,7 @@ import hashlib
 import json
 import pathlib
 import re
+import urllib.parse
 from typing import Any
 
 ROOT = pathlib.Path(__file__).resolve().parents[3]
@@ -120,6 +121,26 @@ content DEMO.
 
 assistantText: one sentence for the driver, at most 120 characters."""
 
+# Grounded variant (a provider mode with web search): facts come from cited findings, and the
+# gateway, not the model, writes the source rows. The plain prompt stays byte-identical.
+_COUNT_RULE = "3 to 12 components per surface"
+_DEMO_RULE = ("- Do not invent URLs, coordinates, prices, licences or claims about real businesses; "
+              "label sample content DEMO.")
+GROUNDED_PROMPT = SYSTEM_PROMPT.replace(_COUNT_RULE, "3 to 9 components per surface").replace(
+    _DEMO_RULE, "- Facts about real places come only from the web findings in the request; add no "
+    "others. Write no URLs or source list: the gateway appends the cited sources as rows. Label "
+    "anything else sample content DEMO.")
+assert _COUNT_RULE in SYSTEM_PROMPT and _DEMO_RULE in SYSTEM_PROMPT
+SEARCH_PROMPT = ("You research a request from a driver's in-car assistant. Search the web, prefer "
+                 "official sources, and answer in 3 to 6 short factual sentences, citing a source "
+                 "for every fact. Plain prose: no lists, no URLs.")
+FINDINGS_HEADER = "Web findings (cited; the gateway attaches their sources):"
+SOURCE_ROWS = 3
+SOURCE_PREFIX = "Source · "
+# A2uiValueLimits' fail-closed string length: a source row is never truncated by any reading.
+VALUE_LIMIT = 60
+_HOST = re.compile(r"^[a-z0-9-]+(\.[a-z0-9-]+)+$")
+
 
 class ContractError(Exception):
     """Vendor output the gateway must not return. ``detail`` is a token, never vendor text."""
@@ -139,18 +160,20 @@ def compact(value: Any) -> bytes:
     return json.dumps(value, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
-def build_prompt(input_text: str, display: dict) -> tuple[str, str]:
+def build_prompt(input_text: str, display: dict, grounded: bool = False) -> tuple[str, str]:
     user = (f"Request: {input_text}\n"
             f"Display: id={display['id']} activeRestrictions=0x{display['activeRestrictions']:x} "
             f"trustworthy={'true' if display['trustworthy'] else 'false'}")
-    return SYSTEM_PROMPT, user
+    return (GROUNDED_PROMPT if grounded else SYSTEM_PROMPT), user
 
 
-def cache_key(model: str, system: str, user: str) -> str:
-    """Model id plus everything the model sees: an output replays only for the call that made it."""
-    material = b"\0".join((model.encode(), system.encode(), user.encode(),
-                           canonical(GENERATION_SCHEMA)))
-    return hashlib.sha256(material).hexdigest()
+def cache_key(model: str, system: str, user: str, extra: bytes | None = None) -> str:
+    """Model id plus everything the model sees: an output replays only for the call that made it.
+    ``extra`` (a mode's search settings and prompts) is appended only when set, so plain keys hold."""
+    parts = [model.encode(), system.encode(), user.encode(), canonical(GENERATION_SCHEMA)]
+    if extra is not None:
+        parts.append(extra)
+    return hashlib.sha256(b"\0".join(parts)).hexdigest()
 
 
 def _reject_duplicates(pairs):
@@ -218,6 +241,71 @@ def normalize(generated: dict) -> dict:
     if generated.get("assistantText"):
         output["assistantText"] = generated["assistantText"]
     return output
+
+
+def _clip(text: str, limit: int = VALUE_LIMIT) -> str:
+    text = "".join(ch for ch in " ".join(str(text).split()) if ch.isprintable())
+    if _utf16_len(text) <= limit:
+        return text
+    while _utf16_len(text) > limit - 1:
+        text = text[:-1]
+    return text.rstrip() + "…"
+
+
+def _host(url: str) -> str | None:
+    try:
+        parts = urllib.parse.urlsplit(url)
+        host = parts.hostname or ""
+        host = host.encode("idna").decode("ascii")
+    except (ValueError, UnicodeError):
+        return None
+    if parts.scheme not in ("http", "https"):
+        return None
+    host = host.removeprefix("www.")
+    return host if len(host) <= 253 and _HOST.match(host) else None
+
+
+def source_rows(citations) -> list[tuple[str, str]]:
+    """(title, subtitle) per cited page, at most SOURCE_ROWS: each row once, new hosts first."""
+    rows, seen = [], set()
+    for url, title in citations:
+        host = _host(url) if isinstance(url, str) else None
+        if host is None:
+            continue
+        row = (_clip(SOURCE_PREFIX + host), _clip(title or ""))
+        if row not in seen:
+            seen.add(row)
+            rows.append((host, row))
+    hosts, first, rest = set(), [], []
+    for host, row in rows:
+        (rest if host in hosts else first).append(row)
+        hosts.add(host)
+    return (first + rest)[:SOURCE_ROWS]
+
+
+def add_sources(output: dict, citations) -> int:
+    """Appends source Text rows as the root's last children (so a content limit cuts them first)
+    of the first surface with a container root. Returns how many were added."""
+    rows = source_rows(citations)
+    for message in output["messages"] if rows else []:
+        components = message.get("updateComponents", {}).get("components", [])
+        root = next((c for c in components if c["id"] == "root"), None)
+        if root is None or root["component"] not in ("Column", "List", "Card"):
+            continue
+        taken = {c["id"] for c in components}
+        for n, (title, subtitle) in enumerate(rows, 1):
+            cid, suffix = f"source_{n}", 1
+            while cid in taken:
+                suffix += 1
+                cid = f"source_{n}_{suffix}"
+            taken.add(cid)
+            row = {"id": cid, "component": "Text", "title": title}
+            if subtitle:
+                row["subtitle"] = subtitle
+            components.append(row)
+            root["children"] = root.get("children", []) + [cid]
+        return len(rows)
+    return 0
 
 
 def envelope(output: dict, provider: str, session_id: str, turn_id: str,
