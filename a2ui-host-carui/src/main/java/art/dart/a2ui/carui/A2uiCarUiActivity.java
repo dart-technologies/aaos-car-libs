@@ -1748,13 +1748,50 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         collectBriefLines(pruned, true, lines, sources);
         if (lines.isEmpty()) return;
         String title = lines.remove(0);
-        List<String> body = new ArrayList<>(lines.subList(0, Math.min(1, lines.size())));
-        body.addAll(sources.subList(0, Math.min(2, sources.size())));
+        List<String> body = briefBody(lines, sources, providerLabel(mAgent.provider()));
         String thumb = DemoNativeContract.thumbnailFor(mSurfaceId,
                 new A2uiComponent.Builder(ComponentType.CARD).setId("brief").build());
         int art = thumb == null || !parkedNow() ? 0 : drawableNamed(thumb, 0);
         addRow(rows, keys, HostRows.AGENT_BRIEF, HostRows.card(allowed, limits, title, body,
                 art == 0 ? null : getDrawable(art), getDrawable(R.drawable.a2ui_ic_film)));
+    }
+
+    /** A street address or a ZIP code: "1000 Fifth Avenue", "New York, NY 10028". */
+    private static final java.util.regex.Pattern ADDRESS = java.util.regex.Pattern.compile(
+            "\\b\\d{1,5}\\s+(?:[A-Z][\\w.]*\\s+){0,3}(?:Avenue|Ave|Street|St|Road|Rd|Boulevard"
+                    + "|Blvd|Place|Pl|Drive|Dr|Lane|Ln|Way|Parkway|Pkwy|Broadway|Plaza|Square|Sq)\\b"
+                    + "|\\b[A-Z]{2}\\s+\\d{5}(?:-\\d{4})?\\b");
+
+    /**
+     * The brief card's lines under its title: the brief's first line that is not just a street
+     * address (the address only when nothing else is there), then one source row naming who cited
+     * what, e.g. "Muse · cited · metmuseum.org".
+     */
+    @VisibleForTesting
+    @NonNull
+    static List<String> briefBody(@NonNull List<String> lines, @NonNull List<String> sources,
+            @NonNull String provider) {
+        List<String> body = new ArrayList<>();
+        String lead = null;
+        for (String line : lines) {
+            if (!ADDRESS.matcher(line).find()) {
+                lead = line;
+                break;
+            }
+        }
+        if (lead == null && !lines.isEmpty()) lead = lines.get(0);
+        if (lead != null) body.add(lead);
+        List<String> hosts = new ArrayList<>();
+        for (String source : sources) {
+            String[] parts = source.split(" · ", 2);
+            String host = parts.length == 2 ? parts[1].trim() : "";
+            if (!host.isEmpty() && !hosts.contains(host)) hosts.add(host);
+        }
+        if (!hosts.isEmpty()) {
+            body.add(provider + " · cited · "
+                    + String.join(", ", hosts.subList(0, Math.min(2, hosts.size()))));
+        }
+        return body;
     }
 
     private static void collectBriefLines(@NonNull A2uiComponent node, boolean root,

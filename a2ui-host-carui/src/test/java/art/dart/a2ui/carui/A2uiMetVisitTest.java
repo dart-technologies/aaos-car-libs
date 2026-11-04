@@ -89,6 +89,30 @@ public class A2uiMetVisitTest {
     }
 
     @Test
+    public void theBriefCardLeadsWithANonAddressLineAndOneCitedSourceRow() {
+        java.util.List<String> lines = java.util.Arrays.asList(
+                "The Met Fifth Avenue · 1000 Fifth Avenue, New York, NY 10028",
+                "Hours · Thursday 10 AM–5 PM, timed entry advised");
+        assertThat(A2uiCarUiActivity.briefBody(lines,
+                java.util.Arrays.asList("Source · metmuseum.org", "Source · metmuseum.org"),
+                "Muse")).containsExactly("Hours · Thursday 10 AM–5 PM, timed entry advised",
+                        "Muse · cited · metmuseum.org").inOrder();
+        // Only an address: it stays rather than leaving the card bare. One row for the hosts.
+        assertThat(A2uiCarUiActivity.briefBody(lines.subList(0, 1),
+                java.util.Arrays.asList("Source · metmuseum.org", "Source · nyc.gov"), "Muse"))
+                .containsExactly(lines.get(0), "Muse · cited · metmuseum.org, nyc.gov")
+                .inOrder();
+        // No sources, no cited row: nothing is invented.
+        assertThat(A2uiCarUiActivity.briefBody(lines, java.util.Collections.emptyList(),
+                "Muse")).containsExactly(lines.get(1));
+        // An entrance by street name is not an address.
+        assertThat(A2uiCarUiActivity.briefBody(
+                java.util.Collections.singletonList("Use the 81st St entrance"),
+                java.util.Collections.emptyList(), "Muse"))
+                .containsExactly("Use the 81st St entrance");
+    }
+
+    @Test
     public void nwsPeriodsAreReadForTheDayAfterCaptureAndNothingIsAdded() {
         String json = "{'periods':["
                 + "{'startTime':'2026-11-04T07:00:00-05:00','isDaytime':true,'temperature':75,"
