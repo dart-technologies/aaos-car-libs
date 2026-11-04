@@ -3,9 +3,9 @@
 <!-- The Met demo (demo branch). Artwork: The Metropolitan Museum of Art Open Access, CC0. -->
 <resources>
     <string name="a2ui_met_toolbar_title">The Met, safely</string>
-    <string name="a2ui_met_heading">THE MET · THURSDAY</string>
-    <string name="a2ui_met_film_credit">Six works from The Met, Open Access · CC0</string>
-    <string name="a2ui_met_slides_credit">The Met, Open Access · CC0</string>
+    <string name="a2ui_met_heading">The Met · Thursday</string>
+    <string name="a2ui_met_film_credit">Six works from The Met · Open Access CC0</string>
+    <string name="a2ui_met_slides_credit">The Met · Open Access CC0</string>
     <string name="a2ui_met_guide_title">Now playing · Audio guide</string>
     <!-- %1$s work title, %2$d its position, %3$d the number of works. -->
     <string name="a2ui_met_guide_body">%1$s (%2$d/%3$d)</string>

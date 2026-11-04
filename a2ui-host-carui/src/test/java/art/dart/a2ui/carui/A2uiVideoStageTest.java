@@ -74,8 +74,12 @@ public class A2uiVideoStageTest {
 
         assertThat(stage.getVisibility()).isEqualTo(View.GONE);
         assertThat(activity.videoViewForTesting()).isNull();
-        // The surface left with its view: only the caption and the close button remain.
-        assertThat(stage.getChildCount()).isEqualTo(2);
+        // The surface left with its view: only the stage's own chrome (caption, title, close)
+        // remains.
+        for (int i = 0; i < stage.getChildCount(); i++) {
+            assertThat(stage.getChildAt(i)).isNotInstanceOf(android.widget.VideoView.class);
+        }
+        assertThat(stage.getChildCount()).isEqualTo(3);
         assertThat(titles(activity)).doesNotContain("Fifth House city note · Big Buck Bunny");
         assertThat(row(activity, "Play audio / pause").getOnClickListener()).isNotNull();
     }
@@ -132,6 +136,21 @@ public class A2uiVideoStageTest {
 
         drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_FULLY_RESTRICTED);
         assertThat(activity.mDemoMedia.imagesAllowed()).isFalse();
+    }
+
+    /** The player's view covers the stage: a 16:9 fit in a wider stage grows until no edge shows. */
+    @Test
+    public void thePlayerCoversItsStageRatherThanLetterboxing() {
+        // 1408x712 stage, 16:9 clip fitted to 1266x712: scaled to 1408 wide, cropped top and bottom.
+        assertThat(CoverVideoView.cover(1266, 712, 1408, 712)).asList()
+                .containsExactly(1408, 792).inOrder();
+        // Already covering, or a size not known yet: unchanged.
+        assertThat(CoverVideoView.cover(1408, 792, 1408, 792)).asList()
+                .containsExactly(1408, 792).inOrder();
+        assertThat(CoverVideoView.cover(0, 0, 1408, 712)).asList()
+                .containsExactly(0, 0).inOrder();
+        assertThat(CoverVideoView.cover(1266, 712, 0, 712)).asList()
+                .containsExactly(1266, 712).inOrder();
     }
 
     private static void openVideo(A2uiCarUiActivity activity) {

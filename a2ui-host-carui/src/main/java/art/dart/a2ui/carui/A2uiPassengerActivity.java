@@ -17,12 +17,14 @@ package art.dart.a2ui.carui;
 
 import android.app.Activity;
 import android.car.drivingstate.CarUxRestrictions;
+import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
@@ -41,6 +43,8 @@ import com.android.car.ui.utils.CarUxRestrictionsUtil;
 import art.dart.a2ui.model.ComponentType;
 import art.dart.a2ui.policy.A2uiRestrictionPolicy;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,6 +54,9 @@ import java.util.Set;
  *
  * <p>Started on the passenger display by the system (or {@code am start --display <id>}); an app
  * cannot place a window on a private display it is not already present on.
+ *
+ * <p>Video fills the display, centre-cropped and never letterboxed, preferring a bundled portrait
+ * cut on a portrait display ({@link PassengerMedia#fileFor}); its credit sits over the picture.
  */
 // metalava api-lint: ForbiddenSuperClass and ProtectedMember, suppressed as on A2uiCarUiActivity.
 @SuppressWarnings("ForbiddenSuperClass")
@@ -62,10 +69,11 @@ public class A2uiPassengerActivity extends Activity {
 
     private CarUxRestrictionsUtil mRestrictions;
     private FrameLayout mStage;
+    /** The idle or held card: an accent rule over {@link #mMessage}. */
+    private View mIdle;
     private TextView mMessage;
     private TextView mCredit;
-    private TextView mZone;
-    @Nullable private VideoView mVideo;
+    @Nullable private FillVideoView mVideo;
     @Nullable private PassengerMedia mMedia;
     private ArtworkSlideshow mSlideshow;
     /** This display's last genuine reading, captured before a demo zone reading replaces it. */
@@ -93,10 +101,12 @@ public class A2uiPassengerActivity extends Activity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.a2ui_passenger_activity);
+        // The screen's name for accessibility only: the theme draws no title bar.
+        setTitle(R.string.a2ui_passenger_label);
         mStage = findViewById(R.id.passenger_stage);
+        mIdle = findViewById(R.id.passenger_idle);
         mMessage = findViewById(R.id.passenger_message);
         mCredit = findViewById(R.id.passenger_credit);
-        mZone = findViewById(R.id.passenger_zone);
         mSlideshow = new ArtworkSlideshow(findViewById(R.id.passenger_gallery),
                 findViewById(R.id.passenger_gallery_backdrop),
                 findViewById(R.id.passenger_gallery_image),
@@ -177,8 +187,9 @@ public class A2uiPassengerActivity extends Activity {
 
     /**
      * A display with no passenger-zone configuration reads fully restricted from car service (this
-     * AVD declares one occupant zone). Debug builds may stand in a labelled DEMO zone reading for
-     * it, and never for the default (driver) display.
+     * AVD declares one occupant zone). Debug builds may stand in a DEMO zone reading for it, and
+     * never for the default (driver) display. The DEMO provenance is in the reading's source and
+     * the log, not on the passenger's screen.
      */
     private boolean mayUseDemoZone() {
         return A2uiCarUiActivity.debugBusAllowed(getApplicationInfo(), Build.TYPE)
@@ -191,17 +202,16 @@ public class A2uiPassengerActivity extends Activity {
             mGenuine = mRestrictions.getCurrentRestrictions();
         }
         Log.i(TAG, "display " + mRestrictions.getDisplayId() + " has no passenger-zone reading;"
-                + " applying a labelled DEMO zone reading (BASELINE) to this display only");
+                + " applying a DEMO zone reading (BASELINE) to this display only");
         mRestrictions.setDemoUxRestrictions(new CarUxRestrictions.Builder(false,
                 A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE, 0).build());
         mDemoZone = true;
-        mZone.setVisibility(View.VISIBLE);
     }
 
     private void clearDemoZone() {
         if (!mDemoZone) return;
         mDemoZone = false;
-        mZone.setVisibility(View.GONE);
+        Log.i(TAG, "display " + mRestrictions.getDisplayId() + ": DEMO zone reading cleared");
         if (mGenuine != null) {
             mRestrictions.setUxRestrictions(mGenuine);
             mGenuine = null;
@@ -212,24 +222,26 @@ public class A2uiPassengerActivity extends Activity {
         teardownVideo();
         if (media.mStills) {
             // Auto-advancing stills are moving imagery: decided as video, above.
-            mSlideshow.show(MetArtworks.slides());
+            mSlideshow.show(withCredit(MetArtworks.slides(), getString(media.mCredit)));
             mMedia = media;
-            mMessage.setVisibility(View.GONE);
+            mIdle.setVisibility(View.GONE);
             PassengerDisplay.report(media.mName, 0);
             mHandler.postDelayed(mTick, TICK_MS);
             Log.i(TAG, "showing " + media.mName + " on display " + mRestrictions.getDisplayId());
             return;
         }
-        int named = getResources().getIdentifier(media.mRawName, "raw", getPackageName());
-        int raw = named != 0 ? named : R.raw.demo_placeholder_video;
-        VideoView video = new VideoView(this);
+        String file = media.fileFor(isPortrait(), name -> rawId(name) != 0);
+        int raw = file != null ? rawId(file) : R.raw.demo_placeholder_video;
+        FillVideoView video = new FillVideoView(this);
+        // Centred and cropped by the stage: the picture covers the display edge to edge.
         mStage.addView(video, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+                ViewGroup.LayoutParams.MATCH_PARENT, Gravity.CENTER));
         // Its own zone's sound: no focus taken from the cabin's audio.
         video.setAudioFocusRequest(AudioManager.AUDIOFOCUS_NONE);
         video.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + raw));
         video.setOnPreparedListener(player -> {
             if (mVideo != video) return;
+            video.setVideoSize(player.getVideoWidth(), player.getVideoHeight());
             player.setLooping(true);
             if (!media.mCabinAudio) player.setVolume(0f, 0f);
             video.start();
@@ -240,14 +252,37 @@ public class A2uiPassengerActivity extends Activity {
         });
         mVideo = video;
         mMedia = media;
-        mMessage.setVisibility(View.GONE);
+        mIdle.setVisibility(View.GONE);
         // Credit only what is actually playing: the fallback fixture is not the named film.
-        mCredit.setText(named != 0 ? getString(media.mCredit) : null);
-        mCredit.setVisibility(named != 0 ? View.VISIBLE : View.GONE);
+        mCredit.setText(file != null ? getString(media.mCredit) : null);
+        mCredit.setVisibility(file != null ? View.VISIBLE : View.GONE);
         PassengerDisplay.report(media.mName, 0);
         mHandler.removeCallbacks(mTick);
         mHandler.postDelayed(mTick, TICK_MS);
-        Log.i(TAG, "playing " + media.mName + " on display " + mRestrictions.getDisplayId());
+        Log.i(TAG, "playing " + media.mName + " (" + (file != null ? file : "decoder fixture")
+                + ") on display " + mRestrictions.getDisplayId());
+    }
+
+    private int rawId(@NonNull String name) {
+        return getResources().getIdentifier(name, "raw", getPackageName());
+    }
+
+    /** This activity's display, from its own resources: a portrait screen prefers portrait cuts. */
+    private boolean isPortrait() {
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        return metrics.heightPixels > metrics.widthPixels;
+    }
+
+    /** The slides with this media's own credit on each, so stills and film credit alike. */
+    @NonNull
+    private static List<ArtworkSlideshow.Slide> withCredit(
+            @NonNull List<ArtworkSlideshow.Slide> slides, @NonNull CharSequence credit) {
+        List<ArtworkSlideshow.Slide> out = new ArrayList<>();
+        for (ArtworkSlideshow.Slide slide : slides) {
+            out.add(new ArtworkSlideshow.Slide(slide.mDrawable, slide.mTitle, slide.mCaption,
+                    credit));
+        }
+        return out;
     }
 
     /** Reports which segment is on screen, for hosts that follow along. */
@@ -288,13 +323,60 @@ public class A2uiPassengerActivity extends Activity {
 
     private void showMessage(int text) {
         mMessage.setText(text);
-        mMessage.setVisibility(View.VISIBLE);
+        mIdle.setVisibility(View.VISIBLE);
     }
 
     @VisibleForTesting
     @Nullable
-    VideoView videoForTesting() {
+    FillVideoView videoForTesting() {
         return mVideo;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    TextView creditForTesting() {
+        return mCredit;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    View idleForTesting() {
+        return mIdle;
+    }
+
+    /**
+     * A VideoView that covers its parent instead of fitting inside it: measured to the larger of
+     * the two scales and centred by its FrameLayout parent, which clips the overflow. Until the
+     * video's size is known it measures as a plain VideoView.
+     */
+    @VisibleForTesting
+    static final class FillVideoView extends VideoView {
+        private int mVideoWidth;
+        private int mVideoHeight;
+
+        FillVideoView(@NonNull Context context) {
+            super(context);
+        }
+
+        void setVideoSize(int width, int height) {
+            if (width == mVideoWidth && height == mVideoHeight) return;
+            mVideoWidth = width;
+            mVideoHeight = height;
+            requestLayout();
+        }
+
+        @Override
+        protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+            int width = MeasureSpec.getSize(widthMeasureSpec);
+            int height = MeasureSpec.getSize(heightMeasureSpec);
+            if (mVideoWidth <= 0 || mVideoHeight <= 0 || width <= 0 || height <= 0) {
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+                return;
+            }
+            float scale = Math.max((float) width / mVideoWidth, (float) height / mVideoHeight);
+            setMeasuredDimension(Math.max(width, Math.round(mVideoWidth * scale)),
+                    Math.max(height, Math.round(mVideoHeight * scale)));
+        }
     }
 
     @VisibleForTesting

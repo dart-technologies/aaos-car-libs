@@ -185,10 +185,33 @@ final class DemoNativeContract {
     static final class Media {
         @NonNull final String mRawName;
         @NonNull final String mCaption;
+        /** The player's title overlay, or null for none (the film carries its own captions). */
+        @Nullable final String mTitle;
+        @Nullable final String mCredit;
+        /**
+         * Driver media in the full-bleed player: it fills the stage, and it opens and stays only
+         * on a trusted parked reading, over and above the VIDEO gate every video has.
+         */
+        final boolean mPlayer;
 
         Media(@NonNull String rawName, @NonNull String caption) {
+            this(rawName, caption, null, null, false);
+        }
+
+        private Media(@NonNull String rawName, @NonNull String caption, @Nullable String title,
+                @Nullable String credit, boolean player) {
             mRawName = rawName;
             mCaption = caption;
+            mTitle = title;
+            mCredit = credit;
+            mPlayer = player;
+        }
+
+        /** Parked-only driver media with a host-owned title and credit, never agent text. */
+        @NonNull
+        static Media player(@NonNull String rawName, @NonNull String title,
+                @NonNull String credit) {
+            return new Media(rawName, "", title, credit, true);
         }
     }
 
@@ -200,7 +223,23 @@ final class DemoNativeContract {
             // The film carries its own captions and credit.
             return new Media("met_artwork_film", "");
         }
+        if (isDriverMedia(surfaceId, component)) {
+            // The landscape cut the passenger display also plays, in the parked-only player.
+            return Media.player("bbb_passenger", BBB_TITLE, BBB_CREDIT);
+        }
         return null;
+    }
+
+    /** The charging window's short to watch: ev_charge_coffee's Video "bbb". */
+    static final String EV_DRIVER_MEDIA = "bbb";
+    static final String BBB_TITLE = "Big Buck Bunny";
+    static final String BBB_CREDIT = "Blender Foundation · CC BY 3.0";
+
+    /** The exact corpus driver media: ev_charge_coffee's Video "bbb" with its open action. */
+    static boolean isDriverMedia(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return "ev_charge_coffee".equals(surfaceId) && EV_DRIVER_MEDIA.equals(component.getId())
+                && component.getType() == ComponentType.VIDEO
+                && "open".equals(component.getAction());
     }
 
     /** The bundled artwork for an exact corpus Image inside a gallery, by drawable name. */
@@ -264,6 +303,7 @@ final class DemoNativeContract {
             if ("gallery".equals(id)) return "met_437881";
         }
         if ("ev_charge_coffee".equals(surfaceId) && "tour".equals(id)) return "met_435868";
+        if ("ev_charge_coffee".equals(surfaceId) && EV_DRIVER_MEDIA.equals(id)) return "bbb_thumb";
         return null;
     }
 
@@ -282,7 +322,7 @@ final class DemoNativeContract {
                 return R.drawable.a2ui_ic_battery;
             }
             if ("coffee".equals(id)) return R.drawable.a2ui_ic_pickup;
-            if ("tour".equals(id)) return R.drawable.a2ui_ic_film;
+            if ("tour".equals(id) || EV_DRIVER_MEDIA.equals(id)) return R.drawable.a2ui_ic_film;
         }
         return 0;
     }
@@ -307,7 +347,7 @@ final class DemoNativeContract {
     }
 
     /** Credit for every Met image and the film made from them. */
-    static final String MET_CREDIT = "The Met, Open Access · CC0";
+    static final String MET_CREDIT = "The Met · Open Access CC0";
 
     /** The six bundled works, in gallery order. */
     static final List<String> MET_WORKS = Collections.unmodifiableList(Arrays.asList(
@@ -326,6 +366,9 @@ final class DemoNativeContract {
         }
         if ("tour".equals(id) && type == ComponentType.MODAL && "open".equals(action)) {
             return Spec.simple(Kind.GALLERY, "Finish the Met tour");
+        }
+        if (EV_DRIVER_MEDIA.equals(id) && type == ComponentType.VIDEO && "open".equals(action)) {
+            return Spec.simple(Kind.VIDEO, BBB_TITLE);
         }
         return null;
     }
@@ -376,6 +419,7 @@ final class DemoNativeContract {
             if ("tour".equals(id)) return "Artwork";
             if (id.startsWith("c") && id.length() == 2) return "Chargers";
             if ("coffee".equals(id)) return "Order";
+            if (EV_DRIVER_MEDIA.equals(id)) return "Video";
         }
         if ("met_visit".equals(surfaceId)) {
             if ("map".equals(id) || "preview".equals(id)) return "Map";

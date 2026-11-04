@@ -437,9 +437,10 @@ public final class UseCaseCorpus {
         Builder b = new Builder("ev_charge_coffee",
                 "Low battery on the way: compare fast chargers, choose one by voice, then reorder "
                         + "coffee and finish the Met tour while charging",
-                "BASELINE adds the parked reorder and tour; motion keeps the glanceable charger "
-                        + "comparison and navigation, refuses the purchase, removes the tour");
-        b.container("root", "Column", "c1", "c2", "c3", "coffee", "tour");
+                "BASELINE adds the parked reorder, the tour and a short to watch; motion keeps the "
+                        + "glanceable charger comparison and navigation, refuses the purchase, "
+                        + "removes the tour and the short");
+        b.container("root", "Column", "c1", "c2", "c3", "coffee", "tour", "bbb");
         b.put("root", "title", "Charge and a coffee");
         String[] ordinals = {"first", "second", "third"};
         for (int i = 0; i < 3; i++) {
@@ -468,6 +469,9 @@ public final class UseCaseCorpus {
         b.component("met_436105", "Image", "The Death of Socrates", "Jacques Louis David · 1787");
         b.component("met_435868", "Image", "The Card Players", "Paul Cézanne · 1890–92");
         b.component("film", "Video", "Artwork film", "Six works, slowly · parked only");
+        // Something to watch while charging: a Video, so motion prunes it, and opening it is
+        // navigation, not a purchase. Big Buck Bunny © Blender Foundation, CC BY 3.0.
+        b.action("bbb", "Video", "Big Buck Bunny", "Watch while you charge", "open");
         // Placeholders; a bundled chargers.json (OSM) replaces them through updateDataModel.
         b.data("/chargers/0/name", "Charger nearby");
         b.data("/chargers/0/detail", "0.6 mi · public charging");
@@ -477,9 +481,9 @@ public final class UseCaseCorpus {
         b.data("/chargers/2/detail", "1.9 mi · public charging");
         b.data("/session/detail", "about 22 min");
         // Generic words; Host B names the real café (fixtures/coffee) near the chosen charger.
-        b.data("/order/status", "Coffee ready at the counter");
+        // What was ordered, never that it is ready: nothing is sent to a café.
+        b.data("/order/status", "Order confirmed");
         b.data("/order/pickup", "Oat milk latte");
-        b.data("/order/note", "Demo · nothing sent to the café");
         b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
                 TemplateCapability.MODAL, TemplateCapability.VIDEO);
         return b.build();

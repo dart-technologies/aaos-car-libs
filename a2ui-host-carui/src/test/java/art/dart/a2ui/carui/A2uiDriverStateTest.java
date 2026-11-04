@@ -48,7 +48,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 
-/** The vehicle-state banner and the "what changed" line, both read from the policy's output. */
+/** The vehicle-state chip and the "what changed" line, both read from the policy's output. */
 @RunWith(RobolectricTestRunner.class)
 public class A2uiDriverStateTest {
 
@@ -70,25 +70,35 @@ public class A2uiDriverStateTest {
     @Test
     public void bannerNamesTheDeliveredStateAndNeverClaimsOneItWasNotTold() {
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
-        assertThat(banner(activity)).isEqualTo("PARKED");
+        assertThat(banner(activity)).isEqualTo("Parked");
+        // The longer line is spoken with the chip, not drawn in it.
         assertThat(activity.bannerDetailForTesting().getText().toString())
                 .isEqualTo("Full experience available");
+        assertThat(activity.bannerDetailForTesting().getVisibility()).isEqualTo(View.GONE);
+        View chip = activity.findViewById(R.id.drive_banner);
+        assertThat(chip.getContentDescription().toString())
+                .isEqualTo("Parked. Full experience available.");
+        int parkedFill = chip.getBackgroundTintList().getDefaultColor();
 
         drive(activity, DRIVE);
-        assertThat(banner(activity)).isEqualTo("DRIVING");
+        assertThat(banner(activity)).isEqualTo("Driving");
+        // The state reads before the word does: a different fill, the driving token.
+        assertThat(chip.getBackgroundTintList().getDefaultColor()).isNotEqualTo(parkedFill);
+        assertThat(chip.getBackgroundTintList().getDefaultColor()).isEqualTo(
+                activity.getColor(R.color.a2ui_brand_state_driving));
         drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_NO_VIDEO);
-        assertThat(banner(activity)).isEqualTo("DRIVING");
+        assertThat(banner(activity)).isEqualTo("Driving");
 
-        // Injected: DEMO, never DRIVING, whatever the mask.
+        // Injected: Simulated, never Driving, whatever the mask.
         CarUxRestrictionsUtil.getInstance(activity).setDemoUxRestrictions(reading(DRIVE));
         shadowOf(Looper.getMainLooper()).idle();
-        assertThat(banner(activity)).isEqualTo("DEMO");
+        assertThat(banner(activity)).isEqualTo("Simulated");
 
-        // Never delivered: SAFE MODE, and the fail-closed prune stands behind it.
+        // Never delivered: Safe mode, and the fail-closed prune stands behind it.
         CarUxRestrictionsUtil.clearInstancesForTesting();
         A2uiCarUiActivity unknown =
                 Robolectric.buildActivity(A2uiCarUiActivity.class).create().start().get();
-        assertThat(banner(unknown)).isEqualTo("SAFE MODE");
+        assertThat(banner(unknown)).isEqualTo("Safe mode");
     }
 
     @Test
@@ -129,7 +139,8 @@ public class A2uiDriverStateTest {
         assertThat(text(activity)).isEqualTo("Put away for the drive: search, video");
         assertThat(strip.isClickable()).isFalse();
         assertThat(strip.isFocusable()).isFalse();
-        // In the header band, holding the heading's place: never over a card.
+        // In the header row beside the chip, holding the context title's place: never over a
+        // card.
         assertThat(strip.getParent()).isSameInstanceAs(
                 activity.findViewById(R.id.surface_heading).getParent());
         assertThat(activity.findViewById(R.id.surface_heading).getVisibility())

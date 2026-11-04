@@ -19,6 +19,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
+import java.util.function.Predicate;
+
 /**
  * The bundled media the passenger display may play, by the name the PASSENGER broadcast uses. An
  * exact registry: a broadcast names an entry, never a resource.
@@ -31,6 +33,8 @@ final class PassengerMedia {
     static final String ARTWORK = "artwork";
     /** {@code slideshow}: the six Met works as stills. */
     static final String SLIDESHOW = "slideshow";
+    /** Suffix of a bundled portrait cut of the media, e.g. {@code bbb_passenger_portrait}. */
+    static final String PORTRAIT_SUFFIX = "_portrait";
 
     @NonNull final String mName;
     /** Raw resource name, looked up at play time so a missing file falls back, not fails. */
@@ -51,6 +55,19 @@ final class PassengerMedia {
         mSegments = segments;
         mCabinAudio = cabinAudio;
         mStills = stills;
+    }
+
+    /**
+     * The raw resource to play: on a portrait display the portrait cut when one is bundled, else
+     * the file itself; null when neither is bundled (the caller falls back to the decoder fixture
+     * and credits nothing). Either way the picture fills the display, centre-cropped.
+     */
+    @Nullable
+    String fileFor(boolean portraitDisplay, @NonNull Predicate<String> bundled) {
+        if (mRawName.isEmpty()) return null;
+        String portrait = mRawName + PORTRAIT_SUFFIX;
+        if (portraitDisplay && bundled.test(portrait)) return portrait;
+        return bundled.test(mRawName) ? mRawName : null;
     }
 
     @Nullable

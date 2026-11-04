@@ -8,11 +8,16 @@
     <color name="a2ui_brand_on_surface">#FFFFF8EE</color>
     <color name="a2ui_brand_on_surface_muted">#B3FFF8EE</color>
     <color name="a2ui_brand_video_stage">#FF000000</color>
-    <!-- Vehicle-state banner fills: one per state, so the state reads before the words do. -->
-    <color name="a2ui_brand_state_parked">#FF1C6B4E</color>
-    <color name="a2ui_brand_state_driving">#FF1F4F9A</color>
-    <color name="a2ui_brand_state_safe">#FF9A3412</color>
+    <!-- Vehicle-state chip fills, one per state so the state reads before the word does: the
+         brand green and blue at lower saturation, and a brighter dot of the same hue. -->
+    <color name="a2ui_brand_state_parked">#FF2E5C4B</color>
+    <color name="a2ui_brand_state_driving">#FF3D567C</color>
+    <color name="a2ui_brand_state_safe">#FF804B3A</color>
     <color name="a2ui_brand_state_demo">#FF4B4C55</color>
+    <color name="a2ui_brand_state_parked_dot">#FF8FE0B5</color>
+    <color name="a2ui_brand_state_driving_dot">#FF9EC1F7</color>
+    <color name="a2ui_brand_state_safe_dot">#FFF2B38A</color>
+    <color name="a2ui_brand_state_demo_dot">#FFC9CAD3</color>
     <color name="a2ui_brand_strip_surface">#F21B1C20</color>
     <color name="a2ui_brand_panel_surface">#FF17181B</color>
     <color name="a2ui_brand_scrim">#B3000000</color>
@@ -30,11 +35,12 @@
     <string name="a2ui_brand_media_artist">Fifth House · DEMO</string>
     <string name="a2ui_brand_video_caption">DEMO generated decoder fixture · not Big Buck Bunny media</string>
 
-    <!-- Vehicle-state banner. Consumer words; the exact mask stays in the diagnostics strip. -->
-    <string name="a2ui_state_parked">PARKED</string>
-    <string name="a2ui_state_driving">DRIVING</string>
-    <string name="a2ui_state_safe_mode">SAFE MODE</string>
-    <string name="a2ui_state_demo">DEMO</string>
+    <!-- Vehicle-state chip. Consumer words; the exact mask and the reading's provenance stay in
+         the diagnostics strip and the log. A simulated (DEMO) reading says so. -->
+    <string name="a2ui_state_parked">Parked</string>
+    <string name="a2ui_state_driving">Driving</string>
+    <string name="a2ui_state_safe_mode">Safe mode</string>
+    <string name="a2ui_state_demo">Simulated</string>
     <string name="a2ui_state_parked_detail">Full experience available</string>
     <string name="a2ui_state_driving_detail">Simplified for the road</string>
     <string name="a2ui_state_safe_waiting_detail">Waiting for the vehicle · essentials only</string>
@@ -43,9 +49,6 @@
     <string name="a2ui_state_demo_restricted_detail">Simulated reading · restricted</string>
 
     <string name="a2ui_close">Close</string>
-    <!-- One screen-level label for fixture content, instead of a DEMO suffix per row. -->
-    <string name="a2ui_demo_data">Demo data</string>
-    <string name="a2ui_ask_by_voice">Ask by voice</string>
     <string name="a2ui_speak">Speak</string>
     <string name="a2ui_confirm">Confirm</string>
     <string name="a2ui_cancel">Cancel</string>
@@ -58,13 +61,11 @@
     <string name="a2ui_end_card_bullet_4">Stock Android Automotive · no model keys in the car</string>
     <string name="a2ui_end_card_footer">Built with Meta Muse · github.com/dart-technologies/aaos-car-libs</string>
 
-    <!-- Passenger display. -->
+    <!-- Passenger display. The label is the screen's accessibility name; no header draws it. -->
     <string name="a2ui_passenger_label">Passenger display</string>
     <string name="a2ui_passenger_idle">Ready when you are</string>
     <string name="a2ui_passenger_video_credit">Big Buck Bunny © Blender Foundation · CC BY 3.0</string>
     <string name="a2ui_passenger_held">Video is not available on this screen right now</string>
-    <!-- Shown whenever the passenger screen runs on a simulated zone reading (DEMO). -->
-    <string name="a2ui_passenger_demo_zone">Passenger zone · demo setting</string>
 
     <style name="A2uiBrandStatusBadge">
         <item name="android:background">@drawable/a2ui_status_badge</item>
