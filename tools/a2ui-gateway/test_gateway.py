@@ -142,10 +142,15 @@ class ConfigTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             dotenv = pathlib.Path(tmp) / ".env"
             dotenv.write_text("XAI_API_KEY='from-file'\nELEVENLABS_API_KEY=x\n")
+            # clear=True: a key exported on this machine must not leak in and fail the test.
             with mock.patch.dict("os.environ", {"OPENAI_API_KEY": "from-env",
-                                                "MODEL_API_KEY": "generic", "HOME": "/h"}):
+                                                "MODEL_API_KEY": "generic", "HOME": "/h"},
+                                 clear=True):
                 env = core.load_env(dotenv, core.env_names(config))
-        self.assertEqual(env, {"XAI_API_KEY": "from-file", "OPENAI_API_KEY": "from-env"})
+        # Names may be printed; values never are, so a failure cannot echo a credential.
+        self.assertEqual(sorted(env), ["OPENAI_API_KEY", "XAI_API_KEY"])
+        self.assertTrue(env == {"XAI_API_KEY": "from-file", "OPENAI_API_KEY": "from-env"},
+                        "load_env returned the right names with the wrong values")
 
     def test_policy_is_uniform_and_meta_has_no_generic_key(self):
         config = core.load_config()
