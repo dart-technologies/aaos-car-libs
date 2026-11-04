@@ -26,12 +26,11 @@
       "baseUrl": "https://api.openai.com/v1",
       "keyEnv": ["OPENAI_API_KEY"],
       "cli": { "adapter": "codex_exec_cli", "command": "codex",
-               "profiles": { "quality_cached": { "model": "gpt-6-luna", "effort": "high" } },
-               "why": "Subscription baseline without OPENAI_API_KEY: Codex exec on the ChatGPT login. That login rejects gpt-6-terra (2026-11-04), so quality runs Luna at high effort." },
+               "why": "Subscription baseline without OPENAI_API_KEY: Codex exec on the ChatGPT login, same models (gpt-6.1-terra and gpt-6-luna verified there 2026-11-04)." },
       "verifiedAt": "2026-11-03",
-      "source": "https://developers.openai.com/api/docs/models/gpt-6-luna; gpt-6-terra not yet checked against its page",
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-luna; gpt-6.1-terra verified only via Codex on the ChatGPT login",
       "profiles": {
-        "quality_cached": { "model": "gpt-6-terra", "effort": "high", "maxTokens": 16000 },
+        "quality_cached": { "model": "gpt-6.1-terra", "effort": "high", "maxTokens": 16000 },
         "realtime_low_latency": { "model": "gpt-6-luna", "effort": "low", "maxTokens": 8000 }
       }
     },

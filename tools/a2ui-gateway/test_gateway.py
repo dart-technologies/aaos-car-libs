@@ -376,13 +376,14 @@ class OtherCliAdapterTest(FakeCli, unittest.TestCase):
 class CliProfileOverrideTest(GatewayCase):
     def test_a_cli_profile_overrides_the_api_model(self):
         vendor = FakeVendor()
-        gw = self.gateway(vendor, env={}, cli="/usr/local/bin/codex")
-        self.assertEqual(gw.model("chatgpt", "quality_cached"), "gpt-6-luna")
-        gw.handle(turn(provider="chatgpt"))
-        self.assertEqual((vendor.calls[0]["adapter"], vendor.calls[0]["model"],
-                          vendor.calls[0]["effort"]), ("codex_exec_cli", "gpt-6-luna", "high"))
-        api = self.gateway(FakeVendor(), env={"OPENAI_API_KEY": KEY}, cli="/usr/local/bin/codex")
-        self.assertEqual(api.model("chatgpt", "quality_cached"), "gpt-6-terra")
+        gw = self.gateway(vendor, env={}, cli="/usr/local/bin/grok")
+        self.assertEqual(gw.model("grok", "realtime_low_latency"), "grok-4.7-build-fast")
+        self.assertEqual(gw.model("grok", "quality_cached"), "grok-4.7")  # no override: API id
+        gw.handle(turn(provider="grok", profile="realtime_low_latency"))
+        self.assertEqual((vendor.calls[0]["adapter"], vendor.calls[0]["model"]),
+                         ("grok_cli", "grok-4.7-build-fast"))
+        api = self.gateway(FakeVendor(), env={"XAI_API_KEY": KEY}, cli="/usr/local/bin/grok")
+        self.assertEqual(api.model("grok", "realtime_low_latency"), "grok-4.20-0309-non-reasoning")
 
 
 class HttpTest(GatewayCase):
