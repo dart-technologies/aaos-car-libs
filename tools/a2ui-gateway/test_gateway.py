@@ -66,9 +66,11 @@ class GatewayCase(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def gateway(self, vendor, env=None, offline=False):
+    def gateway(self, vendor, env=None, offline=False, cli=None):
+        # which= is explicit so a machine with the claude CLI installed behaves like one without.
         gw = core.Gateway(self.config, {"ANTHROPIC_API_KEY": KEY} if env is None else env,
-                          pathlib.Path(self.tmp.name), offline, complete=vendor)
+                          pathlib.Path(self.tmp.name), offline, complete=vendor,
+                          which=lambda command: cli)
         self.addCleanup(gw.close)
         return gw
 
@@ -186,7 +188,7 @@ class ProfileTest(GatewayCase):
                 break
             time.sleep(0.02)
         self.assertIsNotNone(gw.cache.get("claude", "realtime_low_latency", sha))
-        self.assertEqual(slow.calls[0]["model"], "claude-sonnet-5-5")
+        self.assertEqual(slow.calls[0]["model"], "claude-haiku-5-5")
 
     def test_realtime_without_cache_waits_for_the_live_answer(self):
         response = self.gateway(FakeVendor(delay=0.2)).handle(turn(profile="realtime_low_latency"))
@@ -242,6 +244,168 @@ class ProfileTest(GatewayCase):
                          "actionId": "play", "outcome": "ALLOWED"})
         self.assertEqual((ack.status, ack.body["ack"], ack.body["provider"]),
                          (200, "actionResult", "muse"))
+
+
+class SubscriptionCliTest(GatewayCase):
+    def test_without_an_api_key_a_logged_in_cli_answers_and_says_so(self):
+        vendor = FakeVendor()
+        gw = self.gateway(vendor, env={}, cli="/usr/local/bin/claude")
+        self.assertEqual(gw.transport("claude"), "cli")
+        self.assertIsNone(gw.transport("muse"))  # no CLI configured: still unconfigured
+        response = gw.handle(turn())
+        self.assertEqual((response.status, response.source), (200, "live"))
+        self.assertEqual(vendor.calls[0]["adapter"], "claude_code_cli")
+        entry = next(pathlib.Path(self.tmp.name).rglob("*.json"))
+        self.assertEqual(json.loads(entry.read_text())["transport"], "cli")
+
+    def test_an_api_key_wins_over_the_cli(self):
+        vendor = FakeVendor()
+        gw = self.gateway(vendor, cli="/usr/local/bin/claude")
+        self.assertEqual(gw.transport("claude"), "api")
+        gw.handle(turn())
+        self.assertEqual((vendor.calls[0]["adapter"], vendor.calls[0]["key"]),
+                         ("anthropic_messages", KEY))
+
+
+class FakeCli:
+    """Real adapters against a fake CLI executable that records its argv, cwd and directory."""
+
+    def fake_cli(self, body: str) -> pathlib.Path:
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = pathlib.Path(tmp.name)
+        cli = root / "claude"
+        cli.write_text("#!/usr/bin/env python3\nimport json, os, sys, time\n"
+                       f"open({str(root / 'argv.json')!r}, 'w').write("
+                       "json.dumps({'argv': sys.argv[1:], 'cwd': os.getcwd(), "
+                       "'files': os.listdir('.')}))\n" + body)
+        cli.chmod(0o755)
+        return cli
+
+
+class ClaudeCodeCliAdapterTest(FakeCli, unittest.TestCase):
+    def call(self, cli, timeout_s=10):
+        return adapters.complete("claude_code_cli", str(cli), "claude-sonnet-5-5", "low", 100,
+                                 "\0cli", "sys", "usr", contract.GENERATION_SCHEMA, timeout_s)
+
+    def test_isolated_flags_and_structured_output(self):
+        cli = self.fake_cli("print(json.dumps({'is_error': False, 'subtype': 'success', "
+                            "'structured_output': {'ok': 1}, "
+                            "'modelUsage': {'claude-sonnet-5-5': {}}}))\n")
+        result = self.call(cli)
+        self.assertEqual((json.loads(result.text), result.served_model),
+                         ({"ok": 1}, "claude-sonnet-5-5"))
+        seen = json.loads((cli.parent / "argv.json").read_text())
+        argv = seen["argv"]
+        for flag in ("-p", "--strict-mcp-config", "--disable-slash-commands",
+                     "--no-session-persistence"):
+            self.assertIn(flag, argv)
+        self.assertNotIn("--bare", argv)  # bare mode ignores the subscription login
+        self.assertEqual(argv[argv.index("--tools") + 1], "")
+        self.assertEqual(argv[argv.index("--model") + 1], "claude-sonnet-5-5")
+        self.assertEqual(argv[argv.index("--system-prompt") + 1], "sys")
+        self.assertEqual(argv[-1], "usr")
+        self.assertEqual(json.loads(argv[argv.index("--json-schema") + 1]),
+                         contract.GENERATION_SCHEMA)
+        self.assertEqual(seen["files"], [])  # empty cwd: no project CLAUDE.md to discover
+        self.assertNotEqual(pathlib.Path(seen["cwd"]).resolve(), pathlib.Path.cwd().resolve())
+
+    def test_failures_are_tokens_only(self):
+        cases = [
+            ("print(json.dumps({'is_error': True, 'subtype': 'error_max_turns', "
+             "'result': 'secret prompt text'}))\n", "upstream:error_max_turns"),
+            ("print('not json: secret'); sys.exit(3)\n", "upstream:cli_exit_3"),
+            ("print(json.dumps({'is_error': False, 'result': 'x'}))\n",
+             "upstream:no_structured_output"),
+            ("time.sleep(5)\n", "timeout"),
+        ]
+        for body, expected in cases:
+            with self.subTest(expected=expected):
+                with self.assertRaises(adapters.AdapterError) as raised:
+                    self.call(self.fake_cli(body), timeout_s=1)
+                self.assertEqual(str(raised.exception), expected)
+                self.assertNotIn("secret", str(raised.exception))
+
+
+class OtherCliAdapterTest(FakeCli, unittest.TestCase):
+    def run_cli(self, adapter, body, model="m-1"):
+        cli = self.fake_cli(body)
+        result = adapters.complete(adapter, str(cli), model, "high", 100, "\0cli", "SYS", "USR",
+                                   contract.GENERATION_SCHEMA, 10)
+        return result, json.loads((cli.parent / "argv.json").read_text())["argv"]
+
+    def test_codex_exec_is_read_only_ephemeral_and_schema_enforced(self):
+        result, argv = self.run_cli("codex_exec_cli", (
+            "out = sys.argv[sys.argv.index('-o') + 1]\n"
+            "schema = json.load(open(sys.argv[sys.argv.index('--output-schema') + 1]))\n"
+            "assert schema['type'] == 'object'\n"
+            "open(out, 'w').write(json.dumps({'ok': 1}))\n"
+            "sys.stderr.write('model: gpt-6-luna\\n')\n"), model="gpt-6-luna")
+        self.assertEqual((json.loads(result.text), result.served_model), ({"ok": 1}, "gpt-6-luna"))
+        self.assertEqual(argv[0], "exec")
+        for flag in ("--ephemeral", "--skip-git-repo-check"):
+            self.assertIn(flag, argv)
+        self.assertEqual(argv[argv.index("-s") + 1], "read-only")
+        self.assertIn("model_reasoning_effort=high", argv)
+        self.assertLess(argv[-1].index("SYS"), argv[-1].index("USR"))  # no system flag: prepended
+
+    def test_grok_single_turn_without_tools_plan_or_subagents(self):
+        result, argv = self.run_cli("grok_cli", (
+            "print(json.dumps({'structuredOutput': {'ok': 1}, "
+            "'modelUsage': {'grok-4.7': {}}}))\n"), model="grok-4.7")
+        self.assertEqual((json.loads(result.text), result.served_model), ({"ok": 1}, "grok-4.7"))
+        self.assertEqual(argv[argv.index("-p") + 1], "USR")
+        self.assertEqual(argv[argv.index("--system-prompt") + 1], "SYS")
+        self.assertEqual(argv[argv.index("--tools") + 1], "")
+        for flag in ("--no-plan", "--no-subagents"):
+            self.assertIn(flag, argv)
+
+    def test_antigravity_never_sends_an_empty_enum_and_restores_no_action(self):
+        result, argv = self.run_cli("antigravity_cli", (
+            "schema = sys.argv[sys.argv.index('--json-schema') + 1]\n"
+            "assert '\"\"' not in schema, 'empty enum value reached agy'\n"
+            "print(json.dumps({'status': 'SUCCESS', 'error': '', 'response': json.dumps("
+            "{'surfaces': [{'components': [{'id': 'a', 'action': 'none'}, "
+            "{'id': 'b', 'action': 'play'}]}]})}))\n"), model="gemini-3.8-flash")
+        actions = [c["action"] for c in json.loads(result.text)["surfaces"][0]["components"]]
+        self.assertEqual(actions, ["", "play"])
+
+    def test_antigravity_parses_a_json_string_response_and_reports_sign_in_failure(self):
+        result, argv = self.run_cli("antigravity_cli", (
+            "print(json.dumps({'status': 'success', 'response': json.dumps({'ok': 1})}))\n"),
+            model="gemini-3.8-flash")
+        self.assertEqual(json.loads(result.text), {"ok": 1})
+        self.assertEqual(argv[argv.index("--model") + 1], "gemini-3.8-flash")
+        fenced, _ = self.run_cli("antigravity_cli", (
+            "print(json.dumps({'status': 'SUCCESS', 'response': "
+            "'```json\\n' + json.dumps({'ok': 2}) + '\\n```'}))\n"))
+        self.assertEqual(json.loads(fenced.text), {"ok": 2})
+        prose, _ = self.run_cli("antigravity_cli", (
+            "print(json.dumps({'status': 'SUCCESS', 'response': "
+            "'Here is the surface: ' + json.dumps({'ok': 3}) + ' Done.'}))\n"))
+        self.assertEqual(json.loads(prose.text), {"ok": 3})
+        for error, expected in [("authentication failed or timed out", "not_signed_in"),
+                                ("Individual quota reached. Resets in 2h.", "quota_exhausted"),
+                                ("model x is not recognized as a known model", "unknown_model")]:
+            with self.subTest(expected=expected), \
+                    self.assertRaises(adapters.AdapterError) as raised:
+                self.run_cli("antigravity_cli", (
+                    f"print(json.dumps({{'status': 'ERROR', 'error': {error!r}}}));"
+                    "sys.exit(1)\n"))
+            self.assertEqual(str(raised.exception), f"upstream:{expected}")
+
+
+class CliProfileOverrideTest(GatewayCase):
+    def test_a_cli_profile_overrides_the_api_model(self):
+        vendor = FakeVendor()
+        gw = self.gateway(vendor, env={}, cli="/usr/local/bin/grok")
+        self.assertEqual(gw.model("grok", "realtime_low_latency"), "grok-4.7-build-fast")
+        self.assertEqual(gw.model("grok", "quality_cached"), "grok-4.7")  # no override: API id
+        gw.handle(turn(provider="grok", profile="realtime_low_latency"))
+        self.assertEqual((vendor.calls[0]["adapter"], vendor.calls[0]["model"]),
+                         ("grok_cli", "grok-4.7-build-fast"))
+        api = self.gateway(FakeVendor(), env={"XAI_API_KEY": KEY}, cli="/usr/local/bin/grok")
+        self.assertEqual(api.model("grok", "realtime_low_latency"), "grok-4.20-0309-non-reasoning")
 
 
 class HttpTest(GatewayCase):
@@ -395,7 +559,7 @@ class CompareTest(GatewayCase):
         self.assertEqual(live["source"], "live")
         self.assertFalse(live["failure"])
         self.assertIsNotNone(live["latencyMs"])
-        self.assertEqual(self.compare.model_label(live), "claude-sonnet-5-5")
+        self.assertEqual(self.compare.model_label(live), "claude-haiku-5-5")
 
     def test_a_replay_calls_no_vendor_and_a_miss_is_a_failure(self):
         gw = core.Gateway(self.config, {}, pathlib.Path(self.tmp.name), offline=True,

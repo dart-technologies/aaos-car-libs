@@ -15,7 +15,7 @@
 
 quality_cached replays an exact cached output, generating (and caching) only on a miss.
 realtime_low_latency calls the vendor and, if no valid answer arrives within the profile deadline
-(2500 ms), serves a cached output labelled ``fallback`` while the live call finishes and refreshes
+(providers.json deadlineMs), serves a cached output labelled ``fallback`` while the live call finishes and refreshes
 the cache. Every response says what produced it: ``source`` in the envelope, the output's own model
 and profile on the Response. Nothing is cached or returned before contract.validate_envelope.
 """
@@ -28,6 +28,7 @@ import json
 import os
 import pathlib
 import re
+import shutil
 import tempfile
 import time
 from dataclasses import dataclass
@@ -39,6 +40,7 @@ TOOL_DIR = pathlib.Path(__file__).resolve().parents[1]
 DEFAULT_PROVIDERS = TOOL_DIR / "providers.json"
 DEFAULT_CACHE = contract.ROOT / "build" / "a2ui-gateway-cache"
 GATEWAY_TOKEN_ENV = "A2UI_GATEWAY_TOKEN"
+CLI_KEY = "\0cli"  # sentinel: no API key, so the provider's logged-in CLI answers
 _SHA = re.compile(r"^[0-9a-f]{64}$")
 _ENV_LINE = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
 
@@ -145,7 +147,8 @@ class Gateway:
     def __init__(self, config: dict, env: Mapping[str, str], cache_dir: pathlib.Path = DEFAULT_CACHE,
                  offline: bool = False,
                  complete: Callable[..., adapters.Completion] = adapters.complete,
-                 clock: Callable[[], float] = time.monotonic):
+                 clock: Callable[[], float] = time.monotonic,
+                 which: Callable[[str], str | None] = shutil.which):
         self.config = config
         self.offline = offline
         self.schema = contract.load_gateway_schema()
@@ -153,6 +156,7 @@ class Gateway:
         self._env = dict(env)
         self._complete = complete
         self._clock = clock
+        self._which = which
         self._pool = concurrent.futures.ThreadPoolExecutor(
             max_workers=8, thread_name_prefix="a2ui-vendor")
 
@@ -169,10 +173,26 @@ class Gateway:
         for name in self.key_env(provider):
             if self._env.get(name):
                 return self._env[name]
+        cli = self.config["providers"][provider].get("cli")
+        if cli and self._which(cli["command"]):
+            return CLI_KEY
         return None
 
+    def transport(self, provider: str) -> str | None:
+        """'api', 'cli' (no API key, logged-in CLI), or None when the provider cannot be called."""
+        key = self._key(provider)
+        return None if key is None else ("cli" if key == CLI_KEY else "api")
+
+    def settings(self, provider: str, profile: str) -> dict:
+        """The profile's model/effort; a CLI may override them (its login may not offer the API id)."""
+        chosen = dict(self.config["providers"][provider]["profiles"][profile])
+        if self.transport(provider) == "cli":
+            chosen.update(self.config["providers"][provider]["cli"].get("profiles", {})
+                          .get(profile, {}))
+        return chosen
+
     def model(self, provider: str, profile: str) -> str:
-        return self.config["providers"][provider]["profiles"][profile]["model"]
+        return self.settings(provider, profile)["model"]
 
     def cache_key(self, provider: str, profile: str, system: str, user: str) -> str:
         return contract.cache_key(self.model(provider, profile), system, user)
@@ -256,11 +276,14 @@ class Gateway:
     def _generate(self, provider: str, profile: str, system: str, user: str, key_hash: str,
                   key: str) -> dict:
         settings = self.config["providers"][provider]
-        chosen = settings["profiles"][profile]
+        chosen = self.settings(provider, profile)
         timing = self.config["profiles"][profile]
         began = self._clock()
+        adapter, base_url = settings["adapter"], settings["baseUrl"]
+        if key == CLI_KEY:
+            adapter, base_url = settings["cli"]["adapter"], settings["cli"]["command"]
         completion = self._complete(
-            settings["adapter"], settings["baseUrl"], chosen["model"], chosen.get("effort"),
+            adapter, base_url, chosen["model"], chosen.get("effort"),
             int(chosen.get("maxTokens", 8000)), key, system, user, contract.GENERATION_SCHEMA,
             timing["timeoutMs"] / 1000,
             vendor_fallback=self.config["policy"]["vendorFallback"])
@@ -273,6 +296,7 @@ class Gateway:
                                    self.schema)
         entry = {"cacheVersion": 2, "provider": provider, "profile": profile,
                  "model": chosen["model"], "servedModel": completion.served_model,
+                 "transport": "cli" if key == CLI_KEY else "api",
                  "cacheKey": key_hash, "elapsedMs": elapsed,
                  "createdAt": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                  "output": output}

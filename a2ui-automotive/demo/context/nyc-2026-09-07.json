@@ -11,26 +11,14 @@
     "isDeviceLocation": false,
     "reason": "A recognizable west-side staging point makes cross-borough discovery and a meaningful in-motion interval legible without requesting device location."
   },
-  "event": {
-    "name": "GPT-6 Astra Hackathon NYC",
-    "startsAt": "2026-09-10T09:00:00-04:00",
-    "endsAt": "2026-09-10T22:00:00-04:00",
-    "location": "New York, NY",
-    "locationPrecision": "city_only",
-    "attendanceStatus": "not_asserted",
-    "submissionConstraint": "The public page says all submitted work must be built during the hackathon and published in a public open-source repository; existing product code does not qualify.",
-    "repositoryUse": "Demonstration and architecture reference only unless the organizers confirm a separately built submission is eligible.",
-    "source": "https://cerebralvalley.ai/e/openai-gpt-6-astra-nyc",
-    "reason": "The public event page establishes the city and hours but does not publish a street venue, so the demo must not invent one or route to it; its build-during-event rule also prevents treating this existing branch as an eligible submission."
-  },
   "weather": {
     "observationStation": "New York City, Central Park (KNYC)",
     "observedAt": "2026-09-07T14:51:00-04:00",
     "observed": "Fair, 77°F",
-    "eventDayForecast": "Mostly sunny, then a 30% chance of showers after 2 PM; high near 87°F",
     "forecastIssuedAt": "2026-09-07T14:19:00-04:00",
     "source": "https://forecast.weather.gov/MapClick.php?lat=40.75095500000003&lon=-73.99810999999994",
-    "reason": "Warm weather makes cold pickup and a shaded or indoor arrival suggestion relevant; the afternoon shower chance supports a discreet umbrella reminder."
+    "reason": "Warm weather makes cold pickup and a shaded or indoor arrival suggestion relevant; the afternoon shower chance supports a discreet umbrella reminder.",
+    "dayForecast": "Mostly sunny, then a 30% chance of showers after 2 PM; high near 87°F"
   },
   "commerce": {
     "brand": "Fifth House",

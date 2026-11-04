@@ -14,15 +14,19 @@ gateway. No APK carries a vendor key.
 
 ## Models
 
-| Selector | Adapter | `quality_cached` | `realtime_low_latency` | Key |
-|---|---|---|---|---|
-| `claude` | Anthropic Messages | `claude-opus-5-5`, effort high | `claude-sonnet-5-5`, low | `ANTHROPIC_API_KEY` |
-| `chatgpt` | OpenAI Responses | `gpt-6-astra`, high | `gpt-6-luna`, low | `OPENAI_API_KEY` |
-| `gemini` | `generateContent` + response schema | `gemini-4-argon`, high | `gemini-3.8-flash`, low | `GEMINI_API_KEY` or `GOOGLE_API_KEY` |
-| `grok` | OpenAI-compatible chat | `grok-4.7` | `grok-4.20-0309-non-reasoning` | `XAI_API_KEY` |
-| `muse` | OpenAI-compatible chat, `https://api.meta.ai/v1` | `muse-spark-1.3`, high | `muse-spark-1.3`, low | `META_API_KEY` |
+| Selector | API adapter | `quality_cached` | `realtime_low_latency` | Key | Subscription CLI (when the key is empty) |
+|---|---|---|---|---|---|
+| `claude` | Anthropic Messages | `claude-opus-5-5`, high | `claude-haiku-5-5`, low | `ANTHROPIC_API_KEY` | `claude -p`, same models |
+| `chatgpt` | OpenAI Responses | `gpt-6.1-terra`, high | `gpt-6-luna`, low | `OPENAI_API_KEY` | `codex exec`, same models |
+| `gemini` | `generateContent` + response schema | `gemini-4-argon`, high | `gemini-3.8-flash`, low | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `agy -p`, `gemini-3.8-flash` low (thinking returns empty) |
+| `grok` | OpenAI-compatible chat | `grok-4.7` | `grok-4.20-0309-non-reasoning` | `XAI_API_KEY` | `grok -p`, `grok-4.7` / `grok-4.7-build-fast` |
+| `muse` | OpenAI-compatible chat, `https://api.meta.ai/v1` | `muse-spark-1.3`, high | `muse-spark-1.3`, low | `META_API_KEY` | — |
 
-OpenAI, Google, xAI and Meta ids were read from their model pages on 2026-11-03 (`verifiedAt`);
+Realtime waits 10 s for a live answer, then serves the cached quality answer as a labelled
+fallback. CLI rows run with tools, plugins and sessions off in an empty directory; their latency
+includes process start-up.
+OpenAI (`gpt-6.1-terra` via Codex only), Google, xAI and Meta ids were read from their model pages on
+2026-11-03 (`verifiedAt`);
 Claude's come from the claude-api model table. Meta lists no faster Spark tier, so Muse's profiles
 differ only by effort. The gateway reads only these key names and `A2UI_GATEWAY_TOKEN`.
 

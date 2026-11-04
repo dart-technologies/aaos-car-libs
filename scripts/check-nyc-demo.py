@@ -19,7 +19,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "a2ui-automotive/demo/nyc-scenarios-v1.json"
 AUDIO = ROOT / "a2ui-automotive/demo/audio/elevenlabs"
 CORPUS = ROOT / "a2ui-model/src/main/java/art/dart/a2ui/demo/UseCaseCorpus.java"
-CONTEXT = ROOT / "a2ui-automotive/demo/context/nyc-astra-2026-09-07.json"
+CONTEXT = ROOT / "a2ui-automotive/demo/context/nyc-2026-09-07.json"
 PROFILES = ROOT / "a2ui-automotive/demo/agent-profiles-v1.json"
 RUNNER = ROOT / "scripts/run-nyc-demo.py"
 
@@ -76,7 +76,7 @@ def main() -> int:
         fail("sound-effect ids must be unique and non-empty")
     scenarios = data.get("scenarios", [])
     if {s.get("id") for s in scenarios} != {
-            "nyc_poi_order", "nyc_curated_video", "nyc_astra_concierge"}:
+            "nyc_poi_order", "nyc_curated_video", "nyc_concierge"}:
         fail("the three canonical scenario ids are not exact")
     if {s.get("corpusCase") for s in scenarios} != {
             "poi_discovery_order", "big_buck_bunny"}:
@@ -86,12 +86,6 @@ def main() -> int:
     if context.get("mode") != "curated_snapshot" or context.get("origin", {}).get(
             "isDeviceLocation") is not False:
         fail("context fixture must stay a clearly labelled non-device snapshot")
-    event = context.get("event", {})
-    if event.get("locationPrecision") != "city_only" or event.get(
-            "attendanceStatus") != "not_asserted":
-        fail("event fixture overstates venue precision or attendance")
-    if "existing product code does not qualify" not in event.get("submissionConstraint", ""):
-        fail("event fixture lost the hackathon eligibility constraint")
     if context.get("commerce", {}).get("merchantStatus") != "fictional_demo":
         fail("merchant fixture is not explicitly fictional")
     profiles = json.loads(PROFILES.read_text(encoding="utf-8"))
@@ -99,17 +93,18 @@ def main() -> int:
         fail("provider swap selectors drifted")
     foreground = profiles.get("showcaseRouting", {}).get("foreground", {})
     background = profiles.get("showcaseRouting", {}).get("background", {})
-    if foreground.get("model") != "sonnet" or foreground.get("effort") != "low":
-        fail("foreground latency profile is not Sonnet low")
-    if (background.get("model") != "gpt-6-astra"
+    if foreground.get("model") != "haiku" or foreground.get("effort") != "low":
+        fail("foreground latency profile is not Haiku low")
+    if (background.get("profile") != "quality_cached"
             or background.get("background") is not True
             or background.get("directVehicleActions") is not False):
-        fail("Astra background route lost its staged, non-actioning boundary")
+        fail("background route lost its staged, non-actioning boundary")
     runner = RUNNER.read_text(encoding="utf-8")
     if "tpad=stop_mode=clone" not in runner or '"-shortest"' in runner:
         fail("recorder would truncate timed narration at screenrecord's last changed frame")
 
     clip_ids: set[str] = set()
+    clip_texts: dict[str, str] = {}
     tts_chars = 0
     for scenario in scenarios:
         duration = int(scenario.get("durationSeconds", 0))
@@ -128,6 +123,7 @@ def main() -> int:
             if clip["id"] in clip_ids:
                 fail(f"duplicate clip id {clip['id']}")
             clip_ids.add(clip["id"])
+            clip_texts[clip["id"]] = clip.get("text", "")
             if clip.get("role") not in {"narration", "user_utterance"}:
                 fail(f"unknown role on {clip['id']}")
             if not 0 <= int(clip.get("atMs", -1)) < duration * 1000:
@@ -191,6 +187,9 @@ def main() -> int:
                 fail(f"persona or voice drift for {clip_id}")
             if metadata.get("audioSha256") != hashlib.sha256(audio.read_bytes()).hexdigest():
                 fail(f"audio checksum mismatch for {clip_id}")
+            if metadata.get("inputSha256") != hashlib.sha256(
+                    clip_texts[clip_id].encode()).hexdigest():
+                fail(f"stale audio for {clip_id}: its text changed; regenerate it")
         for scenario in scenarios:
             previous_end_ms = -1.0
             for clip in scenario["clips"]:

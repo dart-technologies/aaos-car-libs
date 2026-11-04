@@ -80,7 +80,7 @@
       "id": "nyc_poi_order",
       "title": "Coffee pickup from Hudson Yards to Brooklyn Museum",
       "corpusCase": "poi_discovery_order",
-      "contextSnapshot": "a2ui-automotive/demo/context/nyc-astra-2026-09-07.json",
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-2026-09-07.json",
       "durationSeconds": 78,
       "premise": "A parked driver chooses a fictional demo pickup along a recognizable NYC route. Once the vehicle enters drive, discovery and purchase disappear or refuse while the route remains.",
       "parameterRationale": [
@@ -151,7 +151,7 @@
       "id": "nyc_curated_video",
       "title": "Curated short while waiting in Long Island City",
       "corpusCase": "big_buck_bunny",
-      "contextSnapshot": "a2ui-automotive/demo/context/nyc-astra-2026-09-07.json",
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-2026-09-07.json",
       "durationSeconds": 78,
       "premise": "A parked driver opens the repository's generated video placeholder from a curated selection. Entering drive removes video decoding and pixels; a separate safe audio control remains.",
       "parameterRationale": [
@@ -216,23 +216,22 @@
       ]
     },
     {
-      "id": "nyc_astra_concierge",
+      "id": "nyc_concierge",
       "title": "Fifth House concierge: order, listen en route, watch on arrival",
       "corpusCase": "poi_discovery_order",
       "corpusSequence": ["poi_discovery_order", "big_buck_bunny"],
-      "contextSnapshot": "a2ui-automotive/demo/context/nyc-astra-2026-09-07.json",
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-2026-09-07.json",
       "agentProfiles": "a2ui-automotive/demo/agent-profiles-v1.json",
       "durationSeconds": 90,
-      "premise": "One calm hospitality story joins contextual pickup, parked confirmation, branded audio continuity in motion, and parked visual content. A fast foreground turn may use Sonnet low effort; a separately staged Astra job prepares evidence-backed concierge updates without controlling the car.",
+      "premise": "One calm hospitality story joins contextual pickup, parked confirmation, branded audio continuity in motion, and parked visual content. A fast low-effort foreground turn answers first; a separately staged higher-effort turn prepares evidence-backed concierge updates without controlling the car.",
       "parameterRationale": [
         "The order and media chapters reuse independently accepted corpus surfaces, so the combined story does not bypass their policy tests.",
         "Fifth House is explicitly fictional and provides one visual and editorial thread across the handoff between surfaces.",
-        "The public Astra event supplies real NYC date and time context; its street venue and the user's attendance are intentionally not inferred.",
+        "A dated NYC weather snapshot supplies the date and time context; the user's location is intentionally not inferred.",
         "Audio starts while parked and continues in drive; visual content opens only after returning to park."
       ],
       "doNotClaim": [
-        "live device location, live weather, event admission, event street venue, merchant inventory, payment, or fulfillment",
-        "that this pre-existing repository is an eligible hackathon submission",
+        "live device location, live weather, merchant inventory, payment, or fulfillment",
         "that Big Buck Bunny footage or any partner-branded asset is present in the generated placeholder",
         "that the optional foreground or background provider call is required for the deterministic replay",
         "that a background agent can publish actions or driver-visible content without gateway and host validation"
@@ -242,7 +241,7 @@
           "id": "concierge_narration_01",
           "role": "narration",
           "atMs": 1000,
-          "text": "Good afternoon from Hudson Yards. Fifth House is a fictional concierge for this demo. The dated New York forecast is warm with a chance of showers after two, so it suggests a cold pickup and a discreet umbrella reminder before the Thursday Astra event."
+          "text": "Good afternoon from Hudson Yards. Fifth House is a fictional concierge for this demo. The dated New York forecast is warm with a chance of showers after two, so it suggests a cold pickup and a discreet umbrella reminder."
         },
         {
           "id": "concierge_utterance_order",
@@ -280,7 +279,7 @@
           "id": "concierge_narration_05",
           "role": "narration",
           "atMs": 72500,
-          "text": "A low-effort Sonnet turn is the optional fast path. In parallel, GPT-6 Astra can prepare a longer evidence-backed arrival brief through the gateway. Its suggestions remain staged until freshness, restrictions, and host-owned actions are checked."
+          "text": "A fast low-effort turn is the optional quick path. In parallel, a higher-effort turn can prepare a longer evidence-backed arrival brief through the gateway. Its suggestions remain staged until freshness, restrictions, and host-owned actions are checked."
         }
       ],
       "actions": [

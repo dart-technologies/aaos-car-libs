@@ -55,7 +55,7 @@ scripts/run-bump-gate.sh my-change          # exit 0 pass, 1 fail, 2 could not d
 # NYC demo on Host B (needs the gitignored audio cache; see docs/DEMO.md)
 (cd aaos-apps-gradle-project && ./gradlew :a2ui-host-carui:assembleDebug \
   && adb install -r -t build/a2ui-host-carui/outputs/apk/debug/a2ui-host-carui-debug.apk)
-scripts/run-nyc-demo.py nyc_astra_concierge /tmp/nyc-astra.mp4 --display-id "$DISPLAY_ID"
+scripts/run-nyc-demo.py nyc_concierge /tmp/nyc-concierge.mp4 --display-id "$DISPLAY_ID"
 ```
 
 - Local secrets start from [`.env.example`](.env.example). Vendor keys belong to operator or gateway
