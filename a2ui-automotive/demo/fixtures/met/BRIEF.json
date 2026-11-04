@@ -1,0 +1,119 @@
+{
+  "note": "Muse's cited brief for The Met on Thursday, Nov 5, as the dev gateway cached it (build/a2ui-gateway-cache/muse/quality_cached/<cacheKey>.json) and replays it in the recording. Copy it there and start tools/a2ui-gateway/serve.py --offline to serve it with no key; the key covers model, prompts and search settings, so it replays only for this request.",
+  "request": {
+    "inputText": "Take us to The Met this afternoon",
+    "display": {
+      "id": 0,
+      "activeRestrictions": 0,
+      "trustworthy": true
+    }
+  },
+  "provider": "muse",
+  "profile": "quality_cached",
+  "mode": "brief",
+  "model": "muse-spark-1.3",
+  "servedModel": "muse-spark-1.3",
+  "transport": "api",
+  "createdAt": "2026-11-04T16:44:28+00:00",
+  "elapsedMs": 37708,
+  "cacheVersion": 2,
+  "cacheKey": "c26cc6f99ddcffe7938a7ee6115cac38d97c6cc4a2c6797a8c02723e1c93456d",
+  "citations": [
+    {
+      "title": "Visitor Guidelines | The Metropolitan Museum of Art",
+      "url": "https://www.metmuseum.org/visit/~/link.aspx?_id=30A85D9CCD644A8E82BFF80A29C704EC&_z=z"
+    },
+    {
+      "title": "Plan Your Visit",
+      "url": "http://www.metmuseum.org/plan-your-visit"
+    }
+  ],
+  "output": {
+    "assistantText": "The Met is open until 5 pm today, on-site parking unavailable this afternoon.",
+    "messages": [
+      {
+        "createSurface": {
+          "catalogId": "automotive",
+          "surfaceId": "met_visit"
+        },
+        "version": "v0.9"
+      },
+      {
+        "updateComponents": {
+          "components": [
+            {
+              "children": [
+                "hdr",
+                "addr",
+                "hours",
+                "admission",
+                "parking",
+                "transit",
+                "nav_btn",
+                "source_1",
+                "source_2"
+              ],
+              "component": "Column",
+              "id": "root"
+            },
+            {
+              "component": "Text",
+              "id": "hdr",
+              "subtitle": "Upper East Side bordering Central Park",
+              "title": "The Met Fifth Avenue"
+            },
+            {
+              "component": "Text",
+              "id": "addr",
+              "title": "1000 Fifth Avenue, New York, NY 10028"
+            },
+            {
+              "component": "Text",
+              "id": "hours",
+              "title": "Open today Thursday 10 am to 5 pm"
+            },
+            {
+              "component": "Text",
+              "id": "admission",
+              "subtitle": "General admission",
+              "title": "Adults $30, seniors $22, students $17"
+            },
+            {
+              "component": "Text",
+              "id": "parking",
+              "subtitle": "Garage at 80th St evenings weekends only",
+              "title": "On-site parking unavailable this afternoon"
+            },
+            {
+              "component": "Text",
+              "id": "transit",
+              "subtitle": "To Fifth Avenue",
+              "title": "4, 5, 6 train to 86th St, walk west 3 blocks"
+            },
+            {
+              "action": "navigate",
+              "component": "Button",
+              "id": "nav_btn",
+              "title": "Navigate to The Met",
+              "voicePhrase": "Navigate to The Met"
+            },
+            {
+              "component": "Text",
+              "id": "source_1",
+              "subtitle": "Visitor Guidelines | The Metropolitan Museum of Art",
+              "title": "Source · metmuseum.org"
+            },
+            {
+              "component": "Text",
+              "id": "source_2",
+              "subtitle": "Plan Your Visit",
+              "title": "Source · metmuseum.org"
+            }
+          ],
+          "surfaceId": "met_visit"
+        },
+        "version": "v0.9"
+      }
+    ]
+  }
+}

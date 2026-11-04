@@ -610,6 +610,24 @@ class MuseBriefTest(GatewayCase):
         self.assertEqual((replay.status, replay.source), (200, "cache"))
         self.assertEqual(replay.body["messages"], live.body["messages"])
 
+    def test_the_committed_met_brief_replays_offline_with_no_key(self):
+        # demo/fixtures/met/BRIEF.json is the cached answer the recording replays: its key must
+        # still be what this gateway computes for its request, or the recording would miss it.
+        brief = json.loads((contract.ROOT / "a2ui-automotive/demo/fixtures/met/BRIEF.json")
+                           .read_text(encoding="utf-8"))
+        path = (pathlib.Path(self.tmp.name) / brief["provider"] / brief["profile"]
+                / f"{brief['cacheKey']}.json")
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps(brief), encoding="utf-8")
+        request = dict(turn(provider="muse", text=brief["request"]["inputText"]),
+                       display=brief["request"]["display"])
+        replay = self.gateway(FakeVendor(error=AssertionError("called")), env={},
+                              offline=True).handle(request)
+        self.assertEqual((replay.status, replay.source), (200, "cache"))
+        self.assertEqual(replay.body["messages"], brief["output"]["messages"])
+        components = brief["output"]["messages"][1]["updateComponents"]["components"]
+        self.assertIn("Source · metmuseum.org", [c.get("title") for c in components])
+
     def test_plain_prompt_and_keys_hold_and_realtime_is_minimal_without_search(self):
         system, user = contract.build_prompt("find coffee", turn()["display"])
         self.assertIs(system, contract.SYSTEM_PROMPT)
