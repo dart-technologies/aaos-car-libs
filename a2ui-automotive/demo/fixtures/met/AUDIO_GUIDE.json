@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-04T16:23:13+00:00",
+  "generator": "scripts/muse-audio-guide.py",
+  "model": "muse-spark-1.3",
+  "servedModel": "muse-spark-1.3",
+  "reasoningEffort": {
+    "research": "low",
+    "narration": "medium"
+  },
+  "webSearch": {
+    "search_context_size": "low",
+    "user_location": {
+      "type": "approximate",
+      "city": "New York",
+      "region": "New York",
+      "country": "US",
+      "timezone": "America/New_York"
+    }
+  },
+  "works": "SOURCE.json (The Met Open Access, CC0); text written by Muse from cited findings",
+  "guide": [
+    {
+      "objectID": 436535,
+      "clipId": "met_guide_01",
+      "title": "Wheat Field with Cypresses",
+      "artist": "Vincent van Gogh",
+      "text": "Wheat Field with Cypresses by Vincent van Gogh was made in Saint-Rémy in the summer heat. He wrote to his brother about it and later made copies for his family.",
+      "sources": [
+        {
+          "url": "https://www.metmuseum.org/art/collection/search/436535",
+          "title": "Wheat Field with Cypresses"
+        },
+        {
+          "url": "https://artuk.org/discover/artworks/a-wheatfield-with-cypresses-114199/view_as/grid/search/style_title",
+          "title": "A Wheatfield, with Cypresses"
+        }
+      ]
+    },
+    {
+      "objectID": 437881,
+      "clipId": "met_guide_02",
+      "title": "Young Woman with a Water Pitcher",
+      "artist": "Johannes Vermeer",
+      "text": "Young Woman with a Water Pitcher by Johannes Vermeer is about a washing ritual. It was the first of his works to reach America, honoring sacredness in daily home life.",
+      "sources": [
+        {
+          "url": "https://www.metmuseum.org/art/collection/search/437881",
+          "title": "Young Woman with a Water Pitcher"
+        }
+      ]
+    },
+    {
+      "objectID": 437394,
+      "clipId": "met_guide_03",
+      "title": "Aristotle with a Bust of Homer",
+      "artist": "Rembrandt (Rembrandt van Rijn)",
+      "text": "Aristotle with a Bust of Homer by Rembrandt van Rijn was for a Sicilian collector who let him choose the subject. It endures as a meditation on fame and wisdom.",
+      "sources": [
+        {
+          "url": "https://smarthistory.org/?p=20253",
+          "title": "Smarthistory  –  A-Level: Rembrandt, Aristotle with a Bust of Homer"
+        },
+        {
+          "url": "https://www.metmuseum.org/art/collection/search/437394",
+          "title": "Aristotle with a Bust of Homer"
+        }
+      ]
+    },
+    {
+      "objectID": 435809,
+      "clipId": "met_guide_04",
+      "title": "The Harvesters",
+      "artist": "Pieter Bruegel the Elder",
+      "text": "The Harvesters by Pieter Bruegel the Elder was part of a seasons series for a merchant dining room. It honors peasant workers and their harmony with nature and seasonal bounty.",
+      "sources": [
+        {
+          "url": "https://www.metmuseum.org/art/collection/search/435809",
+          "title": "Pieter Bruegel the Elder - The Harvesters - The Metropolitan Museum of Art"
+        }
+      ]
+    },
+    {
+      "objectID": 436105,
+      "clipId": "met_guide_05",
+      "title": "The Death of Socrates",
+      "artist": "Jacques Louis David",
+      "text": "The Death of Socrates by Jacques Louis David is about choosing death over giving up beliefs. It became a landmark call to resist unjust authority before the French Revolution.",
+      "sources": [
+        {
+          "url": "https://www.metmuseum.org/art/collection/search/436105",
+          "title": "The Death of Socrates"
+        },
+        {
+          "url": "https://www.christies.com/lot/lot-jacques-louis-david-the-death-of-socrates-5868595/?from=salesummery&",
+          "title": "The Death of Socrates"
+        }
+      ]
+    },
+    {
+      "objectID": 435868,
+      "clipId": "met_guide_06",
+      "title": "The Card Players",
+      "artist": "Paul Cézanne",
+      "text": "The Card Players by Paul Cézanne began a series of five paintings. Made with local farmhands who posed for him, it honors Provençal dignity and points toward modernism.",
+      "sources": [
+        {
+          "url": "https://www.metmuseum.org/art/collection/search/435868",
+          "title": "The Card Players"
+        },
+        {
+          "url": "https://gallerycollections.courtauld.ac.uk/object-p-1932-sc-57",
+          "title": "The Card Players"
+        }
+      ]
+    }
+  ]
+}
