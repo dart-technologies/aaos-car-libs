@@ -1028,9 +1028,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                 insets.getBottom());
     }
 
+    /** The tag car-ui-lib's base layout puts on the view it insets the content's top by. */
+    private static final String TOP_INSET_TAG = "car_ui_top_inset";
+
     /**
-     * The OEM toolbar's own views: what car-ui-lib's base layout draws beside the content
-     * container (it overlays the content and insets it). Rotary's focus-parking view stays.
+     * The OEM toolbar: the base layout's child (beside the content container, which it overlays
+     * and insets) that holds the view tagged {@link #TOP_INSET_TAG}. Only that one view, so
+     * rotary's focus-parking view and any other overlay stay; a layout without the tag (a toolbar
+     * at the side or bottom, an unknown plugin) keeps its toolbar.
      */
     @NonNull
     private List<View> toolbarChrome() {
@@ -1040,13 +1045,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         View container = (View) content.getParent();
         if (!(container.getParent() instanceof ViewGroup)) return chrome;
         ViewGroup base = (ViewGroup) container.getParent();
-        for (int i = 0; i < base.getChildCount(); i++) {
-            View child = base.getChildAt(i);
-            if (child != container
-                    && !"FocusParkingView".equals(child.getClass().getSimpleName())) {
-                chrome.add(child);
-            }
+        View toolbar = base.findViewWithTag(TOP_INSET_TAG);
+        while (toolbar != null && toolbar.getParent() != base) {
+            toolbar = toolbar.getParent() instanceof View ? (View) toolbar.getParent() : null;
         }
+        if (toolbar != null && toolbar != container) chrome.add(toolbar);
         return chrome;
     }
 
@@ -1321,9 +1324,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (pruned != null) {
             pruned = A2uiPruner.applyLimits(pruned, limits);
         }
-        // Voice may only reach what is on screen: CarUiRenderer.render draws no grandchildren, and
-        // host rows take the first places in both capped lists, so the tree is cut to the surface
-        // rows still visible after them.
+        // Voice may only reach what the capped lists hold: CarUiRenderer.render draws no
+        // grandchildren, and host rows take the first places in both capped lists, so the tree is
+        // cut to the surface rows the vehicle's content limit leaves after them. The visitor card
+        // list may draw fewer (cardCap, and whole cards only); a row past it stays reachable by
+        // voice, as a row past the screen's height always was.
         List<CarUiListItem> rows = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         addHostRows(rows, keys, allowed, limits, parked, pruned);

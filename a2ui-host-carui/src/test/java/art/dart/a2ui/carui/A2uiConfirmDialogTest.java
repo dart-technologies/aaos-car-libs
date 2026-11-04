@@ -125,6 +125,40 @@ public class A2uiConfirmDialogTest {
     }
 
     @Test
+    public void aLongDetailScrollsWholeAndTheButtonsStayOnScreen() {
+        A2uiCarUiActivity activity = started(BASELINE);
+        StringBuilder terms = new StringBuilder("Two adult tickets");
+        for (int i = 0; i < 40; i++) terms.append(" · non-refundable after 24 hours");
+        String detail = terms.append(" · total $58.00").toString();
+        AlertDialog dialog = A2uiCarUiActivity.showConfirmation(activity,
+                "Buy two tickets for the 3:00 PM show?", detail, (ignored, which) -> { });
+        TextView message = dialog.findViewById(R.id.a2ui_confirm_message);
+        TextView title = dialog.findViewById(R.id.a2ui_confirm_title);
+        // Nothing agreed to is cut: no line cap, no ellipsis, the price at the end kept.
+        assertThat(message.getText().toString()).isEqualTo(detail);
+        assertThat(message.getMaxLines()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(message.getEllipsize()).isNull();
+        assertThat(title.getMaxLines()).isEqualTo(Integer.MAX_VALUE);
+        assertThat(title.getEllipsize()).isNull();
+        assertThat(isInside(message, dialog.findViewById(R.id.a2ui_confirm_scroll))).isTrue();
+
+        // In a short window the text scrolls and the buttons keep their full height inside it.
+        View root = dialog.findViewById(R.id.a2ui_confirm_root);
+        Button confirm = dialog.findViewById(R.id.a2ui_confirm_ok);
+        int width = dialog.getWindow().getAttributes().width;
+        // Shorter than the question, detail and buttons together, so only the text can give.
+        int shortWindow = 200;
+        root.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(shortWindow, View.MeasureSpec.AT_MOST));
+        root.layout(0, 0, root.getMeasuredWidth(), root.getMeasuredHeight());
+        assertThat(root.getMeasuredHeight()).isAtMost(shortWindow);
+        assertThat(confirm.getHeight()).isEqualTo(activity.getResources()
+                .getDimensionPixelSize(R.dimen.a2ui_dialog_button_height));
+        assertThat(yIn(confirm, root) + confirm.getHeight())
+                .isEqualTo(root.getHeight() - root.getPaddingBottom());
+    }
+
+    @Test
     public void exactlyOneConfirmAndOneCancelAreOnScreenAndTheContractStays() {
         A2uiCarUiActivity activity = started(BASELINE);
         activity.selectCase("met_visit");
