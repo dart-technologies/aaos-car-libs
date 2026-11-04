@@ -21,7 +21,7 @@
       "provider": "claude",
       "operator": "a2ui-gateway",
       "api": "messages",
-      "model": "sonnet",
+      "model": "haiku",
       "effort": "low",
       "maxAgentTurns": 1,
       "tools": [],

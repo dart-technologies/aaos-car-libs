@@ -99,8 +99,8 @@ def main() -> int:
         fail("provider swap selectors drifted")
     foreground = profiles.get("showcaseRouting", {}).get("foreground", {})
     background = profiles.get("showcaseRouting", {}).get("background", {})
-    if foreground.get("model") != "sonnet" or foreground.get("effort") != "low":
-        fail("foreground latency profile is not Sonnet low")
+    if foreground.get("model") != "haiku" or foreground.get("effort") != "low":
+        fail("foreground latency profile is not Haiku low")
     if (background.get("model") != "gpt-6-astra"
             or background.get("background") is not True
             or background.get("directVehicleActions") is not False):

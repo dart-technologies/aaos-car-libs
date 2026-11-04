@@ -188,7 +188,7 @@ class ProfileTest(GatewayCase):
                 break
             time.sleep(0.02)
         self.assertIsNotNone(gw.cache.get("claude", "realtime_low_latency", sha))
-        self.assertEqual(slow.calls[0]["model"], "claude-sonnet-5-5")
+        self.assertEqual(slow.calls[0]["model"], "claude-haiku-5-5")
 
     def test_realtime_without_cache_waits_for_the_live_answer(self):
         response = self.gateway(FakeVendor(delay=0.2)).handle(turn(profile="realtime_low_latency"))
@@ -537,7 +537,7 @@ class CompareTest(GatewayCase):
         self.assertEqual(live["source"], "live")
         self.assertFalse(live["failure"])
         self.assertIsNotNone(live["latencyMs"])
-        self.assertEqual(self.compare.model_label(live), "claude-sonnet-5-5")
+        self.assertEqual(self.compare.model_label(live), "claude-haiku-5-5")
 
     def test_a_replay_calls_no_vendor_and_a_miss_is_a_failure(self):
         gw = core.Gateway(self.config, {}, pathlib.Path(self.tmp.name), offline=True,

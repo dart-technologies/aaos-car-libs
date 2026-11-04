@@ -16,7 +16,7 @@ gateway. No APK carries a vendor key.
 
 | Selector | API adapter | `quality_cached` | `realtime_low_latency` | Key | Subscription CLI (when the key is empty) |
 |---|---|---|---|---|---|
-| `claude` | Anthropic Messages | `claude-opus-5-5`, high | `claude-sonnet-5-5`, low | `ANTHROPIC_API_KEY` | `claude -p`, same models |
+| `claude` | Anthropic Messages | `claude-opus-5-5`, high | `claude-haiku-5-5`, low | `ANTHROPIC_API_KEY` | `claude -p`, same models |
 | `chatgpt` | OpenAI Responses | `gpt-6.1-terra`, high | `gpt-6-luna`, low | `OPENAI_API_KEY` | `codex exec`, same models |
 | `gemini` | `generateContent` + response schema | `gemini-4-argon`, high | `gemini-3.8-flash`, low | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `agy -p`, `gemini-3.8-flash` |
 | `grok` | OpenAI-compatible chat | `grok-4.7` | `grok-4.20-0309-non-reasoning` | `XAI_API_KEY` | `grok -p`, `grok-4.7` / `grok-4.7-build-fast` |
