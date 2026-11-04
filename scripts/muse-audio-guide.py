@@ -43,10 +43,12 @@ RESEARCH = ("You research an artwork for an in-car audio guide. Search the web: 
             "factual sentences on its story, how it was made and why it matters, citing a source "
             "for every fact. Plain prose: no lists, no URLs.")
 NARRATION = ("You write an audio guide heard in a car on the way to The Met. For each work write "
-             "2 or 3 spoken sentences, 20 to 30 words in all: warm, vivid and easy to follow by "
-             "ear. Use only the findings given. The listener cannot see the work: never ask them "
-             "to look, and describe nothing that needs eyes; tell its story, its people and why it "
-             "matters. Name the work and the artist once. No URLs, lists or quotation marks.")
+             "2 or 3 short spoken sentences, 20 to 30 words in all, in warm, natural, "
+             "conversational English that is easy to follow by ear: simple sentences, one idea "
+             "each; leave facts out rather than cram them in. Use only the findings given. The "
+             "listener cannot see the work: never ask them to look, and describe nothing that "
+             "needs eyes; tell its story, its people and why it matters. Name the work and the "
+             "artist once. No URLs, lists or quotation marks.")
 WORDS = (18, 34)  # "about 20 to 30"
 VISUAL = re.compile(r"\b(look(ing)? at|you(?:'ll| will| can)? see|notice|glance|pictured|"
                     r"on (the )?screen|in this (image|picture))\b", re.I)
