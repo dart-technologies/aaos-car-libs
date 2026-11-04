@@ -233,6 +233,22 @@ class ProfileTest(GatewayCase):
         self.assertEqual((response.status, response.body["error"]),
                          (500, {"code": "internal", "detail": "RuntimeError"}))
 
+    def test_an_unexpected_realtime_error_still_serves_the_cache(self):
+        # A worker bug (say jsonschema missing), not a vendor failure: with no cache it is an
+        # internal envelope, before or after the deadline; with one, a labelled fallback.
+        broken = FakeVendor(error=RuntimeError("vendor said: secret"))
+        late = FakeVendor(delay=0.2, error=RuntimeError("vendor said: secret"))
+        for vendor in (broken, late):
+            response = self.gateway(vendor).handle(turn(profile="realtime_low_latency"))
+            self.assertEqual((response.status, response.body["error"]),
+                             (500, {"code": "internal", "detail": "RuntimeError"}))
+        self.gateway(FakeVendor()).handle(turn())  # seeds quality_cached
+        response = self.gateway(broken).handle(turn(profile="realtime_low_latency"))
+        self.assertEqual((response.status, response.source), (200, "fallback"))
+        self.assertEqual((response.output_profile, response.live_error),
+                         ("quality_cached", "internal:RuntimeError"))
+        self.assertNotIn(b"secret", response.wire)
+
     def test_missing_key_offline_miss_bad_request_and_ack(self):
         gw = self.gateway(FakeVendor(), env={})
         self.assertEqual(gw.handle(turn()).body["error"]["code"], "provider_unconfigured")
