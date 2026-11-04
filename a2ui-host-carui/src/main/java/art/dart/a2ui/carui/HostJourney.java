@@ -44,10 +44,12 @@ final class HostJourney {
     @DrawableRes final int mArrivalArt;
     /** Large arrival image for the visual panel, or 0 for the list card alone. */
     @DrawableRes final int mHeroArt;
+    /** The control a confirmed commitment's card replaces, or null to keep it. */
+    @Nullable final String mConfirmReplaces;
 
     private HostJourney(String id, String dataSurface, Set<String> surfaces, String confirmTitle,
             List<String> confirmBody, String arrivalTitle, String arrivalDetail,
-            int confirmGlyph, int arrivalArt, int heroArt) {
+            int confirmGlyph, int arrivalArt, int heroArt, @Nullable String confirmReplaces) {
         mId = id;
         mDataSurface = dataSurface;
         mSurfaces = Collections.unmodifiableSet(surfaces);
@@ -58,6 +60,7 @@ final class HostJourney {
         mConfirmGlyph = confirmGlyph;
         mArrivalArt = arrivalArt;
         mHeroArt = heroArt;
+        mConfirmReplaces = confirmReplaces;
     }
 
     private static final HostJourney FIFTH_HOUSE = new HostJourney("fifth_house",
@@ -65,9 +68,16 @@ final class HostJourney {
             new LinkedHashSet<>(Arrays.asList("poi_discovery_order", "big_buck_bunny")),
             "/order/status", Arrays.asList("/order/eta", "/order/pickup"),
             "/arrival/title", "/arrival/detail",
-            R.drawable.a2ui_ic_pickup, R.drawable.demo_media_poster, 0);
+            R.drawable.a2ui_ic_pickup, R.drawable.demo_media_poster, 0, null);
 
-    private static final List<HostJourney> ALL = Collections.singletonList(FIFTH_HOUSE);
+    /** The Met: a DEMO timed-entry ticket, then the arrival hero over a CC0 work. */
+    private static final HostJourney MET = new HostJourney("met", "met_visit",
+            new LinkedHashSet<>(Collections.singletonList("met_visit")),
+            "/ticket/title", Collections.singletonList("/ticket/detail"),
+            "/arrival/title", "/arrival/detail",
+            R.drawable.a2ui_ic_ticket, R.drawable.met_435809, R.drawable.met_435809, "reserve");
+
+    private static final List<HostJourney> ALL = Arrays.asList(FIFTH_HOUSE, MET);
 
     /** The journey an exact corpus surface belongs to, or null. */
     @Nullable

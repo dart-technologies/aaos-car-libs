@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2026 Dart Technologies. Licensed under the Apache License, Version 2.0. -->
+<!-- The Met demo (demo branch). Artwork: The Metropolitan Museum of Art Open Access, CC0. -->
+<resources>
+    <string name="a2ui_met_toolbar_title">The Met, safely</string>
+    <string name="a2ui_met_heading">THE MET · TODAY</string>
+</resources>

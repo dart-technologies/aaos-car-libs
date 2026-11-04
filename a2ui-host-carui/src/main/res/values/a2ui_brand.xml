@@ -45,7 +45,7 @@
     <string name="a2ui_end_card_bullet_2">Any model, with no keys in the car</string>
     <string name="a2ui_end_card_bullet_3">Stock AAOS hosts</string>
     <string name="a2ui_end_card_bullet_4">Auditable gates</string>
-    <string name="a2ui_end_card_footer">Built on stock AAOS · any model via the gateway</string>
+    <string name="a2ui_end_card_footer">Built with Muse Spark · Muse Voice Transcribe · Muse Code</string>
 
     <!-- Passenger display. -->
     <string name="a2ui_passenger_label">Passenger display</string>

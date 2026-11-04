@@ -934,7 +934,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             return;
         }
         A2uiMessageProcessor.VoiceDispatchResult result =
-                surfaceProcessor().dispatchByVoiceForResult(mSurfaceId, spoken, mRenderedRoot,
+                surfaceProcessor().dispatchByVoiceForResult(mSurfaceId,
+                        VoicePhrase.canonical(spoken), mRenderedRoot,
                         mActionBinder.reader());
         A2uiMessageProcessor.VoiceOutcome outcome = result.getOutcome();
         Log.i(TAG, "voice outcome: " + outcome);
@@ -1051,6 +1052,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         A2uiComponent projected = currentProjection();
         A2uiComponent pruned = projected == null ? null : A2uiPruner.prune(projected, allowed);
+        // A confirmed commitment's card replaces the control that made it: less, never more.
+        HostJourney journey = currentJourney();
+        if (pruned != null && mOrderPlaced && journey != null && journey.mConfirmReplaces != null) {
+            pruned = withoutComponent(pruned, journey.mConfirmReplaces);
+        }
         // Value limits bound the content inside the allowed components.
         A2uiValueLimits limits = limitsFor(source, current);
         if (pruned != null) {
@@ -1323,7 +1329,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mChangeStrip.setVisibility(View.VISIBLE);
         if (animationsEnabled()) {
             mChangeStrip.setAlpha(0f);
-            mChangeStrip.setTranslationY(-getResources().getDisplayMetrics().density * 12);
+            mChangeStrip.setTranslationY(getResources().getDisplayMetrics().density * 12);
             mChangeStrip.animate().alpha(1f).translationY(0f).setDuration(220).start();
         } else {
             mChangeStrip.setAlpha(1f);
@@ -1410,6 +1416,17 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             rows.add(row);
             keys.add(key);
         }
+    }
+
+    /** A copy of {@code tree} without the component {@code id} and its subtree. */
+    @NonNull
+    static A2uiComponent withoutComponent(@NonNull A2uiComponent tree, @NonNull String id) {
+        A2uiComponent.Builder copy = new A2uiComponent.Builder(tree.getType())
+                .copyPropertiesFrom(tree);
+        for (A2uiComponent child : tree.getChildren()) {
+            if (!id.equals(child.getId())) copy.addChild(withoutComponent(child, id));
+        }
+        return copy.build();
     }
 
     /** The host journey of the corpus surface on screen, or null (agent surfaces have none). */
@@ -1518,6 +1535,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if ("big_buck_bunny".equals(surfaceId)) {
             return "FIFTH HOUSE · CITY NOTE";
         }
+        if ("met_visit".equals(surfaceId)) {
+            return "THE MET · TODAY";
+        }
         return "A2UI · " + surfaceId.replace('_', ' ').toUpperCase(java.util.Locale.US);
     }
 
@@ -1528,6 +1548,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         if ("big_buck_bunny".equals(surfaceId)) {
             return getString(R.string.a2ui_brand_city_note_heading);
+        }
+        if ("met_visit".equals(surfaceId)) {
+            return getString(R.string.a2ui_met_heading);
         }
         return surfaceHeading(surfaceId);
     }
@@ -1541,6 +1564,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     @NonNull
     private String themedToolbarTitle(@NonNull String surfaceId, @NonNull CharSequence defaultTitle) {
+        if ("met_visit".equals(surfaceId)) {
+            return getString(R.string.a2ui_met_toolbar_title);
+        }
         return "poi_discovery_order".equals(surfaceId) || "big_buck_bunny".equals(surfaceId)
                 ? getString(R.string.a2ui_brand_toolbar_title) : defaultTitle.toString();
     }
@@ -1732,6 +1758,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             A2uiComponent component = components.get(i);
             CarUiContentListItem row = (CarUiContentListItem) rows.get(i);
             DemoNativeContract.Spec spec = DemoNativeContract.resolve(mSurfaceId, component);
+            appendCitations(row, component);
             if (spec != null) {
                 int art = 0;
                 switch (spec.mKind) {
@@ -1747,7 +1774,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                         break;
                     case WEATHER:
                         if (allowed.contains(ComponentType.ICON)) {
-                            row.setIcon(getDrawable(R.drawable.a2ui_ic_umbrella));
+                            row.setIcon(getDrawable("met_visit".equals(mSurfaceId)
+                                    ? R.drawable.a2ui_ic_sun : R.drawable.a2ui_ic_umbrella));
                             row.setPrimaryIconType(CarUiContentListItem.IconType.STANDARD);
                         }
                         break;
@@ -1771,6 +1799,26 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                 row.setPrimaryIconType(CarUiContentListItem.IconType.STANDARD);
             }
         }
+    }
+
+    /**
+     * Cited sources that survived the prune, as extra body lines under their card. A limit that
+     * cut them (LIMIT_CONTENT's depth) leaves the card with its summary alone.
+     */
+    private void appendCitations(@NonNull CarUiContentListItem row,
+            @NonNull A2uiComponent component) {
+        String containerId = DemoNativeContract.citationContainer(mSurfaceId, component);
+        A2uiComponent sources = containerId == null ? null
+                : findRendered(component, containerId);
+        if (sources == null || !sources.hasChildren()) return;
+        List<com.android.car.ui.CarUiText> body = new ArrayList<>();
+        if (row.getBody() != null) body.addAll(row.getBody());
+        for (A2uiComponent source : sources.getChildren()) {
+            if (source.getTitle() == null) continue;
+            body.add(new com.android.car.ui.CarUiText(source.getSubtitle() == null
+                    ? source.getTitle() : source.getTitle() + " \u2014 " + source.getSubtitle()));
+        }
+        row.setBody(body);
     }
 
     /** Re-resolves a host interaction against the current frame and current UXR before opening. */

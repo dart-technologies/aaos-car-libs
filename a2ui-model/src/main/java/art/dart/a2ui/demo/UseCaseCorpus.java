@@ -122,7 +122,8 @@ public final class UseCaseCorpus {
             passengerVideo(),
             handoffToDriver(),
             poiDiscoveryOrder(),
-            bigBuckBunny()));
+            bigBuckBunny(),
+            metVisit()));
 
     @NonNull
     public static List<UseCase> all() {
@@ -352,6 +353,71 @@ public final class UseCaseCorpus {
         b.text("note", "Leave Long Island City",
                 "Video is withheld in motion; audio controls remain available");
         b.templates(TemplateCapability.SEARCH, TemplateCapability.VIDEO,
+                TemplateCapability.MEDIA_PLAYBACK);
+        return b.build();
+    }
+
+    /**
+     * The Met, safely: a cited brief, a parked-only DEMO reservation, a route preview and artwork.
+     * Nesting is deliberate and ordinary (citations inside the brief, the map inside the route
+     * card): under LIMIT_CONTENT the vehicle's own content-depth limit cuts them, while the ETA,
+     * the brief's summary and the audio guide stay. The gallery is a Modal and the film a Video,
+     * so both leave with motion. Artwork: The Met Open Access, CC0.
+     */
+    private static UseCase metVisit() {
+        Builder b = new Builder("met_visit",
+                "From Hudson Yards to The Met: a cited brief, reserve timed entry while parked, "
+                        + "preview the route, then artwork on arrival",
+                "BASELINE shows sources, map and artwork; motion's depth limit and type policy "
+                        + "remove them while the ETA, brief and audio guide stay");
+        b.container("root", "Column", "route", "brief", "weather", "reserve", "audio", "gallery",
+                "film");
+        b.put("root", "title", "The Met, safely");
+        b.container("route", "Card", "preview");
+        b.put("route", "title", "Arrive 2:41 PM · 19 min");
+        b.put("route", "subtitle", "Hudson Yards → The Met · 81st St entrance");
+        b.container("preview", "Row", "map");
+        b.component("map", "Image", "Hudson Yards → The Met",
+                "Route preview · © OpenStreetMap contributors");
+        b.container("brief", "Card", "sources");
+        b.put("brief", "title", "Visit The Met today");
+        b.put("brief", "subtitle", "Open until 5 PM · timed entry recommended");
+        b.container("sources", "List", "src1", "src2", "src3");
+        b.put("sources", "title", "Sources");
+        b.text("src1", "Source · metmuseum.org", "Hours and admission");
+        b.text("src2", "Source · metmuseum.org", "Exhibitions on view");
+        b.text("src3", "Source · weather.gov", "Forecast for Central Park");
+        b.text("weather", "Today · Sunny · high 71°F",
+                "National Weather Service · Central Park forecast, Nov 4");
+        b.action("reserve", "Button", "Reserve entry for two at 3 PM",
+                "DEMO booking · confirm while parked", "reserve");
+        b.put("reserve", "voicePhrase", "reserve entry for two at three");
+        b.action("audio", "AudioPlayer", "Audio guide · The Met highlights",
+                "Plays in motion", "play");
+        b.put("audio", "voicePhrase", "play the audio guide");
+        b.container("gallery", "Modal", "met_436535", "met_437881", "met_437394", "met_435809",
+                "met_436105", "met_435868");
+        b.put("gallery", "title", "Artwork highlights");
+        b.put("gallery", "subtitle", "Six works · The Met Open Access");
+        b.put("gallery", "action", "open");
+        b.put("gallery", "voicePhrase", "show the highlights");
+        b.component("met_436535", "Image", "Wheat Field with Cypresses",
+                "Vincent van Gogh · 1889");
+        b.component("met_437881", "Image", "Young Woman with a Water Pitcher",
+                "Johannes Vermeer · ca. 1662");
+        b.component("met_437394", "Image", "Aristotle with a Bust of Homer",
+                "Rembrandt (Rembrandt van Rijn) · 1653");
+        b.component("met_435809", "Image", "The Harvesters", "Pieter Bruegel the Elder · 1565");
+        b.component("met_436105", "Image", "The Death of Socrates", "Jacques Louis David · 1787");
+        b.component("met_435868", "Image", "The Card Players", "Paul Cézanne · 1890–92");
+        b.action("film", "Video", "Artwork film", "Six works, slowly · parked only", "open");
+        b.put("film", "voicePhrase", "play the artwork film");
+        b.data("/ticket/title", "Timed entry · 3:00 PM · 2 guests · DEMO");
+        b.data("/ticket/detail", "The Met Fifth Avenue · 81st St entrance");
+        b.data("/arrival/title", "Arrived · The Met Fifth Avenue");
+        b.data("/arrival/detail", "81st St entrance · entry 3:00");
+        b.templates(TemplateCapability.ROUTE_PREVIEW, TemplateCapability.MAP_WITH_CONTENT,
+                TemplateCapability.MODAL, TemplateCapability.VIDEO,
                 TemplateCapability.MEDIA_PLAYBACK);
         return b.build();
     }

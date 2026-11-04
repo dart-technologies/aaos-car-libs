@@ -210,7 +210,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_margin="@dimen/a2ui_space_m"
-            android:layout_weight="0.9"
+            android:layout_weight="0.62"
             android:background="@drawable/a2ui_panel_background"
             android:visibility="gone">
 
@@ -257,8 +257,8 @@
             android:id="@+id/change_strip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="top|center_horizontal"
-            android:layout_marginTop="@dimen/a2ui_space_s"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="@dimen/a2ui_space_m"
             android:accessibilityLiveRegion="polite"
             android:background="@drawable/a2ui_strip_background"
             android:clickable="false"
