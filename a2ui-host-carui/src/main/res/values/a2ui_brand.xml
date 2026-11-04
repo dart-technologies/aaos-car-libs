@@ -16,6 +16,9 @@
     <color name="a2ui_brand_strip_surface">#F21B1C20</color>
     <color name="a2ui_brand_panel_surface">#FF17181B</color>
     <color name="a2ui_brand_scrim">#B3000000</color>
+    <color name="a2ui_brand_card_surface">#FF1E2024</color>
+    <color name="a2ui_brand_card_stroke">#14FFFFFF</color>
+    <color name="a2ui_brand_glyph_tile">#FF2A2C31</color>
 
     <string name="a2ui_brand_toolbar_title">Fifth House · NYC Concierge</string>
     <string name="a2ui_brand_pickup_heading">FIFTH HOUSE · PICKUP</string>
@@ -40,6 +43,12 @@
     <string name="a2ui_state_demo_restricted_detail">Simulated reading · restricted</string>
 
     <string name="a2ui_close">Close</string>
+    <!-- One screen-level label for fixture content, instead of a DEMO suffix per row. -->
+    <string name="a2ui_demo_data">Demo data</string>
+    <string name="a2ui_ask_by_voice">Ask by voice</string>
+    <string name="a2ui_speak">Speak</string>
+    <string name="a2ui_confirm">Confirm</string>
+    <string name="a2ui_cancel">Cancel</string>
 
     <!-- Closing card. Bullets and footer are OEM-overridable. -->
     <string name="a2ui_end_card_title">Why OEMs ship A2UI this way</string>

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  One surface card: 56 dp leading art or glyph, a one-line title, up to two subtitle lines, cited
+  lines under them, and right-aligned meta. Bound from the same row data the car-ui lists hold.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/a2ui_space_s"
+    android:background="@drawable/a2ui_card_background"
+    android:gravity="center_vertical"
+    android:minHeight="88dp"
+    android:orientation="horizontal"
+    android:paddingHorizontal="@dimen/a2ui_space_m"
+    android:paddingVertical="@dimen/a2ui_space_s">
+
+    <FrameLayout
+        android:id="@+id/card_lead"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_marginEnd="@dimen/a2ui_space_m">
+
+        <ImageView
+            android:id="@+id/card_icon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/card_title"
+            style="@style/A2uiBrandTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textSize="24sp" />
+
+        <TextView
+            android:id="@+id/card_subtitle"
+            style="@style/A2uiBrandBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/a2ui_brand_on_surface_muted"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/card_extra"
+            style="@style/A2uiBrandCaption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/a2ui_space_xs"
+            android:ellipsize="end"
+            android:lineSpacingExtra="2dp"
+            android:maxLines="3"
+            android:textSize="15sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/card_meta"
+        style="@style/A2uiBrandBody"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/a2ui_space_m"
+        android:gravity="end"
+        android:maxLines="1"
+        android:textColor="@color/a2ui_brand_accent"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/card_chevron"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/a2ui_space_s"
+        android:importantForAccessibility="no"
+        android:text="›"
+        android:textColor="@color/a2ui_brand_on_surface_muted"
+        android:textSize="30sp" />
+</LinearLayout>

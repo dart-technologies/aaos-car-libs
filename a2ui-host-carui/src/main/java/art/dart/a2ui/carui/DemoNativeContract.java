@@ -222,6 +222,24 @@ final class DemoNativeContract {
         return "met_visit".equals(surfaceId) || "ev_charge_coffee".equals(surfaceId);
     }
 
+    /** The confirmation question for an exact corpus control, or null for the generic one. */
+    @Nullable
+    static String confirmPrompt(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        if ("poi_discovery_order".equals(surfaceId) && "order".equals(component.getId())) {
+            return "Order a cold brew and a bagel for pickup?";
+        }
+        if ("modal_confirmation".equals(surfaceId) && "buy".equals(component.getId())) {
+            return "Buy this album for £9.99?";
+        }
+        return null;
+    }
+
+    /** The confirmation's supporting line for an exact corpus control, or null. */
+    @Nullable
+    static String confirmDetail(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return null;
+    }
+
     /** The id of an exact corpus card's citation list, drawn as lines under it, or null. */
     @Nullable
     static String citationContainer(@NonNull String surfaceId, @NonNull A2uiComponent component) {
