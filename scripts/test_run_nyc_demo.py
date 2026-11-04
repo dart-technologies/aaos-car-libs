@@ -27,6 +27,7 @@ sys.modules[_spec.name] = demo
 _spec.loader.exec_module(demo)
 MANIFEST = json.loads(demo.MANIFEST.read_text(encoding="utf-8"))
 FFMPEG = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
+PILLOW = importlib.util.find_spec("PIL") is not None  # render-demo-cards.py draws the cards
 DRIVER, PASSENGER = "4619827259835644672", "4619827551948147201"
 
 DUAL = {
@@ -350,6 +351,206 @@ class CompositionTest(unittest.TestCase):
         self.assertTrue(near(pixel(out, 1.0, 700, 400), WHITE))
         self.assertTrue(near(pixel(out, 3.0, 700, 400), RED))
         self.assertAlmostEqual(demo.probe_duration(out), 6.0, delta=0.1)
+
+
+CYAN, ORANGE, GREY = (0, 255, 255), (255, 128, 0), (128, 128, 128)
+PANEL = (21, 27, 35)  # render-demo-cards.py's placeholder tile
+POST = {
+    "id": "t_post", "durationSeconds": 6, "actions": [],
+    "preamble": [{"seconds": 1.5}, {"seconds": 1.0}], "outro": {"seconds": 2.0},
+    "clips": [{"id": "p1", "section": "preamble", "atMs": 300}, {"id": "t1", "atMs": 1000},
+              {"id": "o1", "section": "outro", "atMs": 500}],
+    "soundEffects": [{"effectId": "chime", "atMs": 2000, "gainDb": -12}],
+}
+
+
+class PlacementTest(unittest.TestCase):
+    """Clip sections, the video's length and the closing card's journey, from the manifest."""
+
+    def test_sections_place_clips_on_the_video_timeline(self):
+        self.assertEqual([c["atMs"] for c in demo.placed_clips(POST)], [300, 3500, 9000])
+        self.assertEqual([c["atMs"] for c in demo.placed_cues(POST)], [4500])
+        self.assertEqual(demo.total_seconds(POST), 10.5)
+        plain = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_poi_order")
+        self.assertEqual(demo.placed_clips(plain), plain["clips"])  # no preamble: unchanged
+
+    def test_nyc_met_runs_preamble_timeline_outro_within_the_target(self):
+        met = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_met")
+        total = demo.total_seconds(met)
+        self.assertEqual(total, demo.preamble_seconds(met) + met["durationSeconds"]
+                         + demo.outro_seconds(met))
+        self.assertLessEqual(total, 180)
+        placed = {c["id"]: c["atMs"] for c in demo.placed_clips(met)}
+        preamble = round(demo.preamble_seconds(met) * 1000)
+        self.assertEqual(placed["pre_narration_01"], 300)
+        self.assertEqual(placed["met_utterance_visit"], preamble + 3000)
+        self.assertEqual(placed["outro_narration_01"],
+                         preamble + met["durationSeconds"] * 1000 + 500)
+
+    def test_nyc_met_journey_and_closing_card_spec(self):
+        met = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_met")
+        self.assertEqual([s["state"] for s in demo.journey(met)],
+                         ["park", "drive", "park", "drive", "park"])
+        spec = demo.outro_spec(met, {})
+        self.assertEqual([s["label"] for s in spec["segments"]],
+                         ["Parked · Hudson Yards", "Driving", "Parked · The Met", "Driving",
+                          "Parked · charging"])
+        self.assertEqual([s["slots"] for s in spec["segments"]], [2, 1, 1, 1, 2])
+        self.assertEqual([b["segment"] for b in spec["passenger"]], [1, 3])
+        self.assertTrue(all(b["image"] is None for b in spec["driver"] + spec["passenger"]))
+        self.assertEqual(spec["driver"][-1]["label"], "Big Buck Bunny")
+
+
+@unittest.skipUnless(FFMPEG, "ffmpeg/ffprobe not installed")
+class PostProductionCompositionTest(unittest.TestCase):
+    """Preamble cards before the timeline, the closing card after it, the margin disclaimer over
+    all of it, and the narration placed by section: synthetic inputs, pixels read back."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = pathlib.Path(tempfile.mkdtemp())
+        tmp = cls.tmp
+        solid(tmp / "driver.mp4", [("red", 4), ("blue", 1.5), ("magenta", 1)])
+        solid(tmp / "passenger.mp4", [("green", 3)], rate=2)
+        still(tmp / "idle.png", "yellow", "1408x792")
+        still(tmp / "pre1.png", "cyan", "1920x1080")
+        still(tmp / "pre2.png", "0xff8000", "1920x1080")
+        still(tmp / "outro.png", "0x808080", "1920x1080")
+        still(tmp / "note.png", "white", "300x24")
+        (tmp / "audio" / "sfx").mkdir(parents=True)
+        for name in ("p1", "t1", "o1"):
+            tone(tmp / "audio" / f"{name}.mp3", 0.5)
+        tone(tmp / "audio" / "sfx" / "chime.mp3", 0.3)
+        cls.plan = demo.RenderPlan(
+            duration=6, layout="dual", driver_raw=tmp / "driver.mp4",
+            passenger_raw=tmp / "passenger.mp4", passenger_start=3.0,
+            passenger_still=tmp / "idle.png", audio_dir=tmp / "audio",
+            clips=demo.placed_clips(POST), cues=demo.placed_cues(POST),
+            preamble=[(tmp / "pre1.png", 1.5), (tmp / "pre2.png", 1.0)],
+            outro=(tmp / "outro.png", 2.0), disclaimer=tmp / "note.png")
+        cls.out = tmp / "post.mp4"
+        demo.render(cls.plan, cls.out)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp)
+
+    def test_length_is_preamble_plus_timeline_plus_outro(self):
+        self.assertEqual(self.plan.total(), 10.5)
+        self.assertAlmostEqual(demo.probe_duration(self.out), 10.5, delta=0.1)
+        self.assertEqual(demo.probe_size(self.out), (1920, 1080))
+
+    def test_preamble_cards_come_first_in_order(self):
+        self.assertTrue(near(pixel(self.out, 0.7, 960, 540), CYAN))
+        self.assertTrue(near(pixel(self.out, 2.0, 960, 540), ORANGE))
+
+    def test_timeline_follows_the_preamble(self):
+        driver, passenger = (696, 564), (1644, 564)
+        self.assertTrue(near(pixel(self.out, 3.5, *driver), RED), "timeline 1.0 s")
+        self.assertTrue(near(pixel(self.out, 3.5, *passenger), YELLOW), "idle frame first")
+        self.assertTrue(near(pixel(self.out, 6.0, *driver), RED))
+        self.assertTrue(near(pixel(self.out, 6.0, *passenger), GREEN), "stream from 3.0 s")
+        self.assertTrue(near(pixel(self.out, 7.3, *driver), BLUE), "timeline 4.8 s")
+
+    def test_closing_card_covers_the_end(self):
+        self.assertTrue(near(pixel(self.out, 10.0, 960, 540), GREY))
+        self.assertTrue(near(pixel(self.out, 10.0, 696, 564), GREY))
+
+    def test_disclaimer_stays_in_the_margin_throughout(self):
+        x, margin = demo.DISCLAIMER_POS
+        corner = (x + 150, 1080 - margin - 12)
+        for t in (0.7, 3.5, 7.3, 10.0):
+            self.assertTrue(near(pixel(self.out, t, *corner), WHITE), t)
+        # Outside both display panels: below them, never over them.
+        self.assertGreater(1080 - margin - 24, demo.DRIVER_BOX[1] + demo.DRIVER_BOX[3])
+        self.assertTrue(near(pixel(self.out, 3.5, x + 150, demo.DRIVER_BOX[1] + 600), RED))
+
+    def test_narration_is_placed_by_section(self):
+        self.assertLess(max_volume(self.out, 0.0, 0.25), -60)
+        self.assertGreater(max_volume(self.out, 0.35, 0.4), -30, "preamble clip at 0.3 s")
+        self.assertLess(max_volume(self.out, 1.0, 2.3), -60)
+        self.assertGreater(max_volume(self.out, 3.55, 0.4), -30, "timeline clip at 2.5 + 1.0 s")
+        self.assertGreater(max_volume(self.out, 4.55, 0.2), -40, "cue at 2.5 + 2.0 s")
+        self.assertLess(max_volume(self.out, 5.0, 3.9), -60)
+        self.assertGreater(max_volume(self.out, 9.05, 0.4), -30, "outro clip at 8.5 + 0.5 s")
+
+
+OUTRO = {
+    "id": "t_outro", "durationSeconds": 6,
+    "actions": [{"atMs": 2000, "type": "carState", "state": "drive"},
+                {"atMs": 5000, "type": "carState", "state": "park"}],
+    "outro": {"seconds": 5, "places": ["Here", "There"],
+              "beats": [{"atMs": 1000, "display": "driver", "label": "One"},
+                        {"atMs": 4500, "display": "driver", "label": "Two"},
+                        {"atMs": 100000, "display": "driver", "label": "Last"},
+                        {"atMs": 3000, "display": "passenger", "label": "Film"}],
+              "architecture": [{"badge": "Muse · Meta", "tag": "cloud", "lines": ["Research"]},
+                               {"title": "Gateway", "lines": ["Any model"]}],
+              "footer": ["The line.", "The credit."]},
+    "preamble": [{"style": "unsafe", "frameAtMs": 1000, "seconds": 3, "caption": "Unsafe.",
+                  "chip": "Driving · 40 mph"},
+                 {"style": "answer", "frameAtMs": 100000, "seconds": 3, "caption": "Answer."}],
+}
+THUMB_CENTRES = [(384, 177), (960, 177), (1536, 177)]  # one slot per segment, 232x130 tiles
+FRAME_CENTRE = (960, 492)  # render-demo-cards.py FRAME_BOX
+
+
+@unittest.skipUnless(FFMPEG and PILLOW, "ffmpeg/ffprobe or Pillow not installed")
+class CardsFromTheRecordingTest(unittest.TestCase):
+    """The preamble and closing cards take real frames from the raw recording at the scenario's
+    times, and fall back to a placeholder when a frame cannot be extracted."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = pathlib.Path(tempfile.mkdtemp())
+        solid(cls.tmp / "driver.mp4", [("red", 4), ("blue", 1.5), ("magenta", 1)])
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp)
+
+    def test_frames_are_extracted_at_a_time_or_the_last_frame(self):
+        raw = self.tmp / "driver.mp4"
+        self.assertTrue(near(pixel(demo.extract_frame(raw, 4.6, self.tmp / "a.png"), 0, 700,
+                                   400), BLUE))
+        late = demo.extract_frame(raw, 100.0, self.tmp / "b.png")  # screenrecord went still
+        self.assertTrue(near(pixel(late, 0, 700, 400), MAGENTA))
+        self.assertIsNone(demo.extract_frame(self.tmp / "missing.mp4", 1.0, self.tmp / "c.png"))
+        self.assertIsNone(demo.extract_frame(None, 1.0, self.tmp / "d.png"))
+
+    def test_closing_card_has_real_thumbnails_and_a_placeholder_lane(self):
+        (card, seconds), evidence = demo.build_outro(
+            OUTRO, self.tmp / "driver.mp4", None, 0.0, None, self.tmp / "t")
+        self.assertEqual(seconds, 5.0)
+        self.assertEqual([e["frame"] for e in evidence],
+                         ["extracted"] * 3 + ["unavailable; placeholder"])
+        self.assertEqual(demo.probe_size(card), (1920, 1080))
+        for centre, colour in zip(THUMB_CENTRES, (RED, BLUE, MAGENTA)):
+            self.assertTrue(near(pixel(card, 0, *centre), colour), centre)
+        spec = json.loads((self.tmp / "t.outro.json").read_text(encoding="utf-8"))
+        self.assertEqual([s["label"] for s in spec["segments"]],
+                         ["Parked · Here", "Driving", "Parked · There"])
+        self.assertIsNone(spec["passenger"][0]["image"])
+
+    def test_closing_card_draws_a_placeholder_for_a_missing_frame(self):
+        spec = demo.outro_spec(OUTRO, {1: self.tmp / "nowhere.png"})
+        path = self.tmp / "spec.json"
+        path.write_text(json.dumps(spec), encoding="utf-8")
+        card = self.tmp / "placeholder.png"
+        demo.render_card("outro", "--spec", str(path), "--out", str(card))
+        self.assertTrue(near(pixel(card, 0, *THUMB_CENTRES[0]), PANEL, 4), "no frame given")
+        self.assertTrue(near(pixel(card, 0, *THUMB_CENTRES[1]), PANEL, 4), "unreadable frame")
+
+    def test_preamble_cards_wrap_the_recorded_frame(self):
+        cards, evidence = demo.build_preamble(OUTRO, self.tmp / "driver.mp4", self.tmp / "p")
+        self.assertEqual([seconds for _, seconds in cards], [3.0, 3.0])
+        self.assertTrue(near(pixel(cards[0][0], 0, *FRAME_CENTRE), RED), "tinted, still red")
+        self.assertTrue(near(pixel(cards[1][0], 0, *FRAME_CENTRE), MAGENTA), "last frame")
+        self.assertEqual([e["frame"] for e in evidence], ["raw driver recording"] * 2)
+        missing, evidence = demo.build_preamble(
+            dict(OUTRO, preamble=OUTRO["preamble"][1:]), self.tmp / "gone.mp4", self.tmp / "q")
+        self.assertEqual(evidence[0]["frame"], "unavailable; dark panel")
+        self.assertTrue(near(pixel(missing[0][0], 0, *FRAME_CENTRE), PANEL, 4))
 
 
 def legacy_command(audio_dir, raw_video, final_video, clips, cues, target_seconds):
