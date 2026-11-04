@@ -24,12 +24,14 @@ carry the HTTP status and the vendor's error code token only; a vendor body can 
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import re
 import socket
 import ssl
 import subprocess
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -243,8 +245,15 @@ def openai_chat(base_url, model, effort, max_tokens, key, system, user, schema, 
 
 def _run_cli(command: list[str], cwd: str, timeout_s: float) -> subprocess.CompletedProcess:
     try:
-        return subprocess.run(command, cwd=cwd, stdin=subprocess.DEVNULL, capture_output=True,
+        done = subprocess.run(command, cwd=cwd, stdin=subprocess.DEVNULL, capture_output=True,
                               text=True, timeout=timeout_s)
+        debug = os.environ.get("A2UI_CLI_DEBUG_DIR")
+        if debug:  # raw CLI stdout (model output only) for diagnosing a vendor's reply shape
+            out = pathlib.Path(debug)
+            out.mkdir(parents=True, exist_ok=True)
+            name = f"{pathlib.Path(command[0]).name}-{time.time_ns()}.json"
+            (out / name).write_text(done.stdout, encoding="utf-8")
+        return done
     except subprocess.TimeoutExpired:
         raise AdapterError("timeout") from None
     except OSError:
