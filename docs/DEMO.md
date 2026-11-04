@@ -14,7 +14,7 @@ gateway, ranking and recorder tests replay them offline (commands in the README)
 | `nyc_poi_order` | 78 | `poi_discovery_order` | Parked at Hudson Yards, bound for Brooklyn Museum: find coffee on the route, order ahead; drive → search and order go, route stays | Voice and touch share one policy; live re-projection |
 | `nyc_curated_video` | 78 | `big_buck_bunny` | Waiting in Long Island City: open a curated short; drive → video view and decoder close, the audio-only control keeps playing | `NO_VIDEO` drops video, not audio |
 | `nyc_concierge` | 90 | `poi_discovery_order`, then `big_buck_bunny` | Fifth House: parked order, brand audio kept in motion, visual chapter on arrival; closes on the fast foreground and higher-effort background lanes | The journey gets quieter, not unsafe; agents never control the car |
-| `nyc_met` | 143 (13.5 + 121 + 8.5) | `met_visit`, then `ev_charge_coffee` | Preamble from the recording's own frames: the parked full screen as unsafe in motion, then locked out, then the real pruned driving screen. Thursday, Nov 5, Hudson Yards → The Met, both displays: cited Muse brief parked, timed entry confirmed parked; drive → driver screen simplifies, passenger plays the artwork film, Muse's audio guide for all; parked at The Met the film moves to the driver's screen. Then a low battery (vehicle HAL) → three chargers; parked and charging, the passenger keeps Big Buck Bunny, Muse's café pick (15 cafés compared) backs the usual coffee, and the driver opens Big Buck Bunny full-bleed, parked. Closing card: the journey with real thumbnails, the architecture | Muse does the research; the car decides per display |
+| `nyc_met` | 151 (13.5 + 129 + 8.5) | `met_visit`, then `ev_charge_coffee` | Preamble from the recording's own frames: the parked full screen as unsafe in motion, then locked out, then the real pruned driving screen. Thursday, Nov 5, Hudson Yards → The Met, both displays: cited Muse brief parked, timed entry confirmed parked; drive → driver screen simplifies, passenger plays the artwork film, Muse's audio guide for all; parked at The Met the film moves to the driver's screen and plays about 15 s. An eased intermission card ("Later that afternoon · 5:15 PM · back in the car") covers the case switch and the clock jump. Then a low battery (vehicle HAL) → three chargers; parked and charging, the passenger keeps Big Buck Bunny, Muse's café pick (15 cafés compared) backs the usual coffee, and the driver opens Big Buck Bunny full-bleed, parked. Closing card: the journey with real thumbnails, the architecture | Muse does the research; the car decides per display |
 
 Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 2026-09-10 and not
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
@@ -73,8 +73,10 @@ A scenario with `"recording": {"layout": "dual"}` also needs `--passenger-displa
 `4619827551948147201`). It records both physical displays with two `screenrecord` streams and
 composes them at 1920×1080, driver left (1344×756), passenger right (504×756), labelled "Driver"
 and "Passenger". The passenger stream starts at its first `passenger` action; until then the panel
-shows a frame captured from that display 3 s earlier. Optional `titleCard` (any 1920×1080 PNG, 2–3 s
-over the opening of the timeline) and `endCardHoldFromMs` (freeze from there to the end). The canvas,
+shows a frame captured from that display 3 s earlier. Optional `chapterCards`: 1920×1080 PNGs over
+the driver's picture at their `atMs` on the timeline, each held 2–3.5 s; the first opens the
+timeline, and a later one with `fadeIn`/`fadeOut` eases in and out (an intermission that hides a case
+switch and a clock jump). Optional `endCardHoldFromMs` freezes from there to the end. The canvas,
 panel boxes, label and disclaimer positions are module constants at the top of `run-nyc-demo.py`.
 
 Post-production, after capture and from the same raw recording, so it always matches the UI:
@@ -106,7 +108,7 @@ the first preamble card, which plays inside the driver window, as do the chapter
 of the preamble. The closing card covers the whole canvas. Captions (every section, from the real
 speech lengths; a "Passenger" tag on guest lines) and the story rail (beat, progress, Parked or
 Driving) are PNGs from `scripts/demo_overlays.py` (Pillow, in a child process), and the SRT is
-written next to the video. The intro adds 2.0 s: `nyc_met` is 145 s.
+written next to the video. The intro adds 2.0 s: `nyc_met` is 153 s.
 
 `--render-only` composes an earlier capture without a device (`--from-raw <prefix>` names
 `<prefix>.raw.mp4`, `.passenger.raw.mp4`, `.passenger-idle.png`; `--passenger-start` its stream
@@ -148,6 +150,7 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Artwork film, portrait 720×1080 for the passenger display | `res/raw/met_artwork_film_portrait.mp4` | yes | `render-met-artwork-film.py --orientation portrait` (full-bleed Ken Burns pans, bottom captions; `FILM_PORTRAIT.json`, same `startMs`) | `check-demo-assets.py`, `check-nyc-demo.py` (timing equals `FILM.json`) |
 | Route, Met, NWS, chargers | `demo/fixtures/{route,nws,chargers}/` | yes | `scripts/fetch-nyc-met-fixtures.py`, `scripts/fetch-ev-chargers.py` (`python3 -I`) | `check-nyc-demo.py` (context) |
 | `nyc_met` chapter title ("Thursday at The Met") | `demo/cards/nyc_met-title.png` | yes | `render-demo-cards.py title` | `check-nyc-demo.py` |
+| `nyc_met` intermission ("Later that afternoon", "5:15 PM · back in the car") | `demo/cards/nyc_met-intermission.png` | yes | `render-demo-cards.py title` | `check-nyc-demo.py` (covers the chapter-2 switch, silent) |
 
 Generated `demo_*` media hold no third-party content (the placeholder video is not Big Buck Bunny).
 `bbb_passenger.mp4` is: Big Buck Bunny (c) copyright 2008, Blender Foundation / www.bigbuckbunny.org,
