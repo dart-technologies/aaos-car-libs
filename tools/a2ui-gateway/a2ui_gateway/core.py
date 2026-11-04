@@ -211,8 +211,11 @@ class Gateway:
         mode = self.mode(provider, profile)
         if not mode or "webSearch" not in mode:
             return None
+        instructions = contract.SEARCH_PROMPT
+        if mode.get("asOf"):  # a dated demo snapshot: answer as of that day, not the call's
+            instructions += f" Today is {mode['asOf']}; answer for today."
         return {"tool": {"type": "web_search", **mode["webSearch"]},
-                "effort": mode.get("searchEffort"), "instructions": contract.SEARCH_PROMPT,
+                "effort": mode.get("searchEffort"), "instructions": instructions,
                 "findings": contract.FINDINGS_HEADER}
 
     def prompt(self, provider: str, profile: str, request: dict) -> tuple[str, str]:

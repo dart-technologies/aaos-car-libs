@@ -408,6 +408,16 @@ class CliProfileOverrideTest(GatewayCase):
         self.assertEqual(api.model("grok", "realtime_low_latency"), "grok-4.20-0309-non-reasoning")
 
 
+class BriefAsOfTest(GatewayCase):
+    def test_a_dated_snapshot_reaches_the_search_and_the_cache_key(self):
+        gw = self.gateway(FakeVendor(), env={"META_API_KEY": KEY})
+        dated = gw.search("muse", "quality_cached")
+        self.assertIn("Today is Thursday, November 5, 2026", dated["instructions"])
+        self.config["providers"]["muse"]["modes"]["brief"].pop("asOf")
+        undated = gw.search("muse", "quality_cached")
+        self.assertNotIn("Today is", undated["instructions"])
+
+
 class HttpTest(GatewayCase):
     def test_auth_size_and_log_hygiene(self):
         gw = self.gateway(FakeVendor())
