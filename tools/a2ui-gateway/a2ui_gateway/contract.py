@@ -14,7 +14,8 @@
 """Provider-neutral half of the gateway: prompt, generation grammar, normalization, validation.
 
 Every vendor gets the same prompt and the same narrow generation schema, so a comparison measures
-the model rather than five different contracts. The gateway, not the model, writes the lifecycle
+the model rather than five different contracts. A provider mode (Muse's cited brief) swaps in the
+grounded prompt; comparisons drop modes. The gateway, not the model, writes the lifecycle
 envelope (version, catalog, ordering, identity), and the result must then pass the full gateway
 schema plus the vehicle decoder's own bounds before it is returned or cached.
 """

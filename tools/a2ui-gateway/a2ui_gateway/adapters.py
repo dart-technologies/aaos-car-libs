@@ -250,8 +250,10 @@ def _meta_answer(response: dict) -> tuple[str, list[tuple[str, str]]]:
     narrates tool use in phase "commentary" messages, which are not the answer."""
     status = response.get("status")
     if status == "incomplete":
-        raise AdapterError("truncated", _token((response.get("incomplete_details") or {})
-                                               .get("reason")))
+        reason = (response.get("incomplete_details") or {}).get("reason")
+        if reason == "content_filter":
+            raise AdapterError("refusal")
+        raise AdapterError("truncated", _token(reason))
     if status != "completed":
         raise AdapterError("upstream", _token(f"status_{status}"))
     answer = None

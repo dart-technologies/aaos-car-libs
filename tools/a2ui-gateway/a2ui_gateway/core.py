@@ -312,9 +312,9 @@ class Gateway:
         if key == CLI_KEY:
             adapter, base_url = settings["cli"]["adapter"], settings["cli"]["command"]
         elif mode is not None:
-            adapter = mode["adapter"]
-            if self.search(provider, profile) is not None:
-                extra["search"] = self.search(provider, profile)
+            adapter, search = mode["adapter"], self.search(provider, profile)
+            if search is not None:
+                extra["search"] = search
         completion = self._complete(
             adapter, base_url, chosen["model"], chosen.get("effort"),
             int(chosen.get("maxTokens", 8000)), key, system, user, contract.GENERATION_SCHEMA,
