@@ -56,7 +56,7 @@
             android:ellipsize="end"
             android:includeFontPadding="false"
             android:maxLines="1"
-            android:textSize="21sp" />
+            android:textSize="23sp" />
 
         <TextView
             android:id="@+id/card_subtitle"
@@ -68,7 +68,7 @@
             android:includeFontPadding="false"
             android:maxLines="2"
             android:textColor="@color/a2ui_brand_on_surface_muted"
-            android:textSize="16sp" />
+            android:textSize="17sp" />
 
         <TextView
             android:id="@+id/card_extra"
@@ -92,7 +92,7 @@
         android:gravity="end"
         android:maxLines="1"
         android:textColor="@color/a2ui_brand_accent"
-        android:textSize="18sp" />
+        android:textSize="19sp" />
 
     <TextView
         android:id="@+id/card_chevron"
