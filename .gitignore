@@ -42,3 +42,6 @@ a2ui-host-carui/src/debug/devca/res/raw/
 # Paid ElevenLabs output: operator evidence whose voice-licence provenance the repo must not assume.
 # Keep the accepted MP4/metadata pair out of git too.
 a2ui-automotive/demo/audio/elevenlabs/
+
+# Local agent state (worktrees, per-machine permissions).
+.claude/

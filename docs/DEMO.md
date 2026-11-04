@@ -74,9 +74,9 @@ is unverified for outward use. Regenerating spends credits: `--dry-run`, then `-
 re-projection, audio continuity. Not a live agent, live location/inventory/payment, production
 speech, passenger-display pixels or media rights. Never narrate a `DEMO` mask as motion.
 
-## Worker handoff (dartbot-worker.local)
+## Fresh AAOS host
 
-Steps 1–2 and the audio copy are already done for user `dartbot` (2026-11-04); run them on a fresh machine.
+One-time setup for a Mac that runs the emulator and the gate.
 
 ```bash
 # From the repo root. 1. JDK 21 (CI: Temurin 21) and SDK
@@ -100,7 +100,7 @@ for kv in PlayStore.enabled=no hw.cpu.ncore=4 hw.ramSize=3072 vm.heapSize=256 di
 cp .env.example .env && chmod 600 .env
 # 4. Gitignored audio cache, verified
 mkdir -p a2ui-automotive/demo/audio/elevenlabs
-rsync -a ~/handoff/car-libs-assets/elevenlabs/ a2ui-automotive/demo/audio/elevenlabs/
+rsync -a <machine-with-cache>:<repo>/a2ui-automotive/demo/audio/elevenlabs/ a2ui-automotive/demo/audio/elevenlabs/
 scripts/check-nyc-demo.py --require-audio
 # 5. Boot and prepare the emulator: builds :plugin, -writable-system, plugin swap, en-US, no animations
 scripts/ensure-test-env.sh --fix
