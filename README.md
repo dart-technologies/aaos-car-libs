@@ -1,3 +1,25 @@
+# Muse2CarUI
+
+Meta's Muse plans the trip: a cited brief for The Met, an audio guide for the drive, a café picked from 15 it researched.
+The car decides what the driver sees: Android Automotive's own driving restrictions prune Muse's screens per display, so the passenger keeps the film.
+
+Demo video: (link to come)
+
+Muse's work, with its sources: [brief](a2ui-automotive/demo/fixtures/met/BRIEF.json) ·
+[audio guide](a2ui-automotive/demo/fixtures/met/AUDIO_GUIDE.json) ·
+[café pick](a2ui-automotive/demo/fixtures/coffee/COFFEE.json) · the story: [docs/DEMO.md](docs/DEMO.md)
+
+Checks that need no keys:
+
+```bash
+python3 -m pip install --require-hashes -r tools/a2ui-gateway/requirements.txt  # jsonschema
+python3 -m unittest discover -s tools/a2ui-gateway -p 'test_*.py'  # gateway; replays Muse's brief offline
+python3 scripts/test_muse_curate_coffee.py  # café ranking from Muse's recorded answers
+python3 scripts/test_run_nyc_demo.py        # recorder timeline and composition (ffmpeg)
+```
+
+---
+
 # AAOS Car Libraries — Dart Technologies fork
 
 A standalone Gradle build of AOSP `packages/apps/Car/libs` (`car-ui-lib`, rotary, OEM plugin, media,
