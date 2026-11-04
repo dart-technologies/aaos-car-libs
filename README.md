@@ -21,6 +21,9 @@ How Muse (`muse-spark-1.3`) is used:
 - **Muse Code and Muse vision as reviewers:** a deep code review of this branch, and a frame-by-frame review of the demo
   video against what it must not claim. The findings and fixes are in [docs/muse-review/](docs/muse-review/).
 
+- **Every claim cited:** a no-network gate ([check-muse-claims.py](scripts/check-muse-claims.py)) checks Muse's committed outputs:
+  67/67 claims carry a source, scores re-add, and the screen's strings match the ranking.
+
 The story beat by beat: [docs/DEMO.md](docs/DEMO.md).
 
 Checks that need no keys:
