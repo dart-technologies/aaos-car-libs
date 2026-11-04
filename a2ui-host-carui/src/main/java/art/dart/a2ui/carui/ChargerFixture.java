@@ -71,7 +71,7 @@ final class ChargerFixture {
     /** The data-model messages for the three nearest chargers, or empty to keep the defaults. */
     @NonNull
     static List<A2uiMessage> messages(@NonNull Context context) {
-        return messagesFor(parse(readAsset(context)));
+        return messagesFor(parse(readAsset(context, ASSET)));
     }
 
     @VisibleForTesting
@@ -166,9 +166,10 @@ final class ChargerFixture {
         return 2 * r * Math.asin(Math.min(1, Math.sqrt(a)));
     }
 
+    /** A bundled asset as UTF-8, or null when it is not bundled. */
     @Nullable
-    private static String readAsset(@NonNull Context context) {
-        try (InputStream in = context.getAssets().open(ASSET)) {
+    static String readAsset(@NonNull Context context, @NonNull String asset) {
+        try (InputStream in = context.getAssets().open(asset)) {
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             byte[] buffer = new byte[4096];
             for (int n; (n = in.read(buffer)) > 0; ) bytes.write(buffer, 0, n);
