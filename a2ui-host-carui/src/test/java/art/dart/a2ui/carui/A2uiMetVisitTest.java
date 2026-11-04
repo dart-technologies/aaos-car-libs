@@ -141,17 +141,16 @@ public class A2uiMetVisitTest {
         assertGlanceable(ticket);
         assertThat(titles(activity)).doesNotContain(RESERVE);
 
-        int parkedRows = activity.renderedRowsForTesting().size();
         drive(activity, DRIVE);
         assertGlanceable(row(activity, TICKET));
         String expected = ChangeSummary.between(
                 A2uiCarUiActivity.withoutComponent(pruned("met_visit", reading(0)), "reserve"),
                 A2uiCarUiActivity.withoutComponent(pruned("met_visit", reading(DRIVE)),
                         "reserve"),
-                parkedRows, activity.renderedRowsForTesting().size(), false,
+                DriverState.Kind.DRIVING, false,
                 c -> DemoNativeContract.changeLabel("met_visit", c)).text();
         assertThat(activity.changeStripForTesting().getText().toString()).isEqualTo(expected);
-        assertThat(expected).isEqualTo("Map, sources & artwork hidden · 7→5 rows");
+        assertThat(expected).isEqualTo("Put away for the drive: map, sources, artwork");
     }
 
     @Test

@@ -511,6 +511,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @Nullable private DriverState.Kind mBannerKind;
     /** The transient "what changed" line, and what it diffs against. */
     private TextView mChangeStrip;
+    /** The change line holds the header's end; the hint and heading return when it goes. */
+    private boolean mStripShowing;
+    private boolean mVoiceHintWanted;
+    private boolean mSurfaceHeadingWanted = true;
     private final Runnable mHideChangeStrip = this::hideChangeStrip;
     private final Handler mStripHandler = new Handler(Looper.getMainLooper());
     @Nullable private A2uiComponent mLastPrunedTree;
@@ -1222,8 +1226,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                     collapsed.add(label);
                 }
             }
-            showChangeStrip(ChangeSummary.between(mLastPrunedTree, pruned, mLastVisibleRows,
-                    visibleRows, audioContinues(allowed), this::changeLabel, collapsed).text());
+            showChangeStrip(ChangeSummary.between(mLastPrunedTree, pruned,
+                    DriverState.kindFor(source, current.getActiveRestrictions()),
+                    audioContinues(allowed), this::changeLabel, collapsed).text());
         }
         mLastHostKeys.clear();
         mLastHostKeys.addAll(hostKeys);
@@ -1253,8 +1258,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mLimitedColumn.setVisibility(comparison ? View.VISIBLE : View.GONE);
         mCardList.setVisibility(comparison ? View.GONE : View.VISIBLE);
         mDemoPill.setVisibility(!comparison && !mShowingAgent ? View.VISIBLE : View.GONE);
-        mVoiceHint.setVisibility(!comparison && mayListen ? View.VISIBLE : View.GONE);
-        mSurfaceHeading.setVisibility(comparison ? View.GONE : View.VISIBLE);
+        mVoiceHintWanted = !comparison && mayListen;
+        mSurfaceHeadingWanted = !comparison;
+        applyHeaderEnd();
         if (!comparison) {
             mSurfaceHeading.setText(themedSurfaceHeading(mSurfaceId));
         }
@@ -1436,19 +1442,22 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mBannerKind = kind;
     }
 
-    /** Shows the line for {@link #CHANGE_STRIP_MS}. Non-interactive; instant at animator scale 0. */
+    /**
+     * Shows the line for {@link #CHANGE_STRIP_MS}, in the header band where the voice hint and
+     * heading were, so it never covers a card. Non-interactive; instant at animator scale 0.
+     */
     private void showChangeStrip(@NonNull String text) {
         mStripHandler.removeCallbacks(mHideChangeStrip);
         mChangeStrip.animate().cancel();
         mChangeStrip.setText(text);
         mChangeStrip.setVisibility(View.VISIBLE);
+        mStripShowing = true;
+        applyHeaderEnd();
         if (animationsEnabled()) {
             mChangeStrip.setAlpha(0f);
-            mChangeStrip.setTranslationY(getResources().getDisplayMetrics().density * 12);
-            mChangeStrip.animate().alpha(1f).translationY(0f).setDuration(220).start();
+            mChangeStrip.animate().alpha(1f).setDuration(220).start();
         } else {
             mChangeStrip.setAlpha(1f);
-            mChangeStrip.setTranslationY(0f);
         }
         mStripHandler.postDelayed(mHideChangeStrip, CHANGE_STRIP_MS);
         Log.i(TAG, "changed: " + text);
@@ -1458,10 +1467,23 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mChangeStrip.animate().cancel();
         if (animationsEnabled()) {
             mChangeStrip.animate().alpha(0f).setDuration(300)
-                    .withEndAction(() -> mChangeStrip.setVisibility(View.GONE)).start();
+                    .withEndAction(this::changeStripGone).start();
         } else {
-            mChangeStrip.setVisibility(View.GONE);
+            changeStripGone();
         }
+    }
+
+    private void changeStripGone() {
+        mChangeStrip.setVisibility(View.GONE);
+        mStripShowing = false;
+        applyHeaderEnd();
+    }
+
+    /** The voice hint and heading, unless the change line holds their place in the header. */
+    private void applyHeaderEnd() {
+        mVoiceHint.setVisibility(mVoiceHintWanted && !mStripShowing ? View.VISIBLE : View.GONE);
+        mSurfaceHeading.setVisibility(!mSurfaceHeadingWanted ? View.GONE
+                : mStripShowing ? View.INVISIBLE : View.VISIBLE);
     }
 
     /** Audio is said to continue only if it is playing and the new reading still allows it. */

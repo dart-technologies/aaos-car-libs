@@ -114,29 +114,35 @@ public class A2uiDriverStateTest {
         View strip = activity.changeStripForTesting();
         // A case switch is not a restriction change.
         assertThat(strip.getVisibility()).isEqualTo(View.GONE);
-        int parkedRows = activity.renderedRowsForTesting().size();
 
         drive(activity, DRIVE);
 
         // Recomputed here from the policy, not read back from the activity.
         A2uiComponent before = pruned("big_buck_bunny", reading(0));
         A2uiComponent after = pruned("big_buck_bunny", reading(DRIVE));
-        String expected = ChangeSummary.between(before, after, parkedRows,
-                activity.renderedRowsForTesting().size(), false,
+        String expected = ChangeSummary.between(before, after, DriverState.Kind.DRIVING, false,
                 c -> DemoNativeContract.changeLabel("big_buck_bunny", c)).text();
         assertThat(strip.getVisibility()).isEqualTo(View.VISIBLE);
         assertThat(text(activity)).isEqualTo(expected);
-        // Anti-vacuity: the policy did remove search and video, and the line says so.
-        assertThat(text(activity)).isEqualTo("Search & video hidden · 7→5 rows");
+        // Anti-vacuity: the policy did remove search and video, and the line says so. No row
+        // count: the cards on screen are the count.
+        assertThat(text(activity)).isEqualTo("Put away for the drive: search, video");
         assertThat(strip.isClickable()).isFalse();
         assertThat(strip.isFocusable()).isFalse();
+        // In the header band, holding the heading's place: never over a card.
+        assertThat(strip.getParent()).isSameInstanceAs(
+                activity.findViewById(R.id.surface_heading).getParent());
+        assertThat(activity.findViewById(R.id.surface_heading).getVisibility())
+                .isEqualTo(View.INVISIBLE);
 
         shadowOf(Looper.getMainLooper()).idleFor(
                 Duration.ofMillis(A2uiCarUiActivity.CHANGE_STRIP_MS + 50));
         assertThat(strip.getVisibility()).isEqualTo(View.GONE);
+        assertThat(activity.findViewById(R.id.surface_heading).getVisibility())
+                .isEqualTo(View.VISIBLE);
 
         drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
-        assertThat(text(activity)).isEqualTo("Search & video back · 5→7 rows");
+        assertThat(text(activity)).isEqualTo("Parked: full detail is back");
     }
 
     @Test
@@ -145,7 +151,7 @@ public class A2uiDriverStateTest {
         activity.selectCase("big_buck_bunny");
         drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_NO_VIDEO);
         // NO_VIDEO alone keeps search: a hardcoded line could not say this.
-        assertThat(text(activity)).isEqualTo("Video hidden · 7→6 rows");
+        assertThat(text(activity)).isEqualTo("Put away for the drive: video");
     }
 
     @Test
@@ -159,15 +165,27 @@ public class A2uiDriverStateTest {
         A2uiComponent bare = new A2uiComponent.Builder(art.dart.a2ui.model.ComponentType.COLUMN)
                 .setId("root").build();
 
-        ChangeSummary hidden = ChangeSummary.between(root, bare, 4, 3, true, c -> null);
+        ChangeSummary hidden = ChangeSummary.between(root, bare, DriverState.Kind.DRIVING, true,
+                c -> null);
         assertThat(hidden.mHidden).containsExactly("Pop-ups");
-        assertThat(hidden.text()).isEqualTo("Pop-ups hidden · 4→3 rows · "
-                + "Audio continues");
-        assertThat(ChangeSummary.between(root, root, 2, 2, false, c -> null).text())
-                .isEqualTo("Nothing hidden · 2→2 rows");
-        assertThat(ChangeSummary.join(Arrays.asList("Map", "Sources", "Artwork", "Video")))
-                .isEqualTo("Map, sources & artwork +1 more");
-        assertThat(ChangeSummary.join(Collections.singletonList("Map"))).isEqualTo("Map");
+        assertThat(hidden.text()).isEqualTo("Put away for the drive: pop-ups · Audio continues");
+        assertThat(ChangeSummary.between(root, root, DriverState.Kind.DRIVING, false, c -> null)
+                .text()).isEqualTo("Nothing put away");
+        // Host cards join the same list; a name is said once.
+        assertThat(ChangeSummary.between(root, bare, DriverState.Kind.DRIVING, false, c -> null,
+                Arrays.asList("Order", "Pop-ups")).text())
+                .isEqualTo("Put away for the drive: pop-ups, order");
+        assertThat(ChangeSummary.between(bare, root, DriverState.Kind.DEMO, false, c -> null)
+                .text()).isEqualTo("Back: pop-ups");
+        assertThat(ChangeSummary.between(root, bare, DriverState.Kind.SAFE_MODE, false, c -> null)
+                .text()).isEqualTo("Put away until the car reports: pop-ups");
+        // A parked reading prunes nothing: whatever left, left with the journey.
+        assertThat(ChangeSummary.between(bare, root, DriverState.Kind.PARKED, true, c -> null,
+                Collections.singletonList("Suggestion")).text())
+                .isEqualTo("Parked: full detail is back");
+        assertThat(ChangeSummary.list(Arrays.asList("Map", "Sources", "Artwork", "Brief",
+                "Video"))).isEqualTo("map, sources, artwork, brief +1 more");
+        assertThat(ChangeSummary.list(Collections.singletonList("Map"))).isEqualTo("map");
     }
 
     // ---------------------------------------------------------------------------------------

@@ -31,8 +31,9 @@ import java.util.Set;
 
 /**
  * The "what changed" line shown after a restriction change, computed from the two trees the
- * policy actually produced (before and after) and the rows actually drawn. Nouns come from the
- * host (exact corpus labels, else the component type), never from agent text.
+ * policy actually produced (before and after) and the host cards actually drawn. Nouns come from
+ * the host (exact corpus labels, else the component type), never from agent text. It names what
+ * went away, never a row count: the cards on screen already say how many there are.
  */
 final class ChangeSummary {
 
@@ -42,23 +43,22 @@ final class ChangeSummary {
         String labelFor(@NonNull A2uiComponent component);
     }
 
-    private static final int MAX_LABELS = 3;
+    private static final int MAX_LABELS = 4;
 
     final List<String> mHidden;
     final List<String> mRestored;
     /** Host cards that left with the change, by host noun. */
     final List<String> mCollapsed;
-    final int mRowsBefore;
-    final int mRowsAfter;
+    /** The state the change landed on, as the banner names it. */
+    final DriverState.Kind mState;
     final boolean mAudioContinues;
 
     private ChangeSummary(List<String> hidden, List<String> restored, List<String> collapsed,
-            int rowsBefore, int rowsAfter, boolean audioContinues) {
+            DriverState.Kind state, boolean audioContinues) {
         mHidden = hidden;
         mRestored = restored;
         mCollapsed = collapsed;
-        mRowsBefore = rowsBefore;
-        mRowsAfter = rowsAfter;
+        mState = state;
         mAudioContinues = audioContinues;
     }
 
@@ -68,35 +68,40 @@ final class ChangeSummary {
      */
     @NonNull
     static ChangeSummary between(@Nullable A2uiComponent before, @Nullable A2uiComponent after,
-            int rowsBefore, int rowsAfter, boolean audioContinues, @NonNull Labeler labeler) {
-        return between(before, after, rowsBefore, rowsAfter, audioContinues, labeler,
-                new ArrayList<>());
+            @NonNull DriverState.Kind state, boolean audioContinues, @NonNull Labeler labeler) {
+        return between(before, after, state, audioContinues, labeler, new ArrayList<>());
     }
 
     /** As above, plus the host cards (pickup, charging) the change took away. */
     @NonNull
     static ChangeSummary between(@Nullable A2uiComponent before, @Nullable A2uiComponent after,
-            int rowsBefore, int rowsAfter, boolean audioContinues, @NonNull Labeler labeler,
+            @NonNull DriverState.Kind state, boolean audioContinues, @NonNull Labeler labeler,
             @NonNull List<String> collapsedHostCards) {
         return new ChangeSummary(topmostMissing(before, after, labeler),
                 topmostMissing(after, before, labeler), new ArrayList<>(collapsedHostCards),
-                rowsBefore, rowsAfter, audioContinues);
+                state, audioContinues);
     }
 
-    /** The one-line text, e.g. "Map & sources hidden · 7→3 rows · Audio continues". */
+    /**
+     * The one-line text: "Put away for the drive: map, sources, artwork", or on a parked reading
+     * "Parked: full detail is back" (a parked reading prunes nothing; a host card that leaves then
+     * leaves with the journey, not the policy).
+     */
     @NonNull
     String text() {
-        List<String> parts = new ArrayList<>();
-        if (!mHidden.isEmpty()) parts.add(join(mHidden) + " hidden");
-        if (!mCollapsed.isEmpty()) {
-            parts.add(join(mCollapsed) + (mCollapsed.size() == 1 ? " card" : " cards")
-                    + " collapsed");
+        if (mState == DriverState.Kind.PARKED) return "Parked: full detail is back";
+        Set<String> away = new LinkedHashSet<>(mHidden);
+        away.addAll(mCollapsed);
+        String line;
+        if (!away.isEmpty()) {
+            line = (mState == DriverState.Kind.SAFE_MODE ? "Put away until the car reports: "
+                    : "Put away for the drive: ") + list(new ArrayList<>(away));
+        } else if (!mRestored.isEmpty()) {
+            line = "Back: " + list(mRestored);
+        } else {
+            line = "Nothing put away";
         }
-        if (!mRestored.isEmpty()) parts.add(join(mRestored) + " back");
-        if (parts.isEmpty()) parts.add("Nothing hidden");
-        parts.add(mRowsBefore + "→" + mRowsAfter + (mRowsAfter == 1 ? " row" : " rows"));
-        if (mAudioContinues) parts.add("Audio continues");
-        return String.join(" · ", parts);
+        return mAudioContinues ? line + " · Audio continues" : line;
     }
 
     /** A noun per component type, so the strip says something even for an unlabelled surface. */
@@ -165,23 +170,15 @@ final class ChangeSummary {
         }
     }
 
-    /** "Map", "Map & sources", "Map, sources & artwork", then "+N more". */
+    /** "map", "map, sources, artwork", then "+N more" past {@link #MAX_LABELS}. */
     @NonNull
-    static String join(@NonNull List<String> labels) {
+    static String list(@NonNull List<String> labels) {
         List<String> shown = new ArrayList<>();
         for (int i = 0; i < Math.min(labels.size(), MAX_LABELS); i++) {
-            String label = labels.get(i);
-            shown.add(i == 0 ? label : label.substring(0, 1).toLowerCase(Locale.ROOT)
-                    + label.substring(1));
-        }
-        String text;
-        if (shown.size() == 1) {
-            text = shown.get(0);
-        } else {
-            text = String.join(", ", shown.subList(0, shown.size() - 1)) + " & "
-                    + shown.get(shown.size() - 1);
+            shown.add(labels.get(i).toLowerCase(Locale.ROOT));
         }
         int more = labels.size() - shown.size();
+        String text = String.join(", ", shown);
         return more > 0 ? text + " +" + more + " more" : text;
     }
 }

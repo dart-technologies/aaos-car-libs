@@ -42,6 +42,6 @@
   <dimen name="a2ui_banner_padding_vertical">10dp</dimen>
   <dimen name="a2ui_banner_radius">16dp</dimen>
   <dimen name="a2ui_banner_dot_size">14dp</dimen>
-  <dimen name="a2ui_strip_text_size">20sp</dimen>
+  <dimen name="a2ui_strip_text_size">17sp</dimen>
   <dimen name="a2ui_card_radius">20dp</dimen>
 </resources>

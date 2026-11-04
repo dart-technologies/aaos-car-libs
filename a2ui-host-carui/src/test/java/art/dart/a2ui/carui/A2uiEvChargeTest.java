@@ -174,7 +174,7 @@ public class A2uiEvChargeTest {
         assertThat(titles(activity)).containsNoneOf(SESSION, pickup, cafe.whyTitle(),
                 "Finish the Met tour", SUGGESTION_20);
         assertThat(activity.changeStripForTesting().getText().toString())
-                .startsWith("Artwork hidden · Charging, order & café cards collapsed · ");
+                .isEqualTo("Put away for the drive: artwork, charging, order, café");
     }
 
     @Test
