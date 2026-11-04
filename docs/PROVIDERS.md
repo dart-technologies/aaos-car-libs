@@ -20,7 +20,7 @@ gateway. No APK carries a vendor key.
 | `chatgpt` | OpenAI Responses | `gpt-6.1-terra`, high | `gpt-6-luna`, low | `OPENAI_API_KEY` | `codex exec`, same models |
 | `gemini` | `generateContent` + response schema | `gemini-4-argon`, high | `gemini-3.8-flash`, low | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `agy -p`, `gemini-3.8-flash` low (thinking returns empty) |
 | `grok` | OpenAI-compatible chat | `grok-4.7` | `grok-4.20-0309-non-reasoning` | `XAI_API_KEY` | `grok -p`, `grok-4.7` / `grok-4.7-build-fast` |
-| `muse` | OpenAI-compatible chat, `https://api.meta.ai/v1` | `muse-spark-1.3`, high | `muse-spark-1.3`, low | `META_API_KEY` | — |
+| `muse` | OpenAI-compatible chat, `https://api.meta.ai/v1`; Responses for the brief | `muse-spark-1.3`, high, cited brief | `muse-spark-1.3`, minimal | `META_API_KEY` | — |
 
 Realtime waits 10 s for a live answer, then serves the cached quality answer as a labelled
 fallback. CLI rows run with tools, plugins and sessions off in an empty directory; their latency
@@ -28,7 +28,9 @@ includes process start-up.
 OpenAI (`gpt-6.1-terra` via Codex only), Google, xAI and Meta ids were read from their model pages on
 2026-11-03 (`verifiedAt`);
 Claude's come from the claude-api model table. Meta lists no faster Spark tier, so Muse's profiles
-differ only by effort. The gateway reads only these key names and `A2UI_GATEWAY_TOKEN`.
+differ only by effort; `minimal` (Spark rejects `none`) answered in 6–10 s where `low` took ~15 s.
+The gateway reads only these key names and `A2UI_GATEWAY_TOKEN`.
+Muse's brief (`modes.brief`): `web_search` near New York; ≤3 cited pages become `Source · host` rows.
 
 ## What the gateway enforces
 
@@ -38,8 +40,8 @@ differ only by effort. The gateway reads only these key names and `A2UI_GATEWAY_
   limits. Anything else is a `gatewayError`: non-2xx, token detail only.
 - Cache: `build/a2ui-gateway-cache/<provider>/<profile>/<sha256(model, prompt)>.json`; an output
   replays only for the model that made it. `quality_cached` replays exactly; `realtime_low_latency`
-  calls live and, past 2,500 ms or on a vendor error, serves its own earlier output or the quality
-  profile's. Each `surfaceResponse` says which (`source`: `live`, `cache`, `fallback`), and headers
+  calls live and, past the 10 s deadline or on a vendor error, serves its own earlier output or the
+  quality profile's. Each `surfaceResponse` says which (`source`: `live`, `cache`, `fallback`), and headers
   name the output's model, its profile and the live error.
 - `policy.vendorFallback` is false: Anthropic alone offers a server-side model fallback, which would
   credit Claude with another model's output.
@@ -58,6 +60,10 @@ adb shell am broadcast -a art.dart.a2ui.carui.action.AGENT \
 python3 scripts/compare-providers.py         # --replay all; --inject-failure chatgpt=429
 python3 -m unittest discover -s tools/a2ui-gateway -p 'test_*.py'
 ```
+
+Keys on another machine: `scripts/demo-gateway-tunnel.sh ca` once (the worker's CA; only its public
+certificate is copied, into Host B's debug trust; rebuild), then `up` runs the gateway in tmux there
+and forwards `127.0.0.1:8787` here over ssh. `adb reverse` then reaches it; no key leaves the worker.
 
 ## Host B lane (debuggable, non-user builds only)
 

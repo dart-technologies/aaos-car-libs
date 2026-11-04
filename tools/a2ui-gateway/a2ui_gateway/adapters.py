@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Vendor adapters: Anthropic Messages, OpenAI Responses, Gemini generateContent, one
-OpenAI-compatible chat-completions adapter shared by xAI (Grok) and Meta (Muse), and subscription
-CLIs (Claude Code, Codex, Grok, Antigravity) for baselines without API keys.
+OpenAI-compatible chat-completions adapter shared by xAI (Grok) and Meta (Muse), Meta's Responses
+API with web search (Muse's cited brief), and subscription CLIs (Claude Code, Codex, Grok,
+Antigravity) for baselines without API keys.
 
 Raw HTTPS through urllib rather than five SDKs, deliberately: one transport with no hidden
 retries keeps latency comparable across vendors and makes the realtime deadline mean what it says.
@@ -61,6 +62,7 @@ class AdapterError(Exception):
 class Completion:
     text: str
     served_model: str | None
+    citations: tuple = ()  # (url, title) pairs the answer cited, in order; meta_responses only
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -243,6 +245,71 @@ def openai_chat(base_url, model, effort, max_tokens, key, system, user, schema, 
     return Completion(content, _token(response.get("model")))
 
 
+def _meta_answer(response: dict) -> tuple[str, list[tuple[str, str]]]:
+    """The last non-commentary message's text and its url_citation (url, title) pairs. Muse
+    narrates tool use in phase "commentary" messages, which are not the answer."""
+    status = response.get("status")
+    if status == "incomplete":
+        reason = (response.get("incomplete_details") or {}).get("reason")
+        if reason == "content_filter":
+            raise AdapterError("refusal")
+        raise AdapterError("truncated", _token(reason))
+    if status != "completed":
+        raise AdapterError("upstream", _token(f"status_{status}"))
+    answer = None
+    for item in response.get("output") or []:
+        if (not isinstance(item, dict) or item.get("type") != "message"
+                or item.get("phase") == "commentary"):
+            continue
+        texts, cited = [], []
+        for part in item.get("content") or []:
+            if isinstance(part, dict) and part.get("type") == "refusal":
+                raise AdapterError("refusal")
+            if not isinstance(part, dict) or part.get("type") != "output_text":
+                continue
+            texts.append(str(part.get("text", "")))
+            for note in part.get("annotations") or []:
+                if (isinstance(note, dict) and note.get("type") == "url_citation"
+                        and isinstance(note.get("url"), str)):
+                    cited.append((note["url"], str(note.get("title") or "")))
+        answer = ("".join(texts), cited)
+    if answer is None or not answer[0].strip():
+        raise AdapterError("upstream", "no_text")
+    return answer
+
+
+def meta_responses(base_url, model, effort, max_tokens, key, system, user, schema, timeout_s,
+                   search=None):
+    """Muse via the Responses API. With ``search``, a web_search call (location-biased) answers in
+    cited prose first, then a structured call shapes those findings; the citations ride along.
+    Two calls because search and text.format combine but the JSON then carries no annotations
+    (verified 2026-11-04). One deadline covers both."""
+    deadline = time.monotonic() + timeout_s
+    headers = {"Authorization": f"Bearer {key}"}
+    citations, prompt = (), user
+    if search:
+        body = {"model": model, "instructions": search["instructions"],
+                "input": [{"role": "user", "content": user}], "tools": [search["tool"]],
+                "store": False, "max_output_tokens": max_tokens}
+        if search.get("effort") or effort:
+            body["reasoning"] = {"effort": search.get("effort") or effort}
+        findings, cited = _meta_answer(_post(f"{base_url}/responses", headers, body, timeout_s))
+        citations = tuple(dict.fromkeys(cited))
+        prompt = f"{user}\n\n{search['findings']}\n{findings.strip()[:4000]}"
+    body = {"model": model, "instructions": system,
+            "input": [{"role": "user", "content": prompt}],
+            "text": {"format": {"type": "json_schema", "name": SCHEMA_NAME, "schema": schema,
+                                "strict": True}},
+            "store": False, "max_output_tokens": max_tokens}
+    if effort:
+        body["reasoning"] = {"effort": effort}
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise AdapterError("timeout")
+    response = _post(f"{base_url}/responses", headers, body, remaining)
+    return Completion(_meta_answer(response)[0], _token(response.get("model")), citations)
+
+
 def _run_cli(command: list[str], cwd: str, timeout_s: float) -> subprocess.CompletedProcess:
     try:
         done = subprocess.run(command, cwd=cwd, stdin=subprocess.DEVNULL, capture_output=True,
@@ -422,12 +489,13 @@ ADAPTERS = {
     "openai_responses": openai_responses,
     "gemini_generate_content": gemini_generate_content,
     "openai_chat": openai_chat,
+    "meta_responses": meta_responses,
 }
 
 
 def complete(adapter: str, base_url: str, model: str, effort: str | None, max_tokens: int,
              key: str, system: str, user: str, schema: dict, timeout_s: float,
-             vendor_fallback: bool = False) -> Completion:
+             vendor_fallback: bool = False, search: dict | None = None) -> Completion:
     if adapter not in ADAPTERS:
         raise AdapterError("upstream", "unknown_adapter")
     if not _MODEL.match(model):
@@ -436,4 +504,6 @@ def complete(adapter: str, base_url: str, model: str, effort: str | None, max_to
     args = (base_url.rstrip("/"), model, effort, max_tokens, key, system, user, schema, timeout_s)
     if call is anthropic_messages:
         return call(*args, vendor_fallback=vendor_fallback)
+    if call is meta_responses:
+        return call(*args, search=search)
     return call(*args)

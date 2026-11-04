@@ -221,6 +221,9 @@ def main() -> int:
 
     shutil.rmtree(RUNS, ignore_errors=True)
     config = core.load_config()
+    for settings in config["providers"].values():  # like-for-like: no provider modes (web search)
+        for chosen in settings["profiles"].values():
+            chosen.pop("mode", None)
     env = core.load_env(args.env_file, core.env_names(config))
     for provider in failures:
         # A key only so the injected call is attempted; injecting() raises before any I/O.
