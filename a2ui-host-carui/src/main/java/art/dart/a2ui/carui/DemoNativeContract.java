@@ -347,7 +347,7 @@ final class DemoNativeContract {
     }
 
     /** Credit for every Met image and the film made from them. */
-    static final String MET_CREDIT = "The Met, Open Access · CC0";
+    static final String MET_CREDIT = "The Met · Open Access CC0";
 
     /** The six bundled works, in gallery order. */
     static final List<String> MET_WORKS = Collections.unmodifiableList(Arrays.asList(
