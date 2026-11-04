@@ -124,6 +124,10 @@ def check_met_story(scenario: dict) -> None:
         fail(f"nyc_met guest lines drifted: {sorted(said ^ MET_UTTERANCES)}")
     if any("tomorrow" in clip["text"].casefold() for clip in clips):
         fail("nyc_met is set on Thursday itself; no line may say 'tomorrow'")
+    jargon = re.compile(r"\b(fixture|emulator|car[ _]service|adb|broadcast|vhal|a2ui)\b", re.I)
+    for clip in clips:
+        if jargon.search(clip["text"]):
+            fail(f"{clip['id']} speaks engineering jargon: {jargon.search(clip['text'])[0]!r}")
     actions = scenario["actions"]
     asks = [a for a in actions if a["type"] == "agent"]
     if [(a.get("provider"), a.get("ask")) for a in asks] != [("muse", MET_ASK)]:

@@ -50,6 +50,13 @@ scripts/run-nyc-demo.py nyc_met /tmp/nyc-met.mp4 --display-id 461982725983564467
   --passenger-display-id 4619827551948147201
 ```
 
+`nyc_met`'s `vehicleSignal` sets 18% three ways: the fake VHAL's stored `EV_BATTERY_LEVEL`
+(`dumpsys …IVehicle/default --set 0x11600309 -f <Wh>`, which the 1 Hz continuous refresh keeps),
+one `cmd car_service inject-vhal-event 0x11600309 <Wh>`, and Host B's `VEHICLE` broadcast
+(`BATTERY_PCT`, reset to -1 after). Wh is read from `INFO_EV_BATTERY_CAPACITY`
+(`cmd car_service get-property-value 0x11600106 0`); the stored level is restored on exit and Host B
+gets `android.car.permission.CAR_ENERGY`. Any one route succeeding is enough; the sidecar logs each.
+
 `run-nyc-demo.py` refuses another AVD, a second device, an inferred display, a non-debuggable Host B,
 a stale STT fixture or a failed car-service transition (never substitutes `DEMO`), restores park on
 exit, checks the MP4 (exactly the manifest's 60–180 s, ≥5 distinct frames, H.264/AAC, audible) and
