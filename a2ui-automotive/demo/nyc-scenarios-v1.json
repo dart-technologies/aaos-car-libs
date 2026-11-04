@@ -317,13 +317,15 @@
         "Two physical displays show the per-display rule: the passenger keeps moving pictures while the driver's screen simplifies.",
         "The gallery and film use only The Met's CC0 Open Access images; the audio guide is narration timed to each work in the film.",
         "Chapter 2 lowers the battery through the vehicle HAL, so the proactive charger card answers a vehicle signal, not a script.",
-        "The chargers are real OpenStreetMap entries near The Met; availability, price and speed beyond tagged output are unknown and never shown as live."
+        "The chargers are real OpenStreetMap entries near The Met; availability, price and speed beyond tagged output are unknown and never shown as live.",
+        "The café is a real OpenStreetMap listing a 3-minute walk from the first charger, ranked by Muse from cited web sources against open hours, oat milk, reputation and pickup, with walk time and totals computed by script (fixtures/coffee/COFFEE.json)."
       ],
       "doNotClaim": [
         "a real reservation, ticket, coffee order, payment or charging session",
+        "that anything was sent to the café, or that its hours or menu are live",
         "live weather, live location, or live charger availability, price or speed",
-        "that the brief or the audio guide was generated during the recording",
-        "any endorsement by The Metropolitan Museum of Art, OpenStreetMap or a charging network",
+        "that the brief, the audio guide or the café pick was generated during the recording",
+        "any endorsement by The Metropolitan Museum of Art, OpenStreetMap, a charging network or the café",
         "that a DEMO restriction preset represents vehicle motion"
       ],
       "clips": [

@@ -44,10 +44,18 @@
     "reason": "A mild, mostly cloudy Thursday with a chance of showers: the museum is a good indoor plan, and a compact umbrella is worth packing for the walk in."
   },
   "commerce": {
-    "merchantStatus": "none",
+    "merchantStatus": "real_listing_no_order",
+    "merchant": {
+      "name": "Starbucks",
+      "address": "1488 3rd Avenue",
+      "source": "https://www.openstreetmap.org/node/2620513899",
+      "attribution": "© OpenStreetMap contributors (ODbL)",
+      "fixture": "a2ui-automotive/demo/fixtures/coffee/COFFEE.json"
+    },
     "bookingStatus": "demo_fixture",
+    "orderStatus": "demo_not_sent",
     "paymentStatus": "not_connected",
-    "reason": "Timed entry appears as a DEMO ticket. No reservation is made with The Met and nothing is paid, so no merchant, real or fictional, is involved."
+    "reason": "Timed entry appears as a DEMO ticket and the coffee as a DEMO order. The café is a real OpenStreetMap listing a 3-minute walk from the first charger, ranked by Muse from cited sources; no order or reservation reaches it or The Met, and nothing is paid."
   },
   "freshness": {
     "displayLabel": "CURATED SNAPSHOT · THU NOV 5",

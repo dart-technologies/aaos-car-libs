@@ -16,8 +16,9 @@ transition (`cmd car_service emulate-driving-state park|drive`), never a synthet
 Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 2026-09-10 and not
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
 `demo/agent-profiles-v1.json`. `nyc_met` instead uses real, attributed data: Thursday's NWS forecast
-captured Nov 4 (`demo/context/nyc-met-2026-11-05.json`), an OSRM route and OSM chargers, and The
-Met's CC0 images; its ticket and coffee order are `DEMO` and nothing is booked or paid.
+captured Nov 4 (`demo/context/nyc-met-2026-11-05.json`), an OSRM route and OSM chargers, The Met's
+CC0 images, and a real OSM café near the first charger that Muse picked from cited sources; its
+ticket and coffee order are `DEMO` and nothing is booked, sent or paid.
 
 ## Corpus (`UseCaseCorpus`: 10 cases, all 18 catalog types)
 
@@ -86,6 +87,7 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Route preview, poster, album art, 8 s MP4, 12 s M4A | `a2ui-host-carui/src/main/res/{drawable-nodpi,raw}/demo_*` | yes | `scripts/generate-a2ui-demo-assets.sh` (ffmpeg, libx264, AAC) | `check-demo-assets.py` (SHA-256) |
 | 19 TTS clips, 6 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits); `--stt muse` transcribes with Muse Voice Transcribe (`META_API_KEY`) | `check-nyc-demo.py --require-audio` |
 | Met audio guide: 6 narrations with their cited sources | `a2ui-automotive/demo/fixtures/met/AUDIO_GUIDE.json` | yes | `scripts/muse-audio-guide.py` (Muse Spark, `web_search`, `META_API_KEY`, 7 calls) | — |
+| `nyc_met` café: OSM cafés within 400 m of the first charger, Muse's cited findings, scores, gate and pick | `a2ui-automotive/demo/fixtures/coffee/{COFFEE,SOURCE}.json` | yes | `scripts/muse-curate-coffee.py` (Overpass; Muse Spark `web_search`, one call per café within 6 min plus one scoring call; walk and ranking computed by the script) | `test_muse_curate_coffee.py`, `check-nyc-demo.py` (context) |
 | Claude corpus cache | `build/claude-corpus-cache/` | no | `scripts/claude-corpus-tester.py` | gateway schema on replay |
 | Passenger clip, 19.3 s 720p | `a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4` | yes | ffmpeg trim of Blender's MP4 (`demo/fixtures/bbb/SOURCE.json`) | `check-demo-assets.py` (SHA-256, source record) |
 | Panel labels | `a2ui-automotive/demo/cards/label-*.png` | yes | `scripts/render-demo-cards.py` (Pillow; this ffmpeg has no drawtext) | `test_run_nyc_demo.py` |
@@ -96,8 +98,8 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 
 Generated `demo_*` media hold no third-party content (the placeholder video is not Big Buck Bunny).
 `bbb_passenger.mp4` is: Big Buck Bunny (c) copyright 2008, Blender Foundation / www.bigbuckbunny.org,
-CC BY 3.0, trimmed and re-encoded. `nyc_met` credits: route and chargers © OpenStreetMap contributors
-(ODbL), routed by OSRM; artworks The Metropolitan Museum of Art Open Access (CC0); weather U.S.
+CC BY 3.0, trimmed and re-encoded. `nyc_met` credits: route, chargers and café © OpenStreetMap
+contributors (ODbL), routed by OSRM; café findings link their sources (`COFFEE.json`); artworks The Metropolitan Museum of Art Open Access (CC0); weather U.S.
 National Weather Service (public domain). No logos; no endorsement implied. The six `met_guide_*`
 lines are placeholders until the Muse-written guide lands. ElevenLabs licensing is unverified for
 outward use. Regenerating spends credits: `--dry-run`, then `--verify-personas`, then bare.
