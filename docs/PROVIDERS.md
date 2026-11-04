@@ -28,9 +28,29 @@ includes process start-up.
 OpenAI (`gpt-6.1-terra` via Codex only), Google, xAI and Meta ids were read from their model pages on
 2026-11-03 (`verifiedAt`);
 Claude's come from the claude-api model table. Meta lists no faster Spark tier, so Muse's profiles
-differ only by effort; `minimal` (Spark rejects `none`) answered in 6–10 s where `low` took ~15 s.
+differ only by effort; `minimal` is the lowest Spark accepts (`none` is a 400), and `low` took
+~15 s median in an earlier three-prompt check. Measured `minimal` latency is below.
 The gateway reads only these key names and `A2UI_GATEWAY_TOKEN`.
 Muse's brief (`modes.brief`): `web_search` near New York; ≤3 cited pages become `Source · host` rows.
+
+### Muse latency, measured 2026-11-04
+
+`compare-providers.py --providers muse` from the dev worker at b40854f40: the 12 corpus cases,
+`muse-spark-1.3`, a fresh cache per run so every call was live and no fallback could answer.
+Gateway turn time (vendor call plus validation); percentiles nearest-rank, as the script computes
+them.
+
+| Profile | Effort | Calls | p50 | p95 | Max | Over 10 s | Host-valid |
+|---|---|---|---|---|---|---|---|
+| `realtime_low_latency` | `minimal` | 36 (3 runs × 12) | 8.6 s | 15.3 s | 18.5 s | **7 of 36** | 35/36 |
+| `quality_cached`, no web search | `high` | 12 | 32.8 s | 41.7 s | 41.7 s | 12 of 12 (no deadline) | 12/12 |
+
+Muse misses the 10 s realtime deadline on about one turn in five. Those turns get the cached answer
+as a labelled fallback, or wait up to 30 s when nothing is cached; none timed out. Per run, p50 was
+8.9, 8.6 and 8.1 s and p95 11.7, 15.3 and 18.5 s. The one host-invalid answer, `modal_confirmation`
+at 18.5 s, failed Host B's projection (`project.integrity`). The quality row omits the brief's web
+search (the comparison drops modes); the committed cited brief took 37.7 s (`BRIEF.json`
+`elapsedMs`).
 
 ## What the gateway enforces
 
