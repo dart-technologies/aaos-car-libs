@@ -477,9 +477,9 @@ public final class UseCaseCorpus {
         b.data("/chargers/2/detail", "1.9 mi · public charging");
         b.data("/session/detail", "about 22 min");
         // Generic words; Host B names the real café (fixtures/coffee) near the chosen charger.
-        b.data("/order/status", "Coffee ready at the counter");
+        // What was ordered, never that it is ready: nothing is sent to a café.
+        b.data("/order/status", "Order confirmed");
         b.data("/order/pickup", "Oat milk latte");
-        b.data("/order/note", "Demo · nothing sent to the café");
         b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
                 TemplateCapability.MODAL, TemplateCapability.VIDEO);
         return b.build();

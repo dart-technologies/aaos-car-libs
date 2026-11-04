@@ -59,8 +59,8 @@ public class A2uiEvChargeTest {
     /** The station and the vehicle's reading only: ChargePoint tags no kW, so no rate or ETA. */
     private static final String SESSION = "Charging at ChargePoint · 20%";
     private static final String CREDIT = " · © OpenStreetMap";
-    private static final String COFFEE = "Coffee ready at the counter";
-    private static final String NOTE = "Demo · nothing sent to the café";
+    /** The generic pickup card's title, where no café was picked for the charger. */
+    private static final String COFFEE = "Order confirmed";
 
     private Application mApp;
     private int mOriginalFlags;
@@ -161,11 +161,14 @@ public class A2uiEvChargeTest {
                 cafe.mName + " · " + cafe.mWalkMinutes + " min walk from the charger");
         confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
-        // A demo order, never sent: nothing on the card says the coffee is ready.
-        String pickup = "Demo order · " + cafe.mName;
+        // What was ordered and where; nothing on the card says the coffee is ready, and no
+        // demo label: the video carries its own disclaimer.
+        String pickup = "Order confirmed · " + cafe.mName;
         assertGlanceable(row(activity, pickup));
         assertThat(body(row(activity, pickup))).containsExactly(
-                "Oat milk latte · not sent · " + cafe.mWalkMinutes + " min walk");
+                "Oat milk latte · " + cafe.mWalkMinutes + " min walk");
+        assertThat(String.join(" ", titles(activity)).toLowerCase(java.util.Locale.ROOT))
+                .doesNotContainMatch("demo|not sent|\\$");
         assertThat(titles(activity)).doesNotContain(COFFEE);
         assertThat(String.join(" ", titles(activity))).doesNotContain("ready");
         assertThat(titles(activity)).contains(cafe.whyTitle());
@@ -197,7 +200,7 @@ public class A2uiEvChargeTest {
         assertThat(String.join(" ", dialogTexts(confirm))).doesNotContain(cafe.mName);
         confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
-        assertThat(body(row(activity, COFFEE))).containsExactly("Oat milk latte", NOTE).inOrder();
+        assertThat(body(row(activity, COFFEE))).containsExactly("Oat milk latte");
         assertThat(String.join(" ", titles(activity))).doesNotContain(cafe.mName);
     }
 
@@ -225,8 +228,8 @@ public class A2uiEvChargeTest {
         assertThat(pick).isNotNull();
         assertThat(pick.confirmTitle()).isEqualTo("Order your usual: oat milk latte?");
         assertThat(pick.confirmDetail()).isEqualTo("Cafe · 2 min walk from the charger");
-        assertThat(pick.pickupTitle()).isEqualTo("Demo order · Cafe");
-        assertThat(pick.pickupDetail()).isEqualTo("Oat milk latte · not sent · 2 min walk");
+        assertThat(pick.pickupTitle()).isEqualTo("Order confirmed · Cafe");
+        assertThat(pick.pickupDetail()).isEqualTo("Oat milk latte · 2 min walk");
         assertThat(pick.whyBody()).containsExactly("Muse picked it · 2 min walk", "Source · a.com")
                 .inOrder();
         assertThat(pick.isNear("ChargePoint")).isTrue();

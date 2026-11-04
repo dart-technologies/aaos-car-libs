@@ -117,7 +117,7 @@ public class A2uiConsumerModeTest {
         assertThat(activity.mSpeakItem.isVisible()).isFalse();
         // The context title, short and in words.
         assertThat(((TextView) activity.findViewById(R.id.surface_heading)).getText().toString())
-                .isEqualTo(activity.getString(R.string.a2ui_met_heading));
+                .isEqualTo("The Met · Thursday");
 
         // A surface whose search survived keeps the toolbar that carries it.
         activity.selectCase("poi_discovery_order");
@@ -126,7 +126,7 @@ public class A2uiConsumerModeTest {
         activity.selectCase("ev_charge_coffee");
         assertThat(activity.toolbarHiddenForTesting()).isTrue();
         assertThat(((TextView) activity.findViewById(R.id.surface_heading)).getText().toString())
-                .isEqualTo(activity.getString(R.string.a2ui_ev_heading));
+                .isEqualTo("Charge · Coffee");
     }
 
     @Test

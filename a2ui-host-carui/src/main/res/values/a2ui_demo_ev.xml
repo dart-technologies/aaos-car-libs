@@ -3,7 +3,7 @@
 <!-- Charge and a coffee (demo branch). -->
 <resources>
     <string name="a2ui_ev_toolbar_title">Charge and a coffee</string>
-    <string name="a2ui_ev_heading">CHARGE · COFFEE</string>
+    <string name="a2ui_ev_heading">Charge · Coffee</string>
     <!-- %1$d battery percent, %2$d chargers in the comparison. -->
     <plurals name="a2ui_ev_suggestion">
         <item quantity="one">Battery %1$d%% · %2$d charger on your way</item>

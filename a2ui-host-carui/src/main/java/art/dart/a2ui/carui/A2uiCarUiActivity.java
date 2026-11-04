@@ -1694,8 +1694,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             String title = journeyData(journey, journey.mConfirmTitle);
             List<String> body = new ArrayList<>();
             for (String pointer : journey.mConfirmBody) body.add(journeyData(journey, pointer));
-            // The real café's name only for the charger it was picked for. Its one line says the
-            // order was not sent, so the trace's note would only repeat it.
+            // The real café's name only for the charger it was picked for, with what was ordered
+            // and the walk on its one line.
             CoffeeFixture.Pick coffee = journey == HostJourney.forSurface("ev_charge_coffee")
                     ? coffeeNearCharger() : null;
             if (coffee != null && !body.isEmpty()) {
@@ -2199,10 +2199,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             return "FIFTH HOUSE · CITY NOTE";
         }
         if ("met_visit".equals(surfaceId)) {
-            return "THE MET · THURSDAY";
+            return "The Met · Thursday";
         }
         if ("ev_charge_coffee".equals(surfaceId)) {
-            return "CHARGE · COFFEE";
+            return "Charge · Coffee";
         }
         return "A2UI · " + surfaceId.replace('_', ' ').toUpperCase(java.util.Locale.US);
     }
