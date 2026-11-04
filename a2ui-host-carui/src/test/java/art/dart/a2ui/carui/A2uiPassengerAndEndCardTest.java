@@ -157,6 +157,90 @@ public class A2uiPassengerAndEndCardTest {
     }
 
     @Test
+    public void passengerVideoFillsTheScreenWithItsCreditOverItAndNoChrome() {
+        mApp.getApplicationInfo().flags |= ApplicationInfo.FLAG_DEBUGGABLE;
+        A2uiCarUiActivity driver = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        A2uiPassengerActivity passenger = Robolectric.buildActivity(
+                A2uiPassengerActivity.class).create().start().get();
+        // At rest: the idle card alone, no credit.
+        assertThat(passenger.idleForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(passenger.messageForTesting().getText().toString())
+                .isEqualTo(mApp.getString(R.string.a2ui_passenger_idle));
+        assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.GONE);
+
+        driver.onPassengerRequest("video");
+        A2uiPassengerActivity.FillVideoView video = passenger.videoForTesting();
+        assertThat(video).isNotNull();
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) video.getLayoutParams();
+        assertThat(params.width).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
+        assertThat(params.height).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
+        assertThat(params.gravity).isEqualTo(android.view.Gravity.CENTER);
+        assertThat(passenger.idleForTesting().getVisibility()).isEqualTo(View.GONE);
+        // The bundled clip is credited, over the picture.
+        assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(passenger.creditForTesting().getText().toString())
+                .isEqualTo(mApp.getString(R.string.a2ui_passenger_video_credit));
+        // No header and no demo wording anywhere on the passenger's screen.
+        for (String text : visibleTexts(passenger.getWindow().getDecorView())) {
+            assertThat(text.toLowerCase(java.util.Locale.US)).doesNotContain("demo");
+            assertThat(text).isNotEqualTo(mApp.getString(R.string.a2ui_passenger_label));
+        }
+
+        driver.onPassengerRequest(PassengerDisplay.STOP);
+        assertThat(passenger.idleForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.GONE);
+    }
+
+    @Test
+    public void theVideoViewCoversItsParentRatherThanLetterboxing() {
+        A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        A2uiPassengerActivity.FillVideoView video = new A2uiPassengerActivity.FillVideoView(
+                activity);
+        int width = View.MeasureSpec.makeMeasureSpec(528, View.MeasureSpec.EXACTLY);
+        int height = View.MeasureSpec.makeMeasureSpec(792, View.MeasureSpec.EXACTLY);
+
+        // A landscape clip on the portrait screen: full height, the sides cropped evenly.
+        video.setVideoSize(1280, 720);
+        video.measure(width, height);
+        assertThat(video.getMeasuredHeight()).isEqualTo(792);
+        assertThat(video.getMeasuredWidth()).isEqualTo(1408);
+
+        // A portrait cut fills it exactly.
+        video.setVideoSize(720, 1080);
+        video.measure(width, height);
+        assertThat(video.getMeasuredWidth()).isEqualTo(528);
+        assertThat(video.getMeasuredHeight()).isEqualTo(792);
+
+        // Never smaller than the screen on either axis, whatever the shape.
+        video.setVideoSize(1000, 100);
+        video.measure(width, height);
+        assertThat(video.getMeasuredWidth()).isAtLeast(528);
+        assertThat(video.getMeasuredHeight()).isAtLeast(792);
+    }
+
+    @Test
+    public void aPortraitScreenPrefersThePortraitCutAndOtherwiseThePlainFile() {
+        PassengerMedia film = PassengerMedia.forName(PassengerMedia.ARTWORK);
+        java.util.Set<String> both = new java.util.HashSet<>(Arrays.asList(
+                "met_artwork_film", "met_artwork_film_portrait"));
+        assertThat(film.fileFor(true, both::contains)).isEqualTo("met_artwork_film_portrait");
+        assertThat(film.fileFor(false, both::contains)).isEqualTo("met_artwork_film");
+        java.util.Set<String> plain = java.util.Collections.singleton("met_artwork_film");
+        assertThat(film.fileFor(true, plain::contains)).isEqualTo("met_artwork_film");
+        // A portrait cut alone never plays on a landscape screen; nothing bundled credits nothing.
+        java.util.Set<String> portraitOnly =
+                java.util.Collections.singleton("met_artwork_film_portrait");
+        assertThat(film.fileFor(false, portraitOnly::contains)).isNull();
+        assertThat(film.fileFor(true, name -> false)).isNull();
+
+        PassengerMedia clip = PassengerMedia.forName(PassengerMedia.VIDEO);
+        assertThat(clip.fileFor(true, "bbb_passenger_portrait"::equals))
+                .isEqualTo("bbb_passenger_portrait");
+        assertThat(PassengerMedia.forName(PassengerMedia.SLIDESHOW).fileFor(true, name -> true))
+                .isNull();
+    }
+
+    @Test
     public void theEndCardIsParkedOnlyAndLeavesOnTheFirstRestriction() {
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
         View card = activity.endCardForTesting();
@@ -207,6 +291,20 @@ public class A2uiPassengerAndEndCardTest {
     }
 
     // ---------------------------------------------------------------------------------------
+
+    /** Every visible TextView's text under {@code root}. */
+    private static List<String> visibleTexts(View root) {
+        List<String> out = new ArrayList<>();
+        if (root.getVisibility() != View.VISIBLE) return out;
+        if (root instanceof TextView) out.add(((TextView) root).getText().toString());
+        if (root instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                out.addAll(visibleTexts(group.getChildAt(i)));
+            }
+        }
+        return out;
+    }
 
     private static Intent passenger(String media) {
         return new Intent(DebugBroadcasts.ACTION_PASSENGER)

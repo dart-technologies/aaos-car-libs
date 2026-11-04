@@ -58,13 +58,11 @@
     <string name="a2ui_end_card_bullet_4">Stock Android Automotive · no model keys in the car</string>
     <string name="a2ui_end_card_footer">Built with Meta Muse · github.com/dart-technologies/aaos-car-libs</string>
 
-    <!-- Passenger display. -->
+    <!-- Passenger display. The label is the screen's accessibility name; no header draws it. -->
     <string name="a2ui_passenger_label">Passenger display</string>
     <string name="a2ui_passenger_idle">Ready when you are</string>
     <string name="a2ui_passenger_video_credit">Big Buck Bunny © Blender Foundation · CC BY 3.0</string>
     <string name="a2ui_passenger_held">Video is not available on this screen right now</string>
-    <!-- Shown whenever the passenger screen runs on a simulated zone reading (DEMO). -->
-    <string name="a2ui_passenger_demo_zone">Passenger zone · demo setting</string>
 
     <style name="A2uiBrandStatusBadge">
         <item name="android:background">@drawable/a2ui_status_badge</item>
