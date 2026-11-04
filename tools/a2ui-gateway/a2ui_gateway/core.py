@@ -281,6 +281,7 @@ class Gateway:
                 return self._serve(entry, "cache", **ids)
             return self._error("cache_miss" if self.offline else "provider_unconfigured",
                                started, request)
+
         def unexpected(error: Exception) -> Response:
             # A worker bug, not a vendor failure (e.g. a missing validation dependency): a cached
             # answer still beats a 500. Only the type name is kept; a message can carry vendor text.
@@ -306,14 +307,14 @@ class Gateway:
                 return self._error("timeout", started, request)
             except (adapters.AdapterError, contract.ContractError) as error:
                 return self._failure(error, started, request)
-            except Exception as error:  # noqa: BLE001 - see unexpected()
+            except Exception as error:  # a worker bug: see unexpected()
                 return unexpected(error)
         except (adapters.AdapterError, contract.ContractError) as error:
             entry = cached()
             if entry is not None:
                 return self._serve(entry, "fallback", live_error=_describe(error), **ids)
             return self._failure(error, started, request)
-        except Exception as error:  # noqa: BLE001 - see unexpected()
+        except Exception as error:  # a worker bug: see unexpected()
             return unexpected(error)
         return self._serve(entry, "live", **ids)
 
