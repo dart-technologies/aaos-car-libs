@@ -94,6 +94,15 @@ public class A2uiMetVisitTest {
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
         assertThat(activity.selectCase("met_visit")).isTrue();
         assertThat(activity.visualPanelForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        // The map's baked distance and labels reach its edges: it is fitted, never cropped.
+        assertThat(activity.visualPanelImageForTesting().getScaleType())
+                .isEqualTo(android.widget.ImageView.ScaleType.FIT_CENTER);
+        // Cards start clear of the system's back overlay at the left edge: a start inset well
+        // beyond the list's end padding.
+        assertThat(activity.cardListForTesting().getPaddingStart()).isEqualTo(activity
+                .getResources().getDimensionPixelSize(R.dimen.a2ui_card_list_inset_start));
+        assertThat(activity.cardListForTesting().getPaddingStart())
+                .isAtLeast(2 * activity.cardListForTesting().getPaddingEnd());
         assertThat(body(row(activity, BRIEF))).contains(SOURCE);
         assertThat(titles(activity)).containsAtLeast(ETA, GALLERY, FILM, RESERVE);
 
@@ -168,8 +177,12 @@ public class A2uiMetVisitTest {
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
         activity.selectCase("met_visit");
         activity.onHeard("reserve entry for two at three");
-        ShadowAlertDialog.getLatestAlertDialog().getButton(AlertDialog.BUTTON_POSITIVE)
-                .performClick();
+        AlertDialog asked = ShadowAlertDialog.getLatestAlertDialog();
+        // Pinned inside the display with a margin each side: both pills show whole.
+        android.util.DisplayMetrics metrics = activity.getResources().getDisplayMetrics();
+        assertThat(asked.getWindow().getAttributes().width).isEqualTo(metrics.widthPixels
+                - 2 * Math.round(A2uiCarUiActivity.DIALOG_MARGIN_DP * metrics.density));
+        asked.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
         drive(activity, DRIVE);
         drive(activity, A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
@@ -177,6 +190,9 @@ public class A2uiMetVisitTest {
         assertThat(activity.mArrived).isTrue();
         assertThat(titles(activity)).contains("Arrived · The Met Fifth Avenue");
         assertThat(activity.visualPanelForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        // The hero is a painting: it fills the panel.
+        assertThat(activity.visualPanelImageForTesting().getScaleType())
+                .isEqualTo(android.widget.ImageView.ScaleType.CENTER_CROP);
     }
 
     @Test

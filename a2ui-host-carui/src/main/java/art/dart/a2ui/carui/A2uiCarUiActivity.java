@@ -460,7 +460,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void confirm(A2uiComponent component, CarUxRestrictionsUtil restrictions,
             Context uiContext) {
         A2uiDisplayBinder binder = binderFor(restrictions, uiContext);
-        new AlertDialogBuilder(uiContext)
+        AlertDialog asked = new AlertDialogBuilder(uiContext)
                 .setTitle(confirmTitle(component))
                 .setMessage(confirmMessage(component))
                 .setNegativeButton(R.string.a2ui_cancel, null)
@@ -487,7 +487,26 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                             Toast.LENGTH_LONG).show();
                 })
                 .show();
+        fitDialog(asked, uiContext);
     }
+
+    /**
+     * car-ui's dialog puts its buttons in a column on the right and can lay out wider than the
+     * display, clipping both pills at the edge. Pinned to the display's width less a margin each
+     * side, the message wraps instead.
+     */
+    @VisibleForTesting
+    static void fitDialog(@NonNull AlertDialog dialog, @NonNull Context uiContext) {
+        android.view.Window window = dialog.getWindow();
+        if (window == null) return;
+        android.util.DisplayMetrics metrics = uiContext.getResources().getDisplayMetrics();
+        int margin = Math.round(DIALOG_MARGIN_DP * metrics.density);
+        window.setLayout(Math.max(0, metrics.widthPixels - 2 * margin),
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+    }
+
+    /** Space kept between a confirm dialog and each side edge of its display. */
+    static final int DIALOG_MARGIN_DP = 64;
 
     private CarUxRestrictionsUtil mRestrictions;
     private ToolbarController mToolbar;
@@ -1072,7 +1091,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         A2uiDisplayBinder capturedBinder = mActionBinder;
         String capturedSurfaceId = mSurfaceId;
-        new AlertDialogBuilder(this)
+        AlertDialog asked = new AlertDialogBuilder(this)
                 .setTitle(confirmTitle(matched))
                 .setMessage(confirmMessage(matched))
                 .setNegativeButton(R.string.a2ui_cancel, null)
@@ -1112,6 +1131,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                     }
                 })
                 .show();
+        fitDialog(asked, this);
     }
 
     private void refresh() {
@@ -2630,6 +2650,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void updateVisualPanel(@Nullable A2uiComponent pruned,
             @NonNull Set<ComponentType> allowed, boolean parked, boolean comparison) {
         int art = 0;
+        boolean hero = false;
         CharSequence title = null;
         CharSequence caption = null;
         if (!comparison && !mShowingAgent && allowed.contains(ComponentType.IMAGE)) {
@@ -2637,6 +2658,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             A2uiComponent hit = firstPanelComponent(pruned);
             if (journey != null && journey.mHeroArt != 0 && mArrived && parked) {
                 art = journey.mHeroArt;
+                hero = true;
                 title = journeyData(journey, journey.mArrivalTitle);
                 caption = journeyData(journey, journey.mArrivalDetail);
             } else if (hit != null) {
@@ -2649,6 +2671,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         boolean show = art != 0;
         mVisualPanel.setVisibility(show ? View.VISIBLE : View.GONE);
         if (show) {
+            // A map carries baked text (distance, labels) to its edges: fit it whole. Only the
+            // arrival hero, a painting, fills the panel.
+            mVisualPanelImage.setScaleType(hero ? ImageView.ScaleType.CENTER_CROP
+                    : ImageView.ScaleType.FIT_CENTER);
             mVisualPanelImage.setImageResource(art);
             mVisualPanelTitle.setText(title);
             mVisualPanelCaption.setText(caption);
@@ -2656,6 +2682,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         } else {
             mVisualPanelImage.setImageDrawable(null);
         }
+    }
+
+    @VisibleForTesting
+    @NonNull
+    ImageView visualPanelImageForTesting() {
+        return mVisualPanelImage;
     }
 
     /** Pre-order, any depth: the first surviving component with registered panel imagery. */

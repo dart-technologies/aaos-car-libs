@@ -254,7 +254,8 @@
                 tools:ignore="Instantiatable" />
         </LinearLayout>
 
-        <!-- Visitor surfaces: the same rows as surface cards (CardListAdapter). -->
+        <!-- Visitor surfaces: the same rows as surface cards (CardListAdapter). The start inset
+             clears the system's back button, an overlay at the display's left edge. -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/card_list"
             android:layout_width="0dp"
@@ -262,7 +263,8 @@
             android:layout_weight="1"
             android:clipToPadding="false"
             android:overScrollMode="never"
-            android:paddingHorizontal="@dimen/a2ui_space_l"
+            android:paddingStart="@dimen/a2ui_card_list_inset_start"
+            android:paddingEnd="@dimen/a2ui_space_l"
             android:paddingTop="@dimen/a2ui_space_m"
             android:paddingBottom="@dimen/a2ui_space_s"
             android:visibility="gone" />
