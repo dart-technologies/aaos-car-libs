@@ -35,36 +35,54 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/a2ui_brand_header_surface"
-        android:paddingHorizontal="@dimen/a2ui_space_l"
-        android:paddingVertical="@dimen/a2ui_space_s"
+        android:paddingStart="@dimen/a2ui_card_list_inset_start"
+        android:paddingEnd="@dimen/a2ui_space_l"
+        android:paddingVertical="@dimen/a2ui_header_padding_vertical"
         android:gravity="center_vertical"
         android:orientation="vertical">
 
-        <!-- Vehicle state first, large; provider chip and brand heading opposite. -->
+        <!-- One slim row, aligned with the cards: the microphone, the vehicle-state chip, the
+             transient change note beside it, and the screen's context title opposite. A
+             long-press on the row, the chip or the title opens the technical details. -->
         <LinearLayout
             android:id="@+id/presentation_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:minHeight="@dimen/a2ui_header_min_height"
             android:orientation="horizontal">
 
+            <!-- The voice control on consumer screens; refresh() withholds it exactly as it
+                 withholds the toolbar's Speak item. -->
+            <ImageButton
+                android:id="@+id/header_mic"
+                android:layout_width="@dimen/a2ui_header_mic_size"
+                android:layout_height="@dimen/a2ui_header_mic_size"
+                android:layout_marginEnd="@dimen/a2ui_space_m"
+                android:background="@drawable/a2ui_mic_background"
+                android:contentDescription="@string/a2ui_speak"
+                android:padding="@dimen/a2ui_header_mic_padding"
+                android:scaleType="fitCenter"
+                android:src="@drawable/a2ui_ic_mic"
+                android:tint="@color/a2ui_brand_on_surface"
+                android:visibility="gone" />
+
+            <!-- The vehicle state as a compact chip: a dot and one word, tinted per state. -->
             <LinearLayout
                 android:id="@+id/drive_banner"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="@dimen/a2ui_chip_height"
                 android:background="@drawable/a2ui_banner_background"
                 android:backgroundTint="@color/a2ui_brand_state_safe"
                 android:gravity="center_vertical"
-                android:minWidth="360dp"
                 android:orientation="horizontal"
-                android:paddingHorizontal="@dimen/a2ui_banner_padding_horizontal"
-                android:paddingVertical="@dimen/a2ui_banner_padding_vertical">
+                android:paddingHorizontal="@dimen/a2ui_banner_padding_horizontal">
 
                 <View
                     android:id="@+id/drive_banner_dot"
                     android:layout_width="@dimen/a2ui_banner_dot_size"
                     android:layout_height="@dimen/a2ui_banner_dot_size"
-                    android:layout_marginEnd="@dimen/a2ui_space_m"
+                    android:layout_marginEnd="@dimen/a2ui_space_s"
                     android:background="@drawable/a2ui_dot"
                     android:importantForAccessibility="no" />
 
@@ -73,21 +91,20 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-medium"
-                    android:letterSpacing="0.1"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
                     android:text="@string/a2ui_state_safe_mode"
                     android:textColor="@color/a2ui_brand_on_surface"
-                    android:textSize="@dimen/a2ui_banner_title_text_size"
-                    android:textStyle="bold" />
+                    android:textSize="@dimen/a2ui_banner_title_text_size" />
 
+                <!-- Not drawn: the chip's content description says it. -->
                 <TextView
                     android:id="@+id/drive_banner_detail"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/a2ui_space_m"
-                    android:maxLines="1"
                     android:text="@string/a2ui_state_safe_waiting_detail"
-                    android:textColor="@color/a2ui_brand_on_surface"
-                    android:textSize="@dimen/a2ui_banner_detail_text_size" />
+                    android:textSize="@dimen/a2ui_banner_detail_text_size"
+                    android:visibility="gone" />
             </LinearLayout>
 
             <TextView
@@ -100,30 +117,8 @@
                 android:text="@string/status_badge_waiting"
                 android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/demo_pill"
-                style="@style/A2uiBrandStatusBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/a2ui_space_m"
-                android:text="@string/a2ui_demo_data"
-                android:textAllCaps="false"
-                android:textSize="15sp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/voice_hint"
-                style="@style/A2uiBrandCaption"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/a2ui_space_m"
-                android:drawablePadding="6dp"
-                android:gravity="center_vertical"
-                android:text="@string/a2ui_ask_by_voice"
-                android:visibility="gone" />
-
-            <!-- The heading's place. The change line takes it while it shows, so the line sits in
-                 the header band and never covers a card. -->
+            <!-- The context title's place. The change line shows beside the chip while it lasts,
+                 so it stays in the header row and never covers a card. -->
             <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -136,8 +131,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
-                    android:layout_marginStart="@dimen/a2ui_brand_heading_margin_horizontal"
+                    android:ellipsize="end"
                     android:gravity="end|center_vertical"
+                    android:letterSpacing="0.02"
                     android:text="@string/a2ui_brand_pickup_heading" />
 
                 <!-- What changed at the last restriction change. Transient and never
@@ -145,17 +141,18 @@
                 <TextView
                     android:id="@+id/change_strip"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end|center_vertical"
+                    android:layout_height="@dimen/a2ui_chip_height"
+                    android:layout_gravity="start|center_vertical"
                     android:accessibilityLiveRegion="polite"
                     android:background="@drawable/a2ui_strip_background"
                     android:clickable="false"
                     android:ellipsize="end"
                     android:focusable="false"
                     android:fontFamily="sans-serif-medium"
-                    android:maxLines="2"
+                    android:gravity="center_vertical"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
                     android:paddingHorizontal="@dimen/a2ui_space_m"
-                    android:paddingVertical="@dimen/a2ui_space_xs"
                     android:textColor="@color/a2ui_brand_on_surface"
                     android:textSize="@dimen/a2ui_strip_text_size"
                     android:visibility="gone" />
@@ -265,7 +262,7 @@
             android:overScrollMode="never"
             android:paddingStart="@dimen/a2ui_card_list_inset_start"
             android:paddingEnd="@dimen/a2ui_space_l"
-            android:paddingTop="@dimen/a2ui_space_m"
+            android:paddingTop="@dimen/a2ui_space_s"
             android:paddingBottom="@dimen/a2ui_space_s"
             android:visibility="gone" />
 
