@@ -339,7 +339,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"
             android:layout_margin="@dimen/a2ui_brand_heading_margin_horizontal"
-            android:text="@android:string/cancel" />
+            android:text="@string/a2ui_close" />
     </FrameLayout>
 
     <!-- Parked-only, auto-advancing artwork. Filled by ArtworkSlideshow; removed by refresh() on

@@ -23,10 +23,10 @@
     android:layout_marginBottom="@dimen/a2ui_space_s"
     android:background="@drawable/a2ui_card_background"
     android:gravity="center_vertical"
-    android:minHeight="88dp"
+    android:minHeight="72dp"
     android:orientation="horizontal"
     android:paddingHorizontal="@dimen/a2ui_space_m"
-    android:paddingVertical="@dimen/a2ui_space_s">
+    android:paddingVertical="6dp">
 
     <FrameLayout
         android:id="@+id/card_lead"
@@ -55,7 +55,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:textSize="24sp" />
+            android:textSize="22sp" />
 
         <TextView
             android:id="@+id/card_subtitle"
@@ -66,7 +66,7 @@
             android:ellipsize="end"
             android:maxLines="2"
             android:textColor="@color/a2ui_brand_on_surface_muted"
-            android:textSize="18sp" />
+            android:textSize="17sp" />
 
         <TextView
             android:id="@+id/card_extra"
@@ -77,7 +77,7 @@
             android:ellipsize="end"
             android:lineSpacingExtra="2dp"
             android:maxLines="3"
-            android:textSize="15sp" />
+            android:textSize="14sp" />
     </LinearLayout>
 
     <TextView
