@@ -176,10 +176,13 @@ public class A2uiPassengerAndEndCardTest {
         assertThat(params.height).isEqualTo(FrameLayout.LayoutParams.MATCH_PARENT);
         assertThat(params.gravity).isEqualTo(android.view.Gravity.CENTER);
         assertThat(passenger.idleForTesting().getVisibility()).isEqualTo(View.GONE);
-        // The bundled clip is credited, over the picture.
+        // The bundled clip is credited over the picture, along the top, clear of any captions
+        // a film burns in along its bottom.
         assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.VISIBLE);
         assertThat(passenger.creditForTesting().getText().toString())
                 .isEqualTo(mApp.getString(R.string.a2ui_passenger_video_credit));
+        assertThat(((FrameLayout.LayoutParams) passenger.creditForTesting().getLayoutParams())
+                .gravity).isEqualTo(android.view.Gravity.TOP);
         // No header and no demo wording anywhere on the passenger's screen.
         for (String text : visibleTexts(passenger.getWindow().getDecorView())) {
             assertThat(text.toLowerCase(java.util.Locale.US)).doesNotContain("demo");

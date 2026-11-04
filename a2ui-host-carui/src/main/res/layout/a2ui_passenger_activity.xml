@@ -16,8 +16,9 @@
 
   The passenger display. A video view is added per playback and removed on teardown, as on the
   driver's stage, so a reading that forbids video takes the surface away, not just its pixels.
-  Video fills the screen, centre-cropped (never letterboxed); its credit sits over it on a soft
-  scrim. No header: the screen is the passenger's, edge to edge.
+  Video fills the screen, centre-cropped (never letterboxed); its credit sits at the top on a soft
+  scrim, clear of any captions a film burns in along its bottom. No header: the screen is the
+  passenger's, edge to edge.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -137,21 +138,22 @@
             android:textSize="22sp" />
     </LinearLayout>
 
-    <!-- Credit for what is playing, over the video on its own soft scrim. -->
+    <!-- Credit for what is playing: top-left over the video on its own soft scrim, so it never
+         meets the captions a film burns in along its bottom. -->
     <TextView
         android:id="@+id/passenger_credit"
         style="@style/A2uiBrandCaption"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
+        android:layout_gravity="top"
         android:alpha="0.85"
         android:background="@drawable/a2ui_passenger_credit_scrim"
         android:ellipsize="end"
-        android:gravity="center_horizontal|bottom"
+        android:gravity="start|top"
         android:maxLines="1"
         android:paddingHorizontal="@dimen/a2ui_space_m"
-        android:paddingTop="56dp"
-        android:paddingBottom="@dimen/a2ui_space_m"
+        android:paddingTop="@dimen/a2ui_space_m"
+        android:paddingBottom="48dp"
         android:textSize="12sp"
         android:visibility="gone" />
 </FrameLayout>

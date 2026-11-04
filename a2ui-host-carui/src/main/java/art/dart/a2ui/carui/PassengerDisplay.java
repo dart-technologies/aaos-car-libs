@@ -36,6 +36,9 @@ final class PassengerDisplay {
         void play(@NonNull PassengerMedia media);
 
         void stopMedia();
+
+        /** The live playback position of the video it plays, in ms; -1 when none is playing. */
+        int positionMs();
     }
 
     /** Told when the passenger surface starts, stops or moves through its media. */
@@ -118,6 +121,31 @@ final class PassengerDisplay {
 
     static int segment() {
         return sSegment;
+    }
+
+    /**
+     * The passenger's live playback position, in ms, of the media it reports playing; -1 when it
+     * plays none. Read at the moment of asking, so a host that joins in starts where it is now.
+     */
+    @MainThread
+    static int positionMs() {
+        Surface surface = surface();
+        return surface == null || sPlaying == null ? -1 : surface.positionMs();
+    }
+
+    /**
+     * Where another display's copy of {@code rawName} starts so the two play in step: the
+     * passenger's position when it is playing that same clip (its portrait cut is a crop of it,
+     * frame for frame), wrapped into one loop of {@code durationMs} as both loop; otherwise 0, from
+     * the top.
+     */
+    static int startPositionMs(@Nullable String playing, int positionMs, @NonNull String rawName,
+            int durationMs) {
+        PassengerMedia media = PassengerMedia.forName(playing);
+        if (media == null || media.mStills || !rawName.equals(media.mRawName) || positionMs <= 0) {
+            return 0;
+        }
+        return durationMs > 0 ? positionMs % durationMs : positionMs;
     }
 
     @MainThread

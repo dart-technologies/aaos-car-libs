@@ -193,25 +193,43 @@ final class DemoNativeContract {
          * on a trusted parked reading, over and above the VIDEO gate every video has.
          */
         final boolean mPlayer;
+        /** Fills the stage edge to edge, scaled to cover and cropped, never letterboxed. */
+        final boolean mFill;
+        /**
+         * The file burns its own captions and credit in along its bottom edge: a crop to fill takes
+         * from the top, never from them.
+         */
+        final boolean mBottomCaptions;
 
         Media(@NonNull String rawName, @NonNull String caption) {
-            this(rawName, caption, null, null, false);
+            this(rawName, caption, null, null, false, false, false);
         }
 
         private Media(@NonNull String rawName, @NonNull String caption, @Nullable String title,
-                @Nullable String credit, boolean player) {
+                @Nullable String credit, boolean player, boolean fill, boolean bottomCaptions) {
             mRawName = rawName;
             mCaption = caption;
             mTitle = title;
             mCredit = credit;
             mPlayer = player;
+            mFill = fill;
+            mBottomCaptions = bottomCaptions;
         }
 
         /** Parked-only driver media with a host-owned title and credit, never agent text. */
         @NonNull
         static Media player(@NonNull String rawName, @NonNull String title,
                 @NonNull String credit) {
-            return new Media(rawName, "", title, credit, true);
+            return new Media(rawName, "", title, credit, true, true, false);
+        }
+
+        /**
+         * A film that carries its own captions and credit along its bottom: it fills the stage,
+         * cropped from the top, with no host title or caption over it.
+         */
+        @NonNull
+        static Media film(@NonNull String rawName) {
+            return new Media(rawName, "", null, null, false, true, true);
         }
     }
 
