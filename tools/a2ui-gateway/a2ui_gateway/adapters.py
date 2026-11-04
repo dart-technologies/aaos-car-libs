@@ -353,7 +353,12 @@ def antigravity_cli(base_url, model, effort, max_tokens, key, system, user, sche
     with tempfile.TemporaryDirectory(prefix="a2ui-cli-") as cwd:
         wrapper = _cli_wrapper(_run_cli(command, cwd, timeout_s + 5))
     if wrapper.get("error") or wrapper.get("status") not in (None, "success", "completed"):
-        raise AdapterError("upstream", _token(wrapper.get("status")) or "cli_error")
+        message = str(wrapper.get("error") or "").lower()
+        reason = ("quota_exhausted" if "quota" in message
+                  else "unknown_model" if "not recognized" in message
+                  else "not_signed_in" if "auth" in message
+                  else _token(wrapper.get("status")) or "cli_error")
+        raise AdapterError("upstream", reason)
     usage = wrapper.get("usage")
     served = usage.get("model") if isinstance(usage, dict) else None
     return Completion(_structured(wrapper.get("response")), _token(served))

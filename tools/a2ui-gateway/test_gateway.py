@@ -366,11 +366,15 @@ class OtherCliAdapterTest(FakeCli, unittest.TestCase):
             model="gemini-3.8-flash")
         self.assertEqual(json.loads(result.text), {"ok": 1})
         self.assertEqual(argv[argv.index("--model") + 1], "gemini-3.8-flash")
-        with self.assertRaises(adapters.AdapterError) as raised:
-            self.run_cli("antigravity_cli", (
-                "print(json.dumps({'status': 'error', 'error': 'Authentication required'}));"
-                "sys.exit(1)\n"))
-        self.assertEqual(str(raised.exception), "upstream:error")
+        for error, expected in [("authentication failed or timed out", "not_signed_in"),
+                                ("Individual quota reached. Resets in 2h.", "quota_exhausted"),
+                                ("model x is not recognized as a known model", "unknown_model")]:
+            with self.subTest(expected=expected), \
+                    self.assertRaises(adapters.AdapterError) as raised:
+                self.run_cli("antigravity_cli", (
+                    f"print(json.dumps({{'status': 'ERROR', 'error': {error!r}}}));"
+                    "sys.exit(1)\n"))
+            self.assertEqual(str(raised.exception), f"upstream:{expected}")
 
 
 class CliProfileOverrideTest(GatewayCase):
