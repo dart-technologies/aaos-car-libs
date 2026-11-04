@@ -408,5 +408,87 @@ class LegacyTest(unittest.TestCase):
             shutil.rmtree(tmp)
 
 
+CAPACITY = ("VehiclePropValue{timestamp: 1, areaId: 0, prop: 291504390, status: AVAILABLE, "
+            "value: RawPropValues{int32Values: [], floatValues: [150000.0], int64Values: []}}")
+LEVEL = CAPACITY.replace("291504390", "291504905").replace("150000.0", "120000.0")
+BATTERY = {"atMs": 40000, "type": "vehicleSignal", "signal": "battery", "percent": 18,
+           "via": ["vhal-set", "vhal-inject", "broadcast"]}
+SET, INJECT = "0x11600309", "inject-vhal-event"
+
+
+class VhalDevice(FakeDevice):
+    """A fake whose shell answers by matching tokens: [((token, ...), exit, stdout), ...]."""
+
+    def __init__(self, clock, outputs):
+        super().__init__(clock)
+        self.outputs = outputs
+
+    def shell(self, *args):
+        self._log("shell", args)
+        for tokens, code, out in self.outputs:
+            if all(token in args for token in tokens):
+                return subprocess.CompletedProcess(args, code, out, "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+
+class VehicleSignalTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = pathlib.Path(tempfile.mkdtemp())
+        self.scenario = dict(DUAL, actions=DUAL["actions"] + [BATTERY])
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_battery_level_by_every_route_then_restored(self):
+        device = VhalDevice(FakeClock(), [
+            (("get-property-value", "0x11600106"), 0, CAPACITY),
+            (("get-property-value", SET), 0, LEVEL),
+            (("--set",), 0, "Set property: ..."),
+        ])
+        evidence = timeline(self.scenario, device, self.tmp)
+        signal = evidence["vehicleSignals"][0]
+        self.assertEqual((signal["levelWh"], signal["capacityWh"], signal["capacitySource"],
+                          signal["previousWh"]), (27000.0, 150000.0, "INFO_EV_BATTERY_CAPACITY",
+                                                  120000.0))
+        self.assertTrue(all(route["ok"] for route in signal["routes"]))
+        at_40 = [c[1:] for c in device.calls if c[0] == 40.0]
+        self.assertEqual(at_40, [
+            ("shell", ("cmd", "car_service", "get-property-value", "0x11600106", "0")),
+            ("shell", ("cmd", "car_service", "get-property-value", SET, "0")),
+            ("shell", ("dumpsys", demo.VHAL_SERVICE, "--set", SET, "-f", "27000")),
+            ("shell", ("cmd", "car_service", INJECT, SET, "27000")),
+            ("broadcast", demo.ACTION_VEHICLE, ("--ei", demo.EXTRA_BATTERY_PCT, "18")),
+        ])
+        stop = device.calls.index((70.0, "stop", 2))
+        self.assertEqual(device.calls[stop + 1], (70.0, "shell", (
+            "dumpsys", demo.VHAL_SERVICE, "--set", SET, "-f", "120000")))
+        self.assertEqual(device.calls[stop + 2], (70.0, "car", "park"))
+
+    def test_unreadable_capacity_falls_back_and_broadcast_only_never_restores(self):
+        scenario = dict(DUAL, actions=DUAL["actions"] + [dict(BATTERY, via=["broadcast"])])
+        device = VhalDevice(FakeClock(), [(("0x11600106",), 0, "Cannot get property value")])
+        signal = timeline(scenario, device, self.tmp)["vehicleSignals"][0]
+        self.assertEqual((signal["levelWh"], signal["capacitySource"], signal["previousWh"]),
+                         (27000.0, "fallback", None))
+        self.assertFalse([c for c in device.calls if c[1] == "shell" and "--set" in c[2]])
+
+    def test_no_working_route_fails_after_cleanup(self):
+        scenario = dict(DUAL, actions=DUAL["actions"] + [
+            dict(BATTERY, via=["vhal-set", "vhal-inject"])])
+        device = VhalDevice(FakeClock(), [
+            (("--set",), 0, "failed to set property: EV_BATTERY_LEVEL, error: NOT_AVAILABLE"),
+            ((INJECT,), 255, "Invalid argument")])
+        with self.assertRaisesRegex(demo.DemoFailure, "no route injected"):
+            timeline(scenario, device, self.tmp)
+        self.assertEqual([c[1:] for c in device.calls if c[1] in ("stop", "car")][-2:],
+                         [("stop", 2), ("car", "park")])
+
+    def test_property_value_formats(self):
+        self.assertEqual(demo.property_float(CAPACITY), 150000.0)
+        self.assertEqual(demo.property_float("CarPropertyValue{mValue=27000.5, mAreaId=0}"),
+                         27000.5)
+        self.assertIsNone(demo.property_float("Cannot get property value for 0x11600106"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

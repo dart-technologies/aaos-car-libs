@@ -45,6 +45,12 @@ EXTRA_ASK = "art.dart.a2ui.carui.extra.ASK"
 ACTION_PASSENGER = "art.dart.a2ui.carui.action.PASSENGER"
 EXTRA_MEDIA = "art.dart.a2ui.carui.extra.MEDIA"
 ACTION_END_CARD = "art.dart.a2ui.carui.action.END_CARD"
+ACTION_VEHICLE = "art.dart.a2ui.carui.action.VEHICLE"
+EXTRA_BATTERY_PCT = "art.dart.a2ui.carui.extra.BATTERY_PCT"
+VHAL_SERVICE = "android.hardware.automotive.vehicle.IVehicle/default"
+# VehicleProperty ids (hardware/interfaces/automotive/vehicle, VehicleProperty.aidl): FLOAT, Wh.
+EV_BATTERY_LEVEL = 0x11600309
+INFO_EV_BATTERY_CAPACITY = 0x11600106
 DEVICE_VIDEO = "/sdcard/a2ui-nyc-demo.mp4"
 DEVICE_PASSENGER_VIDEO = "/sdcard/a2ui-nyc-demo-passenger.mp4"
 SCREENRECORD_MAX_S = 180
@@ -186,6 +192,20 @@ def verify_preconditions(required_avd: str) -> str:
     return avd_name
 
 
+def ok_output(result: subprocess.CompletedProcess[str]) -> bool:
+    text = (result.stdout + result.stderr).lower()
+    return not result.returncode and not any(
+        word in text for word in ("error", "exception", "unknown", "invalid", "usage"))
+
+
+def property_float(text: str) -> float | None:
+    """The first float in `cmd car_service get-property-value` output, which prints the HAL
+    value (`floatValues: [150000.0]`, or `mValue=150000.0` in older formats)."""
+    match = re.search(r"(?:floatValues|mValue|value)\s*[=:]\s*\[?\s*"
+                      r"(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)", text)
+    return float(match.group(1)) if match else None
+
+
 class Adb:
     """The device side of run_timeline(); tests substitute a recording fake."""
 
@@ -230,6 +250,9 @@ class Adb:
             return False
         path.write_bytes(result.stdout)
         return True
+
+    def shell(self, *args: str) -> subprocess.CompletedProcess[str]:
+        return adb_shell(*args, check=False, timeout=30)
 
 
 class Clock:
@@ -282,6 +305,59 @@ def screenrecord_limit(seconds: float) -> int:
     return max(1, min(SCREENRECORD_MAX_S, math.ceil(seconds) + 5))
 
 
+def vehicle_signal(device, action: dict) -> dict:
+    """Inject a battery level by every route the action names; succeed if one route does.
+
+    vhal-set    dumpsys <VHAL> --set: the emulator's fake VHAL stores the value, so reads and the
+                continuous refresh both report it (EV_BATTERY_LEVEL is CONTINUOUS; an injected
+                event alone is overwritten by the next refresh).
+    vhal-inject cmd car_service inject-vhal-event: one event to subscribers; reads are unchanged.
+    broadcast   Host B's debug VEHICLE broadcast, for a host that does not read the property.
+    """
+    if action.get("signal") != "battery":
+        raise DemoFailure(f"unsupported vehicle signal {action.get('signal')!r}")
+    percent = float(action["percent"])
+
+    def read(prop: int) -> float | None:
+        result = device.shell("cmd", "car_service", "get-property-value", hex(prop), "0")
+        return property_float(result.stdout) if ok_output(result) else None
+
+    capacity, source = read(INFO_EV_BATTERY_CAPACITY), "INFO_EV_BATTERY_CAPACITY"
+    if not capacity or capacity <= 0:
+        capacity, source = float(action.get("capacityWhFallback", 150000)), "fallback"
+    level = round(capacity * percent / 100, 1)
+    via = action.get("via", ["vhal-set", "vhal-inject", "broadcast"])
+    previous = read(EV_BATTERY_LEVEL) if "vhal-set" in via else None
+    routes = []
+    for route in via:
+        if route == "vhal-set":
+            result = device.shell("dumpsys", VHAL_SERVICE, "--set", hex(EV_BATTERY_LEVEL),
+                                  "-f", f"{level:g}")
+        elif route == "vhal-inject":
+            result = device.shell("cmd", "car_service", "inject-vhal-event",
+                                  hex(EV_BATTERY_LEVEL), f"{level:g}")
+        elif route == "broadcast":
+            device.broadcast(ACTION_VEHICLE, "--ei", EXTRA_BATTERY_PCT, str(round(percent)))
+            result = subprocess.CompletedProcess([], 0, "", "")
+        else:
+            raise DemoFailure(f"unknown vehicle signal route {route!r}")
+        routes.append({"via": route, "ok": ok_output(result),
+                       "output": (result.stdout + result.stderr).strip()[-200:]})
+    if not any(route["ok"] for route in routes):
+        raise DemoFailure(f"no route injected the battery level: {routes}")
+    return {"signal": "battery", "percent": percent, "levelWh": level, "capacityWh": capacity,
+            "capacitySource": source, "previousWh": previous, "routes": routes}
+
+
+def restore_vehicle(device, signals: list[dict]) -> None:
+    """Put back the stored battery level the first vhal-set replaced (best effort)."""
+    stored = [s for s in signals if s.get("previousWh") is not None
+              and any(r["via"] == "vhal-set" and r["ok"] for r in s["routes"])]
+    if stored:
+        device.shell("dumpsys", VHAL_SERVICE, "--set", hex(EV_BATTERY_LEVEL),
+                     "-f", f"{stored[0]['previousWh']:g}")
+
+
 def run_timeline(scenario: dict, device, clock, *, driver_display: str,
                  passenger_display: str | None, audio_dir: pathlib.Path, allow_scripted: bool,
                  still_path: pathlib.Path) -> dict:
@@ -290,7 +366,7 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
     steps = schedule(scenario, dual)
     clips = {clip["id"]: clip for clip in scenario["clips"]}
     duration = int(scenario["durationSeconds"])
-    evidence: dict = {"transcripts": [], "steps": [],
+    evidence: dict = {"transcripts": [], "vehicleSignals": [], "steps": [],
                       "passengerStartSeconds": None, "passengerStill": None}
     recorders = [("driver", device.start_recording(driver_display, DEVICE_VIDEO,
                                                    screenrecord_limit(duration)), 0.0,
@@ -342,6 +418,8 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
                 device.broadcast(ACTION_PASSENGER, "--es", EXTRA_MEDIA, action["media"])
             elif step.kind == "endCard":
                 device.broadcast(ACTION_END_CARD)
+            elif step.kind == "vehicleSignal":
+                evidence["vehicleSignals"].append(vehicle_signal(device, action))
             else:
                 raise DemoFailure(f"unknown action type {step.kind}")
             evidence["steps"].append({"atMs": step.at_ms, "type": step.kind,
@@ -353,6 +431,7 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
         early = [name for name, proc, began, limit in recorders
                  if not device.alive(proc) and now - began < limit - 1]
         device.stop_recordings([proc for _, proc, _, _ in recorders])
+        restore_vehicle(device, evidence["vehicleSignals"])
         device.set_car_state("park")
         if dual:
             device.broadcast(ACTION_PASSENGER, "--es", EXTRA_MEDIA, "stop")
@@ -759,6 +838,7 @@ def main() -> int:
         "agentProfilesSha256": sha256(ROOT / scenario["agentProfiles"])
             if scenario.get("agentProfiles") else None,
         "transcripts": evidence["transcripts"],
+        "vehicleSignals": evidence["vehicleSignals"],
         "timeline": evidence["steps"],
         "audioTrack": "none — engineering preflight" if args.no_mux else
             "ElevenLabs timed dialogue and sound-effects mix",

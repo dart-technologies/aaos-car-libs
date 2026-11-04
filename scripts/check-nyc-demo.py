@@ -29,8 +29,9 @@ RUNNER = ROOT / "scripts/run-nyc-demo.py"
 CANONICAL = {"nyc_poi_order": "poi_discovery_order", "nyc_curated_video": "big_buck_bunny",
              "nyc_concierge": "poi_discovery_order"}
 ACTIONS = {"speak", "tapText", "carState", "keyEvent", "selectCase", "agent", "passenger",
-           "endCard"}
-PASSENGER_MEDIA = {"video", "stop"}
+           "endCard", "vehicleSignal"}
+PASSENGER_MEDIA = {"video", "artwork", "stop"}
+VEHICLE_ROUTES = {"vhal-set", "vhal-inject", "broadcast"}
 WEATHER_HOSTS = {"forecast.weather.gov", "api.weather.gov"}
 
 
@@ -225,6 +226,11 @@ def main() -> int:
             if action.get("type") == "passenger" and (
                     layout != "dual" or action.get("media") not in PASSENGER_MEDIA):
                 fail(f"passenger action needs a dual-display recording and known media: {action}")
+            if action.get("type") == "vehicleSignal" and (
+                    action.get("signal") != "battery"
+                    or not 0 <= float(action.get("percent", -1)) <= 100
+                    or not action.get("via") or not set(action["via"]) <= VEHICLE_ROUTES):
+                fail(f"vehicle signal needs battery percent 0–100 and known routes: {action}")
             if action.get("type") == "keyEvent" and action.get("key") != "BACK":
                 fail(f"unsupported key event {action}")
             if action.get("type") == "speak":
