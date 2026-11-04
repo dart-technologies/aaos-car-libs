@@ -648,8 +648,10 @@ def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
             filters.append(f"[{offset}:a]volume={float(cue['gainDb']):g}dB,"
                            f"adelay=delays={int(cue['atMs'])}:all=1[a{offset}]")
             labels.append(f"[a{offset}]")
+        # A closing card's silent hold outlasts the last clip: pad the mix to the video's length.
+        pad = "" if legacy(plan) else f"apad=whole_dur={length},"
         filters.append("".join(labels) + f"amix=inputs={len(labels)}:duration=longest:"
-                       f"normalize=0,atrim=duration={length}[a]")
+                       f"normalize=0,{pad}atrim=duration={length}[a]")
         maps += ["-map", "[a]"]
     command += ["-filter_complex", ";".join(filters), *maps,
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p"]

@@ -439,6 +439,12 @@ class PostProductionCompositionTest(unittest.TestCase):
         self.assertEqual(self.plan.total(), 10.5)
         self.assertAlmostEqual(demo.probe_duration(self.out), 10.5, delta=0.1)
         self.assertEqual(demo.probe_size(self.out), (1920, 1080))
+        audio = json.loads(subprocess.run(
+            ["ffprobe", "-v", "error", "-select_streams", "a:0", "-show_entries",
+             "stream=duration", "-of", "json", str(self.out)], check=True, capture_output=True,
+            text=True).stdout)["streams"][0]
+        self.assertAlmostEqual(float(audio["duration"]), 10.5, delta=0.1,
+                               msg="the closing card's silent hold is in the audio track too")
 
     def test_preamble_cards_come_first_in_order(self):
         self.assertTrue(near(pixel(self.out, 0.7, 960, 540), CYAN))
