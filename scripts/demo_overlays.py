@@ -668,7 +668,18 @@ def intro_frames(out_dir: pathlib.Path, *, hold_s: float = 2.0, fade_s: float = 
             t = i / fps
             frame = source.resize(box[2:], Image.LANCZOS,
                                   box=push_box(source.size, 1 + zoom * ease(t / total)))
-            frame.putalpha(round(255 * intro_alpha(t, hold_s, fade_s)))
+            if name == "passenger" and t >= hold_s:
+                # Text over text ghosts in a crossfade: the tagline dips to black, then the
+                # black lifts off the live screen.
+                p = (t - hold_s) / fade_s
+                if p < 0.5:
+                    frame = Image.blend(frame, Image.new("RGB", frame.size), ease(p * 2))
+                    frame.putalpha(255)
+                else:
+                    frame = Image.new("RGB", frame.size)
+                    frame.putalpha(round(255 * (1 - ease((p - 0.5) * 2))))
+            else:
+                frame.putalpha(round(255 * intro_alpha(t, hold_s, fade_s)))
             frame.save(out_dir / f"{name}-{i:04d}.png", format="PNG", compress_level=3)
     return {"driver": str(out_dir / "driver-%04d.png"),
             "passenger": str(out_dir / "passenger-%04d.png"),

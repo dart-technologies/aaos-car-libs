@@ -126,8 +126,15 @@ class IntroTest(unittest.TestCase):
                         self.assertEqual((image.size, image.mode),
                                          (tuple(lay[name][2:]), "RGBA"))
                         alphas.append(image.getchannel("A").getextrema()[0])
-                # smoothstep: hold, then 1 - ease(0, .25, .5, .75)
-                self.assertEqual(alphas, [255, 255, 255, 215, 128, 40], name)
+                if name == "driver":  # smoothstep: hold, then 1 - ease(0, .25, .5, .75)
+                    self.assertEqual(alphas, [255, 255, 255, 215, 128, 40], name)
+                else:  # dips to black while opaque, then the black lifts off
+                    self.assertEqual(alphas, [255, 255, 255, 255, 255, 128], name)
+                    with Image.open(info[name] % 1) as hold, Image.open(info[name] % 3) as dip, \
+                            Image.open(info[name] % 4) as black:
+                        mean = lambda im: sum(im.convert("L").getdata()) / (im.width * im.height)
+                        self.assertLess(mean(dip), mean(hold) * 0.75, "the tagline darkens")
+                        self.assertEqual(black.convert("RGB").getextrema(), ((0, 0),) * 3)
                 self.assertFalse((pathlib.Path(tmp) / f"{name}-0006.png").exists())
 
     def test_push_in_box_shrinks_smoothly_about_the_centre(self):
