@@ -343,13 +343,57 @@
             android:layout_margin="@dimen/a2ui_brand_heading_margin_horizontal"
             android:text="@string/a2ui_brand_video_caption" />
 
+        <!-- A player's title and credit over a soft top scrim; shown on open and on a tap of the
+             stage, then faded. Host-owned words only. -->
+        <LinearLayout
+            android:id="@+id/video_title_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:background="@drawable/a2ui_scrim_top"
+            android:importantForAccessibility="yes"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/a2ui_space_xl"
+            android:paddingTop="@dimen/a2ui_space_l"
+            android:paddingBottom="56dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/video_title"
+                style="@style/A2uiBrandTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="26sp" />
+
+            <TextView
+                android:id="@+id/video_credit"
+                style="@style/A2uiBrandCaption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="15sp" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/video_close"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"
-            android:layout_margin="@dimen/a2ui_brand_heading_margin_horizontal"
-            android:text="@string/a2ui_close" />
+            android:layout_margin="@dimen/a2ui_space_l"
+            android:background="@drawable/a2ui_video_close_background"
+            android:fontFamily="sans-serif-medium"
+            android:minHeight="48dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="24dp"
+            android:stateListAnimator="@null"
+            android:text="@string/a2ui_close"
+            android:textAllCaps="false"
+            android:textColor="@color/a2ui_brand_on_surface"
+            android:textSize="18sp" />
     </FrameLayout>
 
     <!-- Parked-only, auto-advancing artwork. Filled by ArtworkSlideshow; removed by refresh() on

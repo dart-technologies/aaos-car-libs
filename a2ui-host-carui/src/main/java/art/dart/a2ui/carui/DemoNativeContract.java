@@ -185,10 +185,33 @@ final class DemoNativeContract {
     static final class Media {
         @NonNull final String mRawName;
         @NonNull final String mCaption;
+        /** The player's title overlay, or null for none (the film carries its own captions). */
+        @Nullable final String mTitle;
+        @Nullable final String mCredit;
+        /**
+         * Driver media in the full-bleed player: it fills the stage, and it opens and stays only
+         * on a trusted parked reading, over and above the VIDEO gate every video has.
+         */
+        final boolean mPlayer;
 
         Media(@NonNull String rawName, @NonNull String caption) {
+            this(rawName, caption, null, null, false);
+        }
+
+        private Media(@NonNull String rawName, @NonNull String caption, @Nullable String title,
+                @Nullable String credit, boolean player) {
             mRawName = rawName;
             mCaption = caption;
+            mTitle = title;
+            mCredit = credit;
+            mPlayer = player;
+        }
+
+        /** Parked-only driver media with a host-owned title and credit, never agent text. */
+        @NonNull
+        static Media player(@NonNull String rawName, @NonNull String title,
+                @NonNull String credit) {
+            return new Media(rawName, "", title, credit, true);
         }
     }
 

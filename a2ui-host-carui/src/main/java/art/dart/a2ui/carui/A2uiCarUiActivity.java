@@ -625,6 +625,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     /** The parked-only full-bleed video, or null. Tracked like a dialog, with VIDEO required. */
     @Nullable private VideoView mVideoView;
     @Nullable private OnBackInvokedCallback mVideoBack;
+    /** The open video is driver media in the player: parked-only on top of VIDEO. */
+    private boolean mVideoParkedOnly;
+    private View mVideoTitleOverlay;
+    private TextView mVideoTitle;
+    private TextView mVideoCredit;
+    private final Runnable mFadeVideoTitle = this::fadeVideoTitle;
     @Nullable private DemoAudio mAudio;
     /** Between onStart and onStop. The debug bus outlives that window; sound must not. */
     private boolean mStarted;
@@ -821,6 +827,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mContentColumns = findViewById(R.id.content_columns);
         mVideoStage = findViewById(R.id.video_stage);
         findViewById(R.id.video_close).setOnClickListener(ignored -> dismissDemoContent());
+        mVideoTitleOverlay = findViewById(R.id.video_title_overlay);
+        mVideoTitle = findViewById(R.id.video_title);
+        mVideoCredit = findViewById(R.id.video_credit);
+        // A tap on the picture brings the player's title back for a moment.
+        mVideoStage.setOnClickListener(ignored -> showVideoTitle());
         mVisualPanel = findViewById(R.id.visual_panel);
         mVisualPanelImage = findViewById(R.id.visual_panel_image);
         mVisualPanelTitle = findViewById(R.id.visual_panel_title);
@@ -1335,6 +1346,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         // Video pixels exist only while VIDEO is allowed, whatever opened them.
         if (mVideoView != null && !allowed.contains(ComponentType.VIDEO)) {
+            dismissDemoContent();
+        }
+        // Driver media in the player is parked-only on top of that: any other reading takes it.
+        if (mVideoView != null && mVideoParkedOnly && !parked) {
             dismissDemoContent();
         }
 
@@ -2735,12 +2750,21 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     private void showVideoWith(@NonNull String componentId,
             @Nullable DemoNativeContract.Media media) {
+        boolean player = media != null && media.mPlayer;
+        if (player && !parkedNow()) {
+            // Asked again at the moment of opening: a tap can race the reading that withdrew it.
+            Log.i(TAG, "driver media refused: the vehicle is not parked");
+            Toast.makeText(this, A2uiActionBinder.REFUSED_NOTE, Toast.LENGTH_LONG).show();
+            return;
+        }
         dismissDemoContent();
-        VideoView video = new VideoView(this);
+        // The player fills the stage edge to edge; other videos keep their whole frame.
+        VideoView video = player ? new CoverVideoView(this) : new VideoView(this);
         mVideoStage.addView(video, 0, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
                 Gravity.CENTER));
         mVideoView = video;
+        mVideoParkedOnly = player;
         mDemoDialogComponentId = componentId;
         mDemoDialogRequiredType = ComponentType.VIDEO;
         mVideoStage.setVisibility(View.VISIBLE);
@@ -2754,10 +2778,64 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         caption.setText(media == null ? getString(R.string.a2ui_brand_video_caption)
                 : media.mCaption);
         caption.setVisibility(caption.getText().length() == 0 ? View.GONE : View.VISIBLE);
+        // The title names only what actually plays: a missing file falls back unnamed.
+        boolean named = media != null && rawNamed(media.mRawName, 0) != 0;
+        bindVideoTitle(named ? media.mTitle : null, named ? media.mCredit : null);
         if (mDemoMedia != null) {
             mDemoMedia.playVideo(video, media == null ? R.raw.demo_placeholder_video
                     : rawNamed(media.mRawName, R.raw.demo_placeholder_video));
         }
+    }
+
+    /** How long a player's title stays up after opening or a tap, before it fades. */
+    @VisibleForTesting
+    static final long VIDEO_TITLE_MS = 3000;
+
+    private void bindVideoTitle(@Nullable String title, @Nullable String credit) {
+        mStripHandler.removeCallbacks(mFadeVideoTitle);
+        mVideoTitleOverlay.animate().cancel();
+        mVideoTitle.setText(title);
+        mVideoCredit.setText(credit);
+        mVideoCredit.setVisibility(credit == null ? View.GONE : View.VISIBLE);
+        mVideoTitleOverlay.setContentDescription(title == null ? null
+                : credit == null ? title : title + ". " + credit);
+        if (title == null) {
+            mVideoTitleOverlay.setVisibility(View.GONE);
+            return;
+        }
+        mVideoTitleOverlay.setAlpha(0f);
+        showVideoTitle();
+    }
+
+    /** Fades the player's title in, then out after {@link #VIDEO_TITLE_MS}; nothing without one. */
+    private void showVideoTitle() {
+        if (mVideoView == null || mVideoTitle.getText().length() == 0) return;
+        mStripHandler.removeCallbacks(mFadeVideoTitle);
+        mVideoTitleOverlay.animate().cancel();
+        mVideoTitleOverlay.setVisibility(View.VISIBLE);
+        if (animationsEnabled()) {
+            mVideoTitleOverlay.animate().alpha(1f).setDuration(200).start();
+        } else {
+            mVideoTitleOverlay.setAlpha(1f);
+        }
+        mStripHandler.postDelayed(mFadeVideoTitle, VIDEO_TITLE_MS);
+    }
+
+    private void fadeVideoTitle() {
+        mVideoTitleOverlay.animate().cancel();
+        if (animationsEnabled()) {
+            mVideoTitleOverlay.animate().alpha(0f).setDuration(400)
+                    .withEndAction(() -> mVideoTitleOverlay.setVisibility(View.GONE)).start();
+        } else {
+            mVideoTitleOverlay.setAlpha(0f);
+            mVideoTitleOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    @VisibleForTesting
+    @NonNull
+    View videoTitleOverlayForTesting() {
+        return mVideoTitleOverlay;
     }
 
     /** A bundled raw resource by name (media other agents may not have landed yet), else fallback. */
@@ -2770,9 +2848,15 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void hideVideoStage() {
         VideoView video = mVideoView;
         mVideoView = null;
+        mVideoParkedOnly = false;
         if (video != null) {
             if (mDemoMedia != null) mDemoMedia.stopVideo();
             mVideoStage.removeView(video);
+        }
+        mStripHandler.removeCallbacks(mFadeVideoTitle);
+        if (mVideoTitleOverlay != null) {
+            mVideoTitleOverlay.animate().cancel();
+            mVideoTitleOverlay.setVisibility(View.GONE);
         }
         if (mVideoStage != null) mVideoStage.setVisibility(View.GONE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && mVideoBack != null) {
