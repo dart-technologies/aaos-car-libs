@@ -101,6 +101,28 @@
                 android:visibility="gone" />
 
             <TextView
+                android:id="@+id/demo_pill"
+                style="@style/A2uiBrandStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/a2ui_space_m"
+                android:text="@string/a2ui_demo_data"
+                android:textAllCaps="false"
+                android:textSize="15sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/voice_hint"
+                style="@style/A2uiBrandCaption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/a2ui_space_m"
+                android:drawablePadding="6dp"
+                android:gravity="center_vertical"
+                android:text="@string/a2ui_ask_by_voice"
+                android:visibility="gone" />
+
+            <TextView
                 android:id="@+id/surface_heading"
                 style="@style/A2uiBrandSectionHeading"
                 android:layout_width="0dp"
@@ -203,14 +225,28 @@
                 tools:ignore="Instantiatable" />
         </LinearLayout>
 
+        <!-- Visitor surfaces: the same rows as surface cards (CardListAdapter). -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/card_list"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingHorizontal="@dimen/a2ui_space_l"
+            android:paddingTop="@dimen/a2ui_space_m"
+            android:paddingBottom="@dimen/a2ui_space_s"
+            android:visibility="gone" />
+
         <!-- Large imagery for one surviving component (a route map, an arrival hero). Shown only
              while that component is in the pruned tree and the reading allows IMAGE. -->
         <FrameLayout
             android:id="@+id/visual_panel"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_margin="@dimen/a2ui_space_m"
-            android:layout_weight="0.5"
+            android:layout_marginVertical="@dimen/a2ui_space_m"
+            android:layout_marginEnd="@dimen/a2ui_space_l"
+            android:layout_weight="0.62"
             android:background="@drawable/a2ui_panel_background"
             android:visibility="gone">
 
@@ -239,15 +275,19 @@
                     style="@style/A2uiBrandTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:maxLines="2" />
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textSize="20sp" />
 
                 <TextView
                     android:id="@+id/visual_panel_caption"
                     style="@style/A2uiBrandCaption"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/a2ui_space_xs"
-                    android:maxLines="2" />
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textSize="14sp" />
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>
@@ -299,7 +339,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"
             android:layout_margin="@dimen/a2ui_brand_heading_margin_horizontal"
-            android:text="@android:string/cancel" />
+            android:text="@string/a2ui_close" />
     </FrameLayout>
 
     <!-- Parked-only, auto-advancing artwork. Filled by ArtworkSlideshow; removed by refresh() on

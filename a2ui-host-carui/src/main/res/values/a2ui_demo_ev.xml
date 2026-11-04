@@ -6,11 +6,11 @@
     <string name="a2ui_ev_heading">CHARGE · COFFEE</string>
     <!-- %1$d battery percent, %2$d chargers in the comparison. -->
     <plurals name="a2ui_ev_suggestion">
-        <item quantity="one">Battery %1$d%% · %2$d fast charger on your way</item>
-        <item quantity="other">Battery %1$d%% · %2$d fast chargers on your way</item>
+        <item quantity="one">Battery %1$d%% · %2$d charger on your way</item>
+        <item quantity="other">Battery %1$d%% · %2$d chargers on your way</item>
     </plurals>
     <string name="a2ui_ev_from_vehicle">From the vehicle · low battery</string>
-    <string name="a2ui_ev_from_vehicle_demo">From the vehicle · DEMO reading</string>
+    <string name="a2ui_ev_chargers_credit">© OpenStreetMap</string>
     <!-- %1$s the chosen charger. -->
     <string name="a2ui_ev_navigating">Navigating to %1$s</string>
     <!-- %1$s percent at arrival, %2$s time to 80%. -->

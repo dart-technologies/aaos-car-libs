@@ -51,8 +51,9 @@ import java.util.List;
 public class A2uiEvChargeTest {
 
     private static final int DRIVE = 0xff;
-    private static final String SUGGESTION_20 = "Battery 20% · 3 fast chargers on your way";
-    private static final String SESSION = "Charging · 20% → 80% · about 22 min · DEMO";
+    private static final String SUGGESTION_20 = "Battery 20% · 3 chargers on your way";
+    private static final String SESSION = "Charging · 20% → 80% · about 22 min";
+    private static final String CREDIT = " · © OpenStreetMap";
     private static final String COFFEE = "Coffee ready at the counter";
 
     private Application mApp;
@@ -92,17 +93,19 @@ public class A2uiEvChargeTest {
         A2uiCarUiActivity activity = started(DRIVE);
         activity.selectCase("ev_charge_coffee");
         activity.onVehicleBattery(21);
-        assertThat(titles(activity)).doesNotContain("Battery 21% · 3 fast chargers on your way");
+        assertThat(titles(activity)).doesNotContain("Battery 21% · 3 chargers on your way");
 
         activity.onVehicleBattery(20);
         assertThat(activity.renderedRowsForTesting().get(0))
                 .isSameInstanceAs(row(activity, SUGGESTION_20));
         assertThat(body(row(activity, SUGGESTION_20)))
-                .containsExactly("From the vehicle · low battery");
+                .containsExactly("From the vehicle · low battery" + CREDIT);
         assertGlanceable(row(activity, SUGGESTION_20));
-        // The comparison rows are the surface's, through the prune; the tour is not.
-        assertThat(titles(activity)).containsAtLeast("Fast charger A · DEMO",
-                "Fast charger B · DEMO", "Fast charger C · DEMO");
+        // No station is called fast unless OSM tags its output; nothing here says "fast".
+        assertThat(String.join(" ", titles(activity))).doesNotContain("fast");
+        // The comparison rows are the surface's (OSM names via the processor); the tour is not.
+        assertThat(titles(activity)).containsAtLeast("ChargePoint", "FLO",
+                "Tesla Supercharger");
         assertThat(titles(activity)).doesNotContain("Finish the Met tour");
     }
 
@@ -118,7 +121,7 @@ public class A2uiEvChargeTest {
         assertThat(ShadowAlertDialog.getLatestAlertDialog()).isNull();
         assertThat(activity.mChosenCharger).isEqualTo(0);
         assertThat(body(row(activity, SUGGESTION_20)))
-                .containsExactly("Navigating to Fast charger A · DEMO");
+                .containsExactly("Navigating to ChargePoint" + CREDIT);
     }
 
     @Test
@@ -135,7 +138,7 @@ public class A2uiEvChargeTest {
         assertThat(titles(activity)).contains("Finish the Met tour");
 
         // The existing order flow: parked, confirmed, then the pickup card.
-        activity.onHeard("reorder my coffee");
+        activity.onHeard("Order my usual coffee.");
         AlertDialog confirm = ShadowAlertDialog.getLatestAlertDialog();
         confirm.getButton(AlertDialog.BUTTON_POSITIVE).performClick();
         shadowOf(Looper.getMainLooper()).idle();
@@ -149,13 +152,13 @@ public class A2uiEvChargeTest {
     }
 
     @Test
-    public void aDemoReadingIsLabelledAndOnlyDebugBuildsAcceptIt() {
+    public void onlyDebugBuildsAcceptABroadcastReading() {
         mApp.getApplicationInfo().flags &= ~ApplicationInfo.FLAG_DEBUGGABLE;
         A2uiCarUiActivity release = started(DRIVE);
         release.selectCase("ev_charge_coffee");
         mApp.sendBroadcast(vehicle(18));
         shadowOf(Looper.getMainLooper()).idle();
-        assertThat(titles(release)).doesNotContain("Battery 18% · 3 fast chargers on your way");
+        assertThat(titles(release)).doesNotContain("Battery 18% · 3 chargers on your way");
 
         mApp.getApplicationInfo().flags |= ApplicationInfo.FLAG_DEBUGGABLE;
         CarUxRestrictionsUtil.clearInstancesForTesting();
@@ -163,8 +166,8 @@ public class A2uiEvChargeTest {
         debug.selectCase("ev_charge_coffee");
         mApp.sendBroadcast(vehicle(18));
         shadowOf(Looper.getMainLooper()).idle();
-        assertThat(body(row(debug, "Battery 18% · 3 fast chargers on your way")))
-                .containsExactly("From the vehicle · DEMO reading");
+        assertThat(body(row(debug, "Battery 18% · 3 chargers on your way")))
+                .containsExactly("From the vehicle · low battery" + CREDIT);
     }
 
     @Test
@@ -175,9 +178,12 @@ public class A2uiEvChargeTest {
                 + "{\"name\":\"Mid\",\"lat\":40.79,\"lon\":-73.96,\"kw\":50},"
                 + "{\"name\":\"NoPower\",\"lat\":40.78,\"lon\":-73.96}]}";
         List<ChargerFixture.Charger> chargers = ChargerFixture.parse(json);
-        assertThat(chargers).hasSize(3);
+        // Untagged power is kept and simply not shown; nothing is guessed.
+        assertThat(chargers).hasSize(4);
         assertThat(chargers.get(0).mName).isEqualTo("Near");
-        assertThat(chargers.get(2).mName).isEqualTo("Far · X");
+        assertThat(chargers.get(3).mName).isEqualTo("Far · X");
+        assertThat(ChargerFixture.detail(chargers.get(0))).isEqualTo("0.1 mi · 150 kW");
+        assertThat(ChargerFixture.detail(chargers.get(1))).isEqualTo("0.2 mi");
         assertThat(ChargerFixture.messagesFor(chargers)).hasSize(6);
         assertThat(ChargerFixture.messagesFor(chargers.subList(0, 2))).isEmpty();
         assertThat(ChargerFixture.parse("nope")).isEmpty();

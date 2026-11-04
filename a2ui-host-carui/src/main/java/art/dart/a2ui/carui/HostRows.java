@@ -42,6 +42,7 @@ final class HostRows {
     static final String GUIDE = "host:guide";
     static final String SUGGEST = "host:suggest";
     static final String SESSION = "host:session";
+    static final String AGENT_BRIEF = "host:agent-brief";
 
     /** The noun a host card goes by in the change line, or null for one never reported. */
     @androidx.annotation.Nullable
@@ -52,6 +53,7 @@ final class HostRows {
             case GUIDE: return "Audio guide";
             case SUGGEST: return "Suggestion";
             case SESSION: return "Charging";
+            case AGENT_BRIEF: return "Brief";
             default: return null;
         }
     }

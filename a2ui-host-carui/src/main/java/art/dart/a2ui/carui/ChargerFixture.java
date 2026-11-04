@@ -50,18 +50,18 @@ final class ChargerFixture {
     /** Distances are from The Met Fifth Avenue, where chapter two starts. */
     static final double ORIGIN_LAT = 40.7794;
     static final double ORIGIN_LON = -73.9632;
-    /** No live occupancy feed: waits are labelled DEMO estimates. */
-    private static final int[] DEMO_WAIT_MIN = {4, 9, 2};
-
     static final class Charger {
         final String mName;
         final double mMiles;
+        /** Tagged output, or NaN: OSM tags only some stations, and nothing is guessed. */
         final double mKw;
+        final int mCapacity;
 
-        Charger(String name, double miles, double kw) {
+        Charger(String name, double miles, double kw, int capacity) {
             mName = name;
             mMiles = miles;
             mKw = kw;
+            mCapacity = capacity;
         }
     }
 
@@ -84,14 +84,23 @@ final class ChargerFixture {
             out.add(A2uiMessage.updateDataModel(UseCaseCorpus.VERSION, SURFACE,
                     "/chargers/" + i + "/name", c.mName));
             out.add(A2uiMessage.updateDataModel(UseCaseCorpus.VERSION, SURFACE,
-                    "/chargers/" + i + "/detail", String.format(Locale.US,
-                            "%.1f mi · %d kW · est. wait %d min (DEMO)", c.mMiles,
-                            Math.round(c.mKw), DEMO_WAIT_MIN[i])));
+                    "/chargers/" + i + "/detail", detail(c)));
         }
         return out;
     }
 
-    /** Chargers with a name, a position and a power rating, nearest first. */
+    /** "0.9 mi · 72 kW · 4 stalls": only what OSM tags; no availability, price or speed claim. */
+    @NonNull
+    static String detail(@NonNull Charger c) {
+        StringBuilder s = new StringBuilder(String.format(Locale.US, "%.1f mi", c.mMiles));
+        if (c.mKw > 0) s.append(String.format(Locale.US, " · %d kW", Math.round(c.mKw)));
+        if (c.mCapacity > 0) {
+            s.append(" · ").append(c.mCapacity).append(c.mCapacity == 1 ? " stall" : " stalls");
+        }
+        return s.toString();
+    }
+
+    /** Chargers with a name and a position, nearest first. */
     @VisibleForTesting
     @NonNull
     static List<Charger> parse(@Nullable String json) {
@@ -108,11 +117,13 @@ final class ChargerFixture {
             double lat = first(o, "lat", "latitude");
             double lon = first(o, "lon", "lng", "longitude");
             double kw = first(o, "kW", "kw", "powerKw", "power_kw", "maxKw");
-            if (name.isEmpty() || Double.isNaN(lat) || Double.isNaN(lon) || !(kw > 0)) continue;
+            double capacity = first(o, "capacity");
+            if (name.isEmpty() || Double.isNaN(lat) || Double.isNaN(lon)) continue;
             String operator = o.optString("operator", "").trim();
             String label = operator.isEmpty() || name.contains(operator) ? name
                     : name + " · " + operator;
-            chargers.add(new Charger(label, miles(ORIGIN_LAT, ORIGIN_LON, lat, lon), kw));
+            chargers.add(new Charger(label, miles(ORIGIN_LAT, ORIGIN_LON, lat, lon), kw,
+                    Double.isNaN(capacity) ? 0 : (int) capacity));
         }
         chargers.sort(Comparator.comparingDouble(c -> c.mMiles));
         return chargers;

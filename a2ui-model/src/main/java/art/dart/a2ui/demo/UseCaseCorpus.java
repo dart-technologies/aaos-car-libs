@@ -391,11 +391,12 @@ public final class UseCaseCorpus {
         b.text("weather", "Today · Mostly cloudy, chance of showers · high 72°F",
                 "National Weather Service · Central Park · Thu Nov 5 forecast");
         b.action("reserve", "Button", "Reserve entry for two at 3 PM",
-                "DEMO booking · confirm while parked", "reserve");
+                "Timed entry · confirm while parked", "reserve");
         b.put("reserve", "voicePhrase", "reserve entry for two at three");
         b.action("audio", "AudioPlayer", "Audio guide · The Met highlights",
-                "Plays in motion", "play");
-        b.put("audio", "voicePhrase", "play the audio guide");
+                "Six works, a few words each · plays in motion", "play");
+        // Asked in motion; answered by the guide's audio, with nothing new on the driver screen.
+        b.put("audio", "voicePhrase", "what should we see first");
         b.container("gallery", "Modal", "met_436535", "met_437881", "met_437394", "met_435809",
                 "met_436105", "met_435868", "film");
         b.put("gallery", "title", "Artwork highlights");
@@ -416,7 +417,7 @@ public final class UseCaseCorpus {
         b.action("artmode", "ChoicePicker", "Film · Slideshow", "Artwork view · parked only",
                 "select");
         b.put("artmode", "voicePhrase", "switch the artwork view");
-        b.data("/ticket/title", "Timed entry · Thu Nov 5 · 3:00 PM · 2 guests · DEMO");
+        b.data("/ticket/title", "Timed entry · Thu Nov 5 · 3:00 PM · 2 guests");
         b.data("/ticket/detail", "The Met Fifth Avenue · 81st St entrance");
         b.data("/arrival/title", "Arrived · The Met Fifth Avenue");
         b.data("/arrival/detail", "81st St entrance · entry 3:00");
@@ -448,9 +449,9 @@ public final class UseCaseCorpus {
             b.put(id, "subtitle", ptr("/chargers/" + i + "/detail"));
             b.put(id, "voicePhrase", "take me to the " + ordinals[i] + " one");
         }
-        b.action("coffee", "Button", "Reorder cold brew + bagel",
-                "Fifth House · DEMO order · confirm while parked", "purchase");
-        b.put("coffee", "voicePhrase", "reorder my coffee");
+        b.action("coffee", "Button", "Order your usual",
+                "Oat milk latte · $5.25 · pickup at the counter", "purchase");
+        b.put("coffee", "voicePhrase", "order my usual coffee");
         b.container("tour", "Modal", "met_436535", "met_437881", "met_437394", "met_435809",
                 "met_436105", "met_435868", "film");
         b.put("tour", "title", "Finish the Met tour");
@@ -467,16 +468,16 @@ public final class UseCaseCorpus {
         b.component("met_436105", "Image", "The Death of Socrates", "Jacques Louis David · 1787");
         b.component("met_435868", "Image", "The Card Players", "Paul Cézanne · 1890–92");
         b.component("film", "Video", "Artwork film", "Six works, slowly · parked only");
-        // DEMO defaults; a bundled chargers.json (OSM) replaces them through updateDataModel.
-        b.data("/chargers/0/name", "Fast charger A · DEMO");
-        b.data("/chargers/0/detail", "0.6 mi · 150 kW · est. wait 4 min");
-        b.data("/chargers/1/name", "Fast charger B · DEMO");
-        b.data("/chargers/1/detail", "1.1 mi · 250 kW · est. wait 9 min");
-        b.data("/chargers/2/name", "Fast charger C · DEMO");
-        b.data("/chargers/2/detail", "1.9 mi · 120 kW · est. wait 2 min");
-        b.data("/session/detail", "about 22 min · DEMO");
+        // Placeholders; a bundled chargers.json (OSM) replaces them through updateDataModel.
+        b.data("/chargers/0/name", "Charger nearby");
+        b.data("/chargers/0/detail", "0.6 mi · public charging");
+        b.data("/chargers/1/name", "Charger uptown");
+        b.data("/chargers/1/detail", "1.1 mi · public charging");
+        b.data("/chargers/2/name", "Charger east");
+        b.data("/chargers/2/detail", "1.9 mi · public charging");
+        b.data("/session/detail", "about 22 min");
         b.data("/order/status", "Coffee ready at the counter");
-        b.data("/order/pickup", "Fifth House Coffee Atelier · DEMO order");
+        b.data("/order/pickup", "Oat milk latte · Fifth House Coffee Atelier");
         b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
                 TemplateCapability.MODAL, TemplateCapability.VIDEO);
         return b.build();
