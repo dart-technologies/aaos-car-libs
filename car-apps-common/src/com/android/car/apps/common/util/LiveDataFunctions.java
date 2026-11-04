@@ -117,7 +117,9 @@ public class LiveDataFunctions {
      */
     public static <T, R> LiveData<FutureData<R>> loadingSwitchMap(LiveData<T> trigger,
             @NonNull Function<T, LiveData<R>> func) {
-        LiveData<R> output = Transformations.switchMap(trigger, func);
+        // Dart fork note: `func::apply`, because lifecycle 2.6's Kotlin switchMap takes a
+        // Function1; a value already typed as the old Function needs a method reference.
+        LiveData<R> output = Transformations.switchMap(trigger, func::apply);
         return new MediatorLiveData<FutureData<R>>() {
             {
                 addSource(trigger, data -> setValue(new FutureData<>(true, null)));

@@ -31,6 +31,8 @@ import static com.google.common.truth.Truth.assertThat;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.android.car.rotary.test.R;
+
 import androidx.test.rule.ActivityTestRule;
 
 import com.android.car.ui.recyclerview.CarUiRecyclerView;

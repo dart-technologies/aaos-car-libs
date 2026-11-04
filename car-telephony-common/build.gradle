@@ -17,19 +17,23 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion gradle.ext.aaosLatestSDK
+    namespace = 'com.android.car.telephony.common'
+    // Dart fork note: replaces package= in tests/unittests/AndroidManifest.xml,
+    // which AGP 8 rejects. See the note in that file.
+    testNamespace = 'com.android.car.telephony.common.unittests'
+    compileSdk = gradle.ext.aaosLatestSDK
 
     defaultConfig {
-        minSdkVersion 28
-        targetSdkVersion gradle.ext.aaosTargetSDK
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
@@ -41,28 +45,75 @@ android {
 
         androidTest.setRoot('tests/unittests')
         androidTest.java.srcDirs = ['tests/unittests/src']
+
+        // Dart fork addition 2026-08-21: a JVM test source set, so this module enters the ledgers.
+        //
+        // Until now car-telephony-common appeared in NONE of them -- not docs/gate-counts.tsv, not
+        // docs/coverage-baseline.tsv, not scripts/gate-modules.tsv. Its only gate presence was 26
+        // instrumented tests checked against a hardcoded expectation. So 1,904 SLOC of Cursor,
+        // contact and telephony parsing -- the code in this repository most exposed to malformed
+        // provider data -- had no coverage record and no test-count ledger, and nothing would have
+        // noticed if its tests stopped running or its source changed.
+        //
+        // Adding the source set is what buys entry to all three at once, because all three read
+        // scripts/gate-modules.tsv.
+        //
+        // OUTSIDE 'src' for the reason car-assist-lib states: main.java.srcDirs is the bare
+        // directory, so anything under src/test would compile as MAIN source and ship in the AAR.
+        test {
+            java.srcDirs = ['tests/unit/src']
+            resources.srcDirs = ['tests/unit/config']
+        }
     }
 
     testOptions {
         animationsDisabled = true
+        unitTests {
+            includeAndroidResources = true
+            // false: this module's subject is Cursor parsing, and a stubbed Cursor that returns
+            // default values would make every malformed-input test pass by returning 0 and null
+            // from methods that should have thrown or been guarded.
+            returnDefaultValues = false
+        }
     }
 }
 
 dependencies {
-    runtimeOnly 'androidx.legacy:legacy-support-v4:1.0.0'
+    // JVM test dependencies, added 2026-08-21 with the test source set above. Robolectric because
+    // the subject is android.database.MatrixCursor: a mock Cursor would let the test decide what
+    // getColumnIndex returns, which is the exact thing under test.
+    testImplementation libs.junit
+    testImplementation libs.robolectric
+    testImplementation libs.truth
+    testImplementation libs.androidx.test.core
 
-    implementation 'com.github.bumptech.glide:glide:4.12.0'
-    implementation 'com.google.guava:guava:30.1.1-android'
-    implementation 'com.googlecode.libphonenumber:libphonenumber:8.12.31'
+    // Dart fork note: core was used but undeclared, so it compiled against whatever won (1.0.0).
+    // Declared rather than waived in docs/resolution-exceptions.tsv.
+    implementation libs.androidx.core
+
+    // Dart fork note: androidx.legacy:legacy-support-v4 removed. It shipped no code and pulled in
+    // androidx.media 1.0.0; a javap scan found no reference to anything it supplied. See FORK.md.
+
+    implementation libs.glide
+    // Dart fork note: 33.2.1-android, past CVE-2023-2976 (fixed in 32.0.0) and the version truth
+    // brings to androidTest, so compile and test agree. The only guava API used is Preconditions.
+    implementation libs.guava
+    implementation libs.libphonenumber
 
     implementation project(':car-apps-common')
 
-    implementation files(gradle.ext.lib_car_system_stubs)
+    // Dart fork note: no android.car.* import here, so upstream's AOSP stubs dependency is
+    // optional compileOnly.
+    if (file(gradle.ext.lib_car_system_stubs).exists()) {
+        compileOnly files(gradle.ext.lib_car_system_stubs)
+    }
 
-    androidTestImplementation 'com.google.truth:truth:1.1.3'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'org.mockito:mockito-android:3.12.4'
-    androidTestImplementation 'androidx.test:runner:1.4.0'
-    androidTestImplementation 'androidx.test:rules:1.4.0'
-    androidTestImplementation 'androidx.test:core:1.4.0'
+    // Dart fork note: test dependencies unified with the rest of the repo (upstream was on
+    // androidx.test 1.4.0).
+    androidTestImplementation libs.truth
+    androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.mockito.android
+    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.androidx.test.rules
+    androidTestImplementation libs.androidx.test.core
 }

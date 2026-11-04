@@ -16,30 +16,50 @@
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-buildscript {
-    repositories {
-        google()
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.2'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-    }
+// Dart fork note: AGP's version lives in gradle/libs.versions.toml, resolved through
+// settings.gradle's pluginManagement, not upstream's buildscript classpath.
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
 }
 
 allprojects {
-    repositories {
-        google()
-        jcenter()
-    }
-    tasks.withType(JavaCompile) {
-        // Compile with prebuilt android.jar.
-        options.compilerArgs.add('-Xbootclasspath/p:' + gradle.ext.lib_system_stubs)
+    // Dart fork note: upstream's -Xbootclasspath/p AOSP android.jar is removed: it never resolved
+    // outside an AOSP tree and JDK 9 dropped the flag. Modules use useLibrary 'android.car'.
+    tasks.withType(JavaCompile).configureEach {
         // TODO: just pass -Xlint, to enable all the supported types of warnings.
         options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
     }
 
-    buildDir = "/tmp/aaos-apps-gradle-build/${rootProject.name}/${project.name}"
+    // Test results are gate evidence: always execute, never restore from the build cache.
+    tasks.withType(Test).configureEach {
+        outputs.cacheIf('tests are gate evidence') { false }
+    }
+
+    // Dart fork note: build output under the repo, not upstream's absolute /tmp path.
+    layout.buildDirectory = rootProject.layout.projectDirectory
+            .dir("build/${project.name}")
+
+    // Dart fork note: JVM unit-test coverage, enabled centrally so a new module is covered.
+    // Instrumented coverage stays off; it would slow the gate's most expensive step.
+    // includeNoLocationClasses makes Robolectric suites measurable (its classloader drops source
+    // locations). It is set from AGP's unitTests.all hook, which runs after AGP applies jacoco; a
+    // tasks.withType block can run before that and silently set nothing.
+    def enableJvmCoverage = {
+        android.buildTypes.debug.enableUnitTestCoverage = true
+        android.testOptions.unitTests.all { t ->
+            def jacocoExt = t.extensions.findByName('jacoco')
+            if (jacocoExt == null) {
+                // Fail loudly: a missing extension would silently leave modules unmeasured.
+                throw new GradleException("no jacoco extension on ${t.path}; coverage would "
+                        + "silently not be collected")
+            }
+            jacocoExt.includeNoLocationClasses = true
+            // Required with includeNoLocationClasses: JDK internals have no location either, and
+            // instrumenting them fails inside the agent.
+            jacocoExt.excludes = ['jdk.internal.*']
+        }
+    }
+    plugins.withId('com.android.library', enableJvmCoverage)
+    plugins.withId('com.android.application', enableJvmCoverage)
 }

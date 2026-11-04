@@ -16,6 +16,7 @@
 package com.android.car.ui.toolbar;
 
 import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.pressImeActionButton;
 import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom;
@@ -113,7 +114,26 @@ public class ToolbarSearchTest {
             toolbar.registerSearchListener(searchListener);
             toolbar.registerSearchCompletedListener(searchCompletedListener);
         });
-        onView(isAssignableFrom(EditText.class)).perform(typeText("hello\n"));
+        // Typed and SUBMITTED separately, rather than relying on a trailing "\n".
+        //
+        // The newline only becomes a search submission if the IME translates it into an editor
+        // action, and in SearchMode.EDIT that translation is racing an IME restart:
+        // SearchView.setPlainText(true) switches imeOptions from IME_ACTION_SEARCH to
+        // IME_ACTION_DONE and then calls InputMethodManager.restartInput(), which is asynchronous.
+        // Until the IME has restarted, the input connection still describes the old options, and a
+        // newline arriving in that window is delivered as a plain character instead of an action --
+        // so onEditorAction never fires and searchCompletedListener never runs.
+        //
+        // That is why the two parameters observed to flake were [1] and [3], which are exactly the
+        // two EDIT cases (plugin off and plugin on); the SEARCH cases never call setPlainText on
+        // this path and never restart the input.
+        //
+        // pressImeActionButton() performs the editor action directly on the current input
+        // connection instead of hoping the IME derives one, and SearchView#onEditorAction accepts
+        // IME_ACTION_DONE *or* IME_ACTION_SEARCH -- so it is correct on either side of the restart
+        // rather than only after it.
+        onView(isAssignableFrom(EditText.class)).perform(typeText("hello"));
+        onView(isAssignableFrom(EditText.class)).perform(pressImeActionButton());
 
         verify(searchListener).accept("h");
         verify(searchListener).accept("he");

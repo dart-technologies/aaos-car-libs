@@ -15,10 +15,9 @@
   limitations under the License.
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.car.ui.paintbooth">
-  <uses-sdk
-      android:minSdkVersion="28" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Dart fork note: <uses-sdk android:minSdkVersion="28"> removed; AGP 9 rejects it and
+         minSdk comes from defaultConfig. -->
   <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
   <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL"/>
   <uses-permission android:name="android.permission.CHANGE_OVERLAY_PACKAGES"/>
@@ -103,11 +102,8 @@
         android:exported="false"
         android:parentActivityName=".MainActivity"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-    <activity
-        android:name=".toolbar.OldToolbarActivity"
-        android:exported="false"
-        android:parentActivityName=".MainActivity"
-        android:theme="@style/Theme.CarUi"/>
+    <!-- Dart fork note: removed .toolbar.OldToolbarActivity and .button.CarUiButtonActivity, whose
+         classes do not exist. Theme.CarUi now has no demo in this app. -->
     <activity
         android:name=".overlays.OverlayActivity"
         android:exported="false"
@@ -120,10 +116,6 @@
         android:parentActivityName=".MainActivity"/>
     <activity
         android:name=".caruirecyclerview.CarUiListItemActivity"
-        android:exported="false"
-        android:parentActivityName=".MainActivity"/>
-    <activity
-        android:name=".button.CarUiButtonActivity"
         android:exported="false"
         android:parentActivityName=".MainActivity"/>
 

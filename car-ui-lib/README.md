@@ -18,6 +18,8 @@ Project layout:
 
 ### Building and running PaintBooth
 
+> Dart fork note: the standalone Gradle build in this folder (AGP 7.0.0, Gradle 7 wrapper) could not run and was removed. Open `aaos-apps-gradle-project/` instead; it includes car-ui-lib, PaintBooth and the plugin.
+
 While car-ui-lib can be developed by using aidegen, it's probably easier to use Android Studio with the gradle build files. To do this, select "Open an existing Android Studio project", then navigating to the (outer) car-ui-lib folder:
 
 ![Open an existing Android Studio project](documentation/images/open_existing_android_studio_project.png)

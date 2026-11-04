@@ -332,6 +332,44 @@ public final class PluginFactoryAdapterV2 implements PluginFactory {
             public boolean getReverseLayout() {
                 return reversed;
             }
+
+            /**
+             * Dart fork fix: THIS OVERRIDE IS THE CRASH FIX.
+             *
+             * <p>This anonymous class previously relied on {@code LayoutStyleOEMV1}'s
+             * {@code default int getSpanSize(int)}. That default exists <b>only in the AOSP source
+             * tree</b> — AOSP commit {@code 9307f5b38}, 2021-10-26. In every <b>published</b>
+             * {@code car-ui-lib-plugin-apis} (1.0.1 through 1.5.0) and in the proxy plugin that
+             * <b>ships on the AAOS system image</b>, the method is {@code PUBLIC ABSTRACT}
+             * (verified by {@code javap} on both AARs and {@code dexdump} on the image's APK).
+             *
+             * <p>So this object was handed across the plugin boundary with no concrete
+             * {@code getSpanSize}, and the plugin — built against the abstract declaration — called
+             * it:
+             *
+             * <pre>
+             * java.lang.AbstractMethodError: abstract method
+             *   "int ...oemapis.recyclerview.LayoutStyleOEMV1.getSpanSize(int)"
+             * at com.chassis.car.ui.plugin.recyclerview.RecyclerViewAdapterProxyV1$3.getSpanSize
+             * Test run failed to complete. Instrumentation run failed due to Process crashed.
+             * </pre>
+             *
+             * <p>That is a <b>process crash</b>, not a catchable exception. It truncated this
+             * repository's 497-test suite at 227 and, in production, is an app crash on any head
+             * unit whose plugin was built against published artifacts.
+             *
+             * <p>Implementing it explicitly makes the object valid under both declarations, so this
+             * fix stands independently of whether the vendored {@code oem-apis} is later replaced
+             * by {@code car-ui-lib-plugin-apis:1.5.0}. {@code RecyclerViewAdapterV1} already did
+             * this correctly; only this call site relied on the default.
+             *
+             * <p>Returns 1 — one span per item — which is the semantics of the removed default and
+             * the correct answer for a layout style carrying no {@code SpanSizeLookup}.
+             */
+            @Override
+            public int getSpanSize(int position) {
+                return 1;
+            }
         };
 
         boolean isLtr = context.getResources().getConfiguration().getLayoutDirection()

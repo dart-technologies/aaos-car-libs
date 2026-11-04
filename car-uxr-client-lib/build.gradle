@@ -19,34 +19,42 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion gradle.ext.aaosLatestSDK
+    namespace = 'com.android.car.uxr'
+    compileSdk = gradle.ext.aaosLatestSDK
 
     defaultConfig {
-        minSdkVersion 28
-        targetSdkVersion gradle.ext.aaosTargetSDK
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
-            aidl.srcDirs = ['src']
-            renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
+        }
+        // Dart fork note: test roots are siblings of 'src', never children, or they would compile
+        // as main source and ship in the AAR.
+        test {
+            java.srcDirs = ['tests/unit/src']
         }
     }
 
     testOptions {
         unitTests {
             includeAndroidResources = true
+            // Deliberately NOT returnDefaultValues: a silently-stubbed android.jar method
+            // returning 0/false is the "absence indistinguishable from a benign reading" shape
+            // these tests exist to detect. Tests mock or pass null instead.
+            returnDefaultValues = false
         }
     }
 
@@ -54,10 +62,12 @@ android {
 }
 
 dependencies {
-    def lifecycle_version = "2.2.0"
-    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
+    implementation libs.androidx.lifecycle.common.java8
 
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation libs.androidx.recyclerview
 
     implementation project(":car-ui-lib")
+
+    testImplementation libs.junit
+    testImplementation libs.mockito.core
 }

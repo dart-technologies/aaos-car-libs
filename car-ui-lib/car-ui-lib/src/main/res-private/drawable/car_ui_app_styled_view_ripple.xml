@@ -16,27 +16,31 @@
   ~ limitations under the License.
   ~
  -->
+<!--
+  Dart fork note: literals replaced by the overlayable car_ui_rotary_focus_* tokens they equalled,
+  as in car_ui_preference_primary_switch_rotary_highlight.xml, so an OEM rotary theme reaches them.
+-->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
   <item android:state_focused="true" android:state_pressed="true">
     <shape android:shape="oval">
-      <solid android:color="#8A94CBFF"/>
-      <stroke android:width="4dp"
-          android:color="#94CBFF"/>
+      <solid android:color="@color/car_ui_rotary_focus_pressed_fill_color"/>
+      <stroke android:width="@dimen/car_ui_rotary_focus_pressed_stroke_width"
+          android:color="@color/car_ui_rotary_focus_pressed_stroke_color"/>
       <size android:width="48dp"
           android:height="48dp"/>
     </shape>
   </item>
   <item android:state_focused="true">
     <shape android:shape="oval">
-      <solid android:color="#3D94CBFF"/>
-      <stroke android:width="8dp"
-          android:color="#94CBFF"/>
+      <solid android:color="@color/car_ui_rotary_focus_fill_color"/>
+      <stroke android:width="@dimen/car_ui_rotary_focus_stroke_width"
+          android:color="@color/car_ui_rotary_focus_stroke_color"/>
       <size android:width="48dp"
           android:height="48dp"/>
     </shape>
   </item>
   <item>
-    <ripple android:color="#27ffffff">
+    <ripple android:color="@color/car_ui_ripple_color">
       <item android:id="@android:id/mask">
         <shape android:shape="oval">
           <solid android:color="#FFFFFF"/>

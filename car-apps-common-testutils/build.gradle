@@ -1,0 +1,68 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Test helpers that used to live in car-apps-common's MAIN source set.
+//
+// They were there because car-media-common's tests consume them across a module boundary, and the
+// only thing one module can take from another is its published artifact. The consequence was that a
+// production library needed JUnit to compile: CaptureObserver and InstantTaskExecutorRule implement
+// org.junit.rules.TestRule. The fork softened that to `compileOnly 'junit:junit'`, which kept JUnit
+// off the runtime classpath and was the right immediate fix — but the helpers still shipped inside
+// the production AAR, and a consumer could still reach them at runtime.
+//
+// A separate module is the shape that actually matches the facts: these are test helpers, they may
+// depend on a test framework, and nothing that ships to a head unit should contain them. The
+// package is deliberately unchanged (com.android.car.apps.common.testutils), so every existing
+// import still resolves and the move is invisible to the tests that use them.
+apply plugin: 'com.android.library'
+
+android {
+    namespace = 'com.android.car.apps.common.testutils'
+    compileSdk = gradle.ext.aaosLatestSDK
+
+    defaultConfig {
+        minSdk = 28
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+        }
+    }
+}
+
+dependencies {
+    // Lifecycle is the catalog's `lifecycle`, the SAME version car-apps-common uses. Hardcoding a
+    // different one here would put two lifecycle versions on one test classpath and let Gradle's
+    // conflict resolution decide which — the kind of silent divergence the androidx.test
+    // unification (B1) removed elsewhere in this repo.
+    //
+    // `api`, not `implementation`: these types appear in the helpers' own public signatures
+    // (Observer<T>, LifecycleOwner, TestRule), so a consuming test source set needs them on its
+    // compile classpath too. `implementation` would compile here and fail at every call site.
+    api libs.junit
+    api libs.androidx.lifecycle.common.java8
+    api libs.androidx.lifecycle.livedataCore
+    api libs.androidx.lifecycle.runtime
+    api libs.androidx.arch.core.testing
+    implementation libs.androidx.annotation
+}

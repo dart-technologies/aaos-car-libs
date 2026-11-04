@@ -19,34 +19,39 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion gradle.ext.aaosLatestSDK
+    namespace = 'com.android.car.apps.common'
+    compileSdk = gradle.ext.aaosLatestSDK
 
     defaultConfig {
-        minSdkVersion 28
-        targetSdkVersion gradle.ext.aaosTargetSDK
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
-            aidl.srcDirs = ['src']
-            renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
+        }
+        // Dart fork note: upstream's tests/unittests were wired only into Soong; they run here.
+        test {
+            java.srcDirs = ['tests/unittests/src']
+            resources.srcDirs = ['tests/unittests/config']
         }
     }
 
     testOptions {
         unitTests {
             includeAndroidResources = true
+            returnDefaultValues = false
         }
     }
 
@@ -56,19 +61,35 @@ android {
 
 dependencies {
 
-    implementation "androidx.annotation:annotation:1.2.0"
-    implementation "androidx.cardview:cardview:1.0.0"
-    implementation "androidx.interpolator:interpolator:1.0.0"
+    // Dart fork note: Gradle equivalents of those tests' Android.bp dependencies. Robolectric
+    // because both classes touch LiveData and Looper.
+    testImplementation libs.junit
+    testImplementation libs.robolectric
+    testImplementation libs.mockito.core
+    testImplementation libs.truth
+    testImplementation libs.androidx.test.core
+    testImplementation libs.androidx.test.ext.junit
+    testImplementation libs.androidx.arch.core.testing
+    testImplementation project(':car-apps-common-testutils')
 
-    def lifecycle_version = "2.2.0"
-    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
-    // Not available in 2.3+
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+    implementation libs.androidx.annotation
+    implementation libs.androidx.cardview
+    implementation libs.androidx.interpolator
 
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation libs.androidx.lifecycle.common.java8
+    // Dart fork note: lifecycle-extensions (final release 2.2.0) was removed; nothing used it. It
+    // was the only compile-scope supplier of lifecycle-livedata, now declared. `api`, because
+    // LiveData appears in public signatures (docs/api-surface/car-apps-common.txt).
+    api libs.androidx.lifecycle.livedata
+    // androidx.fragment was never declared ANYWHERE in this repository. FragmentUtils uses Fragment
+    // and FragmentActivity directly; 1.5.4 is what already resolves here, via appcompat.
+    api libs.androidx.fragment
 
-    implementation "junit:junit:4.12"
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.recyclerview
+
+    // Dart fork note: upstream shipped junit on the production runtime classpath; the test helpers
+    // that needed it moved to :car-apps-common-testutils.
 
     implementation project(":car-ui-lib")
 }

@@ -14,19 +14,50 @@
  * limitations under the License.
  */
 
-rootProject.name='AAOS Apps'
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
 
-gradle.ext.aaosLatestSDK = 31
-gradle.ext.aaosTargetSDK = 31
+// Dart fork addition: gate for the optional Flutter binding; the repositories below depend on it.
+def withFlutter = System.getenv('CAR_UXR_WITH_FLUTTER') != null ||
+        settings.startParameter.projectProperties.containsKey('withFlutter')
 
-gradle.ext.lib_car_system_stubs = rootDir.absolutePath + "../../../../../../prebuilts/sdk/" + gradle.ext.aaosLatestSDK + "/system/android.car-system-stubs.jar"
-gradle.ext.lib_system_stubs = rootDir.absolutePath + "../../../../../../prebuilts/sdk/" + gradle.ext.aaosLatestSDK + "/system/android.jar"
+dependencyResolutionManagement {
+    repositoriesMode = RepositoriesMode.PREFER_SETTINGS
+    repositories {
+        google()
+        mavenCentral()
+        if (withFlutter) {
+            // The Flutter engine embedding is published here; added only when Flutter is enabled.
+            maven { url = 'https://storage.googleapis.com/download.flutter.io' }
+        }
+    }
+}
 
-//TODO: find something that works
-//def repoRootFolder = settingsDir.getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
-//gradle.ext.aaosBuildDir = new File(repoRootFolder, "/out/aaos-apps-gradle-project.build/")
-//gradle.ext.aaosBuildDir = new File('../../../../../out/aaos-apps-gradle-project.build/').getParentFile()
+rootProject.name = 'AAOS Apps'
 
+// Dart fork note: upstream pinned 31. The floor is now 36, set by dependencies (recyclerview
+// 1.4.0 needs 35, core 1.18.0 needs 36), not by the toolchain. targetSdk stays 36 because the
+// newest AAOS image here is API 35, so API 37 behaviour could not be tested. See FORK.md, "Why
+// compileSdk 37 but targetSdk 36". CarUxRestrictionsInfo, which capped this at 34, is declared
+// locally as com.android.car.ui.utils.CarUxRestrictionsInfo.
+gradle.ext.aaosLatestSDK = 37
+gradle.ext.aaosTargetSDK = 36
+
+// Dart fork note: upstream's AOSP prebuilts path could never resolve. Vendor
+// android.car-system-stubs.jar (android.car's @SystemApi surface) at this path to build against
+// it; the modules fall back when it is absent. See FORK.md.
+gradle.ext.lib_car_system_stubs =
+        new File(rootDir, '../prebuilts/android.car-system-stubs.jar').canonicalPath
+
+// Dart fork addition: minimal compile-only stand-in for the @SystemApi classes the public
+// android.car.jar omits, used when no real stubs jar is vendored.
+include ':car-system-stubs'
+project(':car-system-stubs').projectDir = new File('../car-system-stubs')
 
 include ':car-ui-lib'
 project(':car-ui-lib').projectDir = new File('../car-ui-lib/car-ui-lib')
@@ -42,8 +73,14 @@ project(':car-rotary-lib').projectDir = new File('../car-ui-lib/car-rotary-lib')
 include ':car-apps-common'
 project(':car-apps-common').projectDir = new File('../car-apps-common')
 
-include ':car-media-common'
-project(':car-media-common').projectDir = new File('../car-media-common')
+// Test helpers extracted from car-apps-common's main source set — see that module's build.gradle
+// for why. Consumed only by test source sets; nothing ships it.
+include ':car-apps-common-testutils'
+project(':car-apps-common-testutils').projectDir = new File('../car-apps-common-testutils')
+
+
+// Consumer-only compile fixture: depends only on car-media-common, proving the Media3 and Guava
+// types in its public signatures arrive transitively.
 
 include ':car-uxr-client-lib'
 project(':car-uxr-client-lib').projectDir = new File('../car-uxr-client-lib')
@@ -58,25 +95,20 @@ include ':car-messenger-common'
 project(':car-messenger-common').projectDir = new File('../car-messenger-common')
 include ':car-messenger-common:model'
 
-include ':car-media-app'
-project(':car-media-app').projectDir = new File('../../Media')
+// Dart fork additions. :a2ui-model is the shared surface model and prune policy, renderer-free so
+// it runs in a local JVM. Host A (androidx.car.app) renders through the stock templates host,
+// which can reject what it is given.
 
-include ':test-media-app'
-project(':test-media-app').projectDir = new File('../../tests/TestMediaApp')
 
-include ':test-rotary-playground'
-project(':test-rotary-playground').projectDir = new File('../../tests/RotaryPlayground')
+// Host B: the same model rendered by car-ui-lib through the OEM plugin. Neither host depends on
+// the other.
 
-include ':test-rotary-ime'
-project(':test-rotary-ime').projectDir = new File('../../tests/RotaryIME')
+// Dart fork addition: the Flutter binding (car-uxr-flutter/android). Off by default so a Kotlin
+// OEM never resolves Flutter artifacts; enable with -PwithFlutter or CAR_UXR_WITH_FLUTTER=1.
+if (withFlutter) {
+    include ':car-uxr-flutter'
+    project(':car-uxr-flutter').projectDir = new File('../car-uxr-flutter/android')
+}
 
-include ':car-calendar-app'
-project(':car-calendar-app').projectDir = new File('../../Calendar')
-
-include ':car-dialer-app'
-project(':car-dialer-app').projectDir = new File('../../Dialer')
-include ':car-dialer-app:testing'
-include ':car-dialer-app:framework'
-
-include ':car-messenger-app'
-project(':car-messenger-app').projectDir = new File('../../Messenger')
+// Dart fork note: upstream's app includes (media, calendar, dialer, messenger, test apps) live in
+// sibling AOSP repos and are omitted.

@@ -166,7 +166,20 @@ public final class AdapterWrapper extends RecyclerView.Adapter<ViewHolderWrapper
     public void unregisterAdapterDataObserver(RecyclerView.AdapterDataObserver observer) {
         super.unregisterAdapterDataObserver(observer);
         if (!super.hasObservers()) {
-            mAdapter.registerAdapterDataObserver(mAdapterDataObserver);
+            // UNregister. This said `register` -- a copy-paste inversion of the method directly
+            // above, so every detach added ANOTHER plugin-side observer to the app's AdapterOEMV1
+            // instead of removing the one that was there.
+            //
+            // The correct form is three files away: car-ui-lib's DelegatingContentLimitingAdapter
+            // has the identical shape and calls mDelegate.unregisterAdapterDataObserver. This is
+            // the copy that drifted.
+            //
+            // It matters more than an ordinary leak because the retaining object lives in the
+            // PLUGIN's ClassLoader. Nothing in the app's lifecycle can release it and it is
+            // invisible to an app-side leak trace -- and notifications multiply with each detach,
+            // so the symptom is a list that updates several times per change in an app the OEM
+            // did not write.
+            mAdapter.unregisterAdapterDataObserver(mAdapterDataObserver);
         }
     }
 

@@ -39,6 +39,7 @@ import android.view.inputmethod.InputMethodManager;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.car.ui.rotary.R;
 import com.android.car.ui.utils.ViewUtils;
 
 /**

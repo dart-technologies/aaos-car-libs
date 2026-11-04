@@ -15,6 +15,5 @@
   limitations under the License.
   -->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="should.not.matter.because.sta_tic.library">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 </manifest>

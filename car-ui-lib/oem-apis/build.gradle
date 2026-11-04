@@ -14,32 +14,60 @@
  * limitations under the License.
  */
 
-// Library-level build file
+// The plugin-contract module — now a GUARD, not a copy.
+//
+// This module used to vendor 24 interfaces lifted from the AOSP source tree. Measurement showed
+// that copy was published 1.0.1 minus nine methods on RecyclerViewOEMV1, with
+// LayoutStyleOEMV1.getSpanSize weakened from abstract to default; the divergence produced an
+// AbstractMethodError against a stock AAOS image. The sources are gone and both consumers now
+// compile against com.android.car.ui:car-ui-lib-plugin-apis:1.5.0 — the artifact that actually
+// ships — so the shape cannot drift again.
+//
+// What remains here is the part a dependency cannot supply: tests over the published contract.
+//
+//   BuilderDefaultsTest   every Builder default in the contract, so a value crossing into an OEM
+//                         implementation cannot change without a test naming it. These now assert
+//                         the PUBLISHED builders rather than a local copy of them.
+//   OemApiSurfaceTest     the shape this repo relies on, asserted reflectively. Today's parity was
+//                         established by hand-diffing javap output; this is what turns that
+//                         one-off measurement into a standing check, so a future bump that
+//                         removes or weakens a member fails the build instead of failing on a
+//                         head unit.
 
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 30
+    namespace = 'should.not.matter.because.sta_tic.library'
+    compileSdk = gradle.ext.aaosLatestSDK
 
     defaultConfig {
-        minSdkVersion 28
-        targetSdkVersion 30
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     testOptions {
         unitTests {
             includeAndroidResources = true
+            // Dart fork note: no returnDefaultValues; a stubbed method silently returning 0/false
+            // is the absent-reading shape these tests guard against. Tests pass null or a mock.
+            returnDefaultValues = false
         }
     }
 }
 
 dependencies {
+    // Not compileOnly: the tests need these classes at RUNTIME, and they are the subject rather
+    // than a compile-time contract here.
+    implementation libs.carui.plugin.apis
+
+    testImplementation libs.junit
+    testImplementation libs.mockito.core
 }

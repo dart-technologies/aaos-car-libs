@@ -27,6 +27,8 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import com.android.car.ui.utils.CarUxRestrictionsInfo;
+
 import com.android.car.ui.R;
 import com.android.car.ui.utils.CarUxRestrictionsUtil;
 
@@ -60,7 +62,7 @@ public class MenuItem {
     private final boolean mShowIconAndTitle;
     private final boolean mIsTinted;
     private final boolean mIsPrimary;
-    @CarUxRestrictions.CarUxRestrictionsInfo
+    @CarUxRestrictionsInfo
 
     private int mId;
     private CarUxRestrictions mCurrentRestrictions;
@@ -227,14 +229,14 @@ public class MenuItem {
     }
 
     /** Sets the UxRestrictions of this MenuItem. */
-    public void setUxRestrictions(@CarUxRestrictions.CarUxRestrictionsInfo int uxRestrictions) {
+    public void setUxRestrictions(@CarUxRestrictionsInfo int uxRestrictions) {
         if (mUxRestrictions != uxRestrictions) {
             mUxRestrictions = uxRestrictions;
             update();
         }
     }
 
-    @CarUxRestrictions.CarUxRestrictionsInfo
+    @CarUxRestrictionsInfo
     public int getUxRestrictions() {
         return mUxRestrictions;
     }
@@ -347,7 +349,7 @@ public class MenuItem {
         private boolean mIsSearch = false;
         private boolean mIsSettings = false;
         private boolean mIsPrimary = false;
-        @CarUxRestrictions.CarUxRestrictionsInfo
+        @CarUxRestrictionsInfo
         private int mUxRestrictions = CarUxRestrictions.UX_RESTRICTIONS_BASELINE;
 
         public Builder(Context c) {
@@ -534,11 +536,11 @@ public class MenuItem {
         }
 
         /**
-         * Sets under what {@link android.car.drivingstate.CarUxRestrictions.CarUxRestrictionsInfo}
+         * Sets under what {@link com.android.car.ui.utils.CarUxRestrictionsInfo}
          * the MenuItem should be restricted.
          */
         public Builder setUxRestrictions(
-                @CarUxRestrictions.CarUxRestrictionsInfo int restrictions) {
+                @CarUxRestrictionsInfo int restrictions) {
             mUxRestrictions = restrictions;
             return this;
         }

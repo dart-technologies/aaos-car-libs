@@ -17,24 +17,32 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion gradle.ext.aaosLatestSDK
+    namespace = 'com.android.car.messenger.common'
+    compileSdk = gradle.ext.aaosLatestSDK
 
     defaultConfig {
-        minSdkVersion 28
-        targetSdkVersion gradle.ext.aaosTargetSDK
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest-unbundled.xml'
             java.srcDirs = ['src']
+            // NOTE: main.java.srcDirs is the bare 'src' directory, so anything placed under
+            // src/test/ would compile as MAIN source and ship in the AAR. Any test root must be
+            // a SIBLING of src/ — same reason as car-media-common.
+            //
+            // Dart fork note: do not remove this exclude. :car-messenger-common:model compiles only
+            // Conversation.java from this directory and ships it; compiling it here as well puts a
+            // duplicate class in both AARs. See scripts/check-build-coverage.py.
             java.excludes = ['com/android/car/messenger/common/Conversation.java']
         }
     }
@@ -45,10 +53,15 @@ android {
 }
 
 dependencies {
-    runtimeOnly 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.annotation:annotation:1.2.0'
-    implementation 'androidx.core:core:1.6.0'
-    implementation files(gradle.ext.lib_car_system_stubs)
+    // Dart fork note: androidx.legacy:legacy-support-v4 removed. It shipped no code and pulled in
+    // androidx.media 1.0.0; a javap scan found no reference to anything it supplied. See FORK.md.
+    implementation libs.androidx.annotation
+    implementation libs.androidx.core
+    // Dart fork note: no android.car.* import here, so the AOSP stubs dependency is optional
+    // compileOnly. See FORK.md.
+    if (file(gradle.ext.lib_car_system_stubs).exists()) {
+        compileOnly files(gradle.ext.lib_car_system_stubs)
+    }
     implementation project(path: ':car-assist-lib')
     implementation project(path: ':car-telephony-common')
 }

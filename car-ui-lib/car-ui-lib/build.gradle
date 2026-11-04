@@ -17,22 +17,24 @@
 // Library-level build file
 
 apply plugin: 'com.android.library'
-apply plugin: 'jacoco'
+// Dart fork note: upstream also applied the standalone 'jacoco' plugin, which conflicts with
+// AGP's own JaCoCo wiring and breaks :testDebugUnitTest. See enableAndroidTestCoverage below.
 
 android {
-    compileSdkVersion 30
+    namespace = 'com.android.car.ui'
+    compileSdk = gradle.ext.aaosLatestSDK
 
     defaultConfig {
-        minSdkVersion 28
-        targetSdkVersion 30
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
@@ -40,6 +42,22 @@ android {
             res.srcDirs = [
                     'src/main/res',
                     'src/main/res-private'
+                    // NOTE: 'src/main/res-overlayable' is deliberately NOT listed, and that means
+                    // this module's 604-item <overlayable> surface — the documented OEM seam — is
+                    // absent from every artifact this Gradle project builds. Verified with
+                    // `aapt2 dump overlayable` against PaintBooth's APK: nothing.
+                    //
+                    // Adding it fails the build. That directory also holds removed_resources.xml,
+                    // a bookkeeping file listing resources DELETED from the overlayable so RROs do
+                    // not target them; AGP compiles its <item> entries as real resource
+                    // definitions and they collide with res-private
+                    // (layout/car_ui_base_layout_toolbar_legacy). Upstream builds this with Soong,
+                    // which does not have that problem.
+                    //
+                    // Left as-is on purpose: making it work means either restructuring vendored
+                    // upstream resources or splitting the directory, and both are decisions about
+                    // library behaviour rather than build plumbing. Recorded in
+                    // docs/ARCHITECTURE.md so it is a known gap rather than an assumed seam.
             ]
         }
     }
@@ -47,13 +65,16 @@ android {
     testOptions {
         unitTests {
             includeAndroidResources = true
+            // Dart fork note: stub android.jar methods throw; defaults let JVM tests run real logic.
+            returnDefaultValues = true
         }
         animationsDisabled = true
     }
 
     buildTypes {
         debug {
-            testCoverageEnabled = true
+            // Dart fork note: replaces testCoverageEnabled, deprecated in AGP 8.
+            enableAndroidTestCoverage = true
         }
     }
 
@@ -76,28 +97,49 @@ android {
 }
 
 dependencies {
-    compileOnly project(':oem-apis')
+    // The plugin contract, from the PUBLISHED artifact rather than a vendored copy.
+    //
+    // The copy that lived at :oem-apis was measured to be published 1.0.1 minus nine methods on
+    // RecyclerViewOEMV1, with LayoutStyleOEMV1.getSpanSize weakened from abstract to default — a
+    // divergence that produced an AbstractMethodError against a stock AAOS image and cost hours to
+    // diagnose. Parity was restored by hand first (996170b60); depending on the artifact is what
+    // makes it an invariant rather than a fact someone measured once.
+    //
+    // Still compileOnly: at runtime these interfaces come from whichever copy the host app loaded.
+    compileOnly libs.carui.plugin.apis
     api project(':car-rotary-lib')
-    api 'androidx.annotation:annotation:1.2.0'
-    api 'androidx.appcompat:appcompat:1.3.1'
-    api 'androidx.constraintlayout:constraintlayout:2.1.0'
-    api 'androidx.preference:preference:1.1.1'
-    api 'androidx.recyclerview:recyclerview:1.2.1'
-    api 'androidx.core:core:1.6.0'
-    api "androidx.asynclayoutinflater:asynclayoutinflater:1.0.0"
-    implementation 'com.android.support:support-annotations:28.0.0'
+    api libs.androidx.annotation
+    api libs.androidx.appcompat
+    api libs.androidx.constraintlayout
+    api libs.androidx.preference
+    api libs.androidx.recyclerview
+    api libs.androidx.core
+    api libs.androidx.asynclayoutinflater
+    // Seven files here use Fragment/DialogFragment directly, but it was never declared: it came in
+    // through appcompat at 1.5.4. Declared with the fragment bump, so this module compiles against
+    // the version car-apps-common and car-media-common ship next to it.
+    api libs.androidx.fragment
 
-    androidTestImplementation 'org.hamcrest:hamcrest-library:1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.3.0'
-    androidTestImplementation 'com.google.truth:truth:1.1.3'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation "org.mockito:mockito-core:2.19.0"
-    androidTestImplementation 'androidx.test:runner:1.4.0'
-    androidTestImplementation 'androidx.test:rules:1.4.0'
+    // Dart fork note: a local JVM test source set for the UX-restriction state machine (upstream
+    // had only instrumented tests). Mockito 5's inline mock maker mocks final android.car classes.
+    // Dart fork addition: the plugin ABI on the test classpath only (compileOnly does not reach
+    // it), so OemApiUtilNegotiationTest can test the version negotiation.
+    testImplementation libs.carui.plugin.apis
+
+    testImplementation libs.junit
+    testImplementation libs.mockito.core
+    testImplementation libs.truth
+
+    androidTestImplementation libs.hamcrest
+    androidTestImplementation libs.androidx.test.espresso.core
+    androidTestImplementation libs.androidx.test.espresso.contrib
+    androidTestImplementation libs.truth
+    androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.mockito.legacy
+    androidTestImplementation libs.androidx.test.core
+    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.androidx.test.rules
     // This is needed to be able to spy certain classes with Mockito
-    // It's major/minor version must match Mockito's.
-    androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito-inline:2.28.1'
-    // Required for instrumented tests
-    androidTestImplementation 'com.android.support:support-annotations:28.0.0'
+    // Pinned with mockito.legacy: Mockito 5 under dexmaker-inline aborts ART.
+    androidTestImplementation libs.dexmaker.mockito.inline
 }

@@ -1,0 +1,43 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Dart fork addition — not present upstream.
+//
+// Minimal compile-time stand-in for the @SystemApi classes that AOSP's
+// android.car-system-stubs.jar provides and the public android.car.jar does
+// not. Consumed compileOnly, so nothing here is ever packaged. See
+// FORK.md.
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace = 'dev.dart.aaos.carsystemstubs'
+    compileSdk = gradle.ext.aaosLatestSDK
+
+    defaultConfig {
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig = false
+    }
+}

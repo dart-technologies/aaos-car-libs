@@ -26,8 +26,38 @@ import com.chassis.car.ui.plugin.PluginFactoryImpl;
  */
 public class PluginVersionProviderImpl implements PluginVersionProviderOEMV1 {
 
+    /**
+     * The highest {@code PluginFactoryOEMV#} this plugin implements.
+     *
+     * <p>Keep in lockstep with {@link PluginFactoryImpl}'s {@code implements} clause. It is
+     * maintained by hand, which is unattractive — but the alternative, in the tree this fork
+     * started from, was a runtime crash with no diagnostic pointing at the version boundary.
+     */
+    private static final int PROVIDED_VERSION = 2;
+
     @Override
     public Object getPluginFactory(int maxVersion, Context context, String packageName) {
+        // Dart fork fix: honour maxVersion, and take the contract's documented escape hatch.
+        //
+        // This previously ignored maxVersion entirely and returned its factory unconditionally.
+        // PluginVersionProviderOEMV1 specifies:
+        //
+        //   "OEMs should aim to return the highest version of the factory possible that is <=
+        //    maxVersion. If the plugin is not able to provide that version, it may return null,
+        //    in which case car-ui-lib will fall back to it's static, uncustomized implementation."
+        //
+        // Returning null means the app renders unstyled but ALIVE. Returning an incompatible
+        // factory means the app calls a method the interface does not implement and the PROCESS
+        // CRASHES — which is what took this repository's 497-test suite down at 227, and what
+        // happens on a head unit whenever the plugin and the app were built against different
+        // plugin-apis versions.
+        //
+        // This is the defect docs/upstream/AOSP-PLUGIN-VERSION-REPORT.md describes in the
+        // reference implementation. Fixing it here means the fork stops shipping the pattern it
+        // is reporting.
+        if (maxVersion < PROVIDED_VERSION) {
+            return null;
+        }
         return new PluginFactoryImpl(context);
     }
 }
