@@ -104,7 +104,7 @@ CHARGE = [
     ("Order coffee · confirm", lambda: speak("order my usual coffee")),
     ("Pickup card", lambda: (tap_text("Confirm") or tap_text("OK"))),
     ("Drive off · strip", lambda: car("drive")),
-    ("End card", lambda: (car("park"), broadcast(CARUI + "END_CARD"))),
+    ("Parked · Big Buck Bunny", lambda: (car("park"), time.sleep(2), tap_text("Big Buck Bunny"))),
 ]
 
 
