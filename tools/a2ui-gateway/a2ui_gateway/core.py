@@ -281,11 +281,20 @@ class Gateway:
                 return self._serve(entry, "cache", **ids)
             return self._error("cache_miss" if self.offline else "provider_unconfigured",
                                started, request)
+
+        def unexpected(error: Exception) -> Response:
+            # A worker bug, not a vendor failure (e.g. a missing validation dependency): a cached
+            # answer still beats a 500. Only the type name is kept; a message can carry vendor text.
+            failed = self._error("internal", started, request, detail=type(error).__name__)
+            entry = cached()
+            if entry is None:
+                return failed
+            return self._serve(entry, "fallback", live_error=failed.live_error, **ids)
+
         timing = self.config["profiles"][profile]
         future = self._pool.submit(self._generate, provider, profile, system, user, own, key)
         try:
             entry = future.result(timeout=timing["deadlineMs"] / 1000)
-            return self._serve(entry, "live", **ids)
         except concurrent.futures.TimeoutError:
             entry = cached()
             if entry is not None:
@@ -293,16 +302,21 @@ class Gateway:
                 return self._serve(entry, "fallback", live_error="deadline", **ids)
             remaining = max(0.0, timing["timeoutMs"] / 1000 - (self._clock() - started))
             try:
-                return self._serve(future.result(timeout=remaining), "live", **ids)
+                entry = future.result(timeout=remaining)
             except concurrent.futures.TimeoutError:
                 return self._error("timeout", started, request)
             except (adapters.AdapterError, contract.ContractError) as error:
                 return self._failure(error, started, request)
+            except Exception as error:  # a worker bug: see unexpected()
+                return unexpected(error)
         except (adapters.AdapterError, contract.ContractError) as error:
             entry = cached()
             if entry is not None:
                 return self._serve(entry, "fallback", live_error=_describe(error), **ids)
             return self._failure(error, started, request)
+        except Exception as error:  # a worker bug: see unexpected()
+            return unexpected(error)
+        return self._serve(entry, "live", **ids)
 
     def _generate(self, provider: str, profile: str, system: str, user: str, key_hash: str,
                   key: str) -> dict:

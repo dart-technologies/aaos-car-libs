@@ -224,6 +224,12 @@ jobs:
         # 60–90s timing, exact action vocabulary, and 10k-credit ceiling without making a request.
         run: python3 scripts/check-nyc-demo.py
 
+      - name: Muse's committed claims are cited
+        # Brief, coffee ranking and audio guide, offline. The test mutates copies to prove it bites.
+        run: |
+          python3 scripts/check-muse-claims.py
+          python3 scripts/test_check_muse_claims.py
+
       - name: Licence headers
         # Files this fork adds carry an Apache-2.0 header; inherited AOSP files are left alone.
         run: python3 scripts/check-license-headers.py

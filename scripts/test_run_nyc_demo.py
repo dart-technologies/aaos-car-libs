@@ -442,6 +442,21 @@ class WallClockTest(unittest.TestCase):
                       [c[2] for c in device.calls if c[1] == "shell"])
 
 
+class TranscriptTest(unittest.TestCase):
+    def test_a_punctuated_line_matches_what_the_writer_normalized(self):
+        # prepare-elevenlabs-demo-audio.py strips punctuation when it writes the fixture.
+        line = "Hey Muse, take me to the Met."
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        fixture = tmp / "transcripts" / "u1.json"
+        fixture.parent.mkdir()
+        fixture.write_text(json.dumps({"transcript": line, "dispatchText": line,
+                                       "transcriptNormalized": "hey muse take me to the met"}))
+        self.assertEqual(demo.transcript_for(tmp, "u1", line, False), (line, fixture))
+        with self.assertRaisesRegex(demo.DemoFailure, "no longer matches"):
+            demo.transcript_for(tmp, "u1", "Hey Muse, take me home.", False)
+
+
 class VehicleSignalTest(unittest.TestCase):
     def setUp(self):
         self.tmp = pathlib.Path(tempfile.mkdtemp())

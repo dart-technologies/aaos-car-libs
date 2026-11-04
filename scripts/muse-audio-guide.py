@@ -131,7 +131,10 @@ def narrate(key: str, works: list[dict], found: dict, effort: str) -> tuple[dict
                                 "strict": True}},
             "reasoning": {"effort": effort}, "store": False, "max_output_tokens": 8000}
     response = call(key, body)
-    guide = json.loads(adapters._meta_answer(response)[0])["guide"]
+    # As the gateway parses: a fenced or prose-wrapped object still parses; no object is an
+    # AdapterError token, not a traceback.
+    guide = json.loads(adapters._structured(adapters._first_object(
+        adapters._meta_answer(response)[0])))["guide"]
     texts = {item["objectID"]: " ".join(item["text"].split()) for item in guide}
     if sorted(texts) != sorted(ids) or len(guide) != len(ids):
         raise RuntimeError("narration does not cover each work exactly once")

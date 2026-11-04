@@ -16,8 +16,10 @@ import json
 import pathlib
 import random
 import sys
+import tempfile
 import unittest
 import urllib.request
+from unittest import mock
 
 HERE = pathlib.Path(__file__).resolve().parent
 _spec = importlib.util.spec_from_file_location("muse_curate_coffee", HERE / "muse-curate-coffee.py")
@@ -80,6 +82,23 @@ class Scoring(unittest.TestCase):
                          + 0.20 * coffee.WALK_SCORE[top["walkMinutes"]] / 5)
         self.assertAlmostEqual(top["total"], round(by_hand, 1))
         self.assertTrue(all(d["reason"] for d in out))
+
+    def test_a_fenced_or_wrapped_scoring_answer_parses_like_the_gateway(self):
+        cafes = [c for c in self.cafes if c["osmId"] in {s["id"] for s in self.shops}]
+        answer = json.dumps({"shops": self.shops})
+
+        def reply(text):
+            return {"status": "completed", "model": coffee.MODEL, "output": [
+                {"type": "message", "content": [{"type": "output_text", "text": text}]}]}
+
+        with tempfile.TemporaryDirectory() as tmp, \
+                mock.patch.object(coffee, "CACHE", pathlib.Path(tmp)):
+            for text in (answer, f"```json\n{answer}\n```", f"Scores, as asked:\n{answer}"):
+                with mock.patch.object(coffee, "call", return_value=reply(text)):
+                    self.assertEqual(coffee.score("k", cafes, self.found, "low")[0], self.shops)
+            with mock.patch.object(coffee, "call", return_value=reply("No scores today.")), \
+                    self.assertRaises(coffee.adapters.AdapterError):
+                coffee.score("k", cafes, self.found, "low")
 
     def test_no_cited_hours_means_out_not_guessed(self):
         pick = SAMPLE["pick"]

@@ -142,10 +142,15 @@ class ConfigTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             dotenv = pathlib.Path(tmp) / ".env"
             dotenv.write_text("XAI_API_KEY='from-file'\nELEVENLABS_API_KEY=x\n")
+            # clear=True: a key exported on this machine must not leak in and fail the test.
             with mock.patch.dict("os.environ", {"OPENAI_API_KEY": "from-env",
-                                                "MODEL_API_KEY": "generic", "HOME": "/h"}):
+                                                "MODEL_API_KEY": "generic", "HOME": "/h"},
+                                 clear=True):
                 env = core.load_env(dotenv, core.env_names(config))
-        self.assertEqual(env, {"XAI_API_KEY": "from-file", "OPENAI_API_KEY": "from-env"})
+        # Names may be printed; values never are, so a failure cannot echo a credential.
+        self.assertEqual(sorted(env), ["OPENAI_API_KEY", "XAI_API_KEY"])
+        self.assertTrue(env == {"XAI_API_KEY": "from-file", "OPENAI_API_KEY": "from-env"},
+                        "load_env returned the right names with the wrong values")
 
     def test_policy_is_uniform_and_meta_has_no_generic_key(self):
         config = core.load_config()
@@ -232,6 +237,22 @@ class ProfileTest(GatewayCase):
             turn())
         self.assertEqual((response.status, response.body["error"]),
                          (500, {"code": "internal", "detail": "RuntimeError"}))
+
+    def test_an_unexpected_realtime_error_still_serves_the_cache(self):
+        # A worker bug (say jsonschema missing), not a vendor failure: with no cache it is an
+        # internal envelope, before or after the deadline; with one, a labelled fallback.
+        broken = FakeVendor(error=RuntimeError("vendor said: secret"))
+        late = FakeVendor(delay=0.2, error=RuntimeError("vendor said: secret"))
+        for vendor in (broken, late):
+            response = self.gateway(vendor).handle(turn(profile="realtime_low_latency"))
+            self.assertEqual((response.status, response.body["error"]),
+                             (500, {"code": "internal", "detail": "RuntimeError"}))
+        self.gateway(FakeVendor()).handle(turn())  # seeds quality_cached
+        response = self.gateway(broken).handle(turn(profile="realtime_low_latency"))
+        self.assertEqual((response.status, response.source), (200, "fallback"))
+        self.assertEqual((response.output_profile, response.live_error),
+                         ("quality_cached", "internal:RuntimeError"))
+        self.assertNotIn(b"secret", response.wire)
 
     def test_missing_key_offline_miss_bad_request_and_ack(self):
         gw = self.gateway(FakeVendor(), env={})
