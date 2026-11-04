@@ -18,7 +18,7 @@
   intro      the opening shown ON the cockpit's screens, at the recordings' own sizes so it
              takes the same scale-into-the-box path and crossfades into the live UI in place:
              cards/nyc_met-intro-driver.png     1408x792 (16:9), the Muse2CarUI graffiti
-             cards/nyc_met-intro-passenger.png   528x792 (2:3), tagline + "Built with Muse"
+             cards/nyc_met-intro-passenger.png   528x792 (2:3), tagline + the Muse mark
   thumbnail  build/demo/youtube-thumbnail.jpg (1280x720, < 2 MB): the cockpit showing the intro,
              plus its docs/media copy
   all        all three, in that order
@@ -171,26 +171,21 @@ def intro_driver() -> Image.Image:
 
 
 def intro_passenger() -> Image.Image:
-    """The same plate blurred to colour (no cut-off letters), the tagline, and the credit."""
+    """The same plate blurred to colour (no cut-off letters), the tagline, and the Muse mark."""
     ov = overlays()
     w, h = PASSENGER_SIZE
     image = cover(PLATE, (w, h), 0.5).filter(ImageFilter.GaussianBlur(24)).convert("RGBA")
     image.alpha_composite(Image.new("RGBA", (w, h), (6, 7, 12, 150)))
     bottom_gradient(image, 0.5, 190)
-    draw = ImageDraw.Draw(image)
     cx = w // 2
-    draw.text((cx, 168), "MUSE2CARUI", font=ov.font(24, "demi"), fill=(227, 179, 65, 255),
-              anchor="ms")
+    # Less is more: the graffiti carries the name; one tagline, and the Muse mark as the credit.
     for row, line in enumerate(("Muse plans", "the trip.")):
-        shadowed_text(image, (cx, 250 + 62 * row), line, ov.font(54, "bold"),
+        shadowed_text(image, (cx, 330 + 62 * row), line, ov.font(54, "bold"),
                       (255, 255, 255, 255), anchor="ms")
-    for row, line in enumerate(("The car decides", "what the driver sees.")):
-        shadowed_text(image, (cx, 400 + 48 * row), line, ov.font(36, "medium"),
-                      (214, 218, 226, 255), anchor="ms", blur=4)
-    built_with_muse(image, cx, 628, scale=0.9, centre=True)
-    ImageDraw.Draw(image).text((cx, 740), "Meta's Muse on Android Automotive",
-                               font=ov.font(20, "medium"), fill=(150, 158, 170, 255),
-                               anchor="ms")
+    shadowed_text(image, (cx, 470), "The car decides.", ov.font(36, "medium"),
+                  (214, 218, 226, 255), anchor="ms", blur=4)
+    mark = Image.open(BRAND / "muse-icon-256.png").convert("RGBA").resize((56, 56), Image.LANCZOS)
+    image.alpha_composite(mark, (cx - 28, 600))
     return image.convert("RGB")
 
 
