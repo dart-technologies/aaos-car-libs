@@ -122,7 +122,9 @@ public final class UseCaseCorpus {
             passengerVideo(),
             handoffToDriver(),
             poiDiscoveryOrder(),
-            bigBuckBunny()));
+            bigBuckBunny(),
+            metVisit(),
+            evChargeCoffee()));
 
     @NonNull
     public static List<UseCase> all() {
@@ -353,6 +355,137 @@ public final class UseCaseCorpus {
                 "Video is withheld in motion; audio controls remain available");
         b.templates(TemplateCapability.SEARCH, TemplateCapability.VIDEO,
                 TemplateCapability.MEDIA_PLAYBACK);
+        return b.build();
+    }
+
+    /**
+     * The Met, safely: a cited brief, a parked-only DEMO reservation, a route preview and artwork.
+     * Nesting is deliberate and ordinary (citations inside the brief, the map inside the route
+     * card): under LIMIT_CONTENT the vehicle's own content-depth limit cuts them, while the ETA,
+     * the brief's summary and the audio guide stay. The gallery is a Modal and the film a Video,
+     * so both leave with motion. Artwork: The Met Open Access, CC0.
+     */
+    private static UseCase metVisit() {
+        Builder b = new Builder("met_visit",
+                "Take us to The Met this afternoon, from Hudson Yards: a cited brief, reserve "
+                        + "timed entry while parked, preview the route, then artwork on arrival",
+                "BASELINE shows sources, map and artwork; motion's depth limit and type policy "
+                        + "remove them while the ETA, brief and audio guide stay");
+        b.container("root", "Column", "route", "brief", "weather", "reserve", "audio", "gallery",
+                "artmode");
+        b.put("root", "title", "The Met, safely");
+        b.container("route", "Card", "preview");
+        b.put("route", "title", "Arrive 2:41 PM · 19 min");
+        b.put("route", "subtitle", "Hudson Yards → The Met · 81st St entrance");
+        b.container("preview", "Row", "map");
+        b.component("map", "Image", "Hudson Yards → The Met",
+                "Route preview · © OpenStreetMap contributors");
+        b.container("brief", "Card", "sources");
+        b.put("brief", "title", "Today at The Met");
+        b.put("brief", "subtitle", "Open 10 AM–5 PM · timed entry advised");
+        b.container("sources", "List", "src1", "src2", "src3");
+        b.put("sources", "title", "Sources");
+        b.text("src1", "Source · metmuseum.org", "Hours and admission");
+        b.text("src2", "Source · metmuseum.org", "Exhibitions on view");
+        b.text("src3", "Source · metmuseum.org", "Accessibility and entrances");
+        b.text("weather", "Today · Mostly cloudy, chance of showers · high 72°F",
+                "National Weather Service · Central Park · Thu Nov 5 forecast");
+        b.action("reserve", "Button", "Reserve entry for two at 3 PM",
+                "Timed entry · confirm while parked", "reserve");
+        b.put("reserve", "voicePhrase", "reserve entry for two at three");
+        b.action("audio", "AudioPlayer", "Audio guide · The Met highlights",
+                "Six works, a few words each · plays in motion", "play");
+        // Asked in motion; answered by the guide's audio, with nothing new on the driver screen.
+        b.put("audio", "voicePhrase", "what should we see first");
+        b.container("gallery", "Modal", "met_436535", "met_437881", "met_437394", "met_435809",
+                "met_436105", "met_435868", "film");
+        b.put("gallery", "title", "Artwork highlights");
+        b.put("gallery", "subtitle", "Six works · The Met Open Access");
+        b.put("gallery", "action", "open");
+        b.put("gallery", "voicePhrase", "show the highlights");
+        b.component("met_436535", "Image", "Wheat Field with Cypresses",
+                "Vincent van Gogh · 1889");
+        b.component("met_437881", "Image", "Young Woman with a Water Pitcher",
+                "Johannes Vermeer · ca. 1662");
+        b.component("met_437394", "Image", "Aristotle with a Bust of Homer",
+                "Rembrandt (Rembrandt van Rijn) · 1653");
+        b.component("met_435809", "Image", "The Harvesters", "Pieter Bruegel the Elder · 1565");
+        b.component("met_436105", "Image", "The Death of Socrates", "Jacques Louis David · 1787");
+        b.component("met_435868", "Image", "The Card Players", "Paul Cézanne · 1890–92");
+        b.component("film", "Video", "Artwork film", "Six works, slowly · parked only");
+        // Film or stills: a picker, so the policy removes it in motion with the gallery.
+        b.action("artmode", "ChoicePicker", "Film · Slideshow", "Artwork view · parked only",
+                "select");
+        b.put("artmode", "voicePhrase", "switch the artwork view");
+        b.data("/ticket/title", "Timed entry · Thu Nov 5 · 3:00 PM · 2 guests");
+        b.data("/ticket/detail", "The Met Fifth Avenue · 81st St entrance");
+        b.data("/arrival/title", "Arrived · The Met Fifth Avenue");
+        b.data("/arrival/detail", "81st St entrance · entry 3:00");
+        b.templates(TemplateCapability.ROUTE_PREVIEW, TemplateCapability.MAP_WITH_CONTENT,
+                TemplateCapability.MODAL, TemplateCapability.VIDEO,
+                TemplateCapability.MEDIA_PLAYBACK);
+        return b.build();
+    }
+
+    /**
+     * Charge and a coffee: the vehicle starts it (low battery), the surface is a utility
+     * comparison, and a parked charging window opens richer content. Charger rows bind to the data
+     * model so a fixture (OSM) can replace the DEMO defaults through the processor. Choosing a
+     * charger is navigation, allowed in motion; the reorder is a purchase, parked and confirmed.
+     */
+    private static UseCase evChargeCoffee() {
+        Builder b = new Builder("ev_charge_coffee",
+                "Low battery on the way: compare fast chargers, choose one by voice, then reorder "
+                        + "coffee and finish the Met tour while charging",
+                "BASELINE adds the parked reorder, the tour and a short to watch; motion keeps the "
+                        + "glanceable charger comparison and navigation, refuses the purchase, "
+                        + "removes the tour and the short");
+        b.container("root", "Column", "c1", "c2", "c3", "coffee", "tour", "bbb");
+        b.put("root", "title", "Charge and a coffee");
+        String[] ordinals = {"first", "second", "third"};
+        for (int i = 0; i < 3; i++) {
+            String id = "c" + (i + 1);
+            b.action(id, "Card", null, null, "navigate");
+            b.put(id, "title", ptr("/chargers/" + i + "/name"));
+            b.put(id, "subtitle", ptr("/chargers/" + i + "/detail"));
+            b.put(id, "voicePhrase", "take me to the " + ordinals[i] + " one");
+        }
+        b.action("coffee", "Button", "Order your usual",
+                "Oat milk latte · pickup at the counter", "purchase");
+        b.put("coffee", "voicePhrase", "order my usual coffee");
+        b.container("tour", "Modal", "met_436535", "met_437881", "met_437394", "met_435809",
+                "met_436105", "met_435868", "film");
+        b.put("tour", "title", "Finish the Met tour");
+        b.put("tour", "subtitle", "Film or slideshow · parked only");
+        b.put("tour", "action", "open");
+        b.put("tour", "voicePhrase", "finish the tour");
+        b.component("met_436535", "Image", "Wheat Field with Cypresses",
+                "Vincent van Gogh · 1889");
+        b.component("met_437881", "Image", "Young Woman with a Water Pitcher",
+                "Johannes Vermeer · ca. 1662");
+        b.component("met_437394", "Image", "Aristotle with a Bust of Homer",
+                "Rembrandt (Rembrandt van Rijn) · 1653");
+        b.component("met_435809", "Image", "The Harvesters", "Pieter Bruegel the Elder · 1565");
+        b.component("met_436105", "Image", "The Death of Socrates", "Jacques Louis David · 1787");
+        b.component("met_435868", "Image", "The Card Players", "Paul Cézanne · 1890–92");
+        b.component("film", "Video", "Artwork film", "Six works, slowly · parked only");
+        // Something to watch while charging: a Video, so motion prunes it, and opening it is
+        // navigation, not a purchase. Big Buck Bunny © Blender Foundation, CC BY 3.0.
+        b.action("bbb", "Video", "Big Buck Bunny", "Watch while you charge", "open");
+        // Placeholders; a bundled chargers.json (OSM) replaces them through updateDataModel.
+        b.data("/chargers/0/name", "Charger nearby");
+        b.data("/chargers/0/detail", "0.6 mi · public charging");
+        b.data("/chargers/1/name", "Charger uptown");
+        b.data("/chargers/1/detail", "1.1 mi · public charging");
+        b.data("/chargers/2/name", "Charger east");
+        b.data("/chargers/2/detail", "1.9 mi · public charging");
+        b.data("/session/detail", "about 22 min");
+        // Generic words; Host B names the real café (fixtures/coffee) near the chosen charger.
+        // What was ordered, never that it is ready: nothing is sent to a café.
+        b.data("/order/status", "Order confirmed");
+        b.data("/order/pickup", "Oat milk latte");
+        b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
+                TemplateCapability.MODAL, TemplateCapability.VIDEO);
         return b.build();
     }
 

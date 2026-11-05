@@ -256,19 +256,44 @@ public class A2uiPassengerAndEndCardTest {
     }
 
     @Test
+    public void theMetFilmCarriesItsOwnCreditSoNoneIsLaidOverItsCaptions() {
+        mApp.getApplicationInfo().flags |= ApplicationInfo.FLAG_DEBUGGABLE;
+        A2uiCarUiActivity driver = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
+        A2uiPassengerActivity passenger = Robolectric.buildActivity(
+                A2uiPassengerActivity.class).create().start().get();
+
+        driver.onPassengerRequest(PassengerMedia.ARTWORK);
+
+        // The film plays, its burned-in caption and Met credit alone at the bottom.
+        assertThat(passenger.videoForTesting()).isNotNull();
+        assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.GONE);
+        assertThat(PassengerMedia.forName(PassengerMedia.ARTWORK).mOwnCredit).isTrue();
+        // Big Buck Bunny has none of its own: credited, at the top.
+        driver.onPassengerRequest(PassengerMedia.VIDEO);
+        assertThat(passenger.creditForTesting().getVisibility()).isEqualTo(View.VISIBLE);
+        assertThat(PassengerMedia.forName(PassengerMedia.VIDEO).mOwnCredit).isFalse();
+    }
+
+    @Test
     public void aPortraitScreenPrefersThePortraitCutAndOtherwiseThePlainFile() {
-        PassengerMedia clip = PassengerMedia.forName(PassengerMedia.VIDEO);
+        PassengerMedia film = PassengerMedia.forName(PassengerMedia.ARTWORK);
         java.util.Set<String> both = new java.util.HashSet<>(Arrays.asList(
-                "bbb_passenger", "bbb_passenger_portrait"));
-        assertThat(clip.fileFor(true, both::contains)).isEqualTo("bbb_passenger_portrait");
-        assertThat(clip.fileFor(false, both::contains)).isEqualTo("bbb_passenger");
-        java.util.Set<String> plain = java.util.Collections.singleton("bbb_passenger");
-        assertThat(clip.fileFor(true, plain::contains)).isEqualTo("bbb_passenger");
+                "met_artwork_film", "met_artwork_film_portrait"));
+        assertThat(film.fileFor(true, both::contains)).isEqualTo("met_artwork_film_portrait");
+        assertThat(film.fileFor(false, both::contains)).isEqualTo("met_artwork_film");
+        java.util.Set<String> plain = java.util.Collections.singleton("met_artwork_film");
+        assertThat(film.fileFor(true, plain::contains)).isEqualTo("met_artwork_film");
         // A portrait cut alone never plays on a landscape screen; nothing bundled credits nothing.
         java.util.Set<String> portraitOnly =
-                java.util.Collections.singleton("bbb_passenger_portrait");
-        assertThat(clip.fileFor(false, portraitOnly::contains)).isNull();
-        assertThat(clip.fileFor(true, name -> false)).isNull();
+                java.util.Collections.singleton("met_artwork_film_portrait");
+        assertThat(film.fileFor(false, portraitOnly::contains)).isNull();
+        assertThat(film.fileFor(true, name -> false)).isNull();
+
+        PassengerMedia clip = PassengerMedia.forName(PassengerMedia.VIDEO);
+        assertThat(clip.fileFor(true, "bbb_passenger_portrait"::equals))
+                .isEqualTo("bbb_passenger_portrait");
+        assertThat(PassengerMedia.forName(PassengerMedia.SLIDESHOW).fileFor(true, name -> true))
+                .isNull();
     }
 
     @Test

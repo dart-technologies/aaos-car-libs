@@ -39,6 +39,12 @@ final class HostRows {
     static final String THINKING = "host:thinking";
     static final String ARRIVAL = "host:arrival";
     static final String ORDER = "host:order";
+    static final String GUIDE = "host:guide";
+    static final String SUGGEST = "host:suggest";
+    static final String SESSION = "host:session";
+    static final String AGENT_BRIEF = "host:agent-brief";
+    /** Why the café was picked, with its source (ev_charge_coffee, parked at the charger). */
+    static final String WHY = "host:why";
 
     /** The noun a host card goes by in the change line, or null for one never reported. */
     @androidx.annotation.Nullable
@@ -46,6 +52,11 @@ final class HostRows {
         switch (key) {
             case ORDER: return "Order";
             case ARRIVAL: return "Arrival";
+            case GUIDE: return "Audio guide";
+            case SUGGEST: return "Suggestion";
+            case SESSION: return "Charging";
+            case AGENT_BRIEF: return "Brief";
+            case WHY: return "Café";
             default: return null;
         }
     }

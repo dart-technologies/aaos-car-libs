@@ -34,6 +34,8 @@ CASE_MASK=(
   handoff_to_driver   0x1ff   # see MASK NOTE below
   poi_discovery_order 0x1ff   # search/order disappear or refuse; navigation remains
   big_buck_bunny      0x10    # NO_VIDEO, audio remains
+  met_visit           0xff    # motion: depth limit cuts map and sources; gallery and film go
+  ev_charge_coffee    0xff    # motion: charger comparison stays; reorder refused; tour goes
 )
 # These two are interesting at BASELINE only because of a second display, which one recording cannot
 # show; FULLY_RESTRICTED shows what the surface becomes where the driver can see it.
@@ -48,6 +50,8 @@ CASE_WHAT=(
   handoff_to_driver   "composed at BASELINE, re-pruned at the driver's FULLY_RESTRICTED"
   poi_discovery_order "parked search/order become moving-safe navigation-only content"
   big_buck_bunny      "parked video is removed by NO_VIDEO while audio controls remain"
+  met_visit           "map, sources and artwork leave in motion; ETA, brief and audio guide stay"
+  ev_charge_coffee    "charger comparison and navigation stay in motion; reorder and tour wait for park"
 )
 
 HOST_A_PKG=art.dart.a2ui.carapp

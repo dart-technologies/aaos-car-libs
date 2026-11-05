@@ -641,8 +641,38 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     /** Bumped per placed order, so a confirmation can tell the card answered it. */
     private int mOrderSeq;
     private boolean mDroveWithOrder;
+    /** At or below this state of charge, the vehicle suggests chargers. */
+    @VisibleForTesting
+    static final int LOW_BATTERY_PCT = 20;
+    /** State of charge from the vehicle (CarPropertyManager), or null before any reading. */
+    @Nullable private Integer mVehicleBatteryPct;
+    /** A debug VEHICLE broadcast's reading, labelled DEMO; wins while set. */
+    @Nullable private Integer mDemoBatteryPct;
+    @Nullable private VehicleEnergy mEnergy;
+    @Nullable private BroadcastReceiver mVehicleReceiver;
+    /** The charger chosen from the comparison (0-based), or -1. */
+    @VisibleForTesting
+    int mChosenCharger = -1;
+    /** The bundled café (OSM, picked by Muse from cited sources), or null without the fixture. */
+    @Nullable
+    @VisibleForTesting
+    CoffeeFixture.Pick mCoffee;
+    private boolean mDroveToCharger;
+    /** Parked after driving to the chosen charger: the charging window. */
+    @VisibleForTesting
+    boolean mAtCharger;
+    @Nullable private Integer mChargeStartPct;
+    /** A charging stop happened: no new prompt until the reading climbs above the threshold. */
+    private boolean mPromptSpent;
     /** Host row keys drawn at the last refresh, for the "collapsed" half of the change line. */
     private final List<String> mLastHostKeys = new ArrayList<>();
+    /** Artwork plays as the film (true) or the stills (false); the parked-only toggle flips it. */
+    @VisibleForTesting
+    boolean mArtworkFilm = true;
+    /** An agent answer shown as this journey surface's brief, on the lane's processor. */
+    @Nullable
+    @VisibleForTesting
+    String mEmbeddedAgentSurface;
     /** The journey the commitment fields above belong to. */
     @Nullable private HostJourney mJourney;
     /** Parked again after driving with an order: the arrival moment. */
@@ -847,6 +877,13 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             }
         });
 
+        // Real chargers, when the fixture is bundled, enter through the processor like agent text;
+        // so does the Met's weather row, from the NWS forecast.
+        mProcessor.processAll(ChargerFixture.messages(this));
+        mProcessor.processAll(WeatherFixture.messages(this));
+        mCoffee = CoffeeFixture.load(this);
+        mEnergy = new VehicleEnergy(pct -> runOnMain(() -> onVehicleBattery(pct)));
+
         mDemoMedia = new DemoMediaController(this);
         mAudio = new DemoAudio(this, DemoAudio.SFX_ASSETS);
 
@@ -872,6 +909,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mLimiter.start();
         mRestrictions.register(mUxrListener);
         mStarted = true;
+        if (mEnergy != null) mEnergy.start(this, new Handler(Looper.getMainLooper()));
         refresh();
     }
 
@@ -892,6 +930,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (mAudio != null) {
             mAudio.quiet();
         }
+        if (mEnergy != null) mEnergy.stop();
         super.onStop();
         mRestrictions.unregister(mUxrListener);
         mLimiter.stop();
@@ -941,6 +980,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (mEndCardReceiver != null) {
             unregisterReceiver(mEndCardReceiver);
             mEndCardReceiver = null;
+        }
+        if (mVehicleReceiver != null) {
+            unregisterReceiver(mVehicleReceiver);
+            mVehicleReceiver = null;
         }
         PassengerDisplay.removeListener(mPassengerListener);
         if (mAgent != null) {
@@ -1137,7 +1180,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             return;
         }
         A2uiMessageProcessor.VoiceDispatchResult result =
-                surfaceProcessor().dispatchByVoiceForResult(mSurfaceId, spoken, mRenderedRoot,
+                surfaceProcessor().dispatchByVoiceForResult(mSurfaceId,
+                        VoicePhrase.canonical(spoken), mRenderedRoot,
                         mActionBinder.reader());
         A2uiMessageProcessor.VoiceOutcome outcome = result.getOutcome();
         Log.i(TAG, "voice outcome: " + outcome);
@@ -1244,6 +1288,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             mProviderItem.setEnabled(parked);
         }
         trackJourney(isAuthoritative(source), parked);
+        trackCharging(isAuthoritative(source), parked);
         if (!parked && mEndCard != null && mEndCard.getVisibility() == View.VISIBLE) {
             hideEndCard();
         }
@@ -1255,6 +1300,25 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         A2uiComponent projected = currentProjection();
         A2uiComponent pruned = projected == null ? null : A2uiPruner.prune(projected, allowed);
+        // A confirmed commitment's card replaces the control that made it: less, never more.
+        HostJourney journey = currentJourney();
+        if (pruned != null && mOrderPlaced && journey != null && journey.mConfirmReplaces != null) {
+            pruned = withoutComponent(pruned, journey.mConfirmReplaces);
+        }
+        if (pruned != null && embeddedBrief() != null) {
+            pruned = withoutComponent(pruned, "brief");
+        }
+        // Something to watch while charging, only parked at the charger once the coffee is
+        // ordered: the host withholds it otherwise (less, never more).
+        if (pruned != null && "ev_charge_coffee".equals(mSurfaceId)
+                && !driverMediaOffered(parked)) {
+            pruned = withoutComponent(pruned, DemoNativeContract.EV_DRIVER_MEDIA);
+        }
+        // The charging window: what it offers leads; the comparison follows.
+        if (pruned != null && mAtCharger && parked && "ev_charge_coffee".equals(mSurfaceId)) {
+            pruned = withChildrenFirst(pruned, DemoNativeContract.EV_DRIVER_MEDIA, "coffee",
+                    "tour");
+        }
         // Value limits bound the content inside the allowed components.
         A2uiValueLimits limits = limitsFor(source, current);
         if (pruned != null) {
@@ -1267,7 +1331,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         // voice, as a row past the screen's height always was.
         List<CarUiListItem> rows = new ArrayList<>();
         List<String> keys = new ArrayList<>();
-        addHostRows(rows, keys, allowed, limits, parked);
+        addHostRows(rows, keys, allowed, limits, parked, pruned);
         int hostRowCount = rows.size();
         int surfaceBudget = surfaceRowBudget(current, rows.size());
         mRenderedRoot = A2uiVisibleTree.visibleRoot(pruned, surfaceBudget);
@@ -1542,7 +1606,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     /** How long the "what changed" line stays up. */
     @VisibleForTesting
-    static final long CHANGE_STRIP_MS = 2400;
+    static final long CHANGE_STRIP_MS = 3500;
 
     /** How long the chip takes to cross from one state's colour and word to the next. */
     @VisibleForTesting
@@ -1650,9 +1714,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     /** Audio is said to continue only if it is playing and the new reading still allows it. */
     private boolean audioContinues(@NonNull Set<ComponentType> allowed) {
-        return allowed.contains(ComponentType.AUDIO_PLAYER) && mDemoMedia != null
+        if (!allowed.contains(ComponentType.AUDIO_PLAYER)) return false;
+        PassengerMedia passenger = PassengerMedia.forName(PassengerDisplay.playing());
+        return (passenger != null && passenger.mCabinAudio) || (mDemoMedia != null
                 && mDemoMedia.getMode() == DemoMediaController.Mode.AUDIO
-                && mDemoMedia.isPlaying();
+                && mDemoMedia.isPlaying());
     }
 
     /** Host-owned nouns for exact corpus components; agent surfaces fall back to type nouns. */
@@ -1682,7 +1748,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     /** Thinking, arrival and pickup, ahead of the surface's rows. Glanceable text, no actions. */
     private void addHostRows(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
             @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits,
-            boolean parked) {
+            boolean parked, @Nullable A2uiComponent pruned) {
         if (mAgentThinking && mAgent != null) {
             addRow(rows, keys, HostRows.THINKING, HostRows.card(allowed, limits,
                     getString(R.string.a2ui_brand_thinking_title),
@@ -1694,6 +1760,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (journey == null) {
             return;
         }
+        // Arrival leads, then what plays now, then commitments, then the long brief.
         if (mArrived && parked) {
             addRow(rows, keys, HostRows.ARRIVAL, HostRows.card(allowed, limits,
                     journeyData(journey, journey.mArrivalTitle),
@@ -1702,18 +1769,331 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                     journey.mHeroArt != 0 || journey.mArrivalArt == 0 ? null
                             : getDrawable(journey.mArrivalArt), null));
         }
-        if (mOrderPlaced) {
+        addGuideRow(rows, keys, allowed, limits);
+        addChargingRows(rows, keys, allowed, limits, parked, pruned);
+        if (mOrderPlaced && (!journey.mConfirmParkedOnly || parked)) {
+            String title = journeyData(journey, journey.mConfirmTitle);
             List<String> body = new ArrayList<>();
             for (String pointer : journey.mConfirmBody) body.add(journeyData(journey, pointer));
-            addRow(rows, keys, HostRows.ORDER, HostRows.card(allowed, limits,
-                    journeyData(journey, journey.mConfirmTitle), body,
+            // The real café's name only for the charger it was picked for, with what was ordered
+            // and the walk on its one line.
+            CoffeeFixture.Pick coffee = journey == HostJourney.forSurface("ev_charge_coffee")
+                    ? coffeeNearCharger() : null;
+            if (coffee != null && !body.isEmpty()) {
+                title = coffee.pickupTitle();
+                body.clear();
+                body.add(coffee.pickupDetail());
+            }
+            addRow(rows, keys, HostRows.ORDER, HostRows.card(allowed, limits, title, body,
                     null, getDrawable(journey.mConfirmGlyph)));
         }
+        if (parked) addCoffeeWhyRow(rows, keys, allowed, limits);
+        // The brief is detail: parked only, like the narration says.
+        if (parked) addAgentBriefRow(rows, keys, allowed, limits);
     }
+
+    /** The state of charge in force: a DEMO broadcast while set, else the vehicle's. */
+    @Nullable
+    private Integer batteryPct() {
+        return mDemoBatteryPct != null ? mDemoBatteryPct : mVehicleBatteryPct;
+    }
+
+    /** True when a reading exists and is at or below {@link #LOW_BATTERY_PCT}. */
+    @VisibleForTesting
+    static boolean lowBattery(@Nullable Integer pct) {
+        return pct != null && pct >= 0 && pct <= LOW_BATTERY_PCT;
+    }
+
+    @VisibleForTesting
+    void onVehicleBattery(int pct) {
+        Integer previous = mVehicleBatteryPct;
+        mVehicleBatteryPct = pct;
+        if (previous == null || previous != pct) {
+            Log.i(TAG, "battery from the vehicle: " + pct + "%");
+            if (mRestrictions != null) refresh();
+        }
+    }
+
+    /** Drive after choosing a charger, then park: the charging window opens. */
+    private void trackCharging(boolean authoritative, boolean parked) {
+        if (authoritative && !parked) {
+            if (mChosenCharger >= 0) mDroveToCharger = true;
+            mAtCharger = false;
+        } else if (parked && mDroveToCharger) {
+            mDroveToCharger = false;
+            mAtCharger = true;
+            mPromptSpent = true;
+            mChargeStartPct = batteryPct();
+        } else if (!authoritative) {
+            mAtCharger = false;
+        }
+    }
+
+    /**
+     * The vehicle's own prompt (low battery, while not charging) and the parked charging session.
+     * Glanceable host text; the comparison itself is the surface's rows.
+     */
+    private void addChargingRows(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
+            @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits, boolean parked,
+            @Nullable A2uiComponent pruned) {
+        if (!"ev_charge_coffee".equals(mSurfaceId)) return;
+        Integer pct = batteryPct();
+        if (mAtCharger && parked) {
+            // Only what is known: the station and the vehicle's reading. No charge rate, so no
+            // target or time to full.
+            String station = chargerName(mChosenCharger);
+            Integer now = pct != null ? pct : mChargeStartPct;
+            if (station != null) {
+                addRow(rows, keys, HostRows.SESSION, HostRows.card(allowed, limits,
+                        now == null ? getString(R.string.a2ui_ev_session_title_no_reading, station)
+                                : getString(R.string.a2ui_ev_session_title, station, now),
+                        Collections.emptyList(), null, getDrawable(R.drawable.a2ui_ic_battery)));
+            }
+            return;
+        }
+        if (!lowBattery(pct)) {
+            mPromptSpent = false;
+            return;
+        }
+        if (mPromptSpent) return;
+        int chargers = 0;
+        for (String id : new String[]{"c1", "c2", "c3"}) {
+            if (findRendered(pruned, id) != null) chargers++;
+        }
+        String line = mChosenCharger >= 0
+                ? getString(R.string.a2ui_ev_navigating, chargerName(mChosenCharger))
+                : getString(R.string.a2ui_ev_from_vehicle);
+        addRow(rows, keys, HostRows.SUGGEST, HostRows.card(allowed, limits,
+                getResources().getQuantityString(R.plurals.a2ui_ev_suggestion, chargers, pct,
+                        chargers),
+                Collections.singletonList(line + " · " + getString(
+                        R.string.a2ui_ev_chargers_credit)), null,
+                getDrawable(R.drawable.a2ui_ic_battery)));
+    }
+
+    @Nullable
+    private String chargerName(int index) {
+        if (index < 0) return null;
+        return journeyData(HostJourney.forSurface("ev_charge_coffee"),
+                "/chargers/" + index + "/name");
+    }
+
+    /** The bundled café when the chosen charger is the one its walk was measured from. */
+    @Nullable
+    private CoffeeFixture.Pick coffeeNearCharger() {
+        return mCoffee != null && mCoffee.isNear(chargerName(mChosenCharger)) ? mCoffee : null;
+    }
+
+    /**
+     * Why Muse picked the café, with its source: parked at that charger only, a glanceable card
+     * under the same TEXT gate, clamp and content cap as every host row.
+     */
+    private void addCoffeeWhyRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
+            @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits) {
+        if (mShowingAgent || !"ev_charge_coffee".equals(mSurfaceId) || !mAtCharger) return;
+        // Once ordered, the pickup card answers it, and the short to watch takes its place.
+        if (mOrderPlaced) return;
+        CoffeeFixture.Pick coffee = coffeeNearCharger();
+        if (coffee == null) return;
+        addRow(rows, keys, HostRows.WHY, HostRows.card(allowed, limits, coffee.whyTitle(),
+                coffee.whyBody(), null, getDrawable(R.drawable.a2ui_ic_pickup)));
+    }
+
+    /**
+     * The charging window's short to watch is offered only on the corpus surface, parked at the
+     * charger after the coffee order; its player is parked-only besides (showVideoWith).
+     */
+    private boolean driverMediaOffered(boolean parked) {
+        return !mShowingAgent && mOrderPlaced && mAtCharger && parked;
+    }
+
+    static final long ARRIVAL_ARTWORK_DELAY_MS = 1200;
 
     private boolean parkedNow() {
         CarUxRestrictionsUtil.RestrictionsSnapshot s = mRestrictions.getRestrictionsSnapshot();
         return isParked(s.getSource(), s.getRestrictions());
+    }
+
+    /** A copy of {@code tree} whose root children named in {@code first} lead, in that order. */
+    @NonNull
+    static A2uiComponent withChildrenFirst(@NonNull A2uiComponent tree, @NonNull String... first) {
+        A2uiComponent.Builder copy = new A2uiComponent.Builder(tree.getType())
+                .copyPropertiesFrom(tree);
+        List<A2uiComponent> rest = new ArrayList<>(tree.getChildren());
+        for (String id : first) {
+            for (A2uiComponent child : tree.getChildren()) {
+                if (id.equals(child.getId())) {
+                    copy.addChild(child);
+                    rest.remove(child);
+                }
+            }
+        }
+        for (A2uiComponent child : rest) copy.addChild(child);
+        return copy.build();
+    }
+
+    /** The lane's surface shown as this screen's brief, or null. */
+    @Nullable
+    private String embeddedBrief() {
+        return mEmbeddedAgentSurface != null && mAgent != null && !mShowingAgent
+                && DemoNativeContract.embedsAgentBrief(mSurfaceId) ? mEmbeddedAgentSurface : null;
+    }
+
+    /**
+     * The agent's brief as a glanceable card: its tree pruned and limited for this reading like
+     * any surface, then read as text. No control from it is reachable.
+     */
+    private void addAgentBriefRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
+            @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits) {
+        String surfaceId = embeddedBrief();
+        if (surfaceId == null) return;
+        A2uiComponent tree;
+        try {
+            A2uiSurface surface = mAgent.processor().getSurface(surfaceId);
+            tree = surface == null ? null : surface.project(DemoTrace.ROOT_ID);
+        } catch (RuntimeException unprojectable) {
+            tree = null;
+        }
+        A2uiComponent pruned = tree == null ? null : A2uiPruner.prune(tree, allowed);
+        if (pruned != null) pruned = A2uiPruner.applyLimits(pruned, limits);
+        if (pruned == null) return;
+        List<String> lines = new ArrayList<>();
+        List<String> sources = new ArrayList<>();
+        collectBriefLines(pruned, true, lines, sources);
+        if (lines.isEmpty()) return;
+        String rootTitle = pruned.getTitle();
+        String title = briefTitle(lines, pruned.hasChildren() && rootTitle != null
+                && !rootTitle.trim().isEmpty());
+        List<String> body = briefBody(lines, sources, providerLabel(mAgent.provider()));
+        String thumb = DemoNativeContract.thumbnailFor(mSurfaceId,
+                new A2uiComponent.Builder(ComponentType.CARD).setId("brief").build());
+        int art = thumb == null || !parkedNow() ? 0 : drawableNamed(thumb, 0);
+        addRow(rows, keys, HostRows.AGENT_BRIEF, HostRows.card(allowed, limits, title, body,
+                art == 0 ? null : getDrawable(art), getDrawable(R.drawable.a2ui_ic_film)));
+    }
+
+    /** A street address or a ZIP code: "1000 Fifth Avenue", "New York, NY 10028". */
+    private static final java.util.regex.Pattern ADDRESS = java.util.regex.Pattern.compile(
+            "\\b\\d{1,5}\\s+(?:[A-Z][\\w.]*\\s+){0,3}(?:Avenue|Ave|Street|St|Road|Rd|Boulevard"
+                    + "|Blvd|Place|Pl|Drive|Dr|Lane|Ln|Way|Parkway|Pkwy|Broadway|Plaza|Square|Sq)\\b"
+                    + "|\\b[A-Z]{2}\\s+\\d{5}(?:-\\d{4})?\\b");
+
+    /**
+     * Takes the card's title from the front of {@code lines}. A brief with no title of its own
+     * leads with a component's "title · subtitle", too long for a one-line card title: its title
+     * leads, and the subtitle half goes to the back of {@code lines}, a last-resort line.
+     */
+    @VisibleForTesting
+    @NonNull
+    static String briefTitle(@NonNull List<String> lines, boolean titledBrief) {
+        String title = lines.remove(0);
+        int join = titledBrief ? -1 : title.indexOf(" · ");
+        if (join > 0) {
+            lines.add(title.substring(join + " · ".length()));
+            title = title.substring(0, join);
+        }
+        return title;
+    }
+
+    /**
+     * The brief card's lines under its title: the brief's first line that is not just a street
+     * address (the address only when nothing else is there), then one source row naming who cited
+     * what, e.g. "Muse · cited · metmuseum.org".
+     */
+    @VisibleForTesting
+    @NonNull
+    static List<String> briefBody(@NonNull List<String> lines, @NonNull List<String> sources,
+            @NonNull String provider) {
+        List<String> body = new ArrayList<>();
+        String lead = null;
+        for (String line : lines) {
+            if (!ADDRESS.matcher(line).find()) {
+                lead = line;
+                break;
+            }
+        }
+        if (lead == null && !lines.isEmpty()) lead = lines.get(0);
+        if (lead != null) body.add(lead);
+        List<String> hosts = new ArrayList<>();
+        for (String source : sources) {
+            String[] parts = source.split(" · ", 2);
+            String host = parts.length == 2 ? parts[1].trim() : "";
+            if (!host.isEmpty() && !hosts.contains(host)) hosts.add(host);
+        }
+        if (!hosts.isEmpty()) {
+            body.add(provider + " · cited · "
+                    + String.join(", ", hosts.subList(0, Math.min(2, hosts.size()))));
+        }
+        return body;
+    }
+
+    private static void collectBriefLines(@NonNull A2uiComponent node, boolean root,
+            @NonNull List<String> lines, @NonNull List<String> sources) {
+        String title = node.getTitle();
+        if (title != null && !title.trim().isEmpty() && !(root && node.hasChildren())) {
+            if (title.startsWith("Source")) {
+                // "Source · host" alone: the page title is the link's business, not the card's.
+                String[] parts = title.split(" · ");
+                String source = parts.length >= 2 ? parts[0] + " · " + parts[1] : title;
+                if (!sources.contains(source)) sources.add(source);
+            } else {
+                lines.add(node.getSubtitle() == null ? title : title + " · " + node.getSubtitle());
+            }
+        } else if (root && title != null && !title.trim().isEmpty()) {
+            lines.add(title);
+        }
+        for (A2uiComponent child : node.getChildren()) {
+            collectBriefLines(child, false, lines, sources);
+        }
+    }
+
+    /** Registered row art: a thumbnail while IMAGE is allowed, else a glyph while ICON is. */
+    private boolean applyRowArt(@NonNull CarUiContentListItem row,
+            @NonNull A2uiComponent component, @NonNull Set<ComponentType> allowed) {
+        String thumb = DemoNativeContract.thumbnailFor(mSurfaceId, component);
+        int art = thumb == null ? 0 : drawableNamed(thumb, 0);
+        // Artwork thumbnails are parked-only on top of IMAGE: no image to a moving driver.
+        if (art != 0 && allowed.contains(ComponentType.IMAGE) && parkedNow()) {
+            row.setIcon(getDrawable(art));
+            row.setPrimaryIconType(CarUiContentListItem.IconType.CONTENT);
+            return true;
+        }
+        int glyph = DemoNativeContract.glyphFor(mSurfaceId, component);
+        if (glyph != 0 && allowed.contains(ComponentType.ICON)) {
+            row.setIcon(getDrawable(glyph));
+            row.setPrimaryIconType(CarUiContentListItem.IconType.STANDARD);
+            return true;
+        }
+        return false;
+    }
+
+    /** Demo stories ask Muse unless something else was chosen on this lane. */
+    private void defaultToMuse() {
+        if (mAgent == null || mAgent.provider() == AgentProvider.MUSE) return;
+        mAgent.selectProvider(AgentProvider.MUSE);
+        if (mProviderItem != null) mProviderItem.setTitle(providerLabel(AgentProvider.MUSE));
+    }
+
+    /**
+     * While the passenger display plays the Met artwork, the driver gets text only: which work
+     * the audio guide is on. Glanceable, no image, no action; audio is allowed in motion.
+     */
+    private void addGuideRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
+            @NonNull Set<ComponentType> allowed, @NonNull A2uiValueLimits limits) {
+        String playing = PassengerDisplay.playing();
+        int segment = PassengerDisplay.segment();
+        if (!"met_visit".equals(mSurfaceId) || segment < 0
+                || !(PassengerMedia.ARTWORK.equals(playing)
+                        || PassengerMedia.SLIDESHOW.equals(playing))) {
+            return;
+        }
+        int index = Math.min(segment, MetArtworks.WORKS.size() - 1);
+        addRow(rows, keys, HostRows.GUIDE, HostRows.card(allowed, limits,
+                getString(R.string.a2ui_met_guide_title),
+                Collections.singletonList(getString(R.string.a2ui_met_guide_body,
+                        MetArtworks.WORKS.get(index).mTitle, index + 1,
+                        MetArtworks.WORKS.size())),
+                null, getDrawable(R.drawable.a2ui_ic_guide)));
     }
 
     private static void addRow(@NonNull List<CarUiListItem> rows, @NonNull List<String> keys,
@@ -1724,6 +2104,17 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
     }
 
+    /** A copy of {@code tree} without the component {@code id} and its subtree. */
+    @NonNull
+    static A2uiComponent withoutComponent(@NonNull A2uiComponent tree, @NonNull String id) {
+        A2uiComponent.Builder copy = new A2uiComponent.Builder(tree.getType())
+                .copyPropertiesFrom(tree);
+        for (A2uiComponent child : tree.getChildren()) {
+            if (!id.equals(child.getId())) copy.addChild(withoutComponent(child, id));
+        }
+        return copy.build();
+    }
+
     /**
      * The confirmation's question, from the action: a host-owned sentence for exact corpus
      * controls, else the control's own title as a question. Never a bare "Confirm this action?".
@@ -1731,6 +2122,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @VisibleForTesting
     @NonNull
     String confirmTitle(@NonNull A2uiComponent component) {
+        CoffeeFixture.Pick coffee = coffeeFor(component);
+        if (coffee != null) return coffee.confirmTitle();
         String exact = mShowingAgent ? null : DemoNativeContract.confirmPrompt(mSurfaceId,
                 component);
         if (exact != null) return exact;
@@ -1741,9 +2134,18 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     @Nullable
     private String confirmMessage(@NonNull A2uiComponent component) {
+        CoffeeFixture.Pick coffee = coffeeFor(component);
+        if (coffee != null) return coffee.confirmDetail();
         String exact = mShowingAgent ? null : DemoNativeContract.confirmDetail(mSurfaceId,
                 component);
         return exact != null ? exact : component.getSubtitle();
+    }
+
+    /** The café for the corpus coffee order, near the chosen charger; else null. */
+    @Nullable
+    private CoffeeFixture.Pick coffeeFor(@NonNull A2uiComponent component) {
+        return !mShowingAgent && DemoNativeContract.isCoffeeOrder(mSurfaceId, component)
+                ? coffeeNearCharger() : null;
     }
 
     /** Hides any card the list cannot show whole. */
@@ -1782,7 +2184,8 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     /** A string from the journey trace's data model, or null. */
     @Nullable
-    private String journeyData(@NonNull HostJourney journey, @NonNull String pointer) {
+    private String journeyData(@Nullable HostJourney journey, @Nullable String pointer) {
+        if (journey == null || pointer == null) return null;
         A2uiSurface surface = mProcessor.getSurface(journey.mDataSurface);
         try {
             Object value = surface == null ? null : surface.readDataModel(pointer);
@@ -1809,6 +2212,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             mArrived = true;
             if (journey) {
                 earcon(DemoAudio.ARRIVAL);
+            }
+            if ("met_visit".equals(mSurfaceId) && !mShowingAgent) {
+                // Parked at the door: the artwork, under the same checks as a tap.
+                mStripHandler.postDelayed(() -> {
+                    if (mArrived && "met_visit".equals(mSurfaceId)) showGallery("gallery");
+                }, ARRIVAL_ARTWORK_DELAY_MS);
             }
         } else if (!authoritative) {
             mArrived = false;
@@ -1880,6 +2289,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if ("big_buck_bunny".equals(surfaceId)) {
             return "FIFTH HOUSE · CITY NOTE";
         }
+        if ("met_visit".equals(surfaceId)) {
+            return "The Met · Thursday";
+        }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            return "Charge · Coffee";
+        }
         return "A2UI · " + surfaceId.replace('_', ' ').toUpperCase(java.util.Locale.US);
     }
 
@@ -1890,6 +2305,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }
         if ("big_buck_bunny".equals(surfaceId)) {
             return getString(R.string.a2ui_brand_city_note_heading);
+        }
+        if ("met_visit".equals(surfaceId)) {
+            return getString(R.string.a2ui_met_heading);
+        }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            return getString(R.string.a2ui_ev_heading);
         }
         return surfaceHeading(surfaceId);
     }
@@ -1903,6 +2324,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     @NonNull
     private String themedToolbarTitle(@NonNull String surfaceId, @NonNull CharSequence defaultTitle) {
+        if ("met_visit".equals(surfaceId)) {
+            return getString(R.string.a2ui_met_toolbar_title);
+        }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            return getString(R.string.a2ui_ev_toolbar_title);
+        }
         return "poi_discovery_order".equals(surfaceId) || "big_buck_bunny".equals(surfaceId)
                 ? getString(R.string.a2ui_brand_toolbar_title) : defaultTitle.toString();
     }
@@ -2096,6 +2523,14 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             A2uiComponent component = components.get(i);
             CarUiContentListItem row = (CarUiContentListItem) rows.get(i);
             DemoNativeContract.Spec spec = DemoNativeContract.resolve(mSurfaceId, component);
+            appendCitations(row, component);
+            boolean rowArt = applyRowArt(row, component, allowed);
+            if (spec != null && spec.mKind == DemoNativeContract.Kind.TOGGLE) {
+                List<com.android.car.ui.CarUiText> body = new ArrayList<>();
+                body.add(new com.android.car.ui.CarUiText(getString(mArtworkFilm
+                        ? R.string.a2ui_met_artmode_film : R.string.a2ui_met_artmode_slideshow)));
+                row.setBody(body);
+            }
             if (spec != null) {
                 int art = 0;
                 switch (spec.mKind) {
@@ -2111,15 +2546,16 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                         break;
                     case WEATHER:
                         if (allowed.contains(ComponentType.ICON)) {
-                            row.setIcon(getDrawable(R.drawable.a2ui_ic_umbrella));
+                            row.setIcon(getDrawable("met_visit".equals(mSurfaceId)
+                                    ? R.drawable.a2ui_ic_sun : R.drawable.a2ui_ic_umbrella));
                             row.setPrimaryIconType(CarUiContentListItem.IconType.STANDARD);
                         }
                         break;
                     default:
                         break;
                 }
-                // One guard for every kind of artwork.
-                if (art != 0 && images) {
+                // One guard for every kind of artwork; registered row art wins.
+                if (art != 0 && images && !rowArt) {
                     row.setIcon(getDrawable(art));
                     row.setPrimaryIconType(CarUiContentListItem.IconType.CONTENT);
                 }
@@ -2135,6 +2571,26 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                 row.setPrimaryIconType(CarUiContentListItem.IconType.STANDARD);
             }
         }
+    }
+
+    /**
+     * Cited sources that survived the prune, as extra body lines under their card. A limit that
+     * cut them (LIMIT_CONTENT's depth) leaves the card with its summary alone.
+     */
+    private void appendCitations(@NonNull CarUiContentListItem row,
+            @NonNull A2uiComponent component) {
+        String containerId = DemoNativeContract.citationContainer(mSurfaceId, component);
+        A2uiComponent sources = containerId == null ? null
+                : findRendered(component, containerId);
+        if (sources == null || !sources.hasChildren()) return;
+        List<com.android.car.ui.CarUiText> body = new ArrayList<>();
+        if (row.getBody() != null) body.addAll(row.getBody());
+        for (A2uiComponent source : sources.getChildren()) {
+            if (source.getTitle() == null) continue;
+            body.add(new com.android.car.ui.CarUiText(source.getSubtitle() == null
+                    ? source.getTitle() : source.getTitle() + " \u2014 " + source.getSubtitle()));
+        }
+        row.setBody(body);
     }
 
     /** Re-resolves a host interaction against the current frame and current UXR before opening. */
@@ -2196,10 +2652,27 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             case GALLERY:
                 showGallery(componentId);
                 break;
+            case CHARGER:
+                // Navigation, decided by policy as such: allowed in motion, no dialog.
+                mChosenCharger = Integer.parseInt(componentId.substring(1)) - 1;
+                Log.i(TAG, "charger chosen: " + componentId);
+                refresh();
+                break;
+            case TOGGLE:
+                mArtworkFilm = !mArtworkFilm;
+                // An open gallery follows the toggle at once, under the same checks.
+                showGallery("ev_charge_coffee".equals(mSurfaceId) ? "tour" : "gallery");
+                refresh();
+                break;
             case ORDER:
                 placeOrder();
                 break;
             case AUDIO:
+                if ("met_visit".equals(mSurfaceId)) {
+                    // Answered by the audio guide, for everyone in the cabin; nothing new is drawn.
+                    Log.i(TAG, "audio guide asked; answered by audio only");
+                    break;
+                }
                 // Audio replaces the video; its stage must not stay up, black, over the list.
                 if (mVideoView != null) dismissDemoContent();
                 if (mDemoMedia != null) mDemoMedia.toggleAudio();
@@ -2384,7 +2857,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         }, SYNC_LOG_MS);
     }
 
-    /** Suffix of a bundled cut at the stage's own aspect, e.g. {@code <clip>_wide}. */
+    /** Suffix of a bundled cut at the stage's own aspect, e.g. {@code met_artwork_film_wide}. */
     @VisibleForTesting
     static final String WIDE_SUFFIX = "_wide";
 
@@ -2523,6 +2996,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (gallery == null || !allowed.contains(ComponentType.VIDEO)
                 || !allowed.contains(ComponentType.IMAGE)) {
             Toast.makeText(this, A2uiActionBinder.REFUSED_NOTE, Toast.LENGTH_LONG).show();
+            return;
+        }
+        A2uiComponent film = findRendered(gallery, "film");
+        if (mArtworkFilm && film != null && film.getType() == ComponentType.VIDEO) {
+            // The film: a Video that survived inside the gallery, under the video rules.
+            showVideoWith(componentId, DemoNativeContract.videoFor(mSurfaceId, film));
             return;
         }
         String credit = DemoNativeContract.artworkCredit(mSurfaceId);
@@ -2909,6 +3388,19 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         registerReceiver(mPassengerReceiver, new IntentFilter(DebugBroadcasts.ACTION_PASSENGER),
                 Context.RECEIVER_EXPORTED);
 
+        //   adb shell am broadcast --user current -a art.dart.a2ui.carui.action.VEHICLE \
+        //       --ei art.dart.a2ui.carui.extra.BATTERY_PCT 18      (-1 returns to the vehicle's)
+        mVehicleReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                int pct = intent.getIntExtra(DebugBroadcasts.EXTRA_BATTERY_PCT, -1);
+                mDemoBatteryPct = pct < 0 || pct > 100 ? null : pct;
+                refresh();
+            }
+        };
+        registerReceiver(mVehicleReceiver, new IntentFilter(DebugBroadcasts.ACTION_VEHICLE),
+                Context.RECEIVER_EXPORTED);
+
         //   adb shell am broadcast --user current -a art.dart.a2ui.carui.action.END_CARD
         mEndCardReceiver = new BroadcastReceiver() {
             @Override
@@ -2952,6 +3444,15 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mShowingAgent = false;
         mCorpusSurfaceId = caseId;
         mAgentBadge = null;
+        mEmbeddedAgentSurface = null;
+        String passenger = PassengerDisplay.playing();
+        if (PassengerMedia.ARTWORK.equals(passenger) || PassengerMedia.SLIDESHOW.equals(passenger)) {
+            PassengerDisplay.request(PassengerDisplay.STOP);
+        }
+        if (mAgent != null && DemoNativeContract.embedsAgentBrief(caseId) || "ev_charge_coffee"
+                .equals(caseId)) {
+            defaultToMuse();
+        }
         showSurface(caseId);
         return true;
     }
@@ -2995,6 +3496,13 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                 @NonNull String badge) {
             mAgentThinking = false;
             mAgentBadge = badge;
+            if (!mShowingAgent && DemoNativeContract.embedsAgentBrief(mSurfaceId)) {
+                // The answer becomes this screen's brief; the screen and its controls stay.
+                mEmbeddedAgentSurface = surfaceId;
+                Log.i(TAG, "agent surface embedded as the brief: " + badge);
+                refresh();
+                return;
+            }
             mShowingAgent = true;
             showSurface(surfaceId);
             Log.i(TAG, "agent surface: " + badge);

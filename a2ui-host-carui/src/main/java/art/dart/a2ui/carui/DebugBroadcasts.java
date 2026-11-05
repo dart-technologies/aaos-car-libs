@@ -70,6 +70,15 @@ final class DebugBroadcasts {
     /** String extra on {@link #ACTION_PASSENGER}: a {@link PassengerMedia} name, or {@code stop}. */
     static final String EXTRA_MEDIA = "art.dart.a2ui.carui.extra.MEDIA";
 
+    /**
+     * A DEMO state-of-charge reading, debuggable builds only, for images whose VHAL cannot be
+     * driven: {@code --ei art.dart.a2ui.carui.extra.BATTERY_PCT 18}; -1 returns to the vehicle's.
+     */
+    static final String ACTION_VEHICLE = "art.dart.a2ui.carui.action.VEHICLE";
+
+    /** Int extra on {@link #ACTION_VEHICLE}: state of charge in percent, or -1. */
+    static final String EXTRA_BATTERY_PCT = "art.dart.a2ui.carui.extra.BATTERY_PCT";
+
     /** Show the closing card. Parked only; any later restriction change takes it away. */
     static final String ACTION_END_CARD = "art.dart.a2ui.carui.action.END_CARD";
 }

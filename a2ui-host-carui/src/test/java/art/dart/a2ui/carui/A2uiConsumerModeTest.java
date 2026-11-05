@@ -71,7 +71,7 @@ public class A2uiConsumerModeTest {
     public void engineeringChromeHidesUntilTechnicalDetailsAreAskedFor() {
         mApp.getApplicationInfo().flags |= ApplicationInfo.FLAG_DEBUGGABLE;
         A2uiCarUiActivity activity = started(A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
-        activity.selectCase("now_playing");
+        activity.selectCase("met_visit");
         assertThat(activity.mProviderItem.isVisible()).isFalse();
         TextView badge = activity.findViewById(R.id.status_badge);
         assertThat(badge.getVisibility()).isEqualTo(View.GONE);
@@ -106,28 +106,27 @@ public class A2uiConsumerModeTest {
         assertThat(activity.mHeaderMic.getVisibility()).isEqualTo(View.GONE);
         assertThat(activity.mSpeakItem.isVisible()).isTrue();
 
-        activity.selectCase("now_playing");
+        activity.selectCase("met_visit");
         // No app title bar in a car: the toolbar's views go, and its title with them.
         assertThat(activity.toolbarHiddenForTesting()).isTrue();
-        View title = viewWithText(activity.getWindow().getDecorView(),
-                activity.getTitle().toString());
+        View title = viewWithText(activity.getWindow().getDecorView(), "The Met, safely");
         assertThat(title == null || !title.isShown()).isTrue();
         // One microphone: the header's.
         assertThat(activity.mHeaderMic.getVisibility()).isEqualTo(View.VISIBLE);
         assertThat(activity.mHeaderMic.isEnabled()).isTrue();
         assertThat(activity.mSpeakItem.isVisible()).isFalse();
-        // The context title, in the header row.
+        // The context title, short and in words.
         assertThat(((TextView) activity.findViewById(R.id.surface_heading)).getText().toString())
-                .isEqualTo(A2uiCarUiActivity.surfaceHeading("now_playing"));
+                .isEqualTo("The Met · Thursday");
 
         // A surface whose search survived keeps the toolbar that carries it.
         activity.selectCase("poi_discovery_order");
         assertThat(activity.mSearchItem.isVisible()).isTrue();
         assertThat(activity.toolbarHiddenForTesting()).isFalse();
-        activity.selectCase("video_trailer");
+        activity.selectCase("ev_charge_coffee");
         assertThat(activity.toolbarHiddenForTesting()).isTrue();
         assertThat(((TextView) activity.findViewById(R.id.surface_heading)).getText().toString())
-                .isEqualTo(A2uiCarUiActivity.surfaceHeading("video_trailer"));
+                .isEqualTo("Charge · Coffee");
     }
 
     @Test
@@ -148,7 +147,7 @@ public class A2uiConsumerModeTest {
     public void cardsAreAGlanceFourParkedThreeMoving() {
         A2uiCarUiActivity activity = A2uiHostCardsTest.started(
                 A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE);
-        activity.selectCase("big_buck_bunny");
+        activity.selectCase("met_visit");
         // More rows than the cap, so the cap is what is measured.
         assertThat(activity.renderedRowsForTesting().size())
                 .isGreaterThan(A2uiCarUiActivity.MAX_CARDS_PARKED);
@@ -216,24 +215,24 @@ public class A2uiConsumerModeTest {
     @Test
     public void cardsLiftMetaAndDropVoiceHintsButInventNothing() {
         CardListAdapter.Card route = CardListAdapter.cardFor("Arrive 2:41 PM · 19 min",
-                Collections.singletonList("Hudson Yards → Brooklyn Museum"));
+                Collections.singletonList("Hudson Yards → The Met"));
         assertThat(route.mTitle).isEqualTo("Arrive 2:41 PM");
         assertThat(route.mMeta).isEqualTo("19 min");
 
-        CardListAdapter.Card cafe = CardListAdapter.cardFor("Fifth House Coffee Atelier",
-                Arrays.asList("0.4 mi · Open until 6 PM", "say “order ahead”"));
-        assertThat(cafe.mMeta).isEqualTo("0.4 mi");
-        assertThat(cafe.mSubtitle).isEqualTo("Open until 6 PM");
-        assertThat(cafe.mExtra).isEmpty();
+        CardListAdapter.Card charger = CardListAdapter.cardFor("Tesla Supercharger",
+                Arrays.asList("0.9 mi · 72 kW", "say “take me to the first one”"));
+        assertThat(charger.mMeta).isEqualTo("0.9 mi");
+        assertThat(charger.mSubtitle).isEqualTo("72 kW");
+        assertThat(charger.mExtra).isEmpty();
 
-        CardListAdapter.Card episode = CardListAdapter.cardFor("Now playing · Podcast",
-                Collections.singletonList("Episode 12 (4/6)"));
-        assertThat(episode.mSubtitle).isEqualTo("Episode 12");
-        assertThat(episode.mMeta).isEqualTo("4/6");
+        CardListAdapter.Card guide = CardListAdapter.cardFor("Now playing · Audio guide",
+                Collections.singletonList("The Harvesters (4/6)"));
+        assertThat(guide.mSubtitle).isEqualTo("The Harvesters");
+        assertThat(guide.mMeta).isEqualTo("4/6");
 
-        CardListAdapter.Card plain = CardListAdapter.cardFor("Today at the museum",
-                Arrays.asList("Open 10 AM–5 PM", "Source · brooklynmuseum.org"));
+        CardListAdapter.Card plain = CardListAdapter.cardFor("Today at The Met",
+                Arrays.asList("Open 10 AM–5 PM", "Source · metmuseum.org"));
         assertThat(plain.mMeta).isNull();
-        assertThat(plain.mExtra).containsExactly("Source · brooklynmuseum.org");
+        assertThat(plain.mExtra).containsExactly("Source · metmuseum.org");
     }
 }

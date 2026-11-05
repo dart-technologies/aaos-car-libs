@@ -38,16 +38,21 @@ final class HostJourney {
     @NonNull final Set<String> mSurfaces;
     @NonNull final String mConfirmTitle;
     @NonNull final List<String> mConfirmBody;
-    @NonNull final String mArrivalTitle;
-    @NonNull final String mArrivalDetail;
+    @Nullable final String mArrivalTitle;
+    @Nullable final String mArrivalDetail;
     @DrawableRes final int mConfirmGlyph;
     @DrawableRes final int mArrivalArt;
     /** Large arrival image for the visual panel, or 0 for the list card alone. */
     @DrawableRes final int mHeroArt;
+    /** The control a confirmed commitment's card replaces, or null to keep it. */
+    @Nullable final String mConfirmReplaces;
+    /** The confirmation card is shown only while parked (it collapses when driving away). */
+    final boolean mConfirmParkedOnly;
 
     private HostJourney(String id, String dataSurface, Set<String> surfaces, String confirmTitle,
             List<String> confirmBody, String arrivalTitle, String arrivalDetail,
-            int confirmGlyph, int arrivalArt, int heroArt) {
+            int confirmGlyph, int arrivalArt, int heroArt, @Nullable String confirmReplaces,
+            boolean confirmParkedOnly) {
         mId = id;
         mDataSurface = dataSurface;
         mSurfaces = Collections.unmodifiableSet(surfaces);
@@ -58,6 +63,8 @@ final class HostJourney {
         mConfirmGlyph = confirmGlyph;
         mArrivalArt = arrivalArt;
         mHeroArt = heroArt;
+        mConfirmReplaces = confirmReplaces;
+        mConfirmParkedOnly = confirmParkedOnly;
     }
 
     private static final HostJourney FIFTH_HOUSE = new HostJourney("fifth_house",
@@ -65,9 +72,26 @@ final class HostJourney {
             new LinkedHashSet<>(Arrays.asList("poi_discovery_order", "big_buck_bunny")),
             "/order/status", Arrays.asList("/order/eta", "/order/pickup"),
             "/arrival/title", "/arrival/detail",
-            R.drawable.a2ui_ic_pickup, R.drawable.demo_media_poster, 0);
+            R.drawable.a2ui_ic_pickup, R.drawable.demo_media_poster, 0, null, false);
 
-    private static final List<HostJourney> ALL = Collections.singletonList(FIFTH_HOUSE);
+    /** The Met: a DEMO timed-entry ticket, then the arrival hero over a CC0 work. */
+    private static final HostJourney MET = new HostJourney("met", "met_visit",
+            new LinkedHashSet<>(Collections.singletonList("met_visit")),
+            "/ticket/title", Collections.singletonList("/ticket/detail"),
+            "/arrival/title", "/arrival/detail",
+            R.drawable.a2ui_ic_ticket, R.drawable.met_435809, R.drawable.met_435809, "reserve",
+            false);
+
+    /**
+     * Charge and a coffee: the reorder's pickup card lives in the parked charging window. It says
+     * what was ordered, never that it is ready; the café itself comes from CoffeeFixture.
+     */
+    private static final HostJourney EV = new HostJourney("ev", "ev_charge_coffee",
+            new LinkedHashSet<>(Collections.singletonList("ev_charge_coffee")),
+            "/order/status", Collections.singletonList("/order/pickup"), null, null,
+            R.drawable.a2ui_ic_pickup, 0, 0, "coffee", true);
+
+    private static final List<HostJourney> ALL = Arrays.asList(FIFTH_HOUSE, MET, EV);
 
     /** The journey an exact corpus surface belongs to, or null. */
     @Nullable

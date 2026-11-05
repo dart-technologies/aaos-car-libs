@@ -29,6 +29,10 @@ final class PassengerMedia {
 
     /** {@code video}: Big Buck Bunny when bundled, else the generated decoder fixture. */
     static final String VIDEO = "video";
+    /** {@code artwork}: the slow-pan film of the six Met works, when bundled. */
+    static final String ARTWORK = "artwork";
+    /** {@code slideshow}: the six Met works as stills. */
+    static final String SLIDESHOW = "slideshow";
     /** Suffix of a bundled portrait cut of the media, e.g. {@code bbb_passenger_portrait}. */
     static final String PORTRAIT_SUFFIX = "_portrait";
 
@@ -77,6 +81,17 @@ final class PassengerMedia {
         if (VIDEO.equals(name)) {
             return new PassengerMedia(VIDEO, "bbb_passenger", R.string.a2ui_passenger_video_credit,
                     1, false, false, false);
+        }
+        int works = MetArtworks.WORKS.size();
+        if (ARTWORK.equals(name)) {
+            // The audio guide is the film's soundtrack: it belongs in the cabin. Both cuts burn
+            // in each work's caption and the Met's credit, so the host lays none over them.
+            return new PassengerMedia(ARTWORK, "met_artwork_film", R.string.a2ui_met_film_credit,
+                    works, true, false, true);
+        }
+        if (SLIDESHOW.equals(name)) {
+            return new PassengerMedia(SLIDESHOW, "", R.string.a2ui_met_slides_credit, works, false,
+                    true, false);
         }
         return null;
     }

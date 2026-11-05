@@ -42,11 +42,17 @@
   },
   "frame": "a2ui-automotive/demo/cards/cockpit-frame.png",
   "glow": "a2ui-automotive/demo/cards/cockpit-glow.png",
+  "intro": {
+    "driver": "a2ui-automotive/demo/cards/nyc_met-intro-driver.png",
+    "passenger": "a2ui-automotive/demo/cards/nyc_met-intro-passenger.png",
+    "note": "screen images at the recordings' sizes: scale them into the boxes like the recordings, then crossfade into the live UI in place"
+  },
   "windows": "alpha 0 exactly at driver and passenger; opaque everywhere else",
   "composite": "background, recordings scaled into the boxes, then the frame on top (or the frame first and the recordings over it: same pixels)",
   "renderer": "scripts/demo_overlays.py cockpit",
   "approach": {
     "chosen": "procedural",
-    "why": "Legibility first, so the frame is drawn here around the largest boxes that fit."
+    "why": "Muse Image 1.0 drew convincing straight-on cockpits, but neither plate gave a clean 16:9 driver window: cockpit-1's screens cover 62% of the width (driver 16:9 fit ~1040 px wide on the canvas, 80% of this layout) and cockpit-2's wide screen is 1.47:1 with the steering wheel crossing its lower-left corner. Legibility first, so the frame is drawn here around the largest boxes that fit.",
+    "museAttempts": "a2ui-automotive/demo/cards/brand/muse-image-attempts.json"
   }
 }

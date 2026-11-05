@@ -55,6 +55,8 @@ AUDIO_DIR = ROOT / "a2ui-automotive/demo/audio/elevenlabs"
 COCKPIT_FRAME = CARDS / "cockpit-frame.png"
 COCKPIT_LAYOUT = CARDS / "cockpit-layout.json"
 COCKPIT_GLOW = CARDS / "cockpit-glow.png"
+INTRO_DRIVER = CARDS / "nyc_met-intro-driver.png"        # scripts/render-brand-assets.py intro
+INTRO_PASSENGER = CARDS / "nyc_met-intro-passenger.png"
 
 CANVAS = (1920, 1080)
 RAIL_BAND = (0, 0, 1920, 56)
@@ -93,7 +95,14 @@ LANES = {"audio_guide": "Audio guide"}
 
 # Beats anchor on the scenario's own actions: each is the first action after the previous beat
 # whose fields match. A scenario may carry "storyBeats" in the same shape to override this.
-DEFAULT_BEATS: dict[str, list[dict]] = {
+DEFAULT_BEATS = {
+    "nyc_met": [
+        {"title": "Plan at Hudson Yards"},
+        {"title": "Drive uptown", "anchor": {"type": "carState", "state": "drive"}},
+        {"title": "Arrive at The Met", "anchor": {"type": "carState", "state": "park"}},
+        {"title": "Low battery", "anchor": {"type": "carState", "state": "drive"}},
+        {"title": "Charge & coffee", "anchor": {"type": "carState", "state": "park"}},
+    ],
 }
 
 
@@ -103,15 +112,13 @@ DEFAULT_BEATS: dict[str, list[dict]] = {
 def layout(path: pathlib.Path = COCKPIT_LAYOUT) -> dict:
     """Canvas, the cockpit's driver/passenger boxes and the two overlay bands, all [x, y, w, h].
 
-    The boxes come from cockpit-layout.json, which the cockpit renderer writes with the frame;
-    its optional "intro" names the screen images the video may open on (None when it has none).
+    The boxes come from cockpit-layout.json, which the cockpit renderer writes with the frame.
     """
     data = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
     return {"canvas": list(data["canvas"]), "driver": list(data["driver"]),
             "passenger": list(data["passenger"]), "captionBand": list(data["captionBand"]),
             "railBand": list(data["railBand"]), "frame": data["frame"], "glow": data["glow"],
-            "intro": ({k: data["intro"][k] for k in ("driver", "passenger")}
-                      if data.get("intro") else None)}
+            "intro": {k: data["intro"][k] for k in ("driver", "passenger")}}
 
 
 # ---------------------------------------------------------------------------------------------
@@ -639,25 +646,21 @@ def intro_alpha(t: float, hold_s: float, fade_s: float) -> float:
 
 
 def intro_frames(out_dir: pathlib.Path, *, hold_s: float = 2.0, fade_s: float = 1.1,
-                 zoom: float = 0.025, fps: int = 30, screens: dict | None = None) -> dict:
+                 zoom: float = 0.025, fps: int = 30) -> dict:
     """The intro screens as box-sized RGBA frame sequences, push-in and crossfade baked in.
 
-    Frame i is video time i/fps: both screens' images push in by `zoom` (eased) over
+    Frame i is video time i/fps: the graffiti and passenger card push in by `zoom` (eased) over
     hold_s + fade_s, and over the last fade_s their alpha eases from 1 to 0, so the recording
     underneath "turns on". Overlay each sequence at its box, above the recording and below the
     frame, with `-framerate {fps} -i <pattern>` and overlay's eof_action=pass: frame-exact, no
     xfade timeline shift, and the cockpit frame never moves. Sub-pixel crops keep the push-in
-    free of the integer-step jitter of ffmpeg's zoompan. `screens` maps driver and passenger to
-    their images; by default the cockpit layout's intro, and without one there is none."""
+    free of the integer-step jitter of ffmpeg's zoompan."""
     out_dir = pathlib.Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     total = hold_s + fade_s
     count = round(total * fps)
     boxes = {"driver": DRIVER_BOX, "passenger": PASSENGER_BOX}
-    screens = screens or layout()["intro"]
-    if not screens:
-        raise ValueError("the cockpit layout names no intro screens")
-    sources = {name: ROOT / path for name, path in screens.items()}
+    sources = {"driver": INTRO_DRIVER, "passenger": INTRO_PASSENGER}
     for name, box in boxes.items():
         with Image.open(sources[name]) as opened:
             source = opened.convert("RGB")
@@ -666,7 +669,7 @@ def intro_frames(out_dir: pathlib.Path, *, hold_s: float = 2.0, fade_s: float = 
             frame = source.resize(box[2:], Image.LANCZOS,
                                   box=push_box(source.size, 1 + zoom * ease(t / total)))
             if name == "passenger" and t >= hold_s:
-                # Text over text ghosts in a crossfade: the passenger card dips to black, then the
+                # Text over text ghosts in a crossfade: the tagline dips to black, then the
                 # black lifts off the live screen.
                 p = (t - hold_s) / fade_s
                 if p < 0.5:
@@ -691,8 +694,7 @@ def render_overlays(spec: dict, out_dir: pathlib.Path) -> dict:
           scenario       the scenario (its actions and durationSeconds give the story beats)
           railOffsetS    where the device timeline starts in the output (beats are relative)
           audioDir       the speech cache; estimateMissing allows a preflight without it
-          intro          {"hold", "fade", "zoom"} seconds/seconds/fraction, or absent; drawn
-                         only when the cockpit layout names intro screens
+          intro          {"hold", "fade", "zoom"} seconds/seconds/fraction, or absent
           srt            where to write the SubRip file, or absent
     Writes <out_dir>/overlays.json and returns it: layout, captions, rail, intro, srt.
     """
@@ -706,7 +708,7 @@ def render_overlays(spec: dict, out_dir: pathlib.Path) -> dict:
                       states=vehicle_states(scenario), offset_s=float(spec["railOffsetS"]))
     shown = captions(clips, out_dir / "captions", audio_dir=audio, estimate=estimate)
     intro = None
-    if spec.get("intro") and layout()["intro"]:
+    if spec.get("intro"):
         params = spec["intro"]
         intro = intro_frames(out_dir / "intro", hold_s=float(params["hold"]),
                              fade_s=float(params["fade"]), zoom=float(params["zoom"]))
@@ -736,6 +738,10 @@ def cockpit_layout_record(approach: dict) -> dict:
         "sources": {"driver": [1408, 792], "passenger": [528, 792]},
         "frame": str(COCKPIT_FRAME.relative_to(ROOT)),
         "glow": str(COCKPIT_GLOW.relative_to(ROOT)),
+        "intro": {"driver": str(INTRO_DRIVER.relative_to(ROOT)),
+                  "passenger": str(INTRO_PASSENGER.relative_to(ROOT)),
+                  "note": "screen images at the recordings' sizes: scale them into the boxes "
+                          "like the recordings, then crossfade into the live UI in place"},
         "windows": "alpha 0 exactly at driver and passenger; opaque everywhere else",
         "composite": "background, recordings scaled into the boxes, then the frame on top "
                      "(or the frame first and the recordings over it: same pixels)",
@@ -788,7 +794,12 @@ def preview(scenario: dict, driver: pathlib.Path, passenger: pathlib.Path | None
 
 APPROACH = {
     "chosen": "procedural",
-    "why": "Legibility first, so the frame is drawn here around the largest boxes that fit.",
+    "why": "Muse Image 1.0 drew convincing straight-on cockpits, but neither plate gave a clean "
+           "16:9 driver window: cockpit-1's screens cover 62% of the width (driver 16:9 fit "
+           "~1040 px wide on the canvas, 80% of this layout) and cockpit-2's wide screen is "
+           "1.47:1 with the steering wheel crossing its lower-left corner. Legibility first, "
+           "so the frame is drawn here around the largest boxes that fit.",
+    "museAttempts": "a2ui-automotive/demo/cards/brand/muse-image-attempts.json",
 }
 
 
@@ -797,7 +808,7 @@ def main(argv: list[str] | None = None) -> int:
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command")
     srt = sub.add_parser("srt", help="write the SubRip captions (the default command)")
-    srt.add_argument("scenario", nargs="?", default="nyc_concierge")
+    srt.add_argument("scenario", nargs="?", default="nyc_met")
     srt.add_argument("--audio-dir", type=pathlib.Path, default=AUDIO_DIR)
     srt.add_argument("--offset", type=float, default=0.0)
     srt.add_argument("--out", type=pathlib.Path)
@@ -832,18 +843,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"wrote {len(result['captions'])} captions, {len(result['rail'])} rail states"
               f"{', intro' if result['intro'] else ''} to {args.out}")
     elif args.command == "intro-frames":
-        try:
-            frames = intro_frames(args.out, hold_s=args.hold, fade_s=args.fade, zoom=args.zoom)
-        except ValueError as error:
-            print(error, file=sys.stderr)
-            return 2
-        print(json.dumps(frames, indent=2))
+        print(json.dumps(intro_frames(args.out, hold_s=args.hold, fade_s=args.fade,
+                                      zoom=args.zoom), indent=2))
     elif args.command == "preview":
         out = preview(load_scenario(args.scenario), args.driver, args.passenger, args.at,
                       args.out, args.audio_dir, args.passenger_at)
         print(f"wrote {out}")
     else:
-        scenario_id = getattr(args, "scenario", None) or "nyc_concierge"
+        scenario_id = getattr(args, "scenario", None) or "nyc_met"
         audio_dir = getattr(args, "audio_dir", None) or AUDIO_DIR
         out = getattr(args, "out", None) or ROOT / "build/demo" / f"{scenario_id}.srt"
         path = write_srt(load_scenario(scenario_id)["clips"], out, audio_dir=audio_dir,

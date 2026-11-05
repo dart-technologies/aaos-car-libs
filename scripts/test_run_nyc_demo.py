@@ -31,15 +31,15 @@ PILLOW = importlib.util.find_spec("PIL") is not None  # render-demo-cards.py dra
 DRIVER, PASSENGER = "4619827259835644672", "4619827551948147201"
 
 DUAL = {
-    "id": "t_dual", "corpusCase": "big_buck_bunny", "durationSeconds": 70,
+    "id": "t_dual", "corpusCase": "met_visit", "durationSeconds": 70,
     "recording": {"layout": "dual"},
     "clips": [{"id": "u1", "role": "user_utterance", "atMs": 5000, "text": "Go.",
                "expectedTranscript": "go"}],
     "actions": [
         {"atMs": 5000, "type": "speak", "clipId": "u1"},
         {"atMs": 20000, "type": "carState", "state": "drive"},
-        {"atMs": 20000, "type": "passenger", "media": "video"},
-        {"atMs": 30000, "type": "agent", "provider": "muse", "ask": "What is nearby?"},
+        {"atMs": 20000, "type": "passenger", "media": "artwork"},
+        {"atMs": 30000, "type": "agent", "provider": "muse", "ask": "What should we see first?"},
         {"atMs": 50000, "type": "carState", "state": "park"},
         {"atMs": 51000, "type": "passenger", "media": "stop"},
         {"atMs": 60000, "type": "endCard"},
@@ -177,16 +177,16 @@ class TimelineTest(unittest.TestCase):
         calls = device.calls
         self.assertEqual(calls[0], (0.0, "record", DRIVER, demo.DEVICE_VIDEO, 75))
         self.assertEqual(calls[1], (0.0, "broadcast", demo.ACTION_CASE,
-                                    ("--es", demo.EXTRA_CASE, "big_buck_bunny")))
+                                    ("--es", demo.EXTRA_CASE, "met_visit")))
         self.assertIn((17.0, "screencap", PASSENGER), calls)
         record = calls.index((20.0, "record", PASSENGER, demo.DEVICE_PASSENGER_VIDEO, 55))
         self.assertEqual(calls[record + 1], (20.0, "broadcast", demo.ACTION_PASSENGER,
-                                             ("--es", demo.EXTRA_MEDIA, "video")))
+                                             ("--es", demo.EXTRA_MEDIA, "artwork")))
         self.assertIn((5.0, "broadcast", demo.ACTION_SPEAK, ("--es", demo.EXTRA_PHRASE, "go")),
                       calls)
         self.assertIn((30.0, "broadcast", demo.ACTION_AGENT,
                        ("--es", demo.EXTRA_PROVIDER, "muse", "--es", demo.EXTRA_ASK,
-                        "What is nearby?")), calls)
+                        "What should we see first?")), calls)
         self.assertIn((60.0, "broadcast", demo.ACTION_END_CARD, ()), calls)
         self.assertEqual(calls[-3:], [
             (70.0, "stop", 2), (70.0, "car", "park"),
@@ -214,6 +214,22 @@ class TimelineTest(unittest.TestCase):
             timeline(DUAL, device, self.tmp)
         self.assertIn((70.0, "stop", 2), device.calls)
         self.assertIn((70.0, "car", "park"), device.calls)
+
+    def test_nyc_met_ends_parked_on_big_buck_bunny_without_an_end_card(self):
+        met = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_met")
+        device = FakeDevice(FakeClock())
+        evidence = timeline(met, device, self.tmp)
+        calls = device.calls
+        self.assertEqual([c[2] for c in calls if c[1] == "tap"],
+                         ["Confirm", "Confirm", "Big Buck Bunny"])
+        bunny = next(c for c in calls if c[1:] == ("tap", "Big Buck Bunny"))
+        states = [c for c in calls if c[1] == "car" and c[0] < bunny[0]]
+        self.assertEqual(states[-1][2], "park", "the driver watches only while parked")
+        self.assertFalse([c for c in calls if c[1] == "broadcast"
+                          and c[2] == demo.ACTION_END_CARD])
+        self.assertEqual(evidence["passengerStartSeconds"], 30.5)
+        self.assertIn((float(met["durationSeconds"]), "stop", 2), calls)
+        self.assertIn(("date", "110517152026.00"), [c[2] for c in calls if c[1] == "shell"])
 
     def test_missing_idle_frame_is_reported_not_fatal(self):
         device = FakeDevice(FakeClock(), screencap_ok=False)
@@ -375,6 +391,32 @@ class PlacementTest(unittest.TestCase):
         plain = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_poi_order")
         self.assertEqual(demo.placed_clips(plain), plain["clips"])  # no preamble: unchanged
 
+    def test_nyc_met_runs_preamble_timeline_outro_within_the_target(self):
+        met = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_met")
+        total = demo.total_seconds(met)
+        self.assertEqual(total, demo.preamble_seconds(met) + met["durationSeconds"]
+                         + demo.outro_seconds(met))
+        self.assertLessEqual(total, 180)
+        placed = {c["id"]: c["atMs"] for c in demo.placed_clips(met)}
+        preamble = round(demo.preamble_seconds(met) * 1000)
+        self.assertEqual(placed["pre_narration_01"], 300)
+        self.assertEqual(placed["met_utterance_visit"], preamble + 3000)
+        self.assertEqual(placed["outro_narration_01"],
+                         preamble + met["durationSeconds"] * 1000 + 500)
+
+    def test_nyc_met_journey_and_closing_card_spec(self):
+        met = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_met")
+        self.assertEqual([s["state"] for s in demo.journey(met)],
+                         ["park", "drive", "park", "drive", "park"])
+        spec = demo.outro_spec(met, {})
+        self.assertEqual([s["label"] for s in spec["segments"]],
+                         ["Parked · Hudson Yards", "Driving", "Parked · The Met", "Driving",
+                          "Parked · charging"])
+        self.assertEqual([s["slots"] for s in spec["segments"]], [2, 1, 1, 1, 2])
+        self.assertEqual([b["segment"] for b in spec["passenger"]], [1, 3])
+        self.assertTrue(all(b["image"] is None for b in spec["driver"] + spec["passenger"]))
+        self.assertEqual(spec["driver"][-1]["label"], "Big Buck Bunny")
+
 
 @unittest.skipUnless(FFMPEG, "ffmpeg/ffprobe not installed")
 class PostProductionCompositionTest(unittest.TestCase):
@@ -466,7 +508,7 @@ COCKPIT = {
     "clips": [{"id": "p1", "section": "preamble", "atMs": 300, "role": "narration",
                "text": "A model can't see the road.", "durationMs": 900},
               {"id": "t1", "atMs": 2500, "role": "user_utterance",
-               "text": "Take us to the museum.", "durationMs": 1200},
+               "text": "Take us to The Met.", "durationMs": 1200},
               {"id": "o1", "section": "outro", "atMs": 300, "role": "narration",
                "text": "The car decides.", "durationMs": 800}],
 }
@@ -474,12 +516,10 @@ COCKPIT = {
 
 @unittest.skipUnless(FFMPEG and PILLOW, "ffmpeg/ffprobe or Pillow not installed")
 class CockpitCompositionTest(unittest.TestCase):
-    """The cockpit: one frame that never moves, an intro the layout names easing into the
-    preamble inside the driver window, the recordings in the windows, rail, captions, closing
-    card: pixels read back from a synthetic render through the same overlay renderer the
-    recorder runs."""
-    # The lead an intro takes, as post_production sets it: none without intro screens.
-    HOLD, FADE = (0.4 if demo.cockpit_intro() else 0.0), 0.3
+    """The cockpit: one frame that never moves, the intro easing into the preamble inside the
+    driver window, the recordings in the windows, rail, captions, closing card: pixels read back
+    from a synthetic render through the same overlay renderer the recorder runs."""
+    HOLD, FADE = 0.4, 0.3
 
     @classmethod
     def setUpClass(cls):
@@ -548,20 +588,17 @@ class CockpitCompositionTest(unittest.TestCase):
             drawn = frame.convert("RGB").getpixel(gap)
         self.assertTrue(near(reference, drawn, 8), (reference, drawn))
         self.assertFalse(near(reference, BG, 3), "frame drawn over the background")
-        if self.overlays["intro"]:
-            # The intro's glow lights the bezels, then eases out with the crossfade.
-            lit = sum(pixel(self.out, 0.1, *gap))
-            self.assertGreater(lit, sum(reference) + 30, "intro glow")
-            self.assertLess(sum(pixel(self.out, self.HOLD + self.FADE * 0.6, *gap)), lit - 10,
-                            "the glow fades with the crossfade")
+        # The intro's glow lights the bezels, then eases out with the crossfade.
+        lit = sum(pixel(self.out, 0.1, *gap))
+        self.assertGreater(lit, sum(reference) + 30, "intro glow")
+        self.assertLess(sum(pixel(self.out, self.HOLD + self.FADE * 0.6, *gap)), lit - 10,
+                        "the glow fades with the crossfade")
 
     def test_intro_eases_into_the_first_preamble_card_in_the_driver_window(self):
-        if not self.overlays["intro"]:
-            self.skipTest("the cockpit layout names no intro screens")
         from PIL import Image
         with Image.open(self.overlays["intro"]["driver"] % 3) as first:
             expected = first.convert("RGB").getpixel((first.width // 2, first.height // 2))
-        self.assertTrue(near(pixel(self.out, 0.1, *self.driver), expected, 40), "intro screen")
+        self.assertTrue(near(pixel(self.out, 0.1, *self.driver), expected, 40), "graffiti")
         distances = [sum(abs(a - b) for a, b in zip(pixel(self.out, t, *self.driver), CYAN))
                      for t in (0.42, 0.5, 0.57, 0.63, 0.68)]
         self.assertEqual(distances, sorted(distances, reverse=True), "eased, monotonic")
@@ -636,7 +673,7 @@ class CockpitCompositionTest(unittest.TestCase):
         self.assertTrue(self.HOLD <= sections[0] < self.head <= sections[1]
                         < self.head + 8 <= sections[2])
         srt = (self.tmp / "cockpit.srt").read_text(encoding="utf-8")
-        self.assertIn("[Passenger] Take us to the museum.", srt)
+        self.assertIn("[Passenger] Take us to The Met.", srt)
 
     def test_closing_card_covers_everything_and_captions_stay_on_top(self):
         self.assertTrue(near(pixel(self.out, 12.4, 960, 300), GREY))
@@ -754,23 +791,18 @@ class CardsFromTheRecordingTest(unittest.TestCase):
                       passenger_start=0.0, passenger_still=None, audio_dir=None)
         plan, evidence = demo.post_production(scenario, output=self.tmp / "c.mp4",
                                               cockpit=True, **common)
-        # An intro leads the preamble only when the cockpit layout names intro screens.
-        lead = demo.INTRO_HOLD_S if demo.cockpit_intro() else 0.0
-        self.assertEqual(plan.lead, lead)
-        self.assertEqual(plan.total(), lead + demo.total_seconds(scenario))
-        lead_ms = round(lead * 1000)
+        self.assertEqual(plan.lead, demo.INTRO_HOLD_S)
+        self.assertEqual(plan.total(), demo.INTRO_HOLD_S + demo.total_seconds(scenario))
+        lead_ms = round(demo.INTRO_HOLD_S * 1000)
         self.assertEqual([c["atMs"] for c in plan.clips],
                          [c["atMs"] + lead_ms for c in demo.placed_clips(scenario)])
         self.assertEqual([c["atMs"] for c in plan.cues],
                          [c["atMs"] + lead_ms for c in demo.placed_cues(scenario)])
         self.assertEqual(len(plan.cockpit["captions"]), 3, "preamble, timeline and outro")
         self.assertEqual(plan.cockpit["captions"][0][1], (lead_ms + 200) / 1000)
-        self.assertEqual(plan.cockpit["rail"][0][1], lead + 6.0, "after preamble")
-        if lead:
-            self.assertEqual(plan.cockpit["intro"]["frames"],
-                             round((demo.INTRO_HOLD_S + demo.INTRO_FADE_S) * demo.FPS))
-        else:
-            self.assertIsNone(plan.cockpit["intro"])
+        self.assertEqual(plan.cockpit["rail"][0][1], demo.INTRO_HOLD_S + 6.0, "after preamble")
+        self.assertEqual(plan.cockpit["intro"]["frames"],
+                         round((demo.INTRO_HOLD_S + demo.INTRO_FADE_S) * demo.FPS))
         self.assertTrue((self.tmp / "c.srt").is_file(), "SRT next to the video")
         self.assertEqual(evidence["cockpit"]["captions"], 3)
         self.assertEqual(evidence["cockpit"]["estimatedCaptionClips"], [])
@@ -836,30 +868,113 @@ class LegacyTest(unittest.TestCase):
             shutil.rmtree(tmp)
 
 
+CAPACITY = ("VehiclePropValue{timestamp: 1, areaId: 0, prop: 291504390, status: AVAILABLE, "
+            "value: RawPropValues{int32Values: [], floatValues: [150000.0], int64Values: []}}")
+LEVEL = CAPACITY.replace("291504390", "291504905").replace("150000.0", "120000.0")
+BATTERY = {"atMs": 40000, "type": "vehicleSignal", "signal": "battery", "percent": 18,
+           "via": ["vhal-set", "vhal-inject", "broadcast"]}
+SET, INJECT = "0x11600309", "inject-vhal-event"
+
+
+class VhalDevice(FakeDevice):
+    """A fake whose shell answers by matching tokens: [((token, ...), exit, stdout), ...]."""
+
+    def __init__(self, clock, outputs):
+        super().__init__(clock)
+        self.outputs = outputs
+
+    def shell(self, *args):
+        self._log("shell", args)
+        for tokens, code, out in self.outputs:
+            if all(token in args for token in tokens):
+                return subprocess.CompletedProcess(args, code, out, "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+
 class WallClockTest(unittest.TestCase):
     def test_sets_the_device_clock_to_the_story_time(self):
         tmp = pathlib.Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp)
-        clock = {"atMs": 40000, "type": "wallClock", "local": "2026-09-07T17:15"}
+        clock = {"atMs": 40000, "type": "wallClock", "local": "2026-11-05T17:15"}
         device = FakeDevice(FakeClock())
         timeline(dict(DUAL, actions=DUAL["actions"] + [clock]), device, tmp)
-        self.assertIn(("date", "090717152026.00"),
+        self.assertIn(("date", "110517152026.00"),
                       [c[2] for c in device.calls if c[1] == "shell"])
 
 
 class TranscriptTest(unittest.TestCase):
     def test_a_punctuated_line_matches_what_the_writer_normalized(self):
         # prepare-elevenlabs-demo-audio.py strips punctuation when it writes the fixture.
-        line = "Hey Muse, take me to the museum."
+        line = "Hey Muse, take me to the Met."
         tmp = pathlib.Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp)
         fixture = tmp / "transcripts" / "u1.json"
         fixture.parent.mkdir()
         fixture.write_text(json.dumps({"transcript": line, "dispatchText": line,
-                                       "transcriptNormalized": "hey muse take me to the museum"}))
+                                       "transcriptNormalized": "hey muse take me to the met"}))
         self.assertEqual(demo.transcript_for(tmp, "u1", line, False), (line, fixture))
         with self.assertRaisesRegex(demo.DemoFailure, "no longer matches"):
             demo.transcript_for(tmp, "u1", "Hey Muse, take me home.", False)
+
+
+class VehicleSignalTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = pathlib.Path(tempfile.mkdtemp())
+        self.scenario = dict(DUAL, actions=DUAL["actions"] + [BATTERY])
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+
+    def test_battery_level_by_every_route_then_restored(self):
+        device = VhalDevice(FakeClock(), [
+            (("get-property-value", "0x11600106"), 0, CAPACITY),
+            (("get-property-value", SET), 0, LEVEL),
+            (("--set",), 0, "Set property: ..."),
+        ])
+        evidence = timeline(self.scenario, device, self.tmp)
+        signal = evidence["vehicleSignals"][0]
+        self.assertEqual((signal["levelWh"], signal["capacityWh"], signal["capacitySource"],
+                          signal["previousWh"]), (27000.0, 150000.0, "INFO_EV_BATTERY_CAPACITY",
+                                                  120000.0))
+        self.assertTrue(all(route["ok"] for route in signal["routes"]))
+        at_40 = [c[1:] for c in device.calls if c[0] == 40.0]
+        self.assertEqual(at_40, [
+            ("shell", ("cmd", "car_service", "get-property-value", "0x11600106", "0")),
+            ("shell", ("cmd", "car_service", "get-property-value", SET, "0")),
+            ("shell", ("dumpsys", demo.VHAL_SERVICE, "--set", SET, "-f", "27000")),
+            ("shell", ("cmd", "car_service", INJECT, SET, "27000")),
+            ("broadcast", demo.ACTION_VEHICLE, ("--ei", demo.EXTRA_BATTERY_PCT, "18")),
+        ])
+        stop = device.calls.index((70.0, "stop", 2))
+        self.assertEqual(device.calls[stop + 1:stop + 4], [
+            (70.0, "shell", ("dumpsys", demo.VHAL_SERVICE, "--set", SET, "-f", "120000")),
+            (70.0, "broadcast", demo.ACTION_VEHICLE, ("--ei", demo.EXTRA_BATTERY_PCT, "-1")),
+            (70.0, "car", "park")])
+
+    def test_unreadable_capacity_falls_back_and_broadcast_only_never_restores(self):
+        scenario = dict(DUAL, actions=DUAL["actions"] + [dict(BATTERY, via=["broadcast"])])
+        device = VhalDevice(FakeClock(), [(("0x11600106",), 0, "Cannot get property value")])
+        signal = timeline(scenario, device, self.tmp)["vehicleSignals"][0]
+        self.assertEqual((signal["levelWh"], signal["capacitySource"], signal["previousWh"]),
+                         (27000.0, "fallback", None))
+        self.assertFalse([c for c in device.calls if c[1] == "shell" and "--set" in c[2]])
+
+    def test_no_working_route_fails_after_cleanup(self):
+        scenario = dict(DUAL, actions=DUAL["actions"] + [
+            dict(BATTERY, via=["vhal-set", "vhal-inject"])])
+        device = VhalDevice(FakeClock(), [
+            (("--set",), 0, "failed to set property: EV_BATTERY_LEVEL, error: NOT_AVAILABLE"),
+            ((INJECT,), 255, "Invalid argument")])
+        with self.assertRaisesRegex(demo.DemoFailure, "no route injected"):
+            timeline(scenario, device, self.tmp)
+        self.assertEqual([c[1:] for c in device.calls if c[1] in ("stop", "car")][-2:],
+                         [("stop", 2), ("car", "park")])
+
+    def test_property_value_formats(self):
+        self.assertEqual(demo.property_float(CAPACITY), 150000.0)
+        self.assertEqual(demo.property_float("CarPropertyValue{mValue=27000.5, mAreaId=0}"),
+                         27000.5)
+        self.assertIsNone(demo.property_float("Cannot get property value for 0x11600106"))
 
 
 if __name__ == "__main__":

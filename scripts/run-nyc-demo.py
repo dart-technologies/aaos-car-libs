@@ -17,7 +17,7 @@ durationSeconds is the device timeline; the output is preamble + timeline + outr
 
 A dual recording is composed in a cockpit (scripts/demo_overlays.py; --no-cockpit restores the
 side-by-side canvas): one still frame for the whole video with both screens in its windows. It
-opens on the layout's intro screens when it names them, pushing in, which crossfades into what the
+opens on the Muse2CarUI graffiti on the screens, pushing in, which crossfades into what the
 screens show next while the preamble plays in the driver window; captions and the story rail
 are pre-rendered overlays, and the SRT is written next to the video.
 """
@@ -60,6 +60,12 @@ EXTRA_ASK = "art.dart.a2ui.carui.extra.ASK"
 ACTION_PASSENGER = "art.dart.a2ui.carui.action.PASSENGER"
 EXTRA_MEDIA = "art.dart.a2ui.carui.extra.MEDIA"
 ACTION_END_CARD = "art.dart.a2ui.carui.action.END_CARD"
+ACTION_VEHICLE = "art.dart.a2ui.carui.action.VEHICLE"
+EXTRA_BATTERY_PCT = "art.dart.a2ui.carui.extra.BATTERY_PCT"
+VHAL_SERVICE = "android.hardware.automotive.vehicle.IVehicle/default"
+# VehicleProperty ids (hardware/interfaces/automotive/vehicle, VehicleProperty.aidl): FLOAT, Wh.
+EV_BATTERY_LEVEL = 0x11600309
+INFO_EV_BATTERY_CAPACITY = 0x11600106
 DEVICE_VIDEO = "/sdcard/a2ui-nyc-demo.mp4"
 DEVICE_PASSENGER_VIDEO = "/sdcard/a2ui-nyc-demo-passenger.mp4"
 SCREENRECORD_MAX_S = 180
@@ -82,11 +88,9 @@ OUTRO_FADE_S = 0.5
 STILL_LEAD_MS = 3000  # capture the idle passenger frame this long before its stream starts
 CARD_RENDERER = ROOT / "scripts/render-demo-cards.py"
 OVERLAY_RENDERER = ROOT / "scripts/demo_overlays.py"
-COCKPIT_LAYOUT = CARDS / "cockpit-layout.json"
 PASSENGER_SYNC = ROOT / "scripts/passenger_sync.py"
-# The cockpit intro, when the layout names one: its screens hold INTRO_HOLD_S, pushing in by
-# INTRO_ZOOM, then an eased INTRO_FADE_S crossfade into the screens' next content as the preamble
-# begins under it.
+# The cockpit intro: graffiti on both screens for INTRO_HOLD_S, pushing in by INTRO_ZOOM, then an
+# eased INTRO_FADE_S crossfade into the screens' next content as the preamble begins under it.
 INTRO_HOLD_S, INTRO_FADE_S, INTRO_ZOOM = 2.0, 1.1, 0.025
 
 
@@ -233,6 +237,20 @@ def verify_preconditions(required_avd: str) -> str:
     return avd_name
 
 
+def ok_output(result: subprocess.CompletedProcess[str]) -> bool:
+    text = (result.stdout + result.stderr).lower()
+    return not result.returncode and not any(
+        word in text for word in ("error", "exception", "unknown", "invalid", "usage"))
+
+
+def property_float(text: str) -> float | None:
+    """The first float in `cmd car_service get-property-value` output, which prints the HAL
+    value (`floatValues: [150000.0]`, or `mValue=150000.0` in older formats)."""
+    match = re.search(r"(?:floatValues|mValue|value)\s*[=:]\s*\[?\s*"
+                      r"(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)", text)
+    return float(match.group(1)) if match else None
+
+
 class Adb:
     """The device side of run_timeline(); tests substitute a recording fake."""
 
@@ -335,6 +353,62 @@ def screenrecord_limit(seconds: float) -> int:
     return max(1, min(SCREENRECORD_MAX_S, math.ceil(seconds) + 5))
 
 
+def vehicle_signal(device, action: dict) -> dict:
+    """Inject a battery level by every route the action names; succeed if one route does.
+
+    vhal-set    dumpsys <VHAL> --set: the emulator's fake VHAL stores the value, so reads and the
+                continuous refresh both report it (EV_BATTERY_LEVEL is CONTINUOUS; an injected
+                event alone is overwritten by the next refresh).
+    vhal-inject cmd car_service inject-vhal-event: one event to subscribers; reads are unchanged.
+    broadcast   Host B's debug VEHICLE broadcast, for a host that does not read the property.
+    """
+    if action.get("signal") != "battery":
+        raise DemoFailure(f"unsupported vehicle signal {action.get('signal')!r}")
+    percent = float(action["percent"])
+
+    def read(prop: int) -> float | None:
+        result = device.shell("cmd", "car_service", "get-property-value", hex(prop), "0")
+        return property_float(result.stdout) if ok_output(result) else None
+
+    capacity, source = read(INFO_EV_BATTERY_CAPACITY), "INFO_EV_BATTERY_CAPACITY"
+    if not capacity or capacity <= 0:
+        capacity, source = float(action.get("capacityWhFallback", 150000)), "fallback"
+    level = round(capacity * percent / 100, 1)
+    via = action.get("via", ["vhal-set", "vhal-inject", "broadcast"])
+    previous = read(EV_BATTERY_LEVEL) if "vhal-set" in via else None
+    routes = []
+    for route in via:
+        if route == "vhal-set":
+            result = device.shell("dumpsys", VHAL_SERVICE, "--set", hex(EV_BATTERY_LEVEL),
+                                  "-f", f"{level:g}")
+        elif route == "vhal-inject":
+            result = device.shell("cmd", "car_service", "inject-vhal-event",
+                                  hex(EV_BATTERY_LEVEL), f"{level:g}")
+        elif route == "broadcast":
+            device.broadcast(ACTION_VEHICLE, "--ei", EXTRA_BATTERY_PCT, str(round(percent)))
+            result = subprocess.CompletedProcess([], 0, "", "")
+        else:
+            raise DemoFailure(f"unknown vehicle signal route {route!r}")
+        routes.append({"via": route, "ok": ok_output(result),
+                       "output": (result.stdout + result.stderr).strip()[-200:]})
+    if not any(route["ok"] for route in routes):
+        raise DemoFailure(f"no route injected the battery level: {routes}")
+    return {"signal": "battery", "percent": percent, "levelWh": level, "capacityWh": capacity,
+            "capacitySource": source, "previousWh": previous, "routes": routes}
+
+
+def restore_vehicle(device, signals: list[dict]) -> None:
+    """Put back the stored battery level the first vhal-set replaced, and hand Host B back to
+    the vehicle's reading after a broadcast override (best effort)."""
+    stored = [s for s in signals if s.get("previousWh") is not None
+              and any(r["via"] == "vhal-set" and r["ok"] for r in s["routes"])]
+    if stored:
+        device.shell("dumpsys", VHAL_SERVICE, "--set", hex(EV_BATTERY_LEVEL),
+                     "-f", f"{stored[0]['previousWh']:g}")
+    if any(r["via"] == "broadcast" for s in signals for r in s["routes"]):
+        device.broadcast(ACTION_VEHICLE, "--ei", EXTRA_BATTERY_PCT, "-1")
+
+
 def run_timeline(scenario: dict, device, clock, *, driver_display: str,
                  passenger_display: str | None, audio_dir: pathlib.Path, allow_scripted: bool,
                  still_path: pathlib.Path) -> dict:
@@ -343,8 +417,8 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
     steps = schedule(scenario, dual)
     clips = {clip["id"]: clip for clip in scenario["clips"]}
     duration = int(scenario["durationSeconds"])
-    evidence: dict = {"transcripts": [], "steps": [], "passengerStartSeconds": None,
-                      "passengerStill": None}
+    evidence: dict = {"transcripts": [], "vehicleSignals": [], "steps": [],
+                      "passengerStartSeconds": None, "passengerStill": None}
     recorders = [("driver", device.start_recording(driver_display, DEVICE_VIDEO,
                                                    screenrecord_limit(duration)), 0.0,
                   screenrecord_limit(duration))]
@@ -395,6 +469,8 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
                 device.broadcast(ACTION_PASSENGER, "--es", EXTRA_MEDIA, action["media"])
             elif step.kind == "endCard":
                 device.broadcast(ACTION_END_CARD)
+            elif step.kind == "vehicleSignal":
+                evidence["vehicleSignals"].append(vehicle_signal(device, action))
             elif step.kind == "wallClock":
                 # The status bar's time follows the story (needs root adbd and auto_time off).
                 when = dt.datetime.strptime(action["local"], "%Y-%m-%dT%H:%M")
@@ -410,6 +486,7 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
         early = [name for name, proc, began, limit in recorders
                  if not device.alive(proc) and now - began < limit - 1]
         device.stop_recordings([proc for _, proc, _, _ in recorders])
+        restore_vehicle(device, evidence["vehicleSignals"])
         device.set_car_state("park")
         if dual:
             device.broadcast(ACTION_PASSENGER, "--es", EXTRA_MEDIA, "stop")
@@ -836,19 +913,13 @@ def build_cockpit(scenario: dict, clips: list[dict], prefix: pathlib.Path, *, le
             "railOffsetS": lead + preamble_seconds(scenario),
             "audioDir": str(caption_audio) if caption_audio else None,
             "estimateMissing": estimate, "srt": str(srt),
-            "intro": ({"hold": INTRO_HOLD_S, "fade": INTRO_FADE_S, "zoom": INTRO_ZOOM}
-                      if lead else None)}
+            "intro": {"hold": INTRO_HOLD_S, "fade": INTRO_FADE_S, "zoom": INTRO_ZOOM}}
     spec_path = prefix.with_name(f"{prefix.name}.overlays.spec.json")
     spec_path.write_text(json.dumps(spec, indent=2) + "\n", encoding="utf-8")
     out = prefix.with_name(f"{prefix.name}.overlays")
     run([sys.executable, str(OVERLAY_RENDERER), "overlays", "--spec", str(spec_path),
          "--out", str(out)], timeout=600)
     return json.loads((out / "overlays.json").read_text(encoding="utf-8"))
-
-
-def cockpit_intro() -> bool:
-    """Whether the cockpit layout names intro screens for the video to open on."""
-    return bool(json.loads(COCKPIT_LAYOUT.read_text(encoding="utf-8")).get("intro"))
 
 
 def extract_frame(video: pathlib.Path | None, seconds: float,
@@ -1177,7 +1248,7 @@ def post_production(scenario: dict, *, layout: str, output: pathlib.Path,
                              if scenario.get("outro") else (None, []))
     note = disclaimer_image(scenario)
     use_cockpit = cockpit and layout == "dual"
-    lead = INTRO_HOLD_S if use_cockpit and cockpit_intro() else 0.0
+    lead = INTRO_HOLD_S if use_cockpit else 0.0
     lead_ms = round(lead * 1000)
     clips = placed_clips(scenario, lead_ms)
     overlays = build_cockpit(scenario, clips, prefix, lead=lead,
@@ -1324,6 +1395,9 @@ def main() -> int:
     still = args.output.with_name(args.output.stem + ".passenger-idle.png")
 
     set_car_state("park")
+    if any(action["type"] == "vehicleSignal" for action in scenario["actions"]):
+        # Host B reads EV_BATTERY_LEVEL only with this runtime permission (VehicleEnergy).
+        adb_shell("pm", "grant", PACKAGE, "android.car.permission.CAR_ENERGY", check=False)
     launch(args.passenger_launch_display if layout == "dual" else None)
     if dual:
         broadcast(ACTION_PASSENGER, "--es", EXTRA_MEDIA, "stop")
@@ -1411,6 +1485,7 @@ def main() -> int:
         "agentProfilesSha256": sha256(ROOT / scenario["agentProfiles"])
             if scenario.get("agentProfiles") else None,
         "transcripts": evidence["transcripts"],
+        "vehicleSignals": evidence["vehicleSignals"],
         "timeline": evidence["steps"],
         "audioTrack": "none — engineering preflight" if args.no_mux else
             "ElevenLabs timed dialogue and sound-effects mix",

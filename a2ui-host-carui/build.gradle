@@ -127,6 +127,65 @@ androidComponents {
     }
 }
 
+// Debug builds also bundle the Met film's per-work timing (FILM.json) as assets/met/FILM.json when
+// the fixtures agent has written it; MetArtworks falls back to a 6 s cadence without it.
+abstract class BundleMetFilmTiming extends DefaultTask {
+    @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract ConfigurableFileCollection getTiming()
+
+    @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract ConfigurableFileCollection getChargers()
+
+    @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract ConfigurableFileCollection getCoffee()
+
+    @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract ConfigurableFileCollection getNws()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir()
+
+    @Inject
+    abstract FileSystemOperations getFs()
+
+    @TaskAction
+    void bundle() {
+        fs.sync { spec ->
+            spec.from(timing) { into 'met' }
+            spec.from(chargers) { into 'chargers' }
+            spec.from(coffee) { into 'coffee' }
+            spec.from(nws) { into 'nws' }
+            spec.into(outputDir)
+        }
+    }
+}
+def bundleMetFilmTiming = tasks.register('bundleMetFilmTiming', BundleMetFilmTiming) {
+    timing.from(fileTree(file('../a2ui-automotive/demo/fixtures/met')) { include 'FILM.json' })
+    // And the chargers (OSM) for ev_charge_coffee, as assets/chargers/chargers.json.
+    chargers.from(fileTree(file('../a2ui-automotive/demo/fixtures/chargers')) {
+        include 'chargers.json'
+    })
+    // And the café Muse picked near the first charger, as assets/coffee/COFFEE.json.
+    coffee.from(fileTree(file('../a2ui-automotive/demo/fixtures/coffee')) {
+        include 'COFFEE.json'
+    })
+    // And the NWS forecast (public domain) for the Met's weather row, as assets/nws/.
+    nws.from(fileTree(file('../a2ui-automotive/demo/fixtures/nws')) {
+        include 'forecast-*.json'
+    })
+    outputDir = layout.buildDirectory.dir('generated/metFilmTiming')
+}
+androidComponents {
+    onVariants(selector().withBuildType('debug')) { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(bundleMetFilmTiming,
+                { it.outputDir })
+    }
+}
+
 // A2uiAgentLaneTest reads both MERGED manifests: unit tests run against debug, so the release one,
 // which must lack INTERNET and the network config, can only be checked from outside.
 def mergedManifests = [debug: objects.fileProperty(), release: objects.fileProperty()]

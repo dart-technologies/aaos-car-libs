@@ -24,7 +24,8 @@ import java.util.List;
 final class DemoNativeContract {
 
     enum Kind {
-        CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER, GALLERY
+        CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER, GALLERY,
+        TOGGLE, CHARGER
     }
 
     static final class Spec {
@@ -105,6 +106,14 @@ final class DemoNativeContract {
                 && "navigate".equals(component.getAction())) {
             return Spec.simple(Kind.ROUTE, component.getTitle());
         }
+        if ("met_visit".equals(surfaceId)) {
+            Spec met = metSpec(id, component);
+            if (met != null) return met;
+        }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            Spec ev = evSpec(id, component);
+            if (ev != null) return ev;
+        }
         if (matches(surfaceId, id, component, "poi_discovery_order", "order",
                 ComponentType.BUTTON, "purchase")) {
             return Spec.simple(Kind.ORDER, "DEMO pickup order");
@@ -164,6 +173,11 @@ final class DemoNativeContract {
      */
     @Nullable
     static PanelSpec panelFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        if ("met_visit".equals(surfaceId) && "map".equals(component.getId())
+                && component.getType() == ComponentType.IMAGE && component.getAction() == null) {
+            // The real route only: without route_met.png the panel stays hidden.
+            return new PanelSpec("route_met", 0, null);
+        }
         return null;
     }
 
@@ -222,19 +236,49 @@ final class DemoNativeContract {
     /** The video an exact corpus VIDEO component plays, or null for the generated fixture. */
     @Nullable
     static Media videoFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        if (isMetArtSurface(surfaceId) && "film".equals(component.getId())
+                && component.getType() == ComponentType.VIDEO) {
+            // The film carries its own captions and credit, along its bottom.
+            return Media.film("met_artwork_film");
+        }
+        if (isDriverMedia(surfaceId, component)) {
+            // The landscape cut the passenger display also plays, in the parked-only player.
+            return Media.player("bbb_passenger", BBB_TITLE, BBB_CREDIT);
+        }
         return null;
+    }
+
+    /** The charging window's short to watch: ev_charge_coffee's Video "bbb". */
+    static final String EV_DRIVER_MEDIA = "bbb";
+    static final String BBB_TITLE = "Big Buck Bunny";
+    static final String BBB_CREDIT = "Blender Foundation · CC BY 3.0";
+
+    /** The exact corpus driver media: ev_charge_coffee's Video "bbb" with its open action. */
+    static boolean isDriverMedia(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return "ev_charge_coffee".equals(surfaceId) && EV_DRIVER_MEDIA.equals(component.getId())
+                && component.getType() == ComponentType.VIDEO
+                && "open".equals(component.getAction());
     }
 
     /** The bundled artwork for an exact corpus Image inside a gallery, by drawable name. */
     @Nullable
     static String artworkFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        String id = component.getId();
+        if (isMetArtSurface(surfaceId) && id != null && MET_WORKS.contains(id)
+                && component.getType() == ComponentType.IMAGE) {
+            return id; // met_<objectID>.jpg, bundled
+        }
         return null;
     }
 
     /** The credit line under every slide of a corpus gallery, or null. */
     @Nullable
     static String artworkCredit(@NonNull String surfaceId) {
-        return null;
+        return isMetArtSurface(surfaceId) ? MET_CREDIT : null;
+    }
+
+    private static boolean isMetArtSurface(@NonNull String surfaceId) {
+        return "met_visit".equals(surfaceId) || "ev_charge_coffee".equals(surfaceId);
     }
 
     /** The confirmation question for an exact corpus control, or null for the generic one. */
@@ -246,12 +290,130 @@ final class DemoNativeContract {
         if ("modal_confirmation".equals(surfaceId) && "buy".equals(component.getId())) {
             return "Buy this album for £9.99?";
         }
+        if ("met_visit".equals(surfaceId) && "reserve".equals(component.getId())) {
+            return "Reserve 2 timed-entry tickets for 3:00 PM?";
+        }
+        if ("ev_charge_coffee".equals(surfaceId) && "coffee".equals(component.getId())) {
+            // No price: none is shown unless the café fixture cites a menu (CoffeeFixture).
+            return "Order your usual: oat milk latte?";
+        }
         return null;
+    }
+
+    /** The exact corpus coffee reorder, whose words a bundled café fixture may supply. */
+    static boolean isCoffeeOrder(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return "ev_charge_coffee".equals(surfaceId) && "coffee".equals(component.getId())
+                && component.getType() == ComponentType.BUTTON
+                && "purchase".equals(component.getAction());
+    }
+
+    /** Surfaces whose agent answer joins the screen as its brief instead of replacing it. */
+    static boolean embedsAgentBrief(@NonNull String surfaceId) {
+        return "met_visit".equals(surfaceId);
+    }
+
+    /** A thumbnail (by drawable name) for an exact corpus row, drawn only while IMAGE is allowed. */
+    @Nullable
+    static String thumbnailFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        String id = component.getId();
+        if ("met_visit".equals(surfaceId)) {
+            if ("brief".equals(id)) return "met_436535";
+            if ("gallery".equals(id)) return "met_437881";
+        }
+        if ("ev_charge_coffee".equals(surfaceId) && "tour".equals(id)) return "met_435868";
+        if ("ev_charge_coffee".equals(surfaceId) && EV_DRIVER_MEDIA.equals(id)) return "bbb_thumb";
+        return null;
+    }
+
+    /** A glyph for an exact corpus row, drawn while ICON is allowed; 0 for none. */
+    static int glyphFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        String id = component.getId();
+        if ("met_visit".equals(surfaceId)) {
+            if ("route".equals(id)) return R.drawable.a2ui_ic_route;
+            if ("reserve".equals(id)) return R.drawable.a2ui_ic_ticket;
+            if ("audio".equals(id)) return R.drawable.a2ui_ic_guide;
+            if ("artmode".equals(id)) return R.drawable.a2ui_ic_film;
+            if ("brief".equals(id) || "gallery".equals(id)) return R.drawable.a2ui_ic_film;
+        }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            if (id != null && id.length() == 2 && id.startsWith("c")) {
+                return R.drawable.a2ui_ic_battery;
+            }
+            if ("coffee".equals(id)) return R.drawable.a2ui_ic_pickup;
+            if ("tour".equals(id) || EV_DRIVER_MEDIA.equals(id)) return R.drawable.a2ui_ic_film;
+        }
+        return 0;
     }
 
     /** The confirmation's supporting line for an exact corpus control, or null. */
     @Nullable
     static String confirmDetail(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        if ("met_visit".equals(surfaceId) && "reserve".equals(component.getId())) {
+            return "The Met Fifth Avenue · Thu Nov 5 · 81st St entrance";
+        }
+        if ("ev_charge_coffee".equals(surfaceId) && "coffee".equals(component.getId())) {
+            return "Pickup at the counter";
+        }
+        return null;
+    }
+
+    /** The id of an exact corpus card's citation list, drawn as lines under it, or null. */
+    @Nullable
+    static String citationContainer(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return "met_visit".equals(surfaceId) && "brief".equals(component.getId())
+                && component.getType() == ComponentType.CARD ? "sources" : null;
+    }
+
+    /** Credit for every Met image and the film made from them. */
+    static final String MET_CREDIT = "The Met · Open Access CC0";
+
+    /** The six bundled works, in gallery order. */
+    static final List<String> MET_WORKS = Collections.unmodifiableList(Arrays.asList(
+            "met_436535", "met_437881", "met_437394", "met_435809", "met_436105", "met_435868"));
+
+    @Nullable
+    private static Spec evSpec(@NonNull String id, @NonNull A2uiComponent component) {
+        ComponentType type = component.getType();
+        String action = component.getAction();
+        if (("c1".equals(id) || "c2".equals(id) || "c3".equals(id))
+                && type == ComponentType.CARD && "navigate".equals(action)) {
+            return Spec.simple(Kind.CHARGER, "Charger");
+        }
+        if ("coffee".equals(id) && type == ComponentType.BUTTON && "purchase".equals(action)) {
+            return Spec.simple(Kind.ORDER, "DEMO coffee reorder");
+        }
+        if ("tour".equals(id) && type == ComponentType.MODAL && "open".equals(action)) {
+            return Spec.simple(Kind.GALLERY, "Finish the Met tour");
+        }
+        if (EV_DRIVER_MEDIA.equals(id) && type == ComponentType.VIDEO && "open".equals(action)) {
+            return Spec.simple(Kind.VIDEO, BBB_TITLE);
+        }
+        return null;
+    }
+
+    @Nullable
+    private static Spec metSpec(@NonNull String id, @NonNull A2uiComponent component) {
+        ComponentType type = component.getType();
+        String action = component.getAction();
+        if ("reserve".equals(id) && type == ComponentType.BUTTON && "reserve".equals(action)) {
+            return Spec.simple(Kind.ORDER, "DEMO timed entry");
+        }
+        if ("gallery".equals(id) && type == ComponentType.MODAL && "open".equals(action)) {
+            return Spec.simple(Kind.GALLERY, "Artwork highlights");
+        }
+        if ("artmode".equals(id) && type == ComponentType.CHOICE_PICKER
+                && "select".equals(action)) {
+            return Spec.simple(Kind.TOGGLE, "Film · Slideshow");
+        }
+        if ("audio".equals(id) && type == ComponentType.AUDIO_PLAYER && "play".equals(action)) {
+            return Spec.simple(Kind.AUDIO, "Audio guide");
+        }
+        if ("weather".equals(id) && type == ComponentType.TEXT && action == null) {
+            return Spec.simple(Kind.WEATHER, "Weather");
+        }
+        if ("map".equals(id) && type == ComponentType.IMAGE && action == null) {
+            return Spec.simple(Kind.ROUTE, component.getTitle());
+        }
         return null;
     }
 
@@ -270,6 +432,18 @@ final class DemoNativeContract {
         if ("big_buck_bunny".equals(surfaceId)) {
             if ("field".equals(id)) return "Search";
             if ("results".equals(id)) return "Results";
+        }
+        if ("ev_charge_coffee".equals(surfaceId)) {
+            if ("tour".equals(id)) return "Artwork";
+            if (id.startsWith("c") && id.length() == 2) return "Chargers";
+            if ("coffee".equals(id)) return "Order";
+            if (EV_DRIVER_MEDIA.equals(id)) return "Video";
+        }
+        if ("met_visit".equals(surfaceId)) {
+            if ("map".equals(id) || "preview".equals(id)) return "Map";
+            if (id.startsWith("src") || "sources".equals(id)) return "Sources";
+            if ("gallery".equals(id) || "film".equals(id)) return "Artwork";
+            if ("artmode".equals(id)) return "Artwork";
         }
         return null;
     }

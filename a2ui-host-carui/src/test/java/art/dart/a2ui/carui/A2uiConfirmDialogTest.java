@@ -59,7 +59,7 @@ import java.util.List;
 public class A2uiConfirmDialogTest {
     private static final int BASELINE = A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE;
     private static final int DRIVE = 0xff;
-    private static final String ORDER_QUESTION = "Order a cold brew and a bagel for pickup?";
+    private static final String RESERVE_QUESTION = "Reserve 2 timed-entry tickets for 3:00 PM?";
     private static final String ORDER = "Order cold brew + bagel";
 
     @Before
@@ -79,8 +79,8 @@ public class A2uiConfirmDialogTest {
     @Test
     public void theQuestionAndDetailShareAnEdgeAndTheButtonsOneRowInsideTheDisplay() {
         A2uiCarUiActivity activity = started(BASELINE);
-        activity.selectCase("poi_discovery_order");
-        activity.onHeard("order ahead");
+        activity.selectCase("met_visit");
+        activity.onHeard("reserve entry for two at three");
         AlertDialog dialog = ShadowAlertDialog.getLatestAlertDialog();
         assertThat(dialog).isNotNull();
         View root = dialog.findViewById(R.id.a2ui_confirm_root);
@@ -88,7 +88,7 @@ public class A2uiConfirmDialogTest {
         TextView message = dialog.findViewById(R.id.a2ui_confirm_message);
         Button cancel = dialog.findViewById(R.id.a2ui_confirm_cancel);
         Button confirm = dialog.findViewById(R.id.a2ui_confirm_ok);
-        assertThat(title.getText().toString()).isEqualTo(ORDER_QUESTION);
+        assertThat(title.getText().toString()).isEqualTo(RESERVE_QUESTION);
         assertThat(message.getVisibility()).isEqualTo(View.VISIBLE);
         assertThat(message.getText().toString()).isNotEmpty();
 
@@ -161,8 +161,8 @@ public class A2uiConfirmDialogTest {
     @Test
     public void exactlyOneConfirmAndOneCancelAreOnScreenAndTheContractStays() {
         A2uiCarUiActivity activity = started(BASELINE);
-        activity.selectCase("poi_discovery_order");
-        activity.onHeard("order ahead");
+        activity.selectCase("met_visit");
+        activity.onHeard("reserve entry for two at three");
         AlertDialog dialog = ShadowAlertDialog.getLatestAlertDialog();
         View decor = dialog.getWindow().getDecorView();
 
@@ -183,15 +183,15 @@ public class A2uiConfirmDialogTest {
     @Test
     public void theVisibleConfirmIsDecidedByThePolicyAndCancelDecidesNothing() {
         A2uiCarUiActivity activity = started(BASELINE);
-        activity.selectCase("poi_discovery_order");
-        activity.onHeard("order ahead");
+        activity.selectCase("met_visit");
+        activity.onHeard("reserve entry for two at three");
         AlertDialog first = ShadowAlertDialog.getLatestAlertDialog();
         first.findViewById(R.id.a2ui_confirm_cancel).performClick();
         shadowOf(Looper.getMainLooper()).idle();
         assertThat(first.isShowing()).isFalse();
         assertThat(activity.mOrderPlaced).isFalse();
 
-        activity.onHeard("order ahead");
+        activity.onHeard("reserve entry for two at three");
         AlertDialog second = ShadowAlertDialog.getLatestAlertDialog();
         assertThat(second).isNotSameInstanceAs(first);
         second.findViewById(R.id.a2ui_confirm_ok).performClick();
@@ -203,8 +203,8 @@ public class A2uiConfirmDialogTest {
     @Test
     public void aVisibleConfirmPressedAfterTheCarMovesIsRefused() {
         A2uiCarUiActivity activity = started(BASELINE);
-        activity.selectCase("poi_discovery_order");
-        activity.onHeard("order ahead");
+        activity.selectCase("met_visit");
+        activity.onHeard("reserve entry for two at three");
         AlertDialog asked = ShadowAlertDialog.getLatestAlertDialog();
         drive(activity, DRIVE);
         asked.findViewById(R.id.a2ui_confirm_ok).performClick();

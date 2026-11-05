@@ -72,7 +72,7 @@ final class ChangeSummary {
         return between(before, after, state, audioContinues, labeler, new ArrayList<>());
     }
 
-    /** As above, plus the host cards (pickup, arrival) the change took away. */
+    /** As above, plus the host cards (pickup, charging) the change took away. */
     @NonNull
     static ChangeSummary between(@Nullable A2uiComponent before, @Nullable A2uiComponent after,
             @NonNull DriverState.Kind state, boolean audioContinues, @NonNull Labeler labeler,

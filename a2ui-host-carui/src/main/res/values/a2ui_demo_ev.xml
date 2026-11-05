@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2026 Dart Technologies. Licensed under the Apache License, Version 2.0. -->
+<!-- Charge and a coffee (demo branch). -->
+<resources>
+    <string name="a2ui_ev_toolbar_title">Charge and a coffee</string>
+    <string name="a2ui_ev_heading">Charge · Coffee</string>
+    <!-- %1$d battery percent, %2$d chargers in the comparison. -->
+    <plurals name="a2ui_ev_suggestion">
+        <item quantity="one">Battery %1$d%% · %2$d charger on your way</item>
+        <item quantity="other">Battery %1$d%% · %2$d chargers on your way</item>
+    </plurals>
+    <string name="a2ui_ev_from_vehicle">From the vehicle · low battery</string>
+    <string name="a2ui_ev_chargers_credit">© OpenStreetMap</string>
+    <!-- %1$s the chosen charger. -->
+    <string name="a2ui_ev_navigating">Navigating to %1$s</string>
+    <!-- %1$s the charger, %2$d the vehicle's battery percent. No rate is known, so no ETA. -->
+    <string name="a2ui_ev_session_title">Charging at %1$s · %2$d%%</string>
+    <!-- %1$s the charger, before the vehicle reports a battery reading. -->
+    <string name="a2ui_ev_session_title_no_reading">Charging at %1$s</string>
+</resources>

@@ -36,6 +36,8 @@ _spec = importlib.util.spec_from_file_location("demo_overlays", HERE / "demo_ove
 ov = importlib.util.module_from_spec(_spec)
 sys.modules[_spec.name] = ov
 _spec.loader.exec_module(ov)
+MANIFEST = json.loads(ov.MANIFEST.read_text(encoding="utf-8"))
+MET = next(s for s in MANIFEST["scenarios"] if s["id"] == "nyc_met")
 
 
 def mp3_bytes(frames: int, id3: int = 0) -> bytes:
@@ -104,20 +106,19 @@ class LayoutTest(unittest.TestCase):
                             (x + w // 2, y - 1), (x - 1, y + h // 2)]
                     self.assertTrue(all(alpha.getpixel(p) == 255 for p in ring), name)
 
+    def test_intro_screens_match_the_recordings(self):
+        lay = json.loads(ov.COCKPIT_LAYOUT.read_text(encoding="utf-8"))
+        for name in ("driver", "passenger"):
+            with Image.open(ov.ROOT / lay["intro"][name]) as image:
+                self.assertEqual(list(image.size), lay["sources"][name], name)
+
 
 class IntroTest(unittest.TestCase):
     def test_frames_push_in_and_ease_out_frame_exactly(self):
         with tempfile.TemporaryDirectory() as tmp:
-            lay = ov.layout()
-            screens = {}
-            for name in ("driver", "passenger"):
-                screens[name] = str(pathlib.Path(tmp) / f"{name}.png")
-                Image.new("RGB", tuple(json.loads(ov.COCKPIT_LAYOUT.read_text(
-                    encoding="utf-8"))["sources"][name]), (200, 180, 120)).save(screens[name])
-            frames = pathlib.Path(tmp) / "frames"
-            info = ov.intro_frames(frames, hold_s=0.2, fade_s=0.4, zoom=0.03, fps=10,
-                                   screens=screens)
+            info = ov.intro_frames(tmp, hold_s=0.2, fade_s=0.4, zoom=0.03, fps=10)
             self.assertEqual((info["frames"], info["fps"]), (6, 10))
+            lay = ov.layout()
             for name in ("driver", "passenger"):
                 alphas = []
                 for i in range(info["frames"]):
@@ -132,20 +133,9 @@ class IntroTest(unittest.TestCase):
                     with Image.open(info[name] % 1) as hold, Image.open(info[name] % 3) as dip, \
                             Image.open(info[name] % 4) as black:
                         mean = lambda im: sum(im.convert("L").getdata()) / (im.width * im.height)
-                        self.assertLess(mean(dip), mean(hold) * 0.75, "the card darkens")
+                        self.assertLess(mean(dip), mean(hold) * 0.75, "the tagline darkens")
                         self.assertEqual(black.convert("RGB").getextrema(), ((0, 0),) * 3)
-                self.assertFalse((frames / f"{name}-0006.png").exists())
-
-    def test_a_layout_without_intro_screens_has_no_intro(self):
-        if ov.layout()["intro"]:
-            self.skipTest("the committed cockpit layout names intro screens")
-        with tempfile.TemporaryDirectory() as tmp:
-            with self.assertRaisesRegex(ValueError, "names no intro screens"):
-                ov.intro_frames(pathlib.Path(tmp))
-            spec = {"clips": [], "scenario": {"id": "t", "durationSeconds": 10, "actions": [],
-                                              "storyBeats": [{"title": "Start"}]},
-                    "railOffsetS": 0.0, "intro": {"hold": 2.0, "fade": 1.1, "zoom": 0.025}}
-            self.assertIsNone(ov.render_overlays(spec, pathlib.Path(tmp) / "o")["intro"])
+                self.assertFalse((pathlib.Path(tmp) / f"{name}-0006.png").exists())
 
     def test_push_in_box_shrinks_smoothly_about_the_centre(self):
         sizes = [ov.push_box((1408, 792), 1 + 0.025 * ov.ease(i / 92)) for i in range(93)]
@@ -216,9 +206,9 @@ class TimingTest(unittest.TestCase):
 
 
 class CaptionTest(unittest.TestCase):
-    LONG = ("AI can now design the screen in your car. Here, an agent plans our afternoon, "
-            "and the car decides what the driver may see. Orders wait until you're parked "
-            "and you confirm, so nothing is ordered or paid while the car is moving.")
+    LONG = ("AI can now design the screen in your car. Here, Meta's Muse plans our afternoon, "
+            "and the car decides what the driver may see. Bookings wait until you're parked "
+            "and you confirm, so nothing is booked or paid while the car is moving.")
 
     def test_at_most_two_lines_and_no_word_lost(self):
         cues = ov.caption_cues([clip("a", 0, self.LONG, duration_ms=12000)])
@@ -231,8 +221,8 @@ class CaptionTest(unittest.TestCase):
 
     def test_pngs_sit_bottom_centred_inside_the_caption_band(self):
         clips = [clip("n", 0, self.LONG, duration_ms=12000),
-                 clip("u", 20000, "Take us to the museum this afternoon.", role="user_utterance"),
-                 clip("g", 25000, "On side two, a lone cello opens the slow movement softly.",
+                 clip("u", 20000, "Take us to The Met this afternoon.", role="user_utterance"),
+                 clip("g", 25000, "In Van Gogh's wheat field, wind rushes through cypresses.",
                       lane="audio_guide")]
         band_w, band_h = ov.layout()["captionBand"][2:]
         with tempfile.TemporaryDirectory() as tmp:
@@ -250,7 +240,7 @@ class CaptionTest(unittest.TestCase):
                     self.assertLess(start, end)
 
     def test_passenger_and_guide_lines_are_tagged_and_styled_apart(self):
-        text = "Take us to the museum this afternoon."
+        text = "Take us to The Met this afternoon."
         narration = ov.caption_cues([clip("n", 0, text)])[0]
         passenger = ov.caption_cues([clip("u", 0, text, role="user_utterance")])[0]
         guide = ov.caption_cues([clip("g", 0, text, lane="audio_guide")])[0]
@@ -276,7 +266,7 @@ class SrtTest(unittest.TestCase):
 
     def test_srt_matches_the_burned_in_cues(self):
         clips = [clip("n", 1000, CaptionTest.LONG, duration_ms=12000),
-                 clip("u", 20000, "Order ahead for pickup at three.", role="user_utterance")]
+                 clip("u", 20000, "Reserve entry for two at three.", role="user_utterance")]
         cues = ov.caption_cues(clips, offset_s=2.0)
         with tempfile.TemporaryDirectory() as tmp:
             path = ov.write_srt(clips, pathlib.Path(tmp) / "sub" / "x.srt", offset_s=2.0)
@@ -297,11 +287,51 @@ class SrtTest(unittest.TestCase):
             self.assertGreaterEqual(start, previous_end)
             previous_end = end
             self.assertLessEqual(len(lines) - 2, 2)
-        self.assertTrue(blocks[-1].split("\n")[2].startswith("[Passenger] Order ahead"))
+        self.assertTrue(blocks[-1].split("\n")[2].startswith("[Passenger] Reserve entry"))
         self.assertAlmostEqual(cues[0].start_s, 3.0, places=3)
+
+    def test_cli_writes_the_scenario_srt_from_audio_durations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            audio = pathlib.Path(tmp) / "audio"
+            audio.mkdir()
+            for c in MET["clips"]:
+                (audio / f"{c['id']}.mp3").write_bytes(mp3_bytes(120))   # 3.13 s each
+            out = pathlib.Path(tmp) / "nyc_met.srt"
+            self.assertEqual(ov.main(["srt", "nyc_met", "--audio-dir", str(audio),
+                                      "--out", str(out)]), 0)
+            text = out.read_text(encoding="utf-8")
+            expected = ov.srt_text(MET["clips"], audio_dir=audio)
+        self.assertEqual(text, expected)
+        first, second = sorted(MET["clips"], key=lambda c: c["atMs"])[:2]
+        end = min(first["atMs"] / 1000 + max(120 * 1152 / 44100 + ov.LINGER_S,
+                                             len(first["text"]) / ov.MAX_CPS),
+                  second["atMs"] / 1000 - ov.GAP_S)
+        self.assertTrue(text.startswith("1\n" + ov.srt_time(first["atMs"] / 1000) + " --> "))
+        self.assertIn(" --> " + ov.srt_time(end) + "\n", text)
+        self.assertGreaterEqual(text.count(" --> "), len(MET["clips"]))
 
 
 class RailTest(unittest.TestCase):
+    def test_beats_are_ordered_and_anchor_on_the_scenarios_actions(self):
+        beats = ov.scenario_beats(MET)
+        self.assertEqual([b["title"] for b in beats],
+                         ["Plan at Hudson Yards", "Drive uptown", "Arrive at The Met",
+                          "Low battery", "Charge & coffee"])
+        car = [int(a["atMs"]) / 1000 for a in sorted(MET["actions"], key=lambda a: a["atMs"])
+               if a["type"] == "carState"]
+        self.assertEqual([b["start_s"] for b in beats], [0.0] + car[:4])
+        self.assertEqual([b["chapter"] for b in beats], [1, 2, 3, 4, 5])
+        for a, b in zip(beats, beats[1:]):
+            self.assertLess(a["start_s"], b["start_s"])
+            self.assertEqual(a["end_s"], b["start_s"])
+        self.assertEqual(beats[-1]["end_s"], float(MET["durationSeconds"]))
+
+    def test_vehicle_states_follow_car_state_actions(self):
+        states = ov.vehicle_states(MET)
+        self.assertEqual(states[0], (0.0, "Parked"))
+        self.assertEqual([s for _, s in states],
+                         ["Parked", "Driving", "Parked", "Driving", "Parked"])
+
     def test_rail_windows_tile_the_timeline_and_split_on_state_changes(self):
         scenario = {"id": "t", "durationSeconds": 60,
                     "storyBeats": [{"title": "Start"},
@@ -321,6 +351,14 @@ class RailTest(unittest.TestCase):
             for path, _, _ in out:
                 with Image.open(path) as image:
                     self.assertEqual(image.size, (rail_w, rail_h))
+
+    def test_met_rail_covers_the_whole_video(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = ov.story_rail(ov.scenario_beats(MET), tmp, states=ov.vehicle_states(MET))
+        self.assertEqual(out[0][1], 0.0)
+        self.assertEqual(out[-1][2], float(MET["durationSeconds"]))
+        for (_, _, end), (_, start, _) in zip(out, out[1:]):
+            self.assertEqual(end, start)
 
     def test_unmatched_anchor_fails_loudly(self):
         scenario = {"id": "t", "durationSeconds": 60, "actions": [],

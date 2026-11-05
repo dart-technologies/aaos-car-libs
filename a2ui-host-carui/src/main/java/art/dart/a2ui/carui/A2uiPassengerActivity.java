@@ -43,6 +43,8 @@ import com.android.car.ui.utils.CarUxRestrictionsUtil;
 import art.dart.a2ui.model.ComponentType;
 import art.dart.a2ui.policy.A2uiRestrictionPolicy;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -75,11 +77,14 @@ public class A2uiPassengerActivity extends Activity {
     private TextView mCredit;
     @Nullable private FillVideoView mVideo;
     @Nullable private PassengerMedia mMedia;
+    private ArtworkSlideshow mSlideshow;
     /** This display's last genuine reading, captured before a demo zone reading replaces it. */
     @Nullable private CarUxRestrictions mGenuine;
     private boolean mDemoZone;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final Runnable mTick = this::tick;
+    /** The furthest Met work the film has reached in this play; -1 before the first tick. */
+    private int mGuideSegment = -1;
     private final CarUxRestrictionsUtil.OnUxRestrictionsChangedListener mListener =
             ignored -> mHandler.post(this::enforce);
     /** What PassengerDisplay talks to; kept off this public class's API. */
@@ -112,6 +117,13 @@ public class A2uiPassengerActivity extends Activity {
         mIdle = findViewById(R.id.passenger_idle);
         mMessage = findViewById(R.id.passenger_message);
         mCredit = findViewById(R.id.passenger_credit);
+        mSlideshow = new ArtworkSlideshow(findViewById(R.id.passenger_gallery),
+                findViewById(R.id.passenger_gallery_backdrop),
+                findViewById(R.id.passenger_gallery_image),
+                findViewById(R.id.passenger_gallery_title),
+                findViewById(R.id.passenger_gallery_caption),
+                findViewById(R.id.passenger_gallery_credit),
+                findViewById(R.id.passenger_gallery_counter), () -> true);
         mRestrictions = CarUxRestrictionsUtil.getInstance(this);
         CarUxRestrictionsUtil.RestrictionsSnapshot snapshot =
                 mRestrictions.getRestrictionsSnapshot();
@@ -167,7 +179,8 @@ public class A2uiPassengerActivity extends Activity {
 
     /** Re-decides on every change of this display's reading; video goes the moment it may not. */
     private void enforce() {
-        if (mVideo != null && !allowedHere().contains(ComponentType.VIDEO)) {
+        if ((mVideo != null || mSlideshow.isShowing())
+                && !allowedHere().contains(ComponentType.VIDEO)) {
             Log.i(TAG, "video withdrawn: display " + mRestrictions.getDisplayId()
                     + " no longer allows VIDEO");
             teardownVideo();
@@ -217,6 +230,16 @@ public class A2uiPassengerActivity extends Activity {
 
     private void startVideo(@NonNull PassengerMedia media) {
         teardownVideo();
+        if (media.mStills) {
+            // Auto-advancing stills are moving imagery: decided as video, above.
+            mSlideshow.show(withCredit(MetArtworks.slides(), getString(media.mCredit)));
+            mMedia = media;
+            mIdle.setVisibility(View.GONE);
+            PassengerDisplay.report(media.mName, 0);
+            mHandler.postDelayed(mTick, TICK_MS);
+            Log.i(TAG, "showing " + media.mName + " on display " + mRestrictions.getDisplayId());
+            return;
+        }
         String file = media.fileFor(isPortrait(), name -> rawId(name) != 0);
         int raw = file != null ? rawId(file) : R.raw.demo_placeholder_video;
         FillVideoView video = new FillVideoView(this);
@@ -229,7 +252,9 @@ public class A2uiPassengerActivity extends Activity {
         video.setOnPreparedListener(player -> {
             if (mVideo != video) return;
             video.setVideoSize(player.getVideoWidth(), player.getVideoHeight());
-            player.setLooping(true);
+            // The Met film plays once and holds its last frame (work 6 of 6) until something
+            // else plays: looping would flip the driver's guide row back to 1/6 at its end.
+            player.setLooping(!PassengerMedia.ARTWORK.equals(media.mName));
             if (!media.mCabinAudio) player.setVolume(0f, 0f);
             video.start();
         });
@@ -262,16 +287,37 @@ public class A2uiPassengerActivity extends Activity {
         return metrics.heightPixels > metrics.widthPixels;
     }
 
+    /** The slides with this media's own credit on each, so stills and film credit alike. */
+    @NonNull
+    private static List<ArtworkSlideshow.Slide> withCredit(
+            @NonNull List<ArtworkSlideshow.Slide> slides, @NonNull CharSequence credit) {
+        List<ArtworkSlideshow.Slide> out = new ArrayList<>();
+        for (ArtworkSlideshow.Slide slide : slides) {
+            out.add(new ArtworkSlideshow.Slide(slide.mDrawable, slide.mTitle, slide.mCaption,
+                    credit));
+        }
+        return out;
+    }
+
     /** Reports which segment is on screen, for hosts that follow along. */
     private void tick() {
         VideoView video = mVideo;
         PassengerMedia media = mMedia;
-        if (video == null || media == null) return;
-        int duration = video.getDuration();
+        if (media == null) return;
         int segment = 0;
-        if (duration > 0 && media.mSegments > 1) {
-            segment = Math.min(media.mSegments - 1,
-                    (int) ((long) video.getCurrentPosition() * media.mSegments / duration));
+        if (media.mStills) {
+            segment = mSlideshow.index();
+        } else if (video == null) {
+            return;
+        } else if (PassengerMedia.ARTWORK.equals(media.mName)) {
+            // Per-work start times from FILM.json, else the 6 s cadence.
+            // Monotonic for the play: the guide never steps back to an earlier work.
+            segment = Math.max(mGuideSegment, MetArtworks.segmentAt(MetArtworks.filmStarts(this),
+                    video.getCurrentPosition()));
+            mGuideSegment = segment;
+        } else if (video.getDuration() > 0 && media.mSegments > 1) {
+            segment = Math.min(media.mSegments - 1, (int) ((long) video.getCurrentPosition()
+                    * media.mSegments / video.getDuration()));
         }
         PassengerDisplay.report(media.mName, segment);
         mHandler.postDelayed(mTick, TICK_MS);
@@ -279,6 +325,8 @@ public class A2uiPassengerActivity extends Activity {
 
     private void teardownVideo() {
         mHandler.removeCallbacks(mTick);
+        mGuideSegment = -1;
+        mSlideshow.stop();
         VideoView video = mVideo;
         mVideo = null;
         mMedia = null;
@@ -346,6 +394,12 @@ public class A2uiPassengerActivity extends Activity {
             setMeasuredDimension(Math.max(width, Math.round(mVideoWidth * scale)),
                     Math.max(height, Math.round(mVideoHeight * scale)));
         }
+    }
+
+    @VisibleForTesting
+    @NonNull
+    ArtworkSlideshow slideshowForTesting() {
+        return mSlideshow;
     }
 
     @VisibleForTesting
