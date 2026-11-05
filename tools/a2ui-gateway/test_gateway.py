@@ -142,10 +142,15 @@ class ConfigTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             dotenv = pathlib.Path(tmp) / ".env"
             dotenv.write_text("XAI_API_KEY='from-file'\nELEVENLABS_API_KEY=x\n")
+            # clear=True: a key exported on this machine must not leak in and fail the test.
             with mock.patch.dict("os.environ", {"OPENAI_API_KEY": "from-env",
-                                                "MODEL_API_KEY": "generic", "HOME": "/h"}):
+                                                "MODEL_API_KEY": "generic", "HOME": "/h"},
+                                 clear=True):
                 env = core.load_env(dotenv, core.env_names(config))
-        self.assertEqual(env, {"XAI_API_KEY": "from-file", "OPENAI_API_KEY": "from-env"})
+        # Names may be printed; values never are, so a failure cannot echo a credential.
+        self.assertEqual(sorted(env), ["OPENAI_API_KEY", "XAI_API_KEY"])
+        self.assertTrue(env == {"XAI_API_KEY": "from-file", "OPENAI_API_KEY": "from-env"},
+                        "load_env returned the right names with the wrong values")
 
     def test_policy_is_uniform_and_meta_has_no_generic_key(self):
         config = core.load_config()
@@ -232,6 +237,22 @@ class ProfileTest(GatewayCase):
             turn())
         self.assertEqual((response.status, response.body["error"]),
                          (500, {"code": "internal", "detail": "RuntimeError"}))
+
+    def test_an_unexpected_realtime_error_still_serves_the_cache(self):
+        # A worker bug (say jsonschema missing), not a vendor failure: with no cache it is an
+        # internal envelope, before or after the deadline; with one, a labelled fallback.
+        broken = FakeVendor(error=RuntimeError("vendor said: secret"))
+        late = FakeVendor(delay=0.2, error=RuntimeError("vendor said: secret"))
+        for vendor in (broken, late):
+            response = self.gateway(vendor).handle(turn(profile="realtime_low_latency"))
+            self.assertEqual((response.status, response.body["error"]),
+                             (500, {"code": "internal", "detail": "RuntimeError"}))
+        self.gateway(FakeVendor()).handle(turn())  # seeds quality_cached
+        response = self.gateway(broken).handle(turn(profile="realtime_low_latency"))
+        self.assertEqual((response.status, response.source), (200, "fallback"))
+        self.assertEqual((response.output_profile, response.live_error),
+                         ("quality_cached", "internal:RuntimeError"))
+        self.assertNotIn(b"secret", response.wire)
 
     def test_missing_key_offline_miss_bad_request_and_ack(self):
         gw = self.gateway(FakeVendor(), env={})
@@ -408,6 +429,18 @@ class CliProfileOverrideTest(GatewayCase):
         self.assertEqual(api.model("grok", "realtime_low_latency"), "grok-4.20-0309-non-reasoning")
 
 
+class BriefAsOfTest(GatewayCase):
+    def test_a_dated_snapshot_reaches_the_search_and_the_cache_key(self):
+        gw = self.gateway(FakeVendor(), env={"META_API_KEY": KEY})
+        brief = self.config["providers"]["muse"]["modes"]["brief"]
+        brief.pop("asOf", None)
+        undated = gw.search("muse", "quality_cached")
+        self.assertNotIn("Today is", undated["instructions"])
+        brief["asOf"] = "Friday, January 1, 2027"
+        dated = gw.search("muse", "quality_cached")
+        self.assertIn("Today is Friday, January 1, 2027", dated["instructions"])
+
+
 class HttpTest(GatewayCase):
     def test_auth_size_and_log_hygiene(self):
         gw = self.gateway(FakeVendor())
@@ -519,6 +552,127 @@ class AdapterShapeTest(unittest.TestCase):
         with self.assertRaises(adapters.AdapterError):
             adapters._post("http://api.example/v1", {}, {}, 1)
         self.assertIsNone(adapters._NoRedirect().redirect_request(None, None, 302, "", {}, "x"))
+
+
+CITED = [("https://www.brooklynmuseum.org/visit", "Visit | Brooklyn Museum"),
+         ("https://en.wikipedia.org/wiki/Brooklyn_Museum", "Brooklyn Museum")]
+LOCATION = {"type": "approximate", "city": "New York", "region": "New York", "country": "US",
+            "timezone": "America/New_York"}
+
+
+def meta_reply(text, cited=(), commentary=True):
+    """A Meta Responses body: commentary and a search call first when ``commentary``."""
+    output = [{"type": "message", "phase": "commentary", "role": "assistant", "content": [
+        {"type": "output_text", "text": "I'll look that up.", "annotations": []}]},
+        {"type": "web_search_call", "status": "completed",
+         "action": {"type": "search", "query": "museum hours"}}] if commentary else []
+    output.append({"type": "message", "role": "assistant", "content": [{
+        "type": "output_text", "text": text, "annotations": [
+            {"type": "url_citation", "url": url, "title": title, "start_index": 0,
+             "end_index": 4} for url, title in cited]}]})
+    return {"id": "resp_1", "status": "completed", "model": "muse-spark-1.3", "output": output}
+
+
+class MuseBriefTest(GatewayCase):
+    def post(self, *replies):
+        sent, queue = [], list(replies)
+
+        def fake_post(url, headers, body, timeout_s):
+            sent.append({"url": url, "headers": headers, "body": body})
+            return queue.pop(0)
+        return sent, mock.patch.object(adapters, "_post", side_effect=fake_post)
+
+    def test_search_then_structure_keeps_the_citations(self):
+        search = {"tool": {"type": "web_search", "search_context_size": "low",
+                           "user_location": LOCATION},
+                  "effort": "low", "instructions": "SEARCH", "findings": "FINDINGS:"}
+        sent, patch = self.post(meta_reply("Open 10 to 5.", CITED + CITED[:1]),
+                                meta_reply(json.dumps(GOOD), commentary=False))
+        with patch:
+            result = adapters.complete("meta_responses", "https://api.meta.ai/v1",
+                                       "muse-spark-1.3", "high", 100, KEY, "SYS", "USR",
+                                       contract.GENERATION_SCHEMA, 30, search=search)
+        self.assertEqual([s["url"] for s in sent], ["https://api.meta.ai/v1/responses"] * 2)
+        first, second = sent[0]["body"], sent[1]["body"]
+        self.assertEqual((first["tools"], first["instructions"], first["reasoning"]),
+                         ([search["tool"]], "SEARCH", {"effort": "low"}))
+        self.assertNotIn("text", first)
+        self.assertNotIn("tools", second)
+        self.assertTrue(second["text"]["format"]["strict"])
+        self.assertEqual((second["instructions"], second["reasoning"]), ("SYS", {"effort": "high"}))
+        self.assertEqual(second["input"][0]["content"], "USR\n\nFINDINGS:\nOpen 10 to 5.")
+        self.assertIs(first["store"], False)
+        self.assertEqual(sent[0]["headers"], {"Authorization": f"Bearer {KEY}"})
+        self.assertEqual(json.loads(result.text), GOOD)  # commentary is not the answer
+        self.assertEqual(result.citations, tuple(CITED))  # each page once, in order
+
+    def test_muse_quality_is_a_cited_brief_replayed_from_the_cache(self):
+        sent, patch = self.post(meta_reply("Open 10 to 5.", CITED),
+                                meta_reply(json.dumps(GOOD), commentary=False))
+        with patch:
+            live = self.gateway(adapters.complete, env={"META_API_KEY": KEY}).handle(
+                turn(provider="muse", text="Visit the museum today"))
+        self.assertEqual((live.status, live.source), (200, "live"))
+        tool = sent[0]["body"]["tools"][0]
+        self.assertEqual((tool["type"], tool["search_context_size"], tool["user_location"]),
+                         ("web_search", "low", LOCATION))
+        self.assertIn("web findings", sent[1]["body"]["instructions"])  # the grounded prompt
+        components = live.body["messages"][1]["updateComponents"]["components"]
+        rows = [c for c in components if c["id"].startswith("source_")]
+        self.assertEqual([(r["component"], r["title"], r["subtitle"]) for r in rows], [
+            ("Text", "Source · brooklynmuseum.org", "Visit | Brooklyn Museum"),
+            ("Text", "Source · en.wikipedia.org", "Brooklyn Museum")])
+        root = next(c for c in components if c["id"] == "root")
+        self.assertEqual(root["children"][-2:], ["source_1", "source_2"])  # cut first by a limit
+        entry = json.loads(next(pathlib.Path(self.tmp.name).rglob("*.json")).read_text())
+        self.assertEqual((entry["mode"], entry["citations"][0]["url"]), ("brief", CITED[0][0]))
+        # Replays exactly with no key and no vendor: the mode, not the key, sets the cache key.
+        replay = self.gateway(FakeVendor(error=AssertionError("called")), env={},
+                              offline=True).handle(
+            turn(provider="muse", text="Visit the museum today", turn_id="t2"))
+        self.assertEqual((replay.status, replay.source), (200, "cache"))
+        self.assertEqual(replay.body["messages"], live.body["messages"])
+
+    def test_plain_prompt_and_keys_hold_and_realtime_is_minimal_without_search(self):
+        system, user = contract.build_prompt("find coffee", turn()["display"])
+        self.assertIs(system, contract.SYSTEM_PROMPT)
+        self.assertNotEqual(contract.GROUNDED_PROMPT, contract.SYSTEM_PROMPT)
+        import hashlib
+        self.assertEqual(contract.cache_key("m", system, user), hashlib.sha256(b"\0".join((
+            b"m", system.encode(), user.encode(),
+            contract.canonical(contract.GENERATION_SCHEMA)))).hexdigest())
+        vendor = FakeVendor()
+        self.gateway(vendor, env={"META_API_KEY": KEY}).handle(
+            turn(provider="muse", profile="realtime_low_latency"))
+        call = vendor.calls[0]  # FakeVendor takes no search argument: none was passed
+        self.assertEqual((call["adapter"], call["model"], call["effort"]),
+                         ("openai_chat", "muse-spark-1.3", "minimal"))
+
+    def test_source_rows_are_bounded_unique_and_new_hosts_first(self):
+        rows = contract.source_rows([
+            ("https://www.brooklynmuseum.org/visit", "Plan Your Visit"),
+            ("https://brooklynmuseum.org/visit#hours", "Plan Your Visit"),  # the same row: once
+            ("https://www.brooklynmuseum.org/exhibitions", "Exhibitions"),
+            ("ftp://example.org/x", "not web"), ("javascript:alert(1)", "x"),
+            ("https://en.wikipedia.org/wiki/Brooklyn_Museum", "Brooklyn\n Museum\tof Art"),
+            ("https://nyc.gov/parks", "")])
+        self.assertEqual(rows, [("Source · brooklynmuseum.org", "Plan Your Visit"),
+                                ("Source · en.wikipedia.org", "Brooklyn Museum of Art"),
+                                ("Source · nyc.gov", "")])
+        long_host = "https://" + ".".join(["abcdefghij"] * 7) + ".org/"  # labels under 64
+        (title, subtitle), = contract.source_rows([(long_host, "é" * 90)])
+        for text in (title, subtitle):
+            self.assertEqual(contract._utf16_len(text), contract.VALUE_LIMIT)
+            self.assertTrue(text.endswith("…"))
+        taken = copy.deepcopy(GOOD)
+        taken["surfaces"][0]["components"][1]["id"] = "source_1"
+        taken["surfaces"][0]["components"][0]["children"][0] = "source_1"
+        output = contract.normalize(taken)
+        self.assertEqual(contract.add_sources(output, CITED[:1]), 1)
+        ids = [c["id"] for c in output["messages"][1]["updateComponents"]["components"]]
+        self.assertEqual(ids[-1], "source_1_2")
+        contract.validate_envelope(contract.envelope(output, "muse", "s", "t"),
+                                   contract.load_gateway_schema())
 
 
 class CompareTest(GatewayCase):

@@ -83,6 +83,10 @@ def load_config(path: pathlib.Path = DEFAULT_PROVIDERS) -> dict:
             raise ValueError(f"{name}: baseUrl must be https")
         if set(provider.get("profiles", {})) != set(contract.PROFILES):
             raise ValueError(f"{name}: configure both {contract.PROFILES}")
+        for profile in provider["profiles"].values():
+            mode = provider.get("modes", {}).get(profile.get("mode", ""))
+            if "mode" in profile and (mode is None or mode.get("adapter") not in adapters.ADAPTERS):
+                raise ValueError(f"{name}: profile mode must name a mode with a known adapter")
     if set(config.get("profiles", {})) != set(contract.PROFILES):
         raise ValueError("providers.json must define both execution profiles")
     if not isinstance(config.get("policy", {}).get("vendorFallback"), bool):
@@ -194,8 +198,34 @@ class Gateway:
     def model(self, provider: str, profile: str) -> str:
         return self.settings(provider, profile)["model"]
 
+    def mode(self, provider: str, profile: str) -> dict | None:
+        """The profile's API mode from providers.json "modes" (Muse's cited brief), else None.
+        Keyless counts as API, so an offline replay finds the entry a keyed run cached."""
+        name = self.settings(provider, profile).get("mode")
+        if not name or self.transport(provider) == "cli":
+            return None
+        return self.config["providers"][provider]["modes"][name]
+
+    def search(self, provider: str, profile: str) -> dict | None:
+        """What a web-search mode sends besides the prompt; part of the cache key."""
+        mode = self.mode(provider, profile)
+        if not mode or "webSearch" not in mode:
+            return None
+        instructions = contract.SEARCH_PROMPT
+        if mode.get("asOf"):  # a dated demo snapshot: answer as of that day, not the call's
+            instructions += f" Today is {mode['asOf']}; answer for today."
+        return {"tool": {"type": "web_search", **mode["webSearch"]},
+                "effort": mode.get("searchEffort"), "instructions": instructions,
+                "findings": contract.FINDINGS_HEADER}
+
+    def prompt(self, provider: str, profile: str, request: dict) -> tuple[str, str]:
+        return contract.build_prompt(request["inputText"], request["display"],
+                                     grounded=self.search(provider, profile) is not None)
+
     def cache_key(self, provider: str, profile: str, system: str, user: str) -> str:
-        return contract.cache_key(self.model(provider, profile), system, user)
+        search = self.search(provider, profile)
+        return contract.cache_key(self.model(provider, profile), system, user,
+                                  None if search is None else contract.canonical(search))
 
     def handle(self, request: Any) -> Response:
         started = self._clock()
@@ -219,7 +249,7 @@ class Gateway:
 
     def _turn(self, request: dict, started: float) -> Response:
         provider, profile = request["provider"], request["executionProfile"]
-        system, user = contract.build_prompt(request["inputText"], request["display"])
+        system, user = self.prompt(provider, profile, request)
         own = self.cache_key(provider, profile, system, user)
         ids = {"request": request, "started": started}
         key = self._key(provider)
@@ -238,11 +268,12 @@ class Gateway:
             return self._serve(entry, "live", **ids)
 
         def cached():
-            # This profile's own earlier output first, then the quality profile's. Either is
-            # served as a labelled fallback; the Response names whose output it is.
+            # This profile's own earlier output first, then the quality profile's (keyed by its
+            # own prompt). Either is served as a labelled fallback; the Response names whose.
+            quality = self.prompt(provider, "quality_cached", request)
             return (self.cache.get(provider, profile, own)
                     or self.cache.get(provider, "quality_cached",
-                                      self.cache_key(provider, "quality_cached", system, user)))
+                                      self.cache_key(provider, "quality_cached", *quality)))
 
         if self.offline or key is None:
             entry = cached()
@@ -250,11 +281,20 @@ class Gateway:
                 return self._serve(entry, "cache", **ids)
             return self._error("cache_miss" if self.offline else "provider_unconfigured",
                                started, request)
+
+        def unexpected(error: Exception) -> Response:
+            # A worker bug, not a vendor failure (e.g. a missing validation dependency): a cached
+            # answer still beats a 500. Only the type name is kept; a message can carry vendor text.
+            failed = self._error("internal", started, request, detail=type(error).__name__)
+            entry = cached()
+            if entry is None:
+                return failed
+            return self._serve(entry, "fallback", live_error=failed.live_error, **ids)
+
         timing = self.config["profiles"][profile]
         future = self._pool.submit(self._generate, provider, profile, system, user, own, key)
         try:
             entry = future.result(timeout=timing["deadlineMs"] / 1000)
-            return self._serve(entry, "live", **ids)
         except concurrent.futures.TimeoutError:
             entry = cached()
             if entry is not None:
@@ -262,16 +302,21 @@ class Gateway:
                 return self._serve(entry, "fallback", live_error="deadline", **ids)
             remaining = max(0.0, timing["timeoutMs"] / 1000 - (self._clock() - started))
             try:
-                return self._serve(future.result(timeout=remaining), "live", **ids)
+                entry = future.result(timeout=remaining)
             except concurrent.futures.TimeoutError:
                 return self._error("timeout", started, request)
             except (adapters.AdapterError, contract.ContractError) as error:
                 return self._failure(error, started, request)
+            except Exception as error:  # a worker bug: see unexpected()
+                return unexpected(error)
         except (adapters.AdapterError, contract.ContractError) as error:
             entry = cached()
             if entry is not None:
                 return self._serve(entry, "fallback", live_error=_describe(error), **ids)
             return self._failure(error, started, request)
+        except Exception as error:  # a worker bug: see unexpected()
+            return unexpected(error)
+        return self._serve(entry, "live", **ids)
 
     def _generate(self, provider: str, profile: str, system: str, user: str, key_hash: str,
                   key: str) -> dict:
@@ -280,17 +325,23 @@ class Gateway:
         timing = self.config["profiles"][profile]
         began = self._clock()
         adapter, base_url = settings["adapter"], settings["baseUrl"]
+        mode, extra = self.mode(provider, profile), {}
         if key == CLI_KEY:
             adapter, base_url = settings["cli"]["adapter"], settings["cli"]["command"]
+        elif mode is not None:
+            adapter, search = mode["adapter"], self.search(provider, profile)
+            if search is not None:
+                extra["search"] = search
         completion = self._complete(
             adapter, base_url, chosen["model"], chosen.get("effort"),
             int(chosen.get("maxTokens", 8000)), key, system, user, contract.GENERATION_SCHEMA,
             timing["timeoutMs"] / 1000,
-            vendor_fallback=self.config["policy"]["vendorFallback"])
+            vendor_fallback=self.config["policy"]["vendorFallback"], **extra)
         elapsed = self._ms(began)
         generated = contract.parse_json(completion.text)
         contract.validate_generated(generated)
         output = contract.normalize(generated)
+        contract.add_sources(output, completion.citations)
         # Validated before it is cached, with placeholder identity; re-validated when served.
         contract.validate_envelope(contract.envelope(output, provider, "cache", "cache"),
                                    self.schema)
@@ -300,6 +351,10 @@ class Gateway:
                  "cacheKey": key_hash, "elapsedMs": elapsed,
                  "createdAt": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                  "output": output}
+        if mode is not None and key != CLI_KEY:
+            entry["mode"] = self.settings(provider, profile)["mode"]
+            # Every page the answer cited, for audit; the output shows at most SOURCE_ROWS.
+            entry["citations"] = [{"url": u, "title": t} for u, t in completion.citations[:10]]
         self.cache.put(provider, profile, key_hash, entry)
         return entry
 
