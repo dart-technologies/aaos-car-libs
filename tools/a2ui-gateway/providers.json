@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 2,
+  "policy": {
+    "vendorFallback": false,
+    "why": "Uniform for comparisons: each provider answers with the model it was asked for. Only Anthropic offers a server-side model fallback, so enabling it would credit Claude with other models' output."
+  },
+  "profiles": {
+    "quality_cached": { "deadlineMs": 0, "timeoutMs": 120000 },
+    "realtime_low_latency": { "deadlineMs": 10000, "timeoutMs": 30000 }
+  },
+  "providers": {
+    "claude": {
+      "adapter": "anthropic_messages",
+      "baseUrl": "https://api.anthropic.com/v1",
+      "keyEnv": ["ANTHROPIC_API_KEY"],
+      "cli": { "adapter": "claude_code_cli", "command": "claude",
+               "why": "Subscription baseline without ANTHROPIC_API_KEY: Claude Code headless (-p), same prompt, schema and model." },
+      "source": "claude-api skill model table (cached 2026-10-06); no vendor page fetched",
+      "profiles": {
+        "quality_cached": { "model": "claude-opus-5-5", "effort": "high", "maxTokens": 16000 },
+        "realtime_low_latency": { "model": "claude-haiku-5-5", "effort": "low", "maxTokens": 8000 }
+      }
+    },
+    "chatgpt": {
+      "adapter": "openai_responses",
+      "baseUrl": "https://api.openai.com/v1",
+      "keyEnv": ["OPENAI_API_KEY"],
+      "cli": { "adapter": "codex_exec_cli", "command": "codex",
+               "why": "Subscription baseline without OPENAI_API_KEY: Codex exec on the ChatGPT login, same models (gpt-6.1-terra and gpt-6-luna verified there 2026-11-04)." },
+      "verifiedAt": "2026-11-03",
+      "source": "https://developers.openai.com/api/docs/models/gpt-6-luna; gpt-6.1-terra verified only via Codex on the ChatGPT login",
+      "profiles": {
+        "quality_cached": { "model": "gpt-6.1-terra", "effort": "high", "maxTokens": 16000 },
+        "realtime_low_latency": { "model": "gpt-6-luna", "effort": "low", "maxTokens": 8000 }
+      }
+    },
+    "gemini": {
+      "adapter": "gemini_generate_content",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
+      "keyEnv": ["GEMINI_API_KEY", "GOOGLE_API_KEY"],
+      "cli": { "adapter": "antigravity_cli", "command": "agy",
+               "profiles": { "quality_cached": { "model": "gemini-3.8-flash", "effort": "low" }, "realtime_low_latency": { "model": "gemini-3.8-flash", "effort": "low" } },
+               "why": "Subscription baseline without a Gemini key: agy print mode, Flash 3.8 at low effort for both profiles. With thinking on, agy returns an empty response (verified 2026-11-04)." },
+      "verifiedAt": "2026-11-03",
+      "source": "https://aistudio.google.com/docs/models/gemini-4-argon and /gemini-3.8-flash",
+      "profiles": {
+        "quality_cached": { "model": "gemini-4-argon", "effort": "high", "maxTokens": 16000 },
+        "realtime_low_latency": { "model": "gemini-3.8-flash", "effort": "low", "maxTokens": 8000 }
+      }
+    },
+    "grok": {
+      "adapter": "openai_chat",
+      "baseUrl": "https://api.x.ai/v1",
+      "keyEnv": ["XAI_API_KEY"],
+      "cli": { "adapter": "grok_cli", "command": "grok",
+               "profiles": { "realtime_low_latency": { "model": "grok-4.7-build-fast" } },
+               "why": "Subscription baseline without XAI_API_KEY: grok -p on the xAI session. The session offers grok-4.7 but not the API realtime model, so realtime uses its fast model (verified 2026-11-04)." },
+      "verifiedAt": "2026-11-03",
+      "source": "https://docs.x.ai/developers/models (lists both ids; states no latency, so the non-reasoning model is a latency choice, not a documented tier)",
+      "profiles": {
+        "quality_cached": { "model": "grok-4.7", "effort": null, "maxTokens": 16000 },
+        "realtime_low_latency": { "model": "grok-4.20-0309-non-reasoning", "effort": null, "maxTokens": 8000 }
+      }
+    },
+    "muse": {
+      "adapter": "openai_chat",
+      "baseUrl": "https://api.meta.ai/v1",
+      "keyEnv": ["META_API_KEY"],
+      "verifiedAt": "2026-11-03",
+      "source": "https://dev.meta.ai/docs/models (muse-spark-1.3 recommended for new work; 1.1 still listed)",
+      "note": "Meta lists no faster Spark tier, so both profiles use muse-spark-1.3 and differ only by reasoning_effort.",
+      "profiles": {
+        "quality_cached": { "model": "muse-spark-1.3", "effort": "high", "maxTokens": 16000 },
+        "realtime_low_latency": { "model": "muse-spark-1.3", "effort": "low", "maxTokens": 8000 }
+      }
+    }
+  }
+}
