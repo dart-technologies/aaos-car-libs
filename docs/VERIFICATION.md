@@ -51,7 +51,7 @@ second device. Ledgers are re-recorded only from green runs (`record-gate-counts
 | `check-gate-sensitivity.py` | Each registered mutation (≥125) turns its named test red; each gated module has a mutation or an exemption | weekly, before release |
 | `check-instrumented-run.py` | Executed ≥ expected; failures and skips within ceiling | gate, CI |
 | `check-license-headers.py` | Added files carry Apache headers; no header lost from a modified file | CI |
-| `check-nyc-demo.py` | Scenario timing (60–90 s), action vocabulary, corpus mapping, 10k-credit ceiling; `--require-audio` | gate, CI |
+| `check-nyc-demo.py` | Scenario timing (60–180 s), action vocabulary, corpus mapping, 10k-credit ceiling; `--require-audio` | gate, CI |
 | `check-overlayable-packaged.py` | Each `<overlayable>` reaches its own module's artifact | gate, CI |
 | `check-screenshot-evidence.py` | `docs/screenshots/`: PNG structure, inventory, sidecar checksum and provenance | gate, CI |
 | `check-soong-parity.py` | `Android.bp` paths resolve; overlayable dirs match Gradle; vendored plugin-apis SHA-256 | gate |
