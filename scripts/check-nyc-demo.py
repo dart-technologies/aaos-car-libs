@@ -332,15 +332,18 @@ def check_preamble(scenario: dict) -> None:
 
 
 def check_outro(scenario: dict) -> None:
-    """The closing card: one narration line then a silent hold, a calm note on what the drive
+    """The closing card: one narration line, a beat, a spoken close, then a silent hold, a calm note on what the drive
     was, the journey's beats taken from the recording at the right car state, and the
     architecture as title-only boxes. No tagline or footer, and Muse is named once."""
     outro = scenario.get("outro") or {}
-    if not 5 <= outro_seconds(scenario) <= 10:
-        fail("nyc_met closing card holds 5–10 s")
+    if not 5 <= outro_seconds(scenario) <= 12:
+        fail("nyc_met closing card holds 5–12 s")
     clips = [c for c in scenario["clips"] if c.get("section") == "outro"]
-    if [c["id"] for c in clips] != [outro.get("clipId")] or clips[0]["role"] != "narration":
-        fail("nyc_met closing card has exactly one narration clip, its clipId")
+    if ([c["id"] for c in clips] != [outro.get("clipId"), outro.get("closingClipId")]
+            or any(c["role"] != "narration" for c in clips)):
+        fail("nyc_met closing card has its narration clip then its closing clip")
+    if clips[-1]["text"] != "Thanks for checking out Muse2CarUI.":
+        fail("nyc_met closes on the spoken thanks")
     timeline = int(scenario["durationSeconds"]) * 1000
     beats = outro.get("beats", [])
     lanes = {"driver": [], "passenger": []}
@@ -486,7 +489,9 @@ def main() -> int:
             if clip["id"] in clip_ids:
                 fail(f"duplicate clip id {clip['id']}")
             clip_ids.add(clip["id"])
-            clip_texts[clip["id"]] = clip.get("text", "")
+            clip_texts[clip["id"]] = clip.get("spoken") or clip.get("text", "")  # what TTS said
+            if "spoken" in clip and (clip["role"] != "narration" or not clip["spoken"].strip()):
+                fail(f"{clip['id']}: only narration may respell its text for the voice")
             if clip.get("role") not in {"narration", "user_utterance"}:
                 fail(f"unknown role on {clip['id']}")
             section = clip.get("section", "timeline")
@@ -495,7 +500,7 @@ def main() -> int:
                 fail(f"clip {clip['id']} names a section its scenario does not have")
             if not 0 <= int(clip.get("atMs", -1)) < section_bounds_ms(scenario, section)[1]:
                 fail(f"clip {clip['id']} is outside its scenario timeline")
-            tts_chars += len(clip.get("text", ""))
+            tts_chars += len(clip_texts[clip["id"]])
             placeholders += clip.get("placeholder") is True
             if clip["role"] == "user_utterance" and not clip.get("expectedTranscript"):
                 fail(f"utterance {clip['id']} has no expected transcript")
@@ -629,8 +634,8 @@ def main() -> int:
                 if end_ms > card_start:
                     fail(f"{clip['id']} runs past its preamble card")
             if scenario.get("outro"):
-                clip = next(c for c in scenario["clips"]
-                            if c["id"] == scenario["outro"]["clipId"])
+                last_id = scenario["outro"].get("closingClipId") or scenario["outro"]["clipId"]
+                clip = next(c for c in scenario["clips"] if c["id"] == last_id)
                 end_ms = float(clip["atMs"]) + audio_duration(AUDIO / f"{clip['id']}.mp3") * 1000
                 if end_ms > outro_seconds(scenario) * 1000 - 1500:
                     fail(f"{clip['id']} leaves the closing card less than 1.5 s of silence")

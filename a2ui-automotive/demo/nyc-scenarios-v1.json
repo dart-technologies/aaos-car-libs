@@ -323,8 +323,9 @@
         {"style": "answer", "frameAtMs": 26000, "seconds": 5.4, "chip": "Driving", "clipId": "pre_narration_03"}
       ],
       "outro": {
-        "seconds": 8.5,
+        "seconds": 10.9,
         "clipId": "outro_narration_01",
+        "closingClipId": "outro_narration_02",
         "places": ["Hudson Yards", "The Met", "charging"],
         "beats": [
           {"atMs": 12000, "display": "driver", "label": "Cited Met brief"},
@@ -482,7 +483,7 @@
           "id": "met_narration_06",
           "role": "narration",
           "atMs": 68000,
-          "text": "Parked at The Met, the film moves to the driver's screen. Muse wrote that guide from cited sources before we left."
+          "text": "Parked at The Met, the film moves to the driver's screen. Muse curated that guide from cited sources before we left."
         },
         {
           "id": "ev_narration_01",
@@ -534,6 +535,14 @@
           "section": "outro",
           "atMs": 500,
           "text": "Muse does the research and designs the screens. The car decides what each display may show."
+        },
+        {
+          "id": "outro_narration_02",
+          "role": "narration",
+          "section": "outro",
+          "atMs": 7000,
+          "text": "Thanks for checking out Muse2CarUI.",
+          "spoken": "Thanks for checking out Muse to Car U I."
         }
       ],
       "actions": [

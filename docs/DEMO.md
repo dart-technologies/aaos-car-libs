@@ -14,7 +14,7 @@ gateway, ranking and recorder tests replay them offline (commands in the README)
 | `nyc_poi_order` | 78 | `poi_discovery_order` | Parked at Hudson Yards, bound for Brooklyn Museum: find coffee on the route, order ahead; drive → search and order go, route stays | Voice and touch share one policy; live re-projection |
 | `nyc_curated_video` | 78 | `big_buck_bunny` | Waiting in Long Island City: open a curated short; drive → video view and decoder close, the audio-only control keeps playing | `NO_VIDEO` drops video, not audio |
 | `nyc_concierge` | 90 | `poi_discovery_order`, then `big_buck_bunny` | Fifth House: parked order, brand audio kept in motion, visual chapter on arrival; closes on the fast foreground and higher-effort background lanes | The journey gets quieter, not unsafe; agents never control the car |
-| `nyc_met` | 151 (13.5 + 129 + 8.5) | `met_visit`, then `ev_charge_coffee` | Preamble from the recording's own frames: the parked full screen as unsafe in motion, then locked out, then the real pruned driving screen. Thursday, Nov 5, Hudson Yards → The Met, both displays: cited Muse brief parked, timed entry confirmed parked; drive → driver screen simplifies, passenger plays the artwork film, Muse's audio guide for all; parked at The Met the film moves to the driver's screen and plays about 15 s. An eased intermission card ("Later that afternoon · 5:15 PM · back in the car") covers the case switch and the clock jump. Then a low battery (vehicle HAL) → three chargers; parked and charging, the passenger keeps Big Buck Bunny, Muse's café pick (15 cafés compared) backs the usual coffee, and the driver opens Big Buck Bunny full-bleed, parked. Closing card: the journey with real thumbnails, the architecture | Muse does the research; the car decides per display |
+| `nyc_met` | 153.4 (13.5 + 129 + 10.9) | `met_visit`, then `ev_charge_coffee` | Preamble from the recording's own frames: the parked full screen as unsafe in motion, then locked out, then the real pruned driving screen. Thursday, Nov 5, Hudson Yards → The Met, both displays: cited Muse brief parked, timed entry confirmed parked; drive → driver screen simplifies, passenger plays the artwork film, Muse's audio guide for all; parked at The Met the film moves to the driver's screen and plays about 15 s. An eased intermission card ("Later that afternoon · 5:15 PM · back in the car") covers the case switch and the clock jump. Then a low battery (vehicle HAL) → three chargers; parked and charging, the passenger keeps Big Buck Bunny, Muse's café pick (15 cafés compared) backs the usual coffee, and the driver opens Big Buck Bunny full-bleed, parked. Closing card: the journey with real thumbnails, the architecture | Muse does the research; the car decides per display |
 
 Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 2026-09-10 and not
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
@@ -91,10 +91,13 @@ Post-production, after capture and from the same raw recording, so it always mat
   driving, labelled with `places`), a real thumbnail at each `beats` time (driver above, passenger
   below the driving segments; a placeholder tile if a frame cannot be extracted), and the
   `architecture` as title-only boxes (Muse's is the "Muse · Meta" badge with the Muse icon in
-  white, the card's only Muse mention). It ends above the caption band. `nyc_met`: 8.5 s, one
-  narration line then 2 s of silence.
+  white, the card's only Muse mention). It ends above the caption band. `nyc_met`: 10.9 s, one
+  narration line, a 0.6 s beat, the spoken close (`closingClipId`: "Thanks for checking out
+  Muse2CarUI."), then about 1.5 s of silence.
 - `disclaimer`: a PNG line in the canvas margin, outside both panels, for the whole video. In the
   cockpit it sits in the rail band and is gone before the closing card fades in.
+- A narration clip may carry `spoken`, the words the voice says when the caption's would be
+  mangled ("Muse to Car U I" for Muse2CarUI); captions and the SRT keep `text`.
 - Clips take an optional `section`: `preamble` clips count from the start of the video, `outro`
   clips from the closing card, the rest from the device timeline. The video is preamble + timeline +
   outro and must stay within 60–180 s; `durationSeconds` is the device timeline.
@@ -108,7 +111,7 @@ the first preamble card, which plays inside the driver window, as do the chapter
 of the preamble. The closing card covers the whole canvas. Captions (every section, from the real
 speech lengths; a "Passenger" tag on guest lines) and the story rail (beat, progress, Parked or
 Driving) are PNGs from `scripts/demo_overlays.py` (Pillow, in a child process), and the SRT is
-written next to the video. The intro adds 2.0 s: `nyc_met` is 153 s.
+written next to the video. The intro adds 2.0 s: `nyc_met` is 155.4 s.
 
 `--render-only` composes an earlier capture without a device (`--from-raw <prefix>` names
 `<prefix>.raw.mp4`, `.passenger.raw.mp4`, `.passenger-idle.png`; `--passenger-start` its stream

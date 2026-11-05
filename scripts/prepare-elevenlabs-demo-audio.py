@@ -103,6 +103,11 @@ def all_clips(manifest: dict) -> list[tuple[str, dict]]:
             for scenario in manifest["scenarios"] for clip in scenario["clips"]]
 
 
+def spoken(clip: dict) -> str:
+    """What the voice says: the caption's text, or its "spoken" respelling (a name TTS mangles)."""
+    return clip.get("spoken") or clip["text"]
+
+
 def all_effects(manifest: dict) -> list[dict]:
     return list(manifest.get("sfx", {}).get("effects", []))
 
@@ -278,7 +283,7 @@ def main() -> int:
     personas = configured_personas(tts, args)
     clips = all_clips(manifest)
     effects = all_effects(manifest)
-    planned_characters = sum(len(clip["text"]) for _, clip in clips)
+    planned_characters = sum(len(spoken(clip)) for _, clip in clips)
     estimated_sfx_credits = sum(math.ceil(float(effect["durationSeconds"])
                                           * int(manifest["sfx"][
                                               "estimatedCreditsPerSecond"]))
@@ -321,7 +326,7 @@ def main() -> int:
         output = args.output_dir / f"{clip['id']}.mp3"
         metadata_path = args.output_dir / f"{clip['id']}.tts.json"
         payload = {
-            "text": clip["text"],
+            "text": spoken(clip),
             "model_id": tts["modelId"],
             "voice_settings": persona["voiceSettings"],
         }
@@ -354,10 +359,10 @@ def main() -> int:
             "voiceId": voice_id,
             "voiceSettings": persona["voiceSettings"],
             "outputFormat": tts["outputFormat"],
-            "inputSha256": digest(clip["text"].encode()),
+            "inputSha256": digest(spoken(clip).encode()),
             "cacheKey": cache_key,
             "audioSha256": digest(audio),
-            "characters": len(clip["text"]),
+            "characters": len(spoken(clip)),
             "requestIdSha256": digest(headers.get("request-id", "").encode())
                 if headers.get("request-id") else None,
         })
