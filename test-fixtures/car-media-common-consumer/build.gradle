@@ -1,0 +1,28 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+apply plugin: 'com.android.library'
+
+android {
+    namespace = 'art.dart.fixtures.carmediaconsumer'
+    compileSdk = gradle.ext.aaosLatestSDK
+    defaultConfig { minSdk = 30 }
+}
+
+dependencies {
+    // Deliberately the only dependency. Direct Media3 or Guava declarations would invalidate the
+    // fixture by hiding a missing `api` edge in car-media-common.
+    implementation project(':car-media-common')
+}

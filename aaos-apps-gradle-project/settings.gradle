@@ -78,9 +78,14 @@ project(':car-apps-common').projectDir = new File('../car-apps-common')
 include ':car-apps-common-testutils'
 project(':car-apps-common-testutils').projectDir = new File('../car-apps-common-testutils')
 
+include ':car-media-common'
+project(':car-media-common').projectDir = new File('../car-media-common')
 
 // Consumer-only compile fixture: depends only on car-media-common, proving the Media3 and Guava
 // types in its public signatures arrive transitively.
+include ':car-media-common-consumer-fixture'
+project(':car-media-common-consumer-fixture').projectDir =
+        new File('../test-fixtures/car-media-common-consumer')
 
 include ':car-uxr-client-lib'
 project(':car-uxr-client-lib').projectDir = new File('../car-uxr-client-lib')

@@ -19,18 +19,15 @@ package com.android.car.media.common.playback;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.LiveData;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * Updates current progress from a given {@link PlaybackStateCompat} while active
+ * Updates current progress from a given {@link PlaybackTiming} while active
  */
 class ProgressLiveData extends LiveData<PlaybackProgress> {
 
@@ -38,58 +35,40 @@ class ProgressLiveData extends LiveData<PlaybackProgress> {
     @VisibleForTesting
     static final long UPDATE_INTERVAL_MS = 500;
 
-    // This guards against apps who don't keep their playbackSpeed to spec (b/62375164)
-    private static final Set<Integer> NO_PROGRESS_STATES = new HashSet<>(10);
-    static {
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_NONE);
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_STOPPED);
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_PAUSED);
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_BUFFERING);
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_ERROR);
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_CONNECTING);
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS);
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT);
-        NO_PROGRESS_STATES.add(PlaybackStateCompat.STATE_SKIPPING_TO_QUEUE_ITEM);
-    }
-
-    private final PlaybackStateCompat mPlaybackState;
+    // The state predicates moved to PlaybackTiming, which is where they can be produced from either
+    // a legacy session or a Media3 Player. This file no longer knows what a PlaybackStateCompat is.
+    private final PlaybackTiming mTiming;
     private final long mMaxProgress;
     private final Handler mTimerHandler = new Handler(Looper.getMainLooper());
     private final Supplier<Long> mElapsedRealtime;
 
-    ProgressLiveData(@NonNull PlaybackStateCompat playbackState, long maxProgress) {
-        this(playbackState, maxProgress, SystemClock::elapsedRealtime);
+    ProgressLiveData(@NonNull PlaybackTiming timing, long maxProgress) {
+        this(timing, maxProgress, SystemClock::elapsedRealtime);
     }
 
     @VisibleForTesting(otherwise = VisibleForTesting.NONE)
     ProgressLiveData(
-            @NonNull PlaybackStateCompat playbackState, long maxProgress,
+            @NonNull PlaybackTiming timing, long maxProgress,
             Supplier<Long> elapsedRealtime) {
-        mPlaybackState = playbackState;
+        mTiming = timing;
         mMaxProgress = maxProgress;
         mElapsedRealtime = elapsedRealtime;
     }
 
     private void updateProgress() {
         setValue(new PlaybackProgress(getProgress(), mMaxProgress));
-        if (mPlaybackState.getState() != PlaybackStateCompat.STATE_PAUSED
-                && mPlaybackState.getState() != PlaybackStateCompat.STATE_STOPPED
-                && mPlaybackState.getPlaybackSpeed() != 0) {
+        if (mTiming.keepsTicking()) {
             mTimerHandler.postDelayed(this::updateProgress, UPDATE_INTERVAL_MS);
         }
     }
 
     private long getProgress() {
-        if (mPlaybackState.getPosition() == PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN) {
-            return PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN;
+        if (mTiming.position() == PlaybackTiming.POSITION_UNKNOWN) {
+            return PlaybackTiming.POSITION_UNKNOWN;
         }
-        long timeDiff = mElapsedRealtime.get() - mPlaybackState.getLastPositionUpdateTime();
-        float speed = mPlaybackState.getPlaybackSpeed();
-        if (NO_PROGRESS_STATES.contains(mPlaybackState.getState())) {
-            speed = 0f;
-        }
-        long posDiff = (long) (timeDiff * speed);
-        return Math.min(posDiff + mPlaybackState.getPosition(), mMaxProgress);
+        long timeDiff = mElapsedRealtime.get() - mTiming.lastPositionUpdateTime();
+        long posDiff = (long) (timeDiff * mTiming.effectiveSpeed());
+        return Math.min(posDiff + mTiming.position(), mMaxProgress);
     }
 
     @Override

@@ -26,13 +26,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import android.media.MediaMetadata;
 import android.os.Bundle;
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.RatingCompat;
-import android.support.v4.media.session.MediaControllerCompat;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
@@ -44,8 +38,18 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
+import androidx.media3.common.HeartRating;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.MediaMetadata;
+import androidx.media3.common.Player;
+import androidx.media3.common.Rating;
+import androidx.media3.common.Timeline;
+import androidx.media3.session.CommandButton;
+import androidx.media3.session.MediaController;
+import androidx.media3.session.SessionCommand;
 
 import com.android.car.media.common.CustomPlaybackAction;
+import com.android.car.media.common.Media3Adapters;
 import com.android.car.media.common.MediaConstants;
 import com.android.car.media.common.MediaItemMetadata;
 import com.android.car.media.common.R;
@@ -60,7 +64,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * ViewModel for media playback.
@@ -112,17 +115,17 @@ public class PlaybackViewModel extends AndroidViewModel {
      */
     public static final int ACTION_PAUSE = 3;
 
-    /**
-     * Factory for creating dependencies. Can be swapped out for testing.
+    /*
+     * The InputFactory that used to live here is gone, and its disappearance is the point of this
+     * stage rather than a tidy-up. It existed for exactly one reason: to turn the browser's session
+     * token into a second client object, `token -> new MediaControllerCompat(app, token)`. In
+     * Media3 `MediaBrowser extends MediaController`, so the connected browser IS the controller —
+     * there is no second object to build and therefore no factory to swap. Tests now hand the view
+     * model a BrowsingState carrying a mock controller, which is a shorter path to the same seam.
      */
-    @VisibleForTesting
-    interface InputFactory {
-        MediaControllerCompat getControllerForBrowser(@NonNull MediaBrowserCompat browser);
-    }
 
-
-    /** Needs to be a MediaMetadata because the compat class doesn't implement equals... */
-    private static final MediaMetadata EMPTY_MEDIA_METADATA = new MediaMetadata.Builder().build();
+    /** Media3 reports "no metadata" as this value rather than as null. */
+    private static final MediaMetadata EMPTY_MEDIA_METADATA = MediaMetadata.EMPTY;
 
     private final MediaControllerCallback mMediaControllerCallback = new MediaControllerCallback();
     private final Observer<MediaBrowserConnector.BrowsingState> mMediaBrowsingObserver =
@@ -147,20 +150,18 @@ public class PlaybackViewModel extends AndroidViewModel {
     private final LiveData<PlaybackProgress> mProgress =
             switchMap(mPlaybackStateWrapper,
                     state -> state == null ? dataOf(new PlaybackProgress(0L, 0L))
-                            : new ProgressLiveData(state.mState, state.getMaxProgress()));
-
-    private final InputFactory mInputFactory;
+                            : new ProgressLiveData(
+                                    PlaybackTiming.from(state.mState),
+                                    state.getMaxProgress()));
 
     private PlaybackViewModel(Application application, int mode) {
-        this(application, MediaSourceViewModel.get(application, mode).getBrowsingState(),
-                browser -> new MediaControllerCompat(application, browser.getSessionToken()));
+        this(application, MediaSourceViewModel.get(application, mode).getBrowsingState());
     }
 
     @VisibleForTesting
     public PlaybackViewModel(Application application,
-            LiveData<MediaBrowserConnector.BrowsingState> browsingState, InputFactory factory) {
+            LiveData<MediaBrowserConnector.BrowsingState> browsingState) {
         super(application);
-        mInputFactory =  factory;
         mColorsFactory = new MediaSourceColors.Factory(application);
         browsingState.observeForever(mMediaBrowsingObserver);
     }
@@ -174,7 +175,7 @@ public class PlaybackViewModel extends AndroidViewModel {
 
     /**
      * Returns a LiveData that emits a MediaItemMetadata of the current media item in the session
-     * managed by the provided {@link MediaControllerCompat}.
+     * managed by the provided {@link MediaController}.
      */
     public LiveData<MediaItemMetadata> getMetadata() {
         return mMetadata;
@@ -226,23 +227,46 @@ public class PlaybackViewModel extends AndroidViewModel {
     }
 
     @VisibleForTesting
-    MediaControllerCompat getMediaController() {
+    public MediaController getMediaController() {
         return mMediaControllerCallback.mMediaController;
     }
 
     @VisibleForTesting
-    MediaMetadataCompat getMediaMetadata() {
+    public MediaMetadata getMediaMetadata() {
         return mMediaControllerCallback.mMediaMetadata;
     }
 
+    /** Lets tests drive the view model the way Media3 drives it: through Player callbacks. */
+    @VisibleForTesting
+    public Player.Listener getPlayerListener() {
+        return mMediaControllerCallback;
+    }
 
-    private class MediaControllerCallback extends MediaControllerCompat.Callback {
+
+    /**
+     * Bridges Media3's {@link Player.Listener} onto the shape this view model publishes.
+     *
+     * <h3>What replaced what</h3>
+     * <ul>
+     *   <li>{@code onMetadataChanged} → {@link #onMediaMetadataChanged}
+     *   <li>{@code onQueueChanged} → {@link #onTimelineChanged} (Media3's queue IS the timeline)
+     *   <li>{@code onQueueTitleChanged} → {@link #onPlaylistMetadataChanged}
+     *   <li>{@code onPlaybackStateChanged} → {@link #onEvents}, because Media3 splits one legacy
+     *       state integer across several callbacks (state, playWhenReady, error, available
+     *       commands, position) and {@code onEvents} is the one place they are known to be
+     *       consistent with each other.
+     *   <li>{@code onSessionDestroyed} → the connector's {@code SUSPENDED} state, which it derives
+     *       from {@link androidx.media3.session.MediaController.Listener#onDisconnected}. The
+     *       connector owns that listener because Media3 requires it at build time, so the death of
+     *       a session reaches this class the same way every other connection change does — through
+     *       {@link #onMediaBrowsingStateChanged}.
+     * </ul>
+     */
+    private class MediaControllerCallback implements Player.Listener {
 
         private MediaBrowserConnector.BrowsingState mBrowsingState;
-        private MediaControllerCompat mMediaController;
-        private MediaMetadataCompat mMediaMetadata;
-        private PlaybackStateCompat mPlaybackState;
-
+        private MediaController mMediaController;
+        private MediaMetadata mMediaMetadata;
 
         void onMediaBrowsingStateChanged(MediaBrowserConnector.BrowsingState newBrowsingState) {
             if (Objects.equals(mBrowsingState, newBrowsingState)) {
@@ -258,7 +282,7 @@ public class PlaybackViewModel extends AndroidViewModel {
                     case REJECTED:
                     case CONNECTING:
                     case CONNECTED:
-                        mMediaController.unregisterCallback(this);
+                        mMediaController.removeListener(this);
                         // Fall through
                     case SUSPENDED:
                         setMediaController(null);
@@ -268,107 +292,159 @@ public class PlaybackViewModel extends AndroidViewModel {
             mBrowsingState = newBrowsingState;
 
             if (mBrowsingState.mConnectionStatus == ConnectionStatus.CONNECTED) {
-                setMediaController(mInputFactory.getControllerForBrowser(mBrowsingState.mBrowser));
+                setMediaController(mBrowsingState.getController());
             }
         }
 
-        private void setMediaController(MediaControllerCompat mediaController) {
+        private void setMediaController(@Nullable MediaController mediaController) {
             mMediaMetadata = null;
-            mPlaybackState = null;
             mMediaController = mediaController;
             mPlaybackControls.setValue(new PlaybackController(mediaController));
 
             if (mMediaController != null) {
-                mMediaController.registerCallback(this);
+                mMediaController.addListener(this);
 
-                mColors.setValue(mColorsFactory.extractColors(mediaController.getPackageName()));
+                mColors.setValue(mColorsFactory.extractColors(getPackageName(mMediaController)));
 
                 // The apps don't always send updates so make sure we fetch the most recent values.
-                onMetadataChanged(mMediaController.getMetadata());
-                onPlaybackStateChanged(mMediaController.getPlaybackState());
-                onQueueChanged(mMediaController.getQueue());
-                onQueueTitleChanged(mMediaController.getQueueTitle());
+                onMediaMetadataChanged(mMediaController.getMediaMetadata());
+                onTimelineChanged(mMediaController.getCurrentTimeline(),
+                        Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED);
+                onPlaylistMetadataChanged(mMediaController.getPlaylistMetadata());
             } else {
                 mColors.setValue(null);
-                onMetadataChanged(null);
-                onPlaybackStateChanged(null);
-                onQueueChanged(null);
-                onQueueTitleChanged(null);
+                onMediaMetadataChanged(EMPTY_MEDIA_METADATA);
+                setQueue(Collections.emptyList());
+                mQueueTitle.setValue(null);
             }
 
             updatePlaybackStatus();
         }
 
         @Override
-        public void onSessionDestroyed() {
-            Log.w(TAG, "onSessionDestroyed");
-            // Bypass the unregisterCallback as the controller is dead.
-            // TODO: consider keeping track of orphaned callbacks in case they are resurrected...
-            setMediaController(null);
-        }
-
-        @Override
-        public void onMetadataChanged(@Nullable MediaMetadataCompat mmdCompat) {
-            // MediaSession#setMetadata builds an empty MediaMetadata when its argument is null,
-            // yet MediaMetadataCompat doesn't implement equals... so if the given mmdCompat's
-            // MediaMetadata equals EMPTY_MEDIA_METADATA, set mMediaMetadata to null to keep
-            // the code simpler everywhere else.
-            if ((mmdCompat != null) && EMPTY_MEDIA_METADATA.equals(mmdCompat.getMediaMetadata())) {
-                mMediaMetadata = null;
-            } else {
-                mMediaMetadata = mmdCompat;
-            }
-            MediaItemMetadata item =
-                    (mMediaMetadata != null) ? new MediaItemMetadata(mMediaMetadata) : null;
+        public void onMediaMetadataChanged(@NonNull MediaMetadata mediaMetadata) {
+            // Media3 never reports null: an item with nothing set arrives as MediaMetadata.EMPTY.
+            // The legacy code went to some trouble to collapse "empty" onto null so the rest of
+            // the file only had one "nothing playing" case; that collapse is preserved here rather
+            // than pushed onto every reader.
+            mMediaMetadata = EMPTY_MEDIA_METADATA.equals(mediaMetadata) ? null : mediaMetadata;
+            MediaItemMetadata item = (mMediaMetadata != null)
+                    ? Media3Adapters.fromMedia3(currentMediaId(), mMediaMetadata) : null;
             mMetadata.setValue(item);
             updatePlaybackStatus();
         }
 
-        @Override
-        public void onQueueTitleChanged(CharSequence title) {
-            mQueueTitle.setValue(title);
+        @Nullable
+        private String currentMediaId() {
+            if (mMediaController == null) return null;
+            MediaItem item = mMediaController.getCurrentMediaItem();
+            return (item != null) ? item.mediaId : null;
         }
 
         @Override
-        public void onQueueChanged(@Nullable List<MediaSessionCompat.QueueItem> queue) {
-            List<MediaItemMetadata> filtered = queue == null ? Collections.emptyList()
-                    : queue.stream()
-                            .filter(item -> item != null
-                                    && item.getDescription() != null
-                                    && item.getDescription().getTitle() != null)
-                            .map(MediaItemMetadata::new)
-                            .collect(Collectors.toList());
+        public void onPlaylistMetadataChanged(@NonNull MediaMetadata playlistMetadata) {
+            mQueueTitle.setValue(playlistMetadata.title);
+        }
 
+        @Override
+        public void onTimelineChanged(@NonNull Timeline timeline, int reason) {
+            if (mMediaController == null) {
+                setQueue(Collections.emptyList());
+                return;
+            }
+            int count = mMediaController.getMediaItemCount();
+            List<MediaItemMetadata> filtered = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                MediaItem item = mMediaController.getMediaItemAt(i);
+                if (item == null) continue;
+                MediaMetadata md = item.mediaMetadata;
+                // The legacy filter was "has a description AND that description has a title".
+                // Media3 always has a MediaMetadata, so only the title half of the test survives —
+                // and it is the half that was doing the work, since a description without a title
+                // renders as a blank row either way.
+                if (md.displayTitle == null && md.title == null) continue;
+                filtered.add(Media3Adapters.fromMedia3QueueItem(item, i));
+            }
+            setQueue(filtered);
+        }
+
+        private void setQueue(@NonNull List<MediaItemMetadata> filtered) {
             mSanitizedQueue.setValue(filtered);
             mHasQueue.setValue(filtered.size() > 1);
         }
 
+        /**
+         * Recomputes the published playback state after any batch of player changes.
+         *
+         * <p>Every legacy {@code onPlaybackStateChanged} carried a whole {@code PlaybackStateCompat}
+         * — state, actions, position, error, all consistent with one another. Media3 delivers those
+         * as separate callbacks, and {@code onEvents} is the point at which the player is known to
+         * be settled, so it is the honest counterpart to a single state delivery.
+         */
         @Override
-        public void onPlaybackStateChanged(PlaybackStateCompat playbackState) {
-            mPlaybackState = playbackState;
+        public void onEvents(@NonNull Player player, @NonNull Player.Events events) {
             updatePlaybackStatus();
         }
 
         private void updatePlaybackStatus() {
-            if (mMediaController != null && mPlaybackState != null) {
+            if (mMediaController != null) {
                 mPlaybackStateWrapper.setValue(
-                        new PlaybackStateWrapper(mMediaController, mMediaMetadata, mPlaybackState));
+                        new PlaybackStateWrapper(mMediaController, mMediaMetadata,
+                                Media3PlaybackState.toPlaybackState(mMediaController)));
             } else {
                 mPlaybackStateWrapper.setValue(null);
             }
         }
     }
 
-    /** Convenient extension of {@link PlaybackStateCompat}. */
+    /**
+     * The package the session lives in.
+     *
+     * <p>{@code MediaControllerCompat#getPackageName} had no Media3 equivalent on the controller
+     * itself; the connected {@link androidx.media3.session.SessionToken} carries it instead.
+     */
+    @Nullable
+    private static String getPackageName(@NonNull MediaController controller) {
+        return controller.getConnectedToken() != null
+                ? controller.getConnectedToken().getPackageName() : null;
+    }
+
+    /**
+     * Convenient extension of {@link PlaybackStateCompat}.
+     *
+     * <h3>Legacy-SHAPED on purpose</h3>
+     *
+     * <p>Everything this class exposes still speaks the legacy vocabulary: a
+     * {@code @PlaybackStateCompat.State int}, a {@code long} action bitmask, an error code from the
+     * same table. That is deliberate and is the boundary of this migration. Removing the deprecated
+     * CLIENT (which is what changed here — the fields below are now Media3 types) and reshaping this
+     * PUBLIC CONTRACT are separable jobs, and only the first is safe to do while the tests written
+     * against the contract are the safety net. See {@code Media3PlaybackState}, which does the
+     * state and action conversion and carries the same note.
+     *
+     * <h3>Two things Media3 cannot answer the way the legacy client did</h3>
+     *
+     * <ul>
+     *   <li><b>Error codes.</b> {@code Media3PlaybackState} reports
+     *       {@code ERROR_CODE_UNKNOWN_ERROR} rather than inventing a translation from Media3's own
+     *       error space back onto the media-service wire codes in {@code MediaErrorCodes}. The error
+     *       MESSAGE survives; the code does not.
+     *   <li><b>State extras.</b> {@link #getExtras} used to return the extras attached to the
+     *       {@code PlaybackStateCompat} — where a media app puts an error-resolution PendingIntent.
+     *       Media3's controller does not surface those; the nearest thing it has is the SESSION
+     *       extras, which is what this now returns. An app that only ever put its resolution intent
+     *       on the playback state will no longer offer a resolution button.
+     * </ul>
+     */
     public static final class PlaybackStateWrapper {
 
-        private final MediaControllerCompat mMediaController;
+        private final MediaController mMediaController;
         @Nullable
-        private final MediaMetadataCompat mMetadata;
+        private final MediaMetadata mMetadata;
         private final PlaybackStateCompat mState;
 
-        PlaybackStateWrapper(@NonNull MediaControllerCompat mediaController,
-                @Nullable MediaMetadataCompat metadata, @NonNull PlaybackStateCompat state) {
+        PlaybackStateWrapper(@NonNull MediaController mediaController,
+                @Nullable MediaMetadata metadata, @NonNull PlaybackStateCompat state) {
             mMediaController = mediaController;
             mMetadata = metadata;
             mState = state;
@@ -427,8 +503,11 @@ public class PlaybackViewModel extends AndroidViewModel {
          * duration can be obtained by calling {@link #getProgress()}.
          */
         public long getMaxProgress() {
-            return mMetadata == null ? 0 :
-                    mMetadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION);
+            // Read from the metadata, not from Player#getDuration, because the legacy source was
+            // METADATA_KEY_DURATION and that is what Media3's durationMs is converted from. Taking
+            // the player's duration instead would start reporting a length for sessions that
+            // deliberately publish none.
+            return (mMetadata == null || mMetadata.durationMs == null) ? 0 : mMetadata.durationMs;
         }
 
         /** Returns whether the current media source is playing a media item. */
@@ -455,22 +534,20 @@ public class PlaybackViewModel extends AndroidViewModel {
 
         /** Returns whether the media source requires reserved space for the skip to next action. */
         public boolean isSkipNextReserved() {
-            return mMediaController.getExtras() != null
-                    && (mMediaController.getExtras().getBoolean(
-                    MediaConstants.SLOT_RESERVATION_SKIP_TO_NEXT)
-                    || mMediaController.getExtras().getBoolean(
-                    MediaConstants.PLAYBACK_SLOT_RESERVATION_SKIP_TO_NEXT));
+            Bundle extras = mMediaController.getSessionExtras();
+            return extras != null
+                    && (extras.getBoolean(MediaConstants.SLOT_RESERVATION_SKIP_TO_NEXT)
+                    || extras.getBoolean(MediaConstants.PLAYBACK_SLOT_RESERVATION_SKIP_TO_NEXT));
         }
 
         /**
          * Returns whether the media source requires reserved space for the skip to previous action.
          */
         public boolean iSkipPreviousReserved() {
-            return mMediaController.getExtras() != null
-                    && (mMediaController.getExtras().getBoolean(
-                    MediaConstants.SLOT_RESERVATION_SKIP_TO_PREV)
-                    || mMediaController.getExtras().getBoolean(
-                    MediaConstants.PLAYBACK_SLOT_RESERVATION_SKIP_TO_PREV));
+            Bundle extras = mMediaController.getSessionExtras();
+            return extras != null
+                    && (extras.getBoolean(MediaConstants.SLOT_RESERVATION_SKIP_TO_PREV)
+                    || extras.getBoolean(MediaConstants.PLAYBACK_SLOT_RESERVATION_SKIP_TO_PREV));
         }
 
         /** Returns whether the media source is loading (e.g.: buffering, connecting, etc.). */
@@ -495,9 +572,17 @@ public class PlaybackViewModel extends AndroidViewModel {
             return mState.getErrorCode();
         }
 
-        /** See {@link PlaybackStateCompat#getActiveQueueItemId}. */
+        /**
+         * The identifier of the queue item currently playing.
+         *
+         * <p>Media3 identifies a queue entry by its index in the timeline, so that index is the id
+         * — the same one {@code getQueue()} publishes, so the pair still matches. An empty queue
+         * reports {@code -1} rather than Media3's index 0, because a queue with nothing in it has
+         * no active item and index 0 would name a row that does not exist.
+         */
         public long getActiveQueueItemId() {
-            return mState.getActiveQueueItemId();
+            return mMediaController.getMediaItemCount() == 0
+                    ? -1 : mMediaController.getCurrentMediaItemIndex();
         }
 
         /** See {@link PlaybackStateCompat#getState}. */
@@ -506,13 +591,13 @@ public class PlaybackViewModel extends AndroidViewModel {
             return mState.getState();
         }
 
-        /** See {@link PlaybackStateCompat#getExtras}. */
+        /** The session extras. See the class note for why these are not the state extras. */
         public Bundle getExtras() {
-            return mState.getExtras();
+            return mMediaController.getSessionExtras();
         }
 
         @VisibleForTesting
-        PlaybackStateCompat getStateCompat() {
+        public PlaybackStateCompat getStateCompat() {
             return mState;
         }
 
@@ -525,30 +610,40 @@ public class PlaybackViewModel extends AndroidViewModel {
             RawCustomPlaybackAction ratingAction = getRatingAction();
             if (ratingAction != null) actions.add(ratingAction);
 
-            for (PlaybackStateCompat.CustomAction action : mState.getCustomActions()) {
-                String packageName = mMediaController.getPackageName();
-                actions.add(
-                        new RawCustomPlaybackAction(action.getIcon(), packageName,
-                                action.getAction(),
-                                action.getExtras()));
+            String packageName = getPackageName(mMediaController);
+            for (CommandButton button : mMediaController.getCustomLayout()) {
+                // A CommandButton can stand for a PLAYER command instead of a custom session
+                // command; those have no action string and are already offered by the standard
+                // controls, so they are not custom actions.
+                if (button.sessionCommand == null
+                        || button.sessionCommand.commandCode != SessionCommand.COMMAND_CODE_CUSTOM) {
+                    continue;
+                }
+                actions.add(new RawCustomPlaybackAction(button.iconResId, packageName,
+                        button.sessionCommand.customAction, button.extras));
             }
             return actions;
         }
 
+        /**
+         * The heart button, when the session both accepts ratings and rates with hearts.
+         *
+         * <p>Media3 has no {@code getRatingType()}: a session declares it can be rated by making
+         * the SET_RATING session command available, and declares WHICH rating by the concrete
+         * {@link Rating} subclass it publishes in its metadata. So the two questions the legacy code
+         * asked of two different objects are asked here of the command set and the metadata.
+         */
         @Nullable
         private RawCustomPlaybackAction getRatingAction() {
-            long stdActions = mState.getActions();
-            if ((stdActions & PlaybackStateCompat.ACTION_SET_RATING) == 0) return null;
-
-            int ratingType = mMediaController.getRatingType();
-            if (ratingType != RatingCompat.RATING_HEART) return null;
-
-            boolean hasHeart = false;
-            if (mMetadata != null) {
-                RatingCompat rating = mMetadata.getRating(
-                        MediaMetadataCompat.METADATA_KEY_USER_RATING);
-                hasHeart = rating != null && rating.hasHeart();
+            if (!mMediaController.isSessionCommandAvailable(
+                    SessionCommand.COMMAND_CODE_SESSION_SET_RATING)) {
+                return null;
             }
+
+            Rating rating = (mMetadata != null) ? mMetadata.userRating : null;
+            if (!(rating instanceof HeartRating)) return null;
+
+            boolean hasHeart = ((HeartRating) rating).isHeart();
 
             int iconResource = hasHeart ? R.drawable.ic_star_filled : R.drawable.ic_star_empty;
             Bundle extras = new Bundle();
@@ -559,15 +654,32 @@ public class PlaybackViewModel extends AndroidViewModel {
 
 
     /**
-     * Wraps the {@link android.media.session.MediaController.TransportControls TransportControls}
-     * for a {@link MediaControllerCompat} to send commands.
+     * Sends transport commands to the connected session.
+     *
+     * <h3>Media3 has no TransportControls object</h3>
+     *
+     * <p>{@link MediaController} implements {@link Player}, so the commands are methods on the
+     * controller itself. Three of them are not one-for-one renames and are worth naming:
+     *
+     * <ul>
+     *   <li>{@link #playItem} was {@code playFromMediaId}. Media3 expresses it as "set this item,
+     *       prepare, play"; its legacy bridge turns exactly that sequence back into
+     *       {@code playFromMediaId}, which is why all three calls are made and why they are made in
+     *       that order.
+     *   <li>{@link #skipToQueueItem} takes an index into the timeline — see
+     *       {@code PlaybackStateWrapper#getActiveQueueItemId} for why that is now the queue id.
+     *   <li>{@link #seekTo} still republishes the state immediately. The legacy version synthesised
+     *       a PlaybackStateCompat to make the progress bar move before the app answered; Media3's
+     *       controller already masks the new position locally, so re-reading it achieves the same
+     *       thing without fabricating a state.
+     * </ul>
      */
     // TODO(arnaudberry) does this wrapping make sense since we're still null checking the wrapper?
     // Should we call action methods on the model class instead ?
     public class PlaybackController {
-        private final MediaControllerCompat mMediaController;
+        private final MediaController mMediaController;
 
-        private PlaybackController(@Nullable MediaControllerCompat mediaController) {
+        private PlaybackController(@Nullable MediaController mediaController) {
             mMediaController = mediaController;
         }
 
@@ -576,7 +688,7 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void play() {
             if (mMediaController != null) {
-                mMediaController.getTransportControls().play();
+                mMediaController.play();
             }
         }
 
@@ -585,7 +697,7 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void skipToPrevious() {
             if (mMediaController != null) {
-                mMediaController.getTransportControls().skipToPrevious();
+                mMediaController.seekToPreviousMediaItem();
             }
         }
 
@@ -594,7 +706,7 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void skipToNext() {
             if (mMediaController != null) {
-                mMediaController.getTransportControls().skipToNext();
+                mMediaController.seekToNextMediaItem();
             }
         }
 
@@ -603,7 +715,7 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void pause() {
             if (mMediaController != null) {
-                mMediaController.getTransportControls().pause();
+                mMediaController.pause();
             }
         }
 
@@ -612,7 +724,7 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void stop() {
             if (mMediaController != null) {
-                mMediaController.getTransportControls().stop();
+                mMediaController.stop();
             }
         }
 
@@ -623,13 +735,8 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void seekTo(long pos) {
             if (mMediaController != null) {
-                PlaybackStateCompat oldState = mMediaController.getPlaybackState();
-                PlaybackStateCompat newState = new PlaybackStateCompat.Builder(oldState)
-                        .setState(oldState.getState(), pos, oldState.getPlaybackSpeed())
-                        .build();
-                mMediaControllerCallback.onPlaybackStateChanged(newState);
-
-                mMediaController.getTransportControls().seekTo(pos);
+                mMediaController.seekTo(pos);
+                mMediaControllerCallback.updatePlaybackStatus();
             }
         }
 
@@ -641,13 +748,14 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void doCustomAction(String action, Bundle extras) {
             if (mMediaController == null) return;
-            MediaControllerCompat.TransportControls cntrl = mMediaController.getTransportControls();
 
             if (ACTION_SET_RATING.equals(action)) {
                 boolean setHeart = extras != null && extras.getBoolean(EXTRA_SET_HEART, false);
-                cntrl.setRating(RatingCompat.newHeartRating(setHeart));
+                mMediaController.setRating(new HeartRating(setHeart));
             } else {
-                cntrl.sendCustomAction(action, extras);
+                Bundle commandExtras = (extras != null) ? extras : Bundle.EMPTY;
+                mMediaController.sendCustomCommand(
+                        new SessionCommand(action, commandExtras), commandExtras);
             }
         }
 
@@ -658,7 +766,10 @@ public class PlaybackViewModel extends AndroidViewModel {
             if (mMediaController != null) {
                 // Do NOT pass the extras back as that's not the official API and isn't supported
                 // in media2, so apps should not rely on this.
-                mMediaController.getTransportControls().playFromMediaId(item.getId(), null);
+                mMediaController.setMediaItem(
+                        new MediaItem.Builder().setMediaId(item.getId()).build());
+                mMediaController.prepare();
+                mMediaController.play();
             }
         }
 
@@ -669,7 +780,7 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void skipToQueueItem(long queueId) {
             if (mMediaController != null) {
-                mMediaController.getTransportControls().skipToQueueItem(queueId);
+                mMediaController.seekToDefaultPosition((int) queueId);
             }
         }
 
@@ -678,7 +789,7 @@ public class PlaybackViewModel extends AndroidViewModel {
          */
         public void prepare() {
             if (mMediaController != null) {
-                mMediaController.getTransportControls().prepare();
+                mMediaController.prepare();
             }
         }
     }

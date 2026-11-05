@@ -19,28 +19,40 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion gradle.ext.aaosLatestSDK
+    namespace = 'com.android.car.media.common'
+    compileSdk = gradle.ext.aaosLatestSDK
 
     defaultConfig {
-        minSdkVersion 30 // Media requires apis that became public in R.
-        targetSdkVersion gradle.ext.aaosTargetSDK
+        minSdk = 30 // Media requires apis that became public in R.
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
-            aidl.srcDirs = ['src']
-            renderscript.srcDirs = ['src']
             res.srcDirs = ['res']
+        }
+        // Dart fork note: upstream's tests/robotests suite was wired only into Soong; it runs here.
+        test {
+            java.srcDirs = ['tests/robotests/src']
+            resources.srcDirs = ['tests/robotests/config']
+        }
+        // Dart fork note: main.java.srcDirs = ['src'] would make src/androidTest main source, so
+        // the ABI test lives under tests/.
+        androidTest {
+            java.srcDirs = ['tests/abitest/src']
+            // Declares the browse-service fixture. Without a manifest entry a MediaBrowser cannot
+            // resolve the component and the connection fails before it reaches the service.
+            manifest.srcFile 'tests/abitest/AndroidManifest.xml'
         }
     }
 
@@ -49,22 +61,90 @@ android {
             includeAndroidResources = true
         }
     }
+
+    // Dart fork note: no useLibrary 'android.car' here. This module needs CarMediaManager and the
+    // @SystemApi Car.CAR_MEDIA_SERVICE, and useLibrary puts the public jar on the bootclasspath,
+    // where it shadows any stub. It compiles against :car-system-stubs instead. See FORK.md.
 }
 
 dependencies {
-    implementation "androidx.cardview:cardview:1.0.0"
-    implementation "androidx.interpolator:interpolator:1.0.0"
+    // Dart fork note: core was used but undeclared, so it compiled against whatever won (1.13.0).
+    // Declared rather than waived in docs/resolution-exceptions.tsv.
+    implementation libs.androidx.core
 
-    def lifecycle_version = "2.2.0"
-    implementation "androidx.lifecycle:lifecycle-common-java8:$lifecycle_version"
-    // Not available in 2.3+
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
+    implementation libs.androidx.cardview
+    implementation libs.androidx.interpolator
 
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
-    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation libs.androidx.lifecycle.common.java8
 
-    implementation "androidx.media:media:1.4.1"
-    implementation files(gradle.ext.lib_car_system_stubs)
+    // Dart fork note: lifecycle-extensions was removed; its ViewModelProviders.of call became the
+    // equivalent `new ViewModelProvider(activity)`. It was the only compile-scope supplier of
+    // lifecycle-viewmodel, lifecycle-livedata and fragment, now declared. `api`, because Fragment,
+    // AndroidViewModel and LiveData appear in this module's public signatures. Compile versions
+    // moved up toward runtime, here and in :car-telephony-common.
+    api libs.androidx.lifecycle.viewmodel
+    api libs.androidx.lifecycle.livedata
+    api libs.androidx.fragment
+
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.recyclerview
+
+    implementation libs.androidx.media
+    // Stage 1 of the Media3 migration. androidx.media above stays until the session layer moves;
+    // the two coexist deliberately, and Media3Adapters is the seam.
+    //
+    // `api`, because Media3 types occur in this AAR's public and protected signatures. A consumer
+    // must be able to resolve those signatures from this dependency alone; the dedicated
+    // :car-media-common-consumer-fixture proves that property and intentionally declares no Media3
+    // or Guava dependency of its own.
+    api libs.androidx.media3.common
+    // Stage 2: the session/browse CLIENT. Promoted from androidTestImplementation to
+    // implementation because MediaBrowserConnector, MediaItemsRepository and PlaybackViewModel now
+    // build on androidx.media3.session.MediaBrowser / MediaController instead of the deprecated
+    // MediaBrowserCompat / MediaControllerCompat. This is a real production dependency addition:
+    // it puts Guava (ListenableFuture and friends) on the runtime classpath, which media3-common
+    // alone did not.
+    api libs.androidx.media3.session
+
+    // Dart fork note: upstream's unconditional stubs dependency never resolved outside AOSP. Now
+    // optional and compileOnly (Android.bp lists it under libs:, never packaged). This is the one
+    // module that needs the @SystemApi surface (CarMediaManager). See FORK.md.
+    if (file(gradle.ext.lib_car_system_stubs).exists()) {
+        // A real AOSP stubs jar was vendored: use the full @SystemApi surface.
+        compileOnly files(gradle.ext.lib_car_system_stubs)
+    } else {
+        // Fall back to the minimal in-repo stub, which declares exactly the
+        // members this module uses. compileOnly, so it is never packaged.
+        compileOnly project(':car-system-stubs')
+    }
 
     implementation project(":car-apps-common")
+
+    // Dart fork note: Gradle equivalents of the Robolectric suite's Android.bp dependencies.
+    testImplementation libs.junit
+    // testutils moved out of car-apps-common's main source set; see that module.
+    testImplementation project(':car-apps-common-testutils')
+    testImplementation libs.robolectric
+    testImplementation libs.mockito.core
+    testImplementation libs.truth
+    testImplementation libs.androidx.arch.core.testing
+    testImplementation libs.androidx.test.core
+    // The android.car surface is compileOnly for packaging, but the tests need
+    // those classes present at runtime — they mock CarMediaManager directly.
+    testImplementation project(':car-system-stubs')
+
+    // Dart fork note: androidTest must not depend on :car-system-stubs. SystemStubsAbiTest checks
+    // the stubs against the platform by reflection, so stub classes in the test APK would make it
+    // compare the stubs with themselves; the test asserts that precondition first.
+    androidTestImplementation libs.junit
+    androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.androidx.test.runner
+    androidTestImplementation libs.truth
+    // The browse fixture binds a real MediaBrowserServiceCompat on the device — the only place the
+    // framework MediaBrowser that MediaBrowserCompat delegates to actually connects.
+    androidTestImplementation libs.androidx.media
+    // Media3's client, for the equivalence half. No longer androidTest-only: production now
+    // depends on it (see the implementation line above), so this declaration is redundant for
+    // resolution and is kept only to state that the ABI suite exercises the same version.
+    androidTestImplementation libs.androidx.media3.session
 }
