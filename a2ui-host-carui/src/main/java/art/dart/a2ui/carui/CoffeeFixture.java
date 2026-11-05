@@ -98,7 +98,7 @@ final class CoffeeFixture {
 
         @NonNull
         String whyTitle() {
-            return "Why " + mName;
+            return mName;
         }
 
         @NonNull
