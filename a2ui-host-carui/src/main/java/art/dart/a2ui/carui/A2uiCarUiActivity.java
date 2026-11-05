@@ -2838,9 +2838,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private static final long SYNC_LOG_MS = 500;
 
     /**
-     * While the driver's copy plays the clip the passenger plays, logs both players' positions,
-     * read at the same instant on the main thread: the device-side evidence for side-by-side sync
-     * (the recorder aligns the two screen recordings separately).
+     * While the driver's copy plays the clip the passenger plays, reads both players' positions
+     * at the same instant on the main thread, logs them (the device-side evidence for
+     * side-by-side sync), and nudges the driver's copy back in step when they drift apart.
      */
     private void logSync(@NonNull VideoView video) {
         mStripHandler.postDelayed(() -> {
@@ -2849,8 +2849,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
             if (passenger < 0) return;
             if (video.isPlaying()) {
                 int driver = video.getCurrentPosition();
+                boolean nudged = mDemoMedia != null && mDemoMedia.correctDrift(driver - passenger);
                 Log.i(TAG, "media sync: driver=" + driver + " passenger=" + passenger
-                        + " delta=" + (driver - passenger) + " ms");
+                        + " delta=" + (driver - passenger) + " ms" + (nudged ? " (corrected)" : ""));
             }
             logSync(video);
         }, SYNC_LOG_MS);

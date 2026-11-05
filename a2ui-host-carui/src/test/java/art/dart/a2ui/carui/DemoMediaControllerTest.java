@@ -8,6 +8,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
 import android.app.Application;
@@ -93,6 +94,31 @@ public class DemoMediaControllerTest {
         // A permanent loss is not undone by a later gain.
         media.onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN);
         assertThat(media.isPlaying()).isFalse();
+    }
+
+    /** A joined copy trailing its partner seeks ahead by the gap, then by what that seek lost. */
+    @Test
+    public void driftIsCorrectedByExactSeeksThatLearnTheirOwnCost() {
+        DemoMediaController media = new DemoMediaController(mApp, mSession);
+        assertThat(media.correctDrift(-168)).isFalse();  // nothing prepared yet
+
+        MediaPlayer player = mock(MediaPlayer.class);
+        when(player.getDuration()).thenReturn(19_300);
+        when(player.getCurrentPosition()).thenReturn(1_403);
+        media.setVideoPlayerForTesting(player);
+        ArgumentCaptor<MediaPlayer.OnSeekCompleteListener> done =
+                ArgumentCaptor.forClass(MediaPlayer.OnSeekCompleteListener.class);
+
+        assertThat(media.correctDrift(-168)).isTrue();
+        verify(player).seekTo(1_403 + 168, MediaPlayer.SEEK_CLOSEST);
+        assertThat(media.correctDrift(-168)).isFalse();  // one seek at a time
+        verify(player).setOnSeekCompleteListener(done.capture());
+        done.getValue().onSeekComplete(player);
+
+        when(player.getCurrentPosition()).thenReturn(3_000);
+        assertThat(media.correctDrift(-60)).isTrue();  // fell 60 ms short: bias learns it
+        verify(player).seekTo(3_000 + 60 + 60, MediaPlayer.SEEK_CLOSEST);
+        assertThat(media.correctDrift(-20)).isFalse();  // in step: within a frame
     }
 
     /** Album art is an image: off the session while the reading withholds IMAGE. */
