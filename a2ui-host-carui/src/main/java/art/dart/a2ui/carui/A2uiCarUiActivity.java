@@ -2830,7 +2830,30 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                     : null;
             mDemoMedia.playVideo(video, media == null ? R.raw.demo_placeholder_video
                     : stageRaw(media.mRawName), startAt);
+            if (startAt != null) logSync(video);
         }
+    }
+
+    /** How often a joined copy logs its distance from the passenger's (ms). */
+    private static final long SYNC_LOG_MS = 500;
+
+    /**
+     * While the driver's copy plays the clip the passenger plays, logs both players' positions,
+     * read at the same instant on the main thread: the device-side evidence for side-by-side sync
+     * (the recorder aligns the two screen recordings separately).
+     */
+    private void logSync(@NonNull VideoView video) {
+        mStripHandler.postDelayed(() -> {
+            if (mVideoView != video) return;
+            int passenger = PassengerDisplay.positionMs();
+            if (passenger < 0) return;
+            if (video.isPlaying()) {
+                int driver = video.getCurrentPosition();
+                Log.i(TAG, "media sync: driver=" + driver + " passenger=" + passenger
+                        + " delta=" + (driver - passenger) + " ms");
+            }
+            logSync(video);
+        }, SYNC_LOG_MS);
     }
 
     /** Suffix of a bundled cut at the stage's own aspect, e.g. {@code met_artwork_film_wide}. */
