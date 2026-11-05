@@ -1,0 +1,11 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+pubspec.lock
+example/.dart_tool/
+example/build/
+example/android/.gradle/
+example/android/local.properties
+example/pubspec.lock
+example/*.iml
