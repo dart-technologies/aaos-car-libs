@@ -2829,8 +2829,23 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                             PassengerDisplay.positionMs(), media.mRawName, duration)
                     : null;
             mDemoMedia.playVideo(video, media == null ? R.raw.demo_placeholder_video
-                    : rawNamed(media.mRawName, R.raw.demo_placeholder_video), startAt);
+                    : stageRaw(media.mRawName), startAt);
         }
+    }
+
+    /** Suffix of a bundled cut at the stage's own aspect, e.g. {@code met_artwork_film_wide}. */
+    @VisibleForTesting
+    static final String WIDE_SUFFIX = "_wide";
+
+    /**
+     * What the stage plays for {@code rawName}: its wide cut when bundled (made at the stage's
+     * aspect, so it fits exactly: no crop, no bars, every painting's top in frame), else the clip,
+     * else the decoder fixture. Same timing as the clip, so joining the passenger still holds.
+     */
+    @VisibleForTesting
+    int stageRaw(@NonNull String rawName) {
+        int wide = rawNamed(rawName + WIDE_SUFFIX, 0);
+        return wide != 0 ? wide : rawNamed(rawName, R.raw.demo_placeholder_video);
     }
 
     /** How long a player's title stays up after opening or a tap, before it fades. */
