@@ -543,14 +543,20 @@ def card_fit(width: int, height: int) -> str:
 
 
 def chapter_stream(index: int, card: ChapterCard, width: int, height: int, out: str) -> str:
-    """A chapter card as an RGBA stream starting at its time. Its fades ease: a fade with
-    alpha=1 multiplies the alpha it is given, so each one runs twice, a quadratic ease-in (p²)
-    into the card and an ease-out ((1-p)²) from it into what follows."""
+    """A chapter card as an RGBA stream starting at its time. Its fades ease: a fade multiplies
+    what it is given, so each one runs twice, a quadratic ease-in (p²) into the card and an
+    ease-out ((1-p)²) from it into what follows.
+
+    The fade-out dips through dark, like the intro's passenger card: text over text ghosts in a
+    crossfade, so for its first half the card stays opaque while its content eases to the
+    background colour, and for its second half that dark lifts off the live screen."""
     fades = []
     if card.fade_in > 0:
         fades += [f"fade=t=in:st=0:d={card.fade_in:.3f}:alpha=1"] * 2
-    fades += [f"fade=t=out:st={card.seconds - card.fade_out:.3f}:d={card.fade_out:.3f}:"
-              "alpha=1"] * 2
+    half = card.fade_out / 2
+    dip = card.seconds - card.fade_out
+    fades += [f"fade=t=out:st={dip:.3f}:d={half:.3f}:color={BACKGROUND}"] * 2
+    fades += [f"fade=t=out:st={dip + half:.3f}:d={half:.3f}:alpha=1"] * 2
     return (f"[{index}:v]{card_fit(width, height)},format=rgba,{','.join(fades)},"
             f"trim=duration={card.seconds:.3f},setpts=PTS-STARTPTS+{card.at:.3f}/TB{out}")
 

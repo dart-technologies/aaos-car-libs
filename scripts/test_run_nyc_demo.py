@@ -628,6 +628,23 @@ class CockpitCompositionTest(unittest.TestCase):
                         "the passenger window and the frame stay as they are")
         self.assertTrue(near(pixel(self.out, head + 6.9, *self.driver), BLUE), "after it")
 
+    def test_chapter_card_fade_out_dips_through_dark(self):
+        """Text over text ghosts in a crossfade: over its 0.4 s fade-out (6.4–6.8 s) the card
+        eases to the background while opaque, then the dark lifts off the live screen, so no
+        frame holds both the card and what follows. Purple and blue share a full blue channel:
+        a crossfade between them keeps it at 255, a dip pulls it down."""
+        head = self.head
+        purple = (128, 0, 255)
+        self.assertTrue(near(pixel(self.out, head + 6.37, *self.driver), purple, 30), "opaque")
+        darkening = pixel(self.out, head + 6.5, *self.driver)
+        self.assertLess(darkening[2], 180, f"the card darkens, not crossfades: {darkening}")
+        self.assertGreater(darkening[0], BG[0] + 10, f"still the card's own colour: {darkening}")
+        self.assertTrue(near(pixel(self.out, head + 6.6, *self.driver), BG, 24), "the dip")
+        lifting = pixel(self.out, head + 6.7, *self.driver)
+        self.assertLess(lifting[0], BG[0] + 8, f"no card left as the dark lifts: {lifting}")
+        blues = [pixel(self.out, head + t, *self.driver)[2] for t in (6.6, 6.67, 6.73, 6.8)]
+        self.assertEqual(blues, sorted(blues), f"the live screen comes up eased: {blues}")
+
     def test_rail_shows_only_over_the_device_timeline(self):
         from PIL import Image
         png, start, end = self.overlays["rail"][1]
