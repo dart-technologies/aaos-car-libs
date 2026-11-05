@@ -6,7 +6,7 @@ Meta's Muse plans the trip: a cited brief for The Met, an audio guide for the dr
 Android Automotive's own driving restrictions prune Muse's screens per display, fail-closed; bookings and orders wait until
 the car is parked and the driver confirms.
 
-Demo video: (link to come)
+Demo video: [Muse2CarUI on YouTube](https://youtu.be/WVbYJ-v_73s) (2:35)
 
 ![Driving: the driver gets three glanceable cards, the passenger the film](docs/media/nyc_met-driving.jpg)
 ![Parked at the charger: Muse's café pick with its runner-up](docs/media/nyc_met-cafe.jpg)
