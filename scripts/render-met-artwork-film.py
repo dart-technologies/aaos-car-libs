@@ -14,6 +14,11 @@ near-square ones, and the caption sits at the bottom on a soft gradient. Its tim
 landscape film's, and the renderer refuses to finish if any work's startMs differs from
 FILM.json's (the audio guide is timed to those).
 
+--orientation wide (default 1408x712, written to met_artwork_film_wide.mp4 and FILM_WIDE.json)
+is the landscape layout re-laid at the driver stage's own aspect, so the stage fits it exactly
+with no crop and no bars: every painting is framed whole, its top included, and the caption sits
+inside the frame. Same timing check as the portrait cut.
+
 This ffmpeg has no drawtext (built without freetype), so captions are pre-rendered with Pillow,
 and the moves and crossfades are rendered per frame with sub-pixel transforms (zoompan steps in
 whole pixels and judders at this speed); ffmpeg encodes. FILM.json records every input's SHA-256,
@@ -39,6 +44,8 @@ OUT = ROOT / "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4"
 RECORD = MET / "FILM.json"
 OUT_PORTRAIT = ROOT / "a2ui-host-carui/src/main/res/raw/met_artwork_film_portrait.mp4"
 RECORD_PORTRAIT = MET / "FILM_PORTRAIT.json"
+OUT_WIDE = ROOT / "a2ui-host-carui/src/main/res/raw/met_artwork_film_wide.mp4"
+RECORD_WIDE = MET / "FILM_WIDE.json"
 W, H, FPS = 1280, 720, 30         # a portrait run reassigns W and H (default 720x1080)
 TOTAL, FADE = 36.0, 0.8           # film length; crossfade between works
 FADE_IN, FADE_OUT = 0.6, 0.8      # from and to black
@@ -47,6 +54,7 @@ ZOOM, PAN = 0.08, 36              # scale gain per shot; pan travel in px each s
 BOX = (1040, 520)                 # the artwork fits inside this, above the caption
 CENTER = (W / 2, 296)
 BAR_Y, BAR_H, TEXT_X = 598, 62, 80
+VIG_TOP = 560                     # where the bottom shade starts; a wide run re-lays all of these
 FONTS = ["/System/Library/Fonts/Avenir Next.ttc",
          "/System/Library/Fonts/HelveticaNeue.ttc",
          "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]
@@ -145,8 +153,9 @@ def vignette() -> Image.Image:
     """A faint bottom shade and the small credit; present for the whole film."""
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(layer)
-    for row in range(560, H):
-        draw.line([(0, row), (W, row)], fill=(5, 7, 10, round(110 * (row - 560) / (H - 560))))
+    for row in range(VIG_TOP, H):
+        draw.line([(0, row), (W, row)],
+                  fill=(5, 7, 10, round(110 * (row - VIG_TOP) / (H - VIG_TOP))))
     face = font(15, "medium")
     draw.text((W - 40, H - 26), CREDIT, font=face, fill=(170, 178, 188, 255), anchor="rs")
     return layer
@@ -444,14 +453,25 @@ def render_portrait(objects: list[dict], out: pathlib.Path) -> tuple[list[dict],
     return works, fastest
 
 
-def check_timing(works: list[dict]) -> None:
-    """The portrait film must start every work exactly when the landscape film (and so the audio
-    guide) does."""
+def check_timing(works: list[dict], cut: str = "portrait") -> None:
+    """The portrait and wide films must start every work exactly when the landscape film (and so
+    the audio guide) does."""
     film = json.loads(RECORD.read_text(encoding="utf-8"))
     want = [(w["objectID"], w["startMs"]) for w in film["works"]]
     have = [(w["objectID"], w["startMs"]) for w in works]
     if have != want:
-        raise SystemExit(f"portrait startMs {have} differ from {RECORD.name}'s {want}")
+        raise SystemExit(f"{cut} startMs {have} differ from {RECORD.name}'s {want}")
+
+
+def wide_layout() -> None:
+    """Re-lay the landscape constants for a W x H frame wider than 16:9: vertical metrics scale
+    with the height, and the extra width goes to the painting box, so every work is framed whole
+    (top included) and the caption bar sits inside the frame."""
+    global BOX, CENTER, BAR_Y, BAR_H, VIG_TOP
+    s = H / 720
+    BOX = (round(1040 * s) + (W - round(1280 * s)), round(520 * s))
+    CENTER = (W / 2, 296 * s)
+    BAR_Y, BAR_H, VIG_TOP = round(598 * s), round(62 * s), round(560 * s)
 
 
 def shown(path: pathlib.Path) -> str:
@@ -466,10 +486,12 @@ def main() -> int:
     global VIGNETTE, W, H
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--orientation", choices=("landscape", "portrait"),
+    parser.add_argument("--orientation", choices=("landscape", "portrait", "wide"),
                         help="default: portrait when --height exceeds --width, else landscape")
-    parser.add_argument("--width", type=int, help="default 1280 landscape, 720 portrait")
-    parser.add_argument("--height", type=int, help="default 720 landscape, 1080 portrait")
+    parser.add_argument("--width", type=int,
+                        help="default 1280 landscape, 720 portrait, 1408 wide")
+    parser.add_argument("--height", type=int,
+                        help="default 720 landscape, 1080 portrait, 712 wide")
     parser.add_argument("--out", type=pathlib.Path,
                         help=f"default {shown(OUT)}, or {OUT_PORTRAIT.name} for portrait")
     parser.add_argument("--record", type=pathlib.Path,
@@ -478,13 +500,19 @@ def main() -> int:
     args = parser.parse_args()
     portrait = (args.orientation == "portrait" if args.orientation else
                 bool(args.width and args.height and args.height > args.width))
-    W, H = args.width or (720 if portrait else 1280), args.height or (1080 if portrait else 720)
+    wide = args.orientation == "wide"
+    W = args.width or (720 if portrait else 1408 if wide else 1280)
+    H = args.height or (1080 if portrait else 712 if wide else 720)
     if portrait and not (H > W and W % 2 == 0 and H % 2 == 0):
         raise SystemExit("portrait needs an even width and height, taller than wide")
-    if not portrait and (W, H) != (1280, 720):
-        raise SystemExit("the landscape layout is fixed at 1280x720")
-    args.out = args.out or (OUT_PORTRAIT if portrait else OUT)
-    args.record = args.record or (RECORD_PORTRAIT if portrait else RECORD)
+    if wide and not (W * 9 > H * 16 and W % 2 == 0 and H % 2 == 0):
+        raise SystemExit("wide needs an even width and height, wider than 16:9")
+    if not portrait and not wide and (W, H) != (1280, 720):
+        raise SystemExit("the landscape layout is fixed at 1280x720 (see --orientation wide)")
+    if wide:
+        wide_layout()
+    args.out = args.out or (OUT_PORTRAIT if portrait else OUT_WIDE if wide else OUT)
+    args.record = args.record or (RECORD_PORTRAIT if portrait else RECORD_WIDE if wide else RECORD)
     source = json.loads((MET / "SOURCE.json").read_text(encoding="utf-8"))
     objects = source["objects"]
     for obj in objects:
@@ -539,6 +567,20 @@ def main() -> int:
                    "width": streams[0]["width"], "height": streams[0]["height"],
                    "codec": streams[0]["codec_name"], "profile": streams[0].get("profile")},
     }
+    if wide:
+        check_timing(works, "wide")
+        record["note"] = (
+            f"Wide ({W}x{H}) cut of the same film for the driver stage, at its own aspect so it "
+            "fits with no crop and no bars: each painting framed whole, caption inside the frame. "
+            "Built from The Met Open Access images only; no Met video is used. Silent: the audio "
+            "guide (met_guide_01..06) is separate narration timed to startMs, which are "
+            "FILM.json's.")
+        record["parameters"]["box"] = list(BOX)
+        record["parameters"]["center"] = [CENTER[0], round(CENTER[1], 2)]
+        record["parameters"]["captionBar"] = [BAR_Y, BAR_H]
+        record = {"schemaVersion": record["schemaVersion"], "title": record["title"],
+                  "orientation": "wide", "timingFrom": RECORD.name,
+                  **{k: v for k, v in record.items() if k not in ("schemaVersion", "title")}}
     if portrait:
         check_timing(works)
         record["note"] = (
