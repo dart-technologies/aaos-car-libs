@@ -16,7 +16,8 @@
 
   Two lists over identical data. The left one opted in to content limiting; the right one is what
   car-ui-lib gives you by default. Side by side rather than toggled, so the difference is a single
-  screenshot rather than a claim about two of them.
+  screenshot rather than a claim about two of them. Visitor surfaces hide the right list and may use
+  the visual panel instead; every overlay below is host chrome gated on the pruned tree.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -34,36 +35,128 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/a2ui_brand_header_surface"
-        android:paddingHorizontal="@dimen/a2ui_diagnostic_padding_horizontal"
-        android:paddingVertical="@dimen/a2ui_diagnostic_padding_vertical"
+        android:paddingStart="@dimen/a2ui_card_list_inset_start"
+        android:paddingEnd="@dimen/a2ui_space_l"
+        android:paddingVertical="@dimen/a2ui_header_padding_vertical"
         android:gravity="center_vertical"
         android:orientation="vertical">
 
-        <!-- One presentation rail: brand heading opposite provenance; per-column labels below. -->
+        <!-- One slim row, aligned with the cards: the microphone, the vehicle-state chip, the
+             transient change note beside it, and the screen's context title opposite. A
+             long-press on the row, the chip or the title opens the technical details. -->
         <LinearLayout
             android:id="@+id/presentation_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:minHeight="@dimen/a2ui_header_min_height"
             android:orientation="horizontal">
+
+            <!-- The voice control on consumer screens; refresh() withholds it exactly as it
+                 withholds the toolbar's Speak item. -->
+            <ImageButton
+                android:id="@+id/header_mic"
+                android:layout_width="@dimen/a2ui_header_mic_size"
+                android:layout_height="@dimen/a2ui_header_mic_size"
+                android:layout_marginEnd="@dimen/a2ui_space_m"
+                android:background="@drawable/a2ui_mic_background"
+                android:contentDescription="@string/a2ui_speak"
+                android:padding="@dimen/a2ui_header_mic_padding"
+                android:scaleType="fitCenter"
+                android:src="@drawable/a2ui_ic_mic"
+                android:tint="@color/a2ui_brand_on_surface"
+                android:visibility="gone" />
+
+            <!-- The vehicle state as a compact chip: a dot and one word, tinted per state. -->
+            <LinearLayout
+                android:id="@+id/drive_banner"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/a2ui_chip_height"
+                android:background="@drawable/a2ui_banner_background"
+                android:backgroundTint="@color/a2ui_brand_state_safe"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="@dimen/a2ui_banner_padding_horizontal">
+
+                <View
+                    android:id="@+id/drive_banner_dot"
+                    android:layout_width="@dimen/a2ui_banner_dot_size"
+                    android:layout_height="@dimen/a2ui_banner_dot_size"
+                    android:layout_marginEnd="@dimen/a2ui_space_s"
+                    android:background="@drawable/a2ui_dot"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/drive_banner_title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:text="@string/a2ui_state_safe_mode"
+                    android:textColor="@color/a2ui_brand_on_surface"
+                    android:textSize="@dimen/a2ui_banner_title_text_size" />
+
+                <!-- Not drawn: the chip's content description says it. -->
+                <TextView
+                    android:id="@+id/drive_banner_detail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/a2ui_state_safe_waiting_detail"
+                    android:textSize="@dimen/a2ui_banner_detail_text_size"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/status_badge"
                 style="@style/A2uiBrandStatusBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/a2ui_space_m"
                 android:contentDescription="@string/status_badge_description"
-                android:text="@string/status_badge_waiting" />
+                android:text="@string/status_badge_waiting"
+                android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/surface_heading"
-                style="@style/A2uiBrandSectionHeading"
+            <!-- The context title's place. The change line shows beside the chip while it lasts,
+                 so it stays in the header row and never covers a card. -->
+            <FrameLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/a2ui_brand_heading_margin_horizontal"
-                android:layout_weight="1"
-                android:gravity="end|center_vertical"
-                android:text="@string/a2ui_brand_pickup_heading" />
+                android:layout_marginStart="@dimen/a2ui_space_m"
+                android:layout_weight="1">
+
+                <TextView
+                    android:id="@+id/surface_heading"
+                    style="@style/A2uiBrandSectionHeading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:ellipsize="end"
+                    android:gravity="end|center_vertical"
+                    android:letterSpacing="0.02"
+                    android:text="@string/a2ui_brand_pickup_heading" />
+
+                <!-- What changed at the last restriction change. Transient and never
+                     interactive. -->
+                <TextView
+                    android:id="@+id/change_strip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="@dimen/a2ui_chip_height"
+                    android:layout_gravity="start|center_vertical"
+                    android:accessibilityLiveRegion="polite"
+                    android:background="@drawable/a2ui_strip_background"
+                    android:clickable="false"
+                    android:ellipsize="end"
+                    android:focusable="false"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center_vertical"
+                    android:includeFontPadding="false"
+                    android:maxLines="1"
+                    android:paddingHorizontal="@dimen/a2ui_space_m"
+                    android:textColor="@color/a2ui_brand_on_surface"
+                    android:textSize="@dimen/a2ui_strip_text_size"
+                    android:visibility="gone" />
+            </FrameLayout>
         </LinearLayout>
 
         <TextView
@@ -86,15 +179,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        android:paddingHorizontal="@dimen/a2ui_diagnostic_padding_horizontal"
-        android:paddingVertical="@dimen/a2ui_diagnostic_padding_vertical"
+        android:paddingHorizontal="@dimen/a2ui_space_l"
+        android:paddingVertical="@dimen/a2ui_space_s"
         android:textColor="?android:attr/textColorPrimary" />
+
+    <FrameLayout
+        android:id="@+id/content_frame"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
     <LinearLayout
         android:id="@+id/content_columns"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:orientation="horizontal">
 
         <LinearLayout
@@ -152,7 +250,77 @@
                 android:layout_weight="1"
                 tools:ignore="Instantiatable" />
         </LinearLayout>
+
+        <!-- Visitor surfaces: the same rows as surface cards (CardListAdapter). The start inset
+             clears the system's back button, an overlay at the display's left edge. -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/card_list"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingStart="@dimen/a2ui_card_list_inset_start"
+            android:paddingEnd="@dimen/a2ui_space_l"
+            android:paddingTop="@dimen/a2ui_space_s"
+            android:paddingBottom="@dimen/a2ui_space_s"
+            android:visibility="gone" />
+
+        <!-- Large imagery for one surviving component (a route map, an arrival hero). Shown only
+             while that component is in the pruned tree and the reading allows IMAGE. -->
+        <FrameLayout
+            android:id="@+id/visual_panel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginVertical="@dimen/a2ui_space_m"
+            android:layout_marginEnd="@dimen/a2ui_space_l"
+            android:layout_weight="0.55"
+            android:background="@drawable/a2ui_panel_background"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/visual_panel_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:importantForAccessibility="no"
+                android:scaleType="centerCrop" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:layout_gravity="bottom"
+                android:background="@drawable/a2ui_scrim_bottom" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:orientation="vertical"
+                android:padding="@dimen/a2ui_space_l">
+
+                <TextView
+                    android:id="@+id/visual_panel_title"
+                    style="@style/A2uiBrandTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/visual_panel_caption"
+                    style="@style/A2uiBrandCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
+
+    </FrameLayout>
 </LinearLayout>
 
     <!-- Parked-only, full-bleed video. A VideoView is added per playback and removed on teardown,
@@ -175,12 +343,183 @@
             android:layout_margin="@dimen/a2ui_brand_heading_margin_horizontal"
             android:text="@string/a2ui_brand_video_caption" />
 
+        <!-- A player's title and credit over a soft top scrim; shown on open and on a tap of the
+             stage, then faded. Host-owned words only. -->
+        <LinearLayout
+            android:id="@+id/video_title_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:background="@drawable/a2ui_scrim_top"
+            android:importantForAccessibility="yes"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/a2ui_space_xl"
+            android:paddingTop="@dimen/a2ui_space_l"
+            android:paddingBottom="56dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/video_title"
+                style="@style/A2uiBrandTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="26sp" />
+
+            <TextView
+                android:id="@+id/video_credit"
+                style="@style/A2uiBrandCaption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textSize="15sp" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/video_close"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|end"
-            android:layout_margin="@dimen/a2ui_brand_heading_margin_horizontal"
-            android:text="@android:string/cancel" />
+            android:layout_margin="@dimen/a2ui_space_l"
+            android:background="@drawable/a2ui_video_close_background"
+            android:fontFamily="sans-serif-medium"
+            android:minHeight="48dp"
+            android:minWidth="0dp"
+            android:paddingHorizontal="24dp"
+            android:stateListAnimator="@null"
+            android:text="@string/a2ui_close"
+            android:textAllCaps="false"
+            android:textColor="@color/a2ui_brand_on_surface"
+            android:textSize="18sp" />
     </FrameLayout>
+
+    <!-- Parked-only, auto-advancing artwork. Filled by ArtworkSlideshow; removed by refresh() on
+         any reading that prunes its component or forbids moving imagery. -->
+    <FrameLayout
+        android:id="@+id/gallery_stage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/a2ui_brand_video_stage"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/gallery_backdrop"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0.35"
+            android:importantForAccessibility="no"
+            android:scaleType="centerCrop" />
+
+        <ImageView
+            android:id="@+id/gallery_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingVertical="@dimen/a2ui_space_s"
+            android:scaleType="fitCenter" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/a2ui_scrim_bottom" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|start"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/a2ui_space_xl"
+            android:paddingVertical="@dimen/a2ui_space_l">
+
+            <TextView
+                android:id="@+id/gallery_title"
+                style="@style/A2uiBrandTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxLines="1"
+                android:textSize="34sp" />
+
+            <TextView
+                android:id="@+id/gallery_caption"
+                style="@style/A2uiBrandBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/a2ui_space_xs"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/gallery_credit"
+                style="@style/A2uiBrandCaption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/a2ui_space_xs"
+                android:maxLines="1" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/gallery_counter"
+            style="@style/A2uiBrandStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:layout_margin="@dimen/a2ui_space_l" />
+
+        <Button
+            android:id="@+id/gallery_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:layout_margin="@dimen/a2ui_space_l"
+            android:text="@string/a2ui_close" />
+    </FrameLayout>
+
+    <!-- Closing card: static host text, shown only while parked. -->
+    <LinearLayout
+        android:id="@+id/end_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/a2ui_brand_header_surface"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingHorizontal="96dp"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="72dp"
+            android:layout_height="4dp"
+            android:background="@color/a2ui_brand_accent" />
+
+        <TextView
+            android:id="@+id/end_card_title"
+            style="@style/A2uiBrandDisplay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/a2ui_space_m"
+            android:text="@string/a2ui_end_card_title"
+            android:textSize="34sp" />
+
+        <LinearLayout
+            android:id="@+id/end_card_bullets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/a2ui_space_m"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/end_card_footer"
+            style="@style/A2uiBrandCaption"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/a2ui_space_m"
+            android:letterSpacing="0.04"
+            android:text="@string/a2ui_end_card_footer"
+            android:textSize="17sp" />
+    </LinearLayout>
 </FrameLayout>

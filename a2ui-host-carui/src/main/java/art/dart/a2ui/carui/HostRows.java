@@ -40,6 +40,16 @@ final class HostRows {
     static final String ARRIVAL = "host:arrival";
     static final String ORDER = "host:order";
 
+    /** The noun a host card goes by in the change line, or null for one never reported. */
+    @androidx.annotation.Nullable
+    static String label(@NonNull String key) {
+        switch (key) {
+            case ORDER: return "Order";
+            case ARRIVAL: return "Arrival";
+            default: return null;
+        }
+    }
+
     private HostRows() {
     }
 

@@ -8,6 +8,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.robolectric.Shadows.shadowOf;
 
 import android.app.Application;
@@ -95,6 +96,31 @@ public class DemoMediaControllerTest {
         assertThat(media.isPlaying()).isFalse();
     }
 
+    /** A joined copy trailing its partner seeks ahead by the gap, then by what that seek lost. */
+    @Test
+    public void driftIsCorrectedByExactSeeksThatLearnTheirOwnCost() {
+        DemoMediaController media = new DemoMediaController(mApp, mSession);
+        assertThat(media.correctDrift(-168)).isFalse();  // nothing prepared yet
+
+        MediaPlayer player = mock(MediaPlayer.class);
+        when(player.getDuration()).thenReturn(19_300);
+        when(player.getCurrentPosition()).thenReturn(1_403);
+        media.setVideoPlayerForTesting(player);
+        ArgumentCaptor<MediaPlayer.OnSeekCompleteListener> done =
+                ArgumentCaptor.forClass(MediaPlayer.OnSeekCompleteListener.class);
+
+        assertThat(media.correctDrift(-168)).isTrue();
+        verify(player).seekTo(1_403 + 168, MediaPlayer.SEEK_CLOSEST);
+        assertThat(media.correctDrift(-168)).isFalse();  // one seek at a time
+        verify(player).setOnSeekCompleteListener(done.capture());
+        done.getValue().onSeekComplete(player);
+
+        when(player.getCurrentPosition()).thenReturn(3_000);
+        assertThat(media.correctDrift(-60)).isTrue();  // fell 60 ms short: bias learns it
+        verify(player).seekTo(3_000 + 60 + 60, MediaPlayer.SEEK_CLOSEST);
+        assertThat(media.correctDrift(-20)).isFalse();  // in step: within a frame
+    }
+
     /** Album art is an image: off the session while the reading withholds IMAGE. */
     @Test
     public void albumArtFollowsTheReading() {
@@ -156,6 +182,47 @@ public class DemoMediaControllerTest {
 
         assertThat(media.getMode()).isEqualTo(DemoMediaController.Mode.STOPPED);
         assertThat(mAudio.getLastAbandonedAudioFocusRequest()).isSameInstanceAs(request);
+    }
+
+    @Test
+    public void aVideoStartsWhereItsStartRuleSaysOnceReadyAndCatchesUpAfterTheSeek() {
+        DemoMediaController media = new DemoMediaController(mApp, mSession);
+        VideoView video = new VideoView(mApp);
+        int[] passenger = {7200};
+        media.playVideo(video, R.raw.demo_placeholder_video, duration -> passenger[0]);
+        MediaPlayer player = mock(MediaPlayer.class);
+        org.mockito.Mockito.when(player.getDuration()).thenReturn(19300);
+
+        shadowOf(video).getOnPreparedListener().onPrepared(player);
+
+        // Asked once ready, to the exact frame, and looped like the passenger's copy.
+        verify(player).setLooping(true);
+        verify(player).seekTo(7200L, MediaPlayer.SEEK_CLOSEST);
+        ArgumentCaptor<MediaPlayer.OnSeekCompleteListener> landed =
+                ArgumentCaptor.forClass(MediaPlayer.OnSeekCompleteListener.class);
+        verify(player).setOnSeekCompleteListener(landed.capture());
+        // The passenger moved on while it seeked: once landed, it seeks again to catch up.
+        passenger[0] = 7500;
+        landed.getValue().onSeekComplete(player);
+        ArgumentCaptor<Long> again = ArgumentCaptor.forClass(Long.class);
+        verify(player, org.mockito.Mockito.times(2)).seekTo(again.capture(),
+                org.mockito.Mockito.eq(MediaPlayer.SEEK_CLOSEST));
+        assertThat(again.getAllValues().get(1)).isAtLeast(7500L);
+        assertThat(again.getAllValues().get(1)).isLessThan(19300L);
+    }
+
+    @Test
+    public void aVideoWithNoStartRulePlaysFromTheTop() {
+        DemoMediaController media = new DemoMediaController(mApp, mSession);
+        VideoView video = new VideoView(mApp);
+        media.playVideo(video, R.raw.demo_placeholder_video, null);
+        MediaPlayer player = mock(MediaPlayer.class);
+
+        shadowOf(video).getOnPreparedListener().onPrepared(player);
+
+        verify(player, org.mockito.Mockito.never()).seekTo(org.mockito.Mockito.anyLong(),
+                org.mockito.Mockito.anyInt());
+        assertThat(media.getMode()).isEqualTo(DemoMediaController.Mode.VIDEO);
     }
 
     @Test

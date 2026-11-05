@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2026 Dart Technologies. Licensed under the Apache License, Version 2.0. -->
+<!-- Legibility scrim under captions laid over artwork and maps. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="90"
+        android:endColor="#00000000"
+        android:startColor="@color/a2ui_brand_scrim" />
+</shape>

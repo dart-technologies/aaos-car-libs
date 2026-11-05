@@ -136,9 +136,9 @@
       "actions": [
         {"atMs": 16300, "type": "speak", "clipId": "poi_utterance_search"},
         {"atMs": 33000, "type": "tapText", "text": "Preview pickup route"},
-        {"atMs": 35500, "type": "tapText", "text": "OK"},
+        {"atMs": 35500, "type": "tapText", "text": "Confirm"},
         {"atMs": 37500, "type": "speak", "clipId": "poi_utterance_order"},
-        {"atMs": 40000, "type": "tapText", "text": "OK"},
+        {"atMs": 40000, "type": "tapText", "text": "Confirm"},
         {"atMs": 56500, "type": "carState", "state": "drive"}
       ],
       "soundEffects": [
@@ -284,7 +284,7 @@
       ],
       "actions": [
         {"atMs": 16300, "type": "speak", "clipId": "concierge_utterance_order"},
-        {"atMs": 18500, "type": "tapText", "text": "OK"},
+        {"atMs": 18500, "type": "tapText", "text": "Confirm"},
         {"atMs": 35000, "type": "selectCase", "caseId": "big_buck_bunny"},
         {"atMs": 38000, "type": "tapText", "text": "Play audio / pause"},
         {"atMs": 51000, "type": "carState", "state": "drive"},

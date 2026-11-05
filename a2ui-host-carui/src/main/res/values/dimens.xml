@@ -19,6 +19,41 @@
   <dimen name="a2ui_status_badge_text_size">16sp</dimen>
   <dimen name="a2ui_status_badge_radius">18dp</dimen>
   <dimen name="a2ui_diagnostic_detail_margin_top">6dp</dimen>
-  <dimen name="a2ui_brand_heading_text_size">20sp</dimen>
+  <dimen name="a2ui_brand_heading_text_size">18sp</dimen>
   <dimen name="a2ui_brand_heading_margin_horizontal">18dp</dimen>
+
+  <!-- Spacing scale. -->
+  <dimen name="a2ui_space_xs">4dp</dimen>
+  <dimen name="a2ui_space_s">8dp</dimen>
+  <dimen name="a2ui_space_m">16dp</dimen>
+  <dimen name="a2ui_space_l">24dp</dimen>
+  <dimen name="a2ui_space_xl">40dp</dimen>
+  <!-- The card list's start inset. AAOS draws a back-button overlay over the content at the
+       display's left edge (80 px wide on the 1408×792 reference display); cards start clear of
+       it. -->
+  <dimen name="a2ui_card_list_inset_start">64dp</dimen>
+
+  <!-- Type scale. -->
+  <dimen name="a2ui_type_display">44sp</dimen>
+  <dimen name="a2ui_type_title">28sp</dimen>
+  <dimen name="a2ui_type_body">22sp</dimen>
+  <dimen name="a2ui_type_caption">16sp</dimen>
+
+  <!-- The slim header row: microphone, vehicle-state chip, change note, context title. -->
+  <dimen name="a2ui_header_min_height">48dp</dimen>
+  <dimen name="a2ui_header_padding_vertical">4dp</dimen>
+  <dimen name="a2ui_header_mic_size">48dp</dimen>
+  <dimen name="a2ui_header_mic_padding">12dp</dimen>
+
+  <!-- Vehicle-state chip (the "banner" names are the OEM-overlayable ones) and change note. -->
+  <dimen name="a2ui_chip_height">30dp</dimen>
+  <dimen name="a2ui_banner_title_text_size">16sp</dimen>
+  <dimen name="a2ui_banner_detail_text_size">16sp</dimen>
+  <dimen name="a2ui_banner_padding_horizontal">12dp</dimen>
+  <dimen name="a2ui_banner_radius">15dp</dimen>
+  <dimen name="a2ui_banner_dot_size">8dp</dimen>
+  <dimen name="a2ui_strip_text_size">15sp</dimen>
+  <dimen name="a2ui_card_radius">20dp</dimen>
+  <!-- One line of the card title at its largest (23sp, no font padding). -->
+  <dimen name="a2ui_card_title_height">28dp</dimen>
 </resources>

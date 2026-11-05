@@ -58,4 +58,18 @@ final class DebugBroadcasts {
 
     /** String extra on {@link #ACTION_AGENT}: the request text for one turn. */
     static final String EXTRA_ASK = "art.dart.a2ui.carui.extra.ASK";
+
+    /**
+     * Drive the passenger display. The passenger activity decides with its own display's reading.
+     *
+     *   adb shell am broadcast --user current -a art.dart.a2ui.carui.action.PASSENGER \
+     *       --es art.dart.a2ui.carui.extra.MEDIA video
+     */
+    static final String ACTION_PASSENGER = "art.dart.a2ui.carui.action.PASSENGER";
+
+    /** String extra on {@link #ACTION_PASSENGER}: a {@link PassengerMedia} name, or {@code stop}. */
+    static final String EXTRA_MEDIA = "art.dart.a2ui.carui.extra.MEDIA";
+
+    /** Show the closing card. Parked only; any later restriction change takes it away. */
+    static final String ACTION_END_CARD = "art.dart.a2ui.carui.action.END_CARD";
 }

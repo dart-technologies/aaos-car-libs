@@ -23,7 +23,9 @@ import java.util.List;
  */
 final class DemoNativeContract {
 
-    enum Kind { CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER }
+    enum Kind {
+        CHOICE, SLIDER, TIME, BROWSE, ROUTE, IMAGE, VIDEO, AUDIO, MODAL, ORDER, WEATHER, GALLERY
+    }
 
     static final class Spec {
         final Kind mKind;
@@ -139,6 +141,135 @@ final class DemoNativeContract {
         if ("modal_confirmation".equals(surfaceId) && "modal".equals(id)
                 && component.getType() == ComponentType.MODAL && component.getAction() == null) {
             return Spec.simple(Kind.MODAL, "Buy this album?");
+        }
+        return null;
+    }
+
+    /** Large imagery for the visual panel: a bundled drawable by name, with a bundled fallback. */
+    static final class PanelSpec {
+        @NonNull final String mDrawableName;
+        final int mFallbackDrawable;
+        @Nullable final String mCaption;
+
+        PanelSpec(@NonNull String drawableName, int fallbackDrawable, @Nullable String caption) {
+            mDrawableName = drawableName;
+            mFallbackDrawable = fallbackDrawable;
+            mCaption = caption;
+        }
+    }
+
+    /**
+     * Panel imagery for an exact corpus component, or null. Asked only of components that
+     * survived the prune, and drawn only while the reading allows IMAGE.
+     */
+    @Nullable
+    static PanelSpec panelFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return null;
+    }
+
+    /** A bundled video by raw-resource name, and the caption shown with it. */
+    static final class Media {
+        @NonNull final String mRawName;
+        @NonNull final String mCaption;
+        /** The player's title overlay, or null for none (the film carries its own captions). */
+        @Nullable final String mTitle;
+        @Nullable final String mCredit;
+        /**
+         * Driver media in the full-bleed player: it fills the stage, and it opens and stays only
+         * on a trusted parked reading, over and above the VIDEO gate every video has.
+         */
+        final boolean mPlayer;
+        /** Fills the stage edge to edge, scaled to cover and cropped, never letterboxed. */
+        final boolean mFill;
+        /**
+         * The file burns its own captions and credit in along its bottom edge: a crop to fill takes
+         * from the top, never from them.
+         */
+        final boolean mBottomCaptions;
+
+        Media(@NonNull String rawName, @NonNull String caption) {
+            this(rawName, caption, null, null, false, false, false);
+        }
+
+        private Media(@NonNull String rawName, @NonNull String caption, @Nullable String title,
+                @Nullable String credit, boolean player, boolean fill, boolean bottomCaptions) {
+            mRawName = rawName;
+            mCaption = caption;
+            mTitle = title;
+            mCredit = credit;
+            mPlayer = player;
+            mFill = fill;
+            mBottomCaptions = bottomCaptions;
+        }
+
+        /** Parked-only driver media with a host-owned title and credit, never agent text. */
+        @NonNull
+        static Media player(@NonNull String rawName, @NonNull String title,
+                @NonNull String credit) {
+            return new Media(rawName, "", title, credit, true, true, false);
+        }
+
+        /**
+         * A film that carries its own captions and credit along its bottom: it fills the stage,
+         * cropped from the top, with no host title or caption over it.
+         */
+        @NonNull
+        static Media film(@NonNull String rawName) {
+            return new Media(rawName, "", null, null, false, true, true);
+        }
+    }
+
+    /** The video an exact corpus VIDEO component plays, or null for the generated fixture. */
+    @Nullable
+    static Media videoFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return null;
+    }
+
+    /** The bundled artwork for an exact corpus Image inside a gallery, by drawable name. */
+    @Nullable
+    static String artworkFor(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return null;
+    }
+
+    /** The credit line under every slide of a corpus gallery, or null. */
+    @Nullable
+    static String artworkCredit(@NonNull String surfaceId) {
+        return null;
+    }
+
+    /** The confirmation question for an exact corpus control, or null for the generic one. */
+    @Nullable
+    static String confirmPrompt(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        if ("poi_discovery_order".equals(surfaceId) && "order".equals(component.getId())) {
+            return "Order a cold brew and a bagel for pickup?";
+        }
+        if ("modal_confirmation".equals(surfaceId) && "buy".equals(component.getId())) {
+            return "Buy this album for £9.99?";
+        }
+        return null;
+    }
+
+    /** The confirmation's supporting line for an exact corpus control, or null. */
+    @Nullable
+    static String confirmDetail(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        return null;
+    }
+
+    /**
+     * A host-owned noun for the "what changed" line, for exact corpus components only; null falls
+     * back to the type noun. Never agent text.
+     */
+    @Nullable
+    static String changeLabel(@NonNull String surfaceId, @NonNull A2uiComponent component) {
+        String id = component.getId();
+        if (id == null) return null;
+        if ("poi_discovery_order".equals(surfaceId)) {
+            if ("field".equals(id)) return "Search";
+            if ("places".equals(id)) return "Places";
+        }
+        if ("big_buck_bunny".equals(surfaceId)) {
+            if ("field".equals(id)) return "Search";
+            if ("results".equals(id)) return "Results";
         }
         return null;
     }

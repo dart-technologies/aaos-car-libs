@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "title": "Big Buck Bunny (Sunflower version), portrait 2:3 crop",
+  "author": "Blender Foundation",
+  "attribution": "Big Buck Bunny (c) copyright 2008, Blender Foundation / www.bigbuckbunny.org",
+  "license": "CC BY 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+  "sourceUrl": "https://download.blender.org/demo/movies/BBB/bbb_sunflower_1080p_30fps_normal.mp4.zip",
+  "sourcePage": "https://peach.blender.org/",
+  "provenance": "a2ui-automotive/demo/fixtures/bbb/SOURCE.json (its \"portrait\" block holds the crop and the exact command)",
+  "derivedFrom": {
+    "path": "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4",
+    "sha256": "8ca6121326adfc437ee9eb902344bd27e023f338f69202e4605d10844f6f4609"
+  },
+  "changes": "Cropped to a centre-weighted 480x720 (2:3) window of the landscape file, shifted per shot to keep the bunny and the butterfly in frame; video re-encoded; audio stream-copied unchanged.",
+  "output": {
+    "path": "a2ui-host-carui/src/main/res/raw/bbb_passenger_portrait.mp4",
+    "sha256": "fe80570672a0be0508453ab93e309c514ad02e98b5d1bafc99b0bfa99b875ce5",
+    "bytes": 2704213,
+    "durationSeconds": 19.3,
+    "video": "H.264 High@4.0 480x720 30 fps CFR, CRF 20 (maxrate 1400k), 0.98 Mbit/s",
+    "audio": "AAC-LC 48 kHz stereo 128 kbit/s, copied from the landscape file"
+  }
+}

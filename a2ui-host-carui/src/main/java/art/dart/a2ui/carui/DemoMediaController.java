@@ -17,6 +17,7 @@ import android.media.session.PlaybackState;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
@@ -114,21 +115,114 @@ final class DemoMediaController implements AudioManager.OnAudioFocusChangeListen
 
     /** Plays the generated local video fixture in the supplied parked-only native view. */
     void playVideo(@NonNull VideoView video) {
+        playVideo(video, R.raw.demo_placeholder_video);
+    }
+
+    /** Plays a bundled video resource in the supplied parked-only native view. */
+    void playVideo(@NonNull VideoView video, int rawResource) {
+        playVideo(video, rawResource, null);
+    }
+
+    /** Where a video starts, asked once it is ready and knows its length. */
+    interface StartAt {
+        /** A position in ms within {@code durationMs}; 0 plays from the top. */
+        int positionMs(int durationMs);
+    }
+
+    /** The start rule of the video last played, or null for one played from the top. */
+    @Nullable private StartAt mStartAt;
+
+    /** The prepared player behind the current video, for drift correction. */
+    @Nullable private MediaPlayer mVideoPlayer;
+    /** What earlier drift seeks fell short by (ms): the seek's own cost, learned. */
+    private int mSyncBiasMs;
+    private int mSyncCorrections;
+    private boolean mSyncSeeking;
+
+    /** Seeks this far from the partner still count as in step (about one frame at 30 fps). */
+    static final int SYNC_TOLERANCE_MS = 35;
+    /** A joined copy is nudged at most this many times; a constant offset settles in two. */
+    static final int SYNC_MAX_CORRECTIONS = 4;
+
+    @VisibleForTesting
+    void setVideoPlayerForTesting(@Nullable MediaPlayer player) {
+        mVideoPlayer = player;
+    }
+
+    /**
+     * Pulls a joined copy back in step when it trails or leads its partner by {@code deltaMs}
+     * (this copy minus the partner): an exact seek ahead by the gap plus what the previous seek
+     * fell short by. Returns whether it seeked.
+     */
+    boolean correctDrift(int deltaMs) {
+        MediaPlayer player = mVideoPlayer;
+        if (player == null || mSyncSeeking || Math.abs(deltaMs) <= SYNC_TOLERANCE_MS
+                || mSyncCorrections >= SYNC_MAX_CORRECTIONS) {
+            return false;
+        }
+        if (mSyncCorrections > 0) mSyncBiasMs -= deltaMs;
+        mSyncCorrections++;
+        int duration = player.getDuration();
+        int target = player.getCurrentPosition() - deltaMs + mSyncBiasMs;
+        if (duration > 0) target = ((target % duration) + duration) % duration;
+        mSyncSeeking = true;
+        player.setOnSeekCompleteListener(seeked -> {
+            seeked.setOnSeekCompleteListener(null);
+            mSyncSeeking = false;
+        });
+        player.seekTo(target, MediaPlayer.SEEK_CLOSEST);
+        return true;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    StartAt startAtForTesting() {
+        return mStartAt;
+    }
+
+    /**
+     * Plays a bundled video resource in the supplied parked-only native view, from where
+     * {@code startAt} says when it is ready (from the top when null). A start inside the clip
+     * seeks to the exact frame; the clip moves on while that seek runs, so once it lands the start
+     * is asked again and the seek repeated once, ahead by the time the first one took.
+     */
+    void playVideo(@NonNull VideoView video, int rawResource, @Nullable StartAt startAt) {
         stop();
         activate();
         mVideo = video;
+        mStartAt = startAt;
+        mVideoPlayer = null;
+        mSyncBiasMs = 0;
+        mSyncCorrections = 0;
+        mSyncSeeking = false;
         // This controller owns focus for both modes, so the view must not take its own.
         video.setAudioFocusRequest(AudioManager.AUDIOFOCUS_NONE);
         video.setVideoURI(Uri.parse("android.resource://" + mContext.getPackageName()
-                + "/" + R.raw.demo_placeholder_video));
+                + "/" + rawResource));
         video.setOnPreparedListener(player -> {
             if (mVideo != video || !requestFocus()) {
                 return;
             }
             player.setLooping(true);
+            mVideoPlayer = player;
             mMode = Mode.VIDEO;
+            int duration = player.getDuration();
+            int start = startAt == null ? 0 : startAt.positionMs(duration);
+            if (start > 0) {
+                long asked = SystemClock.uptimeMillis();
+                player.setOnSeekCompleteListener(seeked -> {
+                    seeked.setOnSeekCompleteListener(null);
+                    if (mVideo != video) return;
+                    int again = startAt.positionMs(duration);
+                    if (again <= 0) return;
+                    long took = SystemClock.uptimeMillis() - asked;
+                    seeked.seekTo(duration > 0 ? (again + took) % duration : again + took,
+                            MediaPlayer.SEEK_CLOSEST);
+                });
+                player.seekTo(start, MediaPlayer.SEEK_CLOSEST);
+            }
             video.start();
-            publishMetadata(player.getDuration());
+            publishMetadata(duration);
             publish(PlaybackState.STATE_PLAYING, 1);
         });
         video.setOnCompletionListener(player -> {

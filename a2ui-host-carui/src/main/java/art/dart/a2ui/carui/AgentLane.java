@@ -139,6 +139,16 @@ final class AgentLane implements AutoCloseable {
     }
 
     /** Resets the lane's surfaces (AgentSession does) and drops any in-flight turn. */
+    /** Parked asks may take the cached high-quality lane; moving ones the low-latency one. */
+    void selectProfile(@NonNull AgentExecutionProfile profile) {
+        mSession.selectExecutionProfile(profile);
+    }
+
+    @NonNull
+    AgentExecutionProfile profile() {
+        return mSession.getExecutionProfile();
+    }
+
     void selectProvider(@NonNull AgentProvider provider) {
         mSession.selectProvider(provider);
     }

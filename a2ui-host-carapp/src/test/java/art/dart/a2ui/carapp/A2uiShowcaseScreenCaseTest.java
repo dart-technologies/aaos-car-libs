@@ -101,7 +101,9 @@ public class A2uiShowcaseScreenCaseTest {
             assertThat(headerTitle()).doesNotContain("components");
             checked++;
         }
-        assertThat(checked).isEqualTo(10);
+        // Every case was checked, and the corpus is not empty (main ships 10; demos add more).
+        assertThat(checked).isEqualTo(UseCaseCorpus.all().size());
+        assertThat(checked).isAtLeast(10);
     }
 
     private static String rootTitle(UseCaseCorpus.UseCase useCase) {
