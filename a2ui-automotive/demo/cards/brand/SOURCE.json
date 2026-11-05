@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "asset": "Muse icon",
+  "file": "muse-icon.svg",
+  "sha256": "73bdf6aed3c3a03b2181c69532672554fca8a1d303644c301abb1caf5300d703",
+  "source": "https://commons.wikimedia.org/wiki/File:Muse_icon.svg",
+  "author": "Meta Platforms, Inc.",
+  "origin": "muse.ai",
+  "license": "Public domain: simple geometric shapes below the threshold of originality (as tagged on Wikimedia Commons)",
+  "licenseUrl": "https://commons.wikimedia.org/wiki/File:Muse_icon.svg",
+  "trademark": "Muse and the Muse icon are trademarks of Meta Platforms, Inc. Public-domain copyright status grants no trademark rights.",
+  "use": "Attribution only: it credits Muse next to the words \"Built with Muse\". It is never this project's logo and implies no endorsement by Meta.",
+  "derived": {
+    "muse-icon-96.png": "96x96 RGBA, transparent",
+    "muse-icon-256.png": "256x256 RGBA, transparent",
+    "renderer": "scripts/render-brand-assets.py icon (ImageMagick renders the path as a mask; Pillow paints the SVG's own linear gradient, which ImageMagick drops)"
+  },
+  "retrieved": "2026-11-04"
+}
