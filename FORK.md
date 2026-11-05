@@ -57,8 +57,10 @@ Merge-ready requires an owner with an AOSP tree to run
 
 Apache-2.0 ([LICENSE](LICENSE), [NOTICE](NOTICE)). Inherited files keep their AOSP headers; the ~124
 that ship without one (mostly translated `strings.xml`) are left alone. Every added file carries a
-Dart Technologies Apache-2.0 header, enforced by `scripts/check-license-headers.py` (which also fails
-when a modified file loses its header); exceptions with reasons in `scripts/license-header-baseline.txt`.
+Dart Technologies Apache-2.0 header, and every modified upstream file says so ("Modified by Dart
+Technologies, 2026"), per Apache-2.0 §4(b). `scripts/check-license-headers.py` enforces both and fails
+when a modified file loses its header; exceptions with reasons in `scripts/license-header-baseline.txt`.
+Third-party content (A2UI schemas, the plugin-apis AAR, demo media) is listed in NOTICE.
 
 ## Re-syncing
 
