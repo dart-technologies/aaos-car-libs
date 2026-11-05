@@ -145,8 +145,18 @@ final class PassengerDisplay {
         if (media == null || media.mStills || !rawName.equals(media.mRawName) || positionMs <= 0) {
             return 0;
         }
+        // The Met film plays once and holds its end: a copy joining it then starts from the top
+        // rather than flashing the last frame and wrapping.
+        if (PassengerMedia.ARTWORK.equals(playing) && durationMs > 0
+                && positionMs >= durationMs - FINISHED_MS) {
+            return 0;
+        }
         return durationMs > 0 ? positionMs % durationMs : positionMs;
     }
+
+    /** How close to its end a play-once film counts as finished for a joining copy. */
+    @VisibleForTesting
+    static final int FINISHED_MS = 500;
 
     @MainThread
     static void addListener(@NonNull Listener listener) {
