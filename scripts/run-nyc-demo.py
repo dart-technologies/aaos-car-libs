@@ -88,6 +88,7 @@ OUTRO_FADE_S = 0.5
 STILL_LEAD_MS = 3000  # capture the idle passenger frame this long before its stream starts
 CARD_RENDERER = ROOT / "scripts/render-demo-cards.py"
 OVERLAY_RENDERER = ROOT / "scripts/demo_overlays.py"
+PASSENGER_SYNC = ROOT / "scripts/passenger_sync.py"
 # The cockpit intro: graffiti on both screens for INTRO_HOLD_S, pushing in by INTRO_ZOOM, then an
 # eased INTRO_FADE_S crossfade into the screens' next content as the preamble begins under it.
 INTRO_HOLD_S, INTRO_FADE_S, INTRO_ZOOM = 2.0, 1.1, 0.025
@@ -1204,6 +1205,26 @@ def chapter_cards(scenario: dict) -> list[ChapterCard]:
     return cards
 
 
+def align_passenger(scenario: dict, raw_video: pathlib.Path, passenger_raw: pathlib.Path,
+                    host_start: float) -> tuple[float, dict]:
+    """The passenger stream's start on the driver timeline: the host-side start (when each
+    screenrecord was launched, blind to its start-up latency) corrected from the clip both
+    displays play side by side (scripts/passenger_sync.py, in a child interpreter: this recorder
+    never imports numpy). A failed or unconfident measurement keeps the host-side start."""
+    try:
+        result = subprocess.run(
+            [sys.executable, str(PASSENGER_SYNC), scenario["id"], str(raw_video),
+             str(passenger_raw), repr(host_start)], capture_output=True, text=True,
+            timeout=120, check=True)
+        found = json.loads(result.stdout)
+        start = float(found.pop("startSeconds"))
+        return start, found
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError) as error:
+        return host_start, {"hostStartSeconds": host_start, "correctionMs": 0.0,
+                            "applied": False,
+                            "reason": f"passenger sync unavailable: {type(error).__name__}"}
+
+
 def post_production(scenario: dict, *, layout: str, output: pathlib.Path,
                     raw_video: pathlib.Path, passenger_raw: pathlib.Path | None,
                     passenger_start: float, passenger_still: pathlib.Path | None,
@@ -1280,6 +1301,10 @@ def render_only(scenario: dict, args: argparse.Namespace) -> int:
         start = next((int(a["atMs"]) / 1000 for a in sorted(
             scenario["actions"], key=lambda item: int(item["atMs"]))
             if a["type"] == "passenger"), 0.0)
+    if layout == "dual" and passenger_raw.is_file() and not getattr(args, "no_passenger_sync", False):
+        start, sync = align_passenger(scenario, raw_video, passenger_raw, start)
+        print(f"passenger sync: start {start:.4f}s (correction {sync.get('correctionMs')} ms, "
+              f"{'applied' if sync.get('applied') else sync.get('reason')})")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     plan, post = post_production(
         scenario, layout=layout, output=args.output, raw_video=raw_video,
@@ -1342,6 +1367,8 @@ def main() -> int:
     parser.add_argument("--passenger-start", type=float,
                         help="with --render-only: second the passenger stream began (default: "
                              "the first passenger action)")
+    parser.add_argument("--no-passenger-sync", action="store_true",
+                        help="keep the host-side passenger start; skip the shared-clip correction")
     parser.add_argument("--no-cockpit", action="store_true",
                         help="compose a dual recording side by side instead of in the cockpit")
     args = parser.parse_args()
@@ -1378,6 +1405,10 @@ def main() -> int:
     if evidence["passengerStartSeconds"] is not None:
         adb("pull", DEVICE_PASSENGER_VIDEO, str(passenger_raw))
     adb("shell", "rm", "-f", DEVICE_VIDEO, DEVICE_PASSENGER_VIDEO, check=False)
+    passenger_sync = None
+    if evidence["passengerStartSeconds"] is not None and not getattr(args, "no_passenger_sync", False):
+        evidence["passengerStartSeconds"], passenger_sync = align_passenger(
+            scenario, raw_video, passenger_raw, evidence["passengerStartSeconds"])
     plan, post = post_production(
         scenario, layout=layout, output=args.output, raw_video=raw_video,
         passenger_raw=passenger_raw if evidence["passengerStartSeconds"] is not None else None,
@@ -1424,6 +1455,7 @@ def main() -> int:
             "labels": {name: sha256(path) for name, path in LABELS.items()}
             if not plan.cockpit else None,
             "passengerStreamStartsAtSeconds": evidence["passengerStartSeconds"],
+            "passengerSync": passenger_sync,
             "passengerIdleFrame": ("screencap before the passenger stream"
                                    if evidence["passengerStill"] else "unavailable; dark panel"),
             "rawDurationSeconds": {
