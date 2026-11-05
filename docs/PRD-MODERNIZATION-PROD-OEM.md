@@ -87,6 +87,24 @@ Frame review (`docs/muse-review/nyc_met-review.md`) grades Use of Muse 14/25.
 | H9 | Pitch dilutes Meta: end card + 5-provider scoreboard sell neutrality, but 25% is creative Meta-tool use | Muse-first story (brief + guide + 15-café research); others as baseline |
 | H10 | Scoreboard never shows the Muse differentiator: `compare-providers.py` drops modes, so the cited-brief web_search path is unscored | One brief-mode row or a Muse-evidence panel |
 
+### M0 status at submission (2026-11-04, 20:05 ET)
+
+| # | Status |
+|---|---|
+| H1 | Done: [video](https://youtu.be/WVbYJ-v_73s) linked from the README |
+| H2 | Open: the brief is served from the gateway cache; no live Muse turn on camera |
+| H3 | Done: repo public, `sprint/meta-met` pushed, CI dispatched on it |
+| H4 | Measured, not shown: realtime p50 8.6 s, 7/36 over 10 s (`docs/PROVIDERS.md`); research runs before the drive or while parked |
+| H5 | Done: Muse Image 1.0 wordmark and thumbnail, Muse vision frame review, Muse Code branch review |
+| H6 | Partly: keyless checks in the README, Muse outputs committed with citations, brief replays offline |
+| H7 | Done: narration matched to each beat, cited source rows, runner-up, one disclaimer |
+| H8 | Done: cockpit frame, captions, story rail, larger cards, story-consistent clock, intermission |
+| H9 | Done: problem preamble, Muse-first README, Muse badge on the closing card |
+| H10 | Open: no brief-mode row in the scoreboard |
+
+Since the audit, the R5 S4(b) weakness is fixed (a bare "Dart Technologies" line no longer counts
+as a change notice), and `scripts/check-muse-claims.py` gates citation coverage.
+
 Pre-submit confirmations (unresolved — full Rules text not retrievable via
 search; confirm on the signup page): prize split, video cap, public-repo
 mandate, team/eligibility rules; whether judges run the repo or video+link
