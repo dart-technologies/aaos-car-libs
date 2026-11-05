@@ -35,8 +35,9 @@ Muse's brief (`modes.brief`): `web_search` near New York; ≤3 cited pages becom
 
 ### Muse latency, measured 2026-11-04
 
-`compare-providers.py --providers muse` from the dev worker at b40854f40: the 12 corpus cases,
-`muse-spark-1.3`, a fresh cache per run so every call was live and no fallback could answer.
+`compare-providers.py --providers muse` from the dev worker at b40854f40 (the sprint branch,
+before the restack): its 12 corpus cases, `muse-spark-1.3`, a fresh cache per run so every call
+was live and no fallback could answer.
 Gateway turn time (vendor call plus validation); percentiles nearest-rank, as the script computes
 them.
 

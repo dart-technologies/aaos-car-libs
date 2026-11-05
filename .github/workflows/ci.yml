@@ -110,7 +110,8 @@ jobs:
             exit 1
           fi
           read -r -a TASK_ARRAY <<< "$TASKS"
-          ./gradlew "${TASK_ARRAY[@]}" --stacktrace
+          # One worker: parallel JaCoCo report tasks race on a shared zip ("ZipFile closed").
+          ./gradlew "${TASK_ARRAY[@]}" --max-workers=1 --stacktrace
 
       - name: Coverage baseline
         # Per-module status (MEASURED/BLIND/EMPTY), not a percentage; any transition fails.
@@ -221,7 +222,7 @@ jobs:
 
       - name: NYC timed demo scenarios are bounded and mapped to the corpus
         # Provider keys and paid audio do not belong in CI. This validates the data contract,
-        # 60–90s timing, exact action vocabulary, and 10k-credit ceiling without making a request.
+        # 60–180 s timing, exact action vocabulary, and 10k-credit ceiling without making a request.
         run: python3 scripts/check-nyc-demo.py
 
       - name: Licence headers

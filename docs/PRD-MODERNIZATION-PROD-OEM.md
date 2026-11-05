@@ -3,7 +3,8 @@
 - Status: Draft for review
 - Date: 2026-11-04
 - Branch audited: `sprint/meta-met` @ `b40854f40` vs `main` @ `62f00d9b2`
-  (merge-base = main HEAD; branch strictly ahead, tree clean)
+  (merge-base = main HEAD; branch strictly ahead, tree clean). These SHAs predate the
+  2026-11-05 restack of `main`; tag `muse2carui-submission-2026-11-04` still reaches them.
 - Main commits in scope: all 11 Nov-4 commits on `main`
   (`62f00d9b2` … `809250ff6` — gateway baselines, OSS prep, Java 21 toolchain,
   docs, gates, Host A+B, five-provider gateway, A2UI core, Flutter binding,
