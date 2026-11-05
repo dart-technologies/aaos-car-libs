@@ -1,4 +1,4 @@
-# PRD: Modernization and Production with OEM Co-Design via Google Built-in
+# PRD: Modernization and Production — Muse2CarUI with OEM Co-Design via Google Built-in
 
 - Status: Draft for review
 - Date: 2026-11-04
@@ -50,6 +50,8 @@ Verified green at HEAD (re-executed, not just read):
   provider adapters, production (non-log) action sink, retention policy.
 - G4: Establish the OEM co-design path on Google built-in: plugin/theme
   co-design, V3–V7 adapters, V8/V9 publication, Soong/OEM-image validation.
+- G5: Submit a credible Muse-first entry to the Meta AI Developer Hackathon
+  (build window Oct 26 – Nov 4 2026, projects due Nov 4 9:00 PM ET).
 
 ## 3. Non-goals
 
@@ -63,11 +65,53 @@ Verified green at HEAD (re-executed, not just read):
 ## 4. Users
 
 - Drivers: distraction-optimized agent UI (parked vs. driving per display).
-- Passengers: second-display video while the driver view is pruned.
+- Passengers: second-display film/guide while the driver view is pruned.
 - OEM integrators: plugin/theme adapters, Soong build, RRO theming.
-- Demo/sales: one-command NYC scenario replay + video.
+- Demo/sales and hackathon judges: one-command NYC scenario replay + video.
 
-## 5. Requirements
+## 5. Hackathon submission (M0) — issue list in demo-impact order
+
+Rubric pressure: Demo 25% (incl. video), Use-of-Meta-tooling 25%.
+Frame review (`docs/muse-review/nyc_met-review.md`) grades Use of Muse 14/25.
+
+| # | Issue | Fix |
+|---|---|---|
+| H1 | `README.md:6` still says "Demo video: (link to come)"; nothing submitted without the MP4 | Render/upload/link the nyc_met MP4 first — critical path |
+| H2 | No live Muse inference on camera; demo replays committed fixtures via `serve.py --offline` | One live keyed gateway turn (agent action) on camera |
+| H3 | Repo not submittable: private, CI never run, `origin/main` stops at third fork commit | Public-branch/export decision + push before deadline |
+| H4 | Brief latency ~38 s (two Responses calls); realtime minimal profile 6–10 s vs. 10 s deadline | Live beat = minimal-effort turn or cached-brief + live follow-up; show provider·ms badge |
+| H5 | Single Meta capability (Spark text + Voice STT fixtures); no Image / SAM 3.1 / open-weights "unexpected capability" | One surprise beat, e.g. Muse-generated captions or SAM region demo |
+| H6 | Judges cannot reproduce: canonical AVD + ffmpeg + gitignored ElevenLabs cache + adb reverse + gateway | One-command keyless replay doc, or ship MP4 + sidecar as the artifact |
+| H7 | Demo-truth gaps: DRIVING keeps parked detail; passenger blank during film VO; "3 chargers" vs. 2 listed; zero visible citations; brand names need non-endorsement footer | Fix per review §31–40; persistent footer |
+| H8 | Legibility: ~6 pt source lines, tiny pills, dark frames, Big Buck Bunny filler, clock jumps 2:21→5:15 | One readable card at a time; kill filler under end-card; enlarge captions |
+| H9 | Pitch dilutes Meta: end card + 5-provider scoreboard sell neutrality, but 25% is creative Meta-tool use | Muse-first story (brief + guide + 15-café research); others as baseline |
+| H10 | Scoreboard never shows the Muse differentiator: `compare-providers.py` drops modes, so the cited-brief web_search path is unscored | One brief-mode row or a Muse-evidence panel |
+
+### M0 status at submission (2026-11-04, 20:05 ET)
+
+| # | Status |
+|---|---|
+| H1 | Done: [video](https://youtu.be/WVbYJ-v_73s) linked from the README |
+| H2 | Open: the brief is served from the gateway cache; no live Muse turn on camera |
+| H3 | Done: repo public, `sprint/meta-met` pushed, CI dispatched on it |
+| H4 | Measured, not shown: realtime p50 8.6 s, 7/36 over 10 s (`docs/PROVIDERS.md`); research runs before the drive or while parked |
+| H5 | Done: Muse Image 1.0 wordmark and thumbnail, Muse vision frame review, Muse Code branch review |
+| H6 | Partly: keyless checks in the README, Muse outputs committed with citations, brief replays offline |
+| H7 | Done: narration matched to each beat, cited source rows, runner-up, one disclaimer |
+| H8 | Done: cockpit frame, captions, story rail, larger cards, story-consistent clock, intermission |
+| H9 | Done: problem preamble, Muse-first README, Muse badge on the closing card |
+| H10 | Open: no brief-mode row in the scoreboard |
+
+Since the audit, the R5 S4(b) weakness is fixed (a bare "Dart Technologies" line no longer counts
+as a change notice), and `scripts/check-muse-claims.py` gates citation coverage.
+
+Pre-submit confirmations (unresolved — full Rules text not retrievable via
+search; confirm on the signup page): prize split, video cap, public-repo
+mandate, team/eligibility rules; whether judges run the repo or video+link
+suffices; $150 credit activation/expiry; whether pre-Oct-26 fork code needs a
+"built during the event" framing statement.
+
+## 6. Requirements
 
 ### R1 — Distribution / car-app compliance
 
@@ -91,10 +135,12 @@ Verified green at HEAD (re-executed, not just read):
 
 - Deployed gateway, token issuer, provider adapters, non-log production
   action sink, retention + privacy policy with a named owner.
-- Fixes the audit's top code risk along the way: overlapping `ask()` turns
-  in `AgentLane.java:157-193` share one resettable processor (MEDIUM).
+- Fixes the audit's top code risks along the way: overlapping `ask()` turns
+  in `AgentLane.java:157-193` share one resettable processor (MEDIUM);
+  the 1200 ms arrival-gallery `postDelayed` in `A2uiCarUiActivity.java:2010`
+  has no lifecycle guard (MEDIUM).
 - Acceptance: end-to-end live turn against deployed gateway; no demo fixture
-  in the prod path; the MEDIUM fixed with a regression test.
+  in the prod path; both MEDIUMs fixed with regression tests.
 
 ### R4 — Client modernization
 
@@ -103,7 +149,8 @@ Verified green at HEAD (re-executed, not just read):
 - Production network stack replacing the INTERNET-less release assumption
   (release manifest must lack INTERNET per `A2uiAgentLaneTest`; only
   `src/debug` has a network-security-config today).
-- Break up the god activity as new code lands.
+- Break up the ~3660-line god activity as new code lands; dedupe
+  `MetArtworks.readAsset` vs. `ChargerFixture.readAsset`.
 - Fix the latent API <33 `registerReceiver(RECEIVER_EXPORTED)` overload
   issue (5 occurrences, pre-existing at `ba5e387e8`) or raise minSdk with
   OEM agreement.
@@ -125,9 +172,6 @@ Verified green at HEAD (re-executed, not just read):
   "Dart Technologies" line wrongly passes without a "Modified by" notice).
 - Acceptance: security review signed; CodeQL + Scorecard publishing;
   distraction evidence pack per display.
-
-Since the audit, the S4(b) weakness is fixed: a bare "Dart Technologies" line no longer counts
-as a change notice.
 
 ### R6 — Quality / CI / test
 
@@ -161,8 +205,12 @@ as a change notice.
   (RRO-safe overlayables).
 - Acceptance: OEM pilot image builds via Soong; co-design theme signed off.
 
-## 6. Milestones
+## 7. Milestones
 
+- M0 Hackathon submission: H1–H10 worked in table order; suggested day-of
+  order H1 (video link) > H2 (live turn) > H3 (public push) > H4 (latency
+  plan) > H7/H8 (truth + legibility) > H9/H10 (framing + scoreboard);
+  H6 one-command replay if time remains.
 - M1 Repo hygiene: first CI run green, aggregate gate + branch protection,
   desc xml, public/private decision executed, signed demo track.
 - M2 Hardening: release pipeline (R2), observability (R7), security review
@@ -171,7 +219,7 @@ as a change notice.
 - M4 OEM pilot: adapters + Soong + theme co-design (R8, R4 tail).
 - M5 Play submission: tier checklists + distraction evidence (R1, R5).
 
-## 7. Risks
+## 8. Risks
 
 - GAS timeline is OEM-owned (12–18 mo guidance); app-side evidence is the
   only lever we control.
@@ -179,8 +227,11 @@ as a change notice.
   parked-Tier-3 fallback (R1.2 decides early).
 - Templates-host fragmentation (list limit 100, allowlist variance).
 - Non-GAS reach (Host B) vs. GAS feature parity drift.
+- Pre-existing fork weight: judges/partners may discount pre-Oct-26 code;
+  keep the "built during the window" framing crisp (M0) and the export
+  runbook current (STATUS.md GitHub-first alpha).
 
-## 8. Open questions
+## 9. Open questions
 
 - O1: OEM partner-program engagement mechanics + design-review gates — no
   citable partner doc found; needs direct Google/OEM sourcing.

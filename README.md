@@ -1,3 +1,42 @@
+# Muse2CarUI
+
+**Any model can design the screen. The car decides what the driver sees.**
+
+Meta's Muse plans the trip: a cited brief for The Met, an audio guide for the drive, a café picked from 15 it researched.
+Android Automotive's own driving restrictions prune Muse's screens per display, fail-closed; bookings and orders wait until
+the car is parked and the driver confirms.
+
+Demo video: [Muse2CarUI on YouTube](https://youtu.be/WVbYJ-v_73s) (2:35)
+
+![Driving: the driver gets three glanceable cards, the passenger the film](docs/media/nyc_met-driving.jpg)
+![Parked at the charger: Muse's café pick with its runner-up](docs/media/nyc_met-cafe.jpg)
+
+How Muse (`muse-spark-1.3`) is used:
+- **Cited brief:** a Responses API `web_search` call with the car's `user_location` returns cited prose, then a structured call
+  turns it into the car's UI schema. There are two calls because citations are dropped when search and a JSON schema share one
+  (verified 2026-11-04; [adapters.py](tools/a2ui-gateway/a2ui_gateway/adapters.py)). The output, with its sources, is in [BRIEF.json](a2ui-automotive/demo/fixtures/met/BRIEF.json).
+- **Researcher and curator:** a cited audio guide for six Met Open Access works ([AUDIO_GUIDE.json](a2ui-automotive/demo/fixtures/met/AUDIO_GUIDE.json)). Fifteen OpenStreetMap cafés,
+  each with cited evidence per criterion, ranked by a deterministic script ([COFFEE.json](a2ui-automotive/demo/fixtures/coffee/COFFEE.json)).
+- **Voice Transcribe:** the passengers' spoken requests in the video.
+- **Muse Code and Muse vision as reviewers:** a deep code review of this branch, and a frame-by-frame review of the demo
+  video against what it must not claim. The findings and fixes are in [docs/muse-review/](docs/muse-review/).
+
+- **Every claim cited:** a no-network gate ([check-muse-claims.py](scripts/check-muse-claims.py)) checks Muse's committed outputs:
+  67/67 claims carry a source, scores re-add, and the screen's strings match the ranking.
+
+The story beat by beat: [docs/DEMO.md](docs/DEMO.md).
+
+Checks that need no keys:
+
+```bash
+python3 -m pip install --require-hashes -r tools/a2ui-gateway/requirements.txt  # jsonschema
+python3 -m unittest discover -s tools/a2ui-gateway -p 'test_*.py'  # gateway; replays Muse's brief offline
+python3 scripts/test_muse_curate_coffee.py  # café ranking from Muse's recorded answers
+python3 scripts/test_run_nyc_demo.py        # recorder timeline and composition (ffmpeg)
+```
+
+---
+
 # AAOS Car Libraries — Dart Technologies fork
 
 A standalone Gradle build of AOSP `packages/apps/Car/libs` (`car-ui-lib`, rotary, OEM plugin, media,

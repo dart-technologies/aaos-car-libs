@@ -4,6 +4,9 @@ Host B (`art.dart.a2ui.carui`) on `AAOS_35_1408p_GoogleAPIs`. Stories are data
 (`a2ui-automotive/demo/nyc-scenarios-v1.json`), speech is prerecorded, and motion is a live car-service
 transition (`cmd car_service emulate-driving-state park|drive`), never a synthetic mask.
 
+No keys needed to check it: the brief, audio guide and café pick are committed with their citations, and the
+gateway, ranking and recorder tests replay them offline (commands in the README).
+
 ## NYC stories
 
 | Scenario | s | Corpus case | Story | Proves |
@@ -11,10 +14,17 @@ transition (`cmd car_service emulate-driving-state park|drive`), never a synthet
 | `nyc_poi_order` | 78 | `poi_discovery_order` | Parked at Hudson Yards, bound for Brooklyn Museum: find coffee on the route, order ahead; drive → search and order go, route stays | Voice and touch share one policy; live re-projection |
 | `nyc_curated_video` | 78 | `big_buck_bunny` | Waiting in Long Island City: open a curated short; drive → video view and decoder close, the audio-only control keeps playing | `NO_VIDEO` drops video, not audio |
 | `nyc_concierge` | 90 | `poi_discovery_order`, then `big_buck_bunny` | Fifth House: parked order, brand audio kept in motion, visual chapter on arrival; closes on the fast foreground and higher-effort background lanes | The journey gets quieter, not unsafe; agents never control the car |
+| `nyc_met` | 153.4 (13.5 + 129 + 10.9) | `met_visit`, then `ev_charge_coffee` | Preamble from the recording's own frames: the parked full screen as unsafe in motion, then locked out, then the real pruned driving screen. Thursday, Nov 5, Hudson Yards → The Met, both displays: cited Muse brief parked, timed entry confirmed parked; drive → driver screen simplifies, passenger plays the artwork film, Muse's audio guide for all; parked at The Met the film moves to the driver's screen and plays about 15 s. An eased intermission card ("Later that afternoon · 5:15 PM · back in the car") covers the case switch and the clock jump. Then a low battery (vehicle HAL) → three chargers; parked and charging, the passenger keeps Big Buck Bunny, Muse's café pick (15 cafés compared) backs the usual coffee, and the driver opens Big Buck Bunny full-bleed, parked. Closing card: the journey with real thumbnails, the architecture | Muse does the research; the car decides per display |
 
 Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 2026-09-10 and not
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
-`demo/agent-profiles-v1.json`.
+`demo/agent-profiles-v1.json`. `nyc_met` instead uses real, attributed data: Thursday's NWS forecast
+captured Nov 4 (`demo/context/nyc-met-2026-11-05.json`), an OSRM route and OSM chargers, The Met's
+CC0 images, and a real OSM café near the first charger that Muse picked from cited sources; its
+ticket and coffee order are demos and nothing is booked, sent or paid. Its narration never says
+"demo" or claims a transaction (`check-nyc-demo.py` enforces both); one low-contrast line in the
+canvas margin says so for the whole video, in the same words as the closing card's top line:
+"Simulated demo drive on Android Automotive OS emulator".
 
 ## Corpus (`UseCaseCorpus`: 10 cases, all 18 catalog types)
 
@@ -43,7 +53,16 @@ Needs the AVD prepared by `scripts/ensure-test-env.sh --fix`, `ffmpeg`/`ffprobe`
   && adb install -r -t build/a2ui-host-carui/outputs/apk/debug/a2ui-host-carui-debug.apk)
 DISPLAY_ID=$(adb shell dumpsys SurfaceFlinger --display-id | awk '/^Display /{print $2; exit}')
 scripts/run-nyc-demo.py nyc_concierge /tmp/nyc-concierge.mp4 --display-id "$DISPLAY_ID"
+scripts/run-nyc-demo.py nyc_met /tmp/nyc-met.mp4 --display-id 4619827259835644672 \
+  --passenger-display-id 4619827551948147201
 ```
+
+`nyc_met`'s `vehicleSignal` sets 18% three ways: the fake VHAL's stored `EV_BATTERY_LEVEL`
+(`dumpsys …IVehicle/default --set 0x11600309 -f <Wh>`, which the 1 Hz continuous refresh keeps),
+one `cmd car_service inject-vhal-event 0x11600309 <Wh>`, and Host B's `VEHICLE` broadcast
+(`BATTERY_PCT`, reset to -1 after). Wh is read from `INFO_EV_BATTERY_CAPACITY`
+(`cmd car_service get-property-value 0x11600106 0`); the stored level is restored on exit and Host B
+gets `android.car.permission.CAR_ENERGY`. Any one route succeeding is enough; the sidecar logs each.
 
 `run-nyc-demo.py` refuses another AVD, a second device, an inferred display, a non-debuggable Host B,
 a stale STT fixture or a failed car-service transition (never substitutes `DEMO`), restores park on
@@ -57,10 +76,9 @@ and "Passenger". The passenger stream starts at its first `passenger` action; un
 shows a frame captured from that display 3 s earlier. Optional `chapterCards`: 1920×1080 PNGs over
 the driver's picture at their `atMs` on the timeline, each held 2–3.5 s; the first opens the
 timeline, and a later one with `fadeIn`/`fadeOut` eases in and out (an intermission that hides a case
-switch and a clock jump). Every card's fade-out dips through dark: for its first half the card's
-content eases to the background while the card is still opaque, then the dark lifts off the live
-screen, so its text never ghosts over the next chapter's. Optional `endCardHoldFromMs` freezes
-from there to the end. The canvas,
+switch and a clock jump). Every card's fade-out dips through dark, as the intro's tagline does: for
+its first half the card's content eases to the background while the card is still opaque, then the
+dark lifts off the live screen, so its text never ghosts over the next chapter's. Optional `endCardHoldFromMs` freezes from there to the end. The canvas,
 panel boxes, label and disclaimer positions are module constants at the top of `run-nyc-demo.py`.
 
 Post-production, after capture and from the same raw recording, so it always matches the UI:
@@ -68,35 +86,39 @@ Post-production, after capture and from the same raw recording, so it always mat
 - `preamble`: cards prepended before the timeline. Each names a `style` (`unsafe`: the frame tinted
   red under a red "Driving · 40 mph" chip; `useless`: greyed under a lock and `lockText`; `answer`:
   untouched), the `frameAtMs` of the raw driver frame it wraps, `seconds` and its narration
-  `clipId`. No caption is baked in: the burned-in captions carry the narration.
+  `clipId`. No caption is baked in: the burned-in captions carry the narration. `nyc_met`: unsafe and useless wrap the parked brief at 12 s, answer the pruned
+  driving screen at 26 s; 4.8 + 3.3 + 5.4 s, each dipping to the background.
 - `outro`: a closing card after the timeline, fading in over its held last frame. A calm `note`
   on top, the journey as vehicle-state segments from the `carState` actions (green parked, blue
   driving, labelled with `places`), a real thumbnail at each `beats` time (driver above, passenger
   below the driving segments; a placeholder tile if a frame cannot be extracted), and the
-  `architecture` as title-only boxes (one may be a `badge` pill, with the outro's optional
-  `badgeIcon`). It ends above the caption band. An optional `closingClipId` speaks after its `clipId`.
+  `architecture` as title-only boxes (Muse's is the "Muse · Meta" badge with the Muse icon in
+  white, the card's only Muse mention). It ends above the caption band. `nyc_met`: 10.9 s, one
+  narration line, a 0.6 s beat, the spoken close (`closingClipId`: "Thanks for checking out
+  Muse2CarUI."), then about 1.5 s of silence.
 - `disclaimer`: a PNG line in the canvas margin, outside both panels, for the whole video. In the
   cockpit it sits in the rail band and is gone before the closing card fades in.
 - A narration clip may carry `spoken`, the words the voice says when the caption's would be
-  mangled; captions and the SRT keep `text`.
+  mangled ("Muse to Car U I" for Muse2CarUI); captions and the SRT keep `text`.
 - Clips take an optional `section`: `preamble` clips count from the start of the video, `outro`
   clips from the closing card, the rest from the device timeline. The video is preamble + timeline +
   outro and must stay within 60–180 s; `durationSeconds` is the device timeline.
 
 A dual recording is composed in a cockpit by default (`--no-cockpit` restores the side-by-side
 canvas): `cards/cockpit-frame.png`, one still frame for the whole video, with the driver (1312×738)
-and passenger (492×738) recordings in its windows at one scale (`cards/cockpit-layout.json`). When
-the layout names intro screens (its optional `intro`) the video opens on them, pushing in 2.5% for
-3.1 s with a screen glow; from 2.0 s an eased 1.1 s crossfade turns them into the first preamble
-card. The preamble plays inside the driver window, as do the chapter cards. The closing card covers
-the whole canvas. Captions (every section, from the real
-speech lengths; a "Passenger" tag on guest lines) and the story rail (the scenario's `storyBeats`:
-beat, progress, Parked or Driving) are PNGs from `scripts/demo_overlays.py` (Pillow, in a child process), and the SRT is
-written next to the video. An intro adds 2.0 s.
+and passenger (492×738) recordings in its windows at one scale (`cards/cockpit-layout.json`). It
+opens on the Muse2CarUI graffiti and the tagline card on the screens (`cards/nyc_met-intro-*.png`),
+pushing in 2.5% for 3.1 s with a screen glow; from 2.0 s an eased 1.1 s crossfade turns them into
+the first preamble card, which plays inside the driver window, as do the chapter card and the rest
+of the preamble. The closing card covers the whole canvas. Captions (every section, from the real
+speech lengths; a "Passenger" tag on guest lines) and the story rail (beat, progress, Parked or
+Driving) are PNGs from `scripts/demo_overlays.py` (Pillow, in a child process), and the SRT is
+written next to the video. The intro adds 2.0 s: `nyc_met` is 155.4 s.
 
 `--render-only` composes an earlier capture without a device (`--from-raw <prefix>` names
 `<prefix>.raw.mp4`, `.passenger.raw.mp4`, `.passenger-idle.png`; `--passenger-start` its stream
-start). `python3 scripts/test_run_nyc_demo.py` checks the timeline, the composition, the preamble, the
+start). On the 4 Nov capture: 143.0 s, the ffmpeg pass 10 s, about 30 s with cards and validation.
+`python3 scripts/test_run_nyc_demo.py` checks the timeline, the composition, the preamble, the
 closing card (thumbnails and the placeholder fallback) and the disclaimer without a device
 (synthetic `lavfi` recordings, pixel read-back).
 
@@ -114,18 +136,35 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Asset | Where | In git | Made by | Checked by |
 |---|---|---|---|---|
 | Route preview, poster, album art, 8 s MP4, 12 s M4A | `a2ui-host-carui/src/main/res/{drawable-nodpi,raw}/demo_*` | yes | `scripts/generate-a2ui-demo-assets.sh` (ffmpeg, libx264, AAC) | `check-demo-assets.py` (SHA-256) |
-| 19 TTS clips, 6 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits) | `check-nyc-demo.py --require-audio` |
+| 43 TTS clips, 11 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits); `--stt muse` transcribes with Muse Voice Transcribe (`META_API_KEY`; `nyc_met`'s five guest lines) | `check-nyc-demo.py --require-audio` |
+| Met audio guide: one line per film work, at most 11 words, with its cited sources | `a2ui-automotive/demo/fixtures/met/AUDIO_GUIDE.json` | yes | `scripts/muse-audio-guide.py` (Muse Spark, `web_search`, `META_API_KEY`, 7 calls; cites only pages about each Met object) | `check-nyc-demo.py` (one clip per work, timed to the film) |
+| Muse's Thursday brief for The Met, with its citations | `a2ui-automotive/demo/fixtures/met/BRIEF.json` | yes | the dev gateway's `quality_cached` entry (Muse Spark, `web_search`); copy to `build/a2ui-gateway-cache/muse/quality_cached/<cacheKey>.json` and run `serve.py --offline` to replay it keyless | `test_gateway.py` (replays offline) |
+| `nyc_met` café: OSM cafés within 400 m of the first charger, Muse's cited findings, scores, gate and pick | `a2ui-automotive/demo/fixtures/coffee/{COFFEE,SOURCE}.json` | yes | `scripts/muse-curate-coffee.py` (Overpass; Muse Spark `web_search`, one call per café within 6 min plus one scoring call; walk and ranking computed by the script) | `test_muse_curate_coffee.py`, `check-nyc-demo.py` (context) |
 | Claude corpus cache | `build/claude-corpus-cache/` | no | `scripts/claude-corpus-tester.py` | gateway schema on replay |
 | Passenger clip, 19.3 s 720p | `a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4` | yes | ffmpeg trim of Blender's MP4 (`demo/fixtures/bbb/SOURCE.json`) | `check-demo-assets.py` (SHA-256, source record) |
 | Passenger clip, portrait 480×720 (2:3, audio copied) | `res/raw/bbb_passenger_portrait.mp4` | yes | ffmpeg crop of `bbb_passenger.mp4`, window following the subject (`demo/fixtures/bbb/SOURCE.json` `portrait`, `SOURCE_PORTRAIT.json`) | `check-demo-assets.py` (SHA-256, record) |
-| Panel labels, a scenario's margin disclaimer | `a2ui-automotive/demo/cards/label-*.png`, its `disclaimer.image` | yes | `scripts/render-demo-cards.py labels`, `disclaimer` (Pillow; this ffmpeg has no drawtext) | `test_run_nyc_demo.py`, `check-nyc-demo.py` |
+| Panel labels, margin disclaimer | `a2ui-automotive/demo/cards/label-*.png`, `nyc_met-disclaimer.png` | yes | `scripts/render-demo-cards.py labels`, `disclaimer` (Pillow; this ffmpeg has no drawtext) | `test_run_nyc_demo.py`, `check-nyc-demo.py` |
 | Preamble and closing cards | next to the output (`<out>.preamble-N.png`, `<out>.outro.png`) | no | `run-nyc-demo.py` → `render-demo-cards.py preamble`, `outro`, from the raw recording's frames | `test_run_nyc_demo.py` |
-| Cockpit frame, intro glow, layout | `demo/cards/cockpit-{frame,glow}.png`, `cockpit-layout.json` | yes | `scripts/demo_overlays.py cockpit` (procedural) | `test_demo_overlays.py` (windows are exactly the boxes) |
+| Muse icon, white, 64 px (badge on the closing card) | `demo/cards/brand/muse-icon-white.png` | yes | `magick` from the public Muse icon SVG with its fill set to white | — |
+| Muse icon SVG and 96/256 px PNGs: attribution only ("Built with Muse"), never our logo | `demo/cards/brand/muse-icon*.{svg,png}`, `SOURCE.json` (Wikimedia Commons, public domain, Meta trademark) | yes | `scripts/render-brand-assets.py icon` | — |
+| Muse2CarUI graffiti plate (Muse Image 1.0), intro screens, YouTube thumbnail | `demo/cards/brand/graffiti-3.{webp,json}`, `demo/cards/nyc_met-intro-{driver,passenger}.png`, `docs/media/youtube-thumbnail.jpg` | yes | Muse Image 1.0 (`muse-image-attempts.json` lists every call); `scripts/render-brand-assets.py intro thumbnail` | — |
+| Cockpit frame, intro glow, layout | `demo/cards/cockpit-{frame,glow}.png`, `cockpit-layout.json` | yes | `scripts/demo_overlays.py cockpit` (procedural; the Muse plates had no clean 16:9 window) | `test_demo_overlays.py` (windows are exactly the boxes) |
 | Captions, story rail, intro frames, SRT | next to the output (`<out>.overlays/`, `<out>.srt`) | no | `run-nyc-demo.py` → `demo_overlays.py overlays` | `test_demo_overlays.py`, `test_run_nyc_demo.py` |
+| `nyc_met` route image, 1024×576 | `res/drawable-nodpi/route_met.png` | yes | `scripts/render-met-route.py` from `demo/fixtures/route/` (no map tiles) | `check-demo-assets.py` |
+| Artwork film, 36 s 720p, silent | `res/raw/met_artwork_film.mp4` | yes | `scripts/render-met-artwork-film.py` (six CC0 works; `demo/fixtures/met/FILM.json` has per-work `startMs`) | `check-demo-assets.py` (SHA-256, record) |
+| Artwork film, portrait 720×1080 for the passenger display | `res/raw/met_artwork_film_portrait.mp4` | yes | `render-met-artwork-film.py --orientation portrait` (full-bleed Ken Burns pans, bottom captions; `FILM_PORTRAIT.json`, same `startMs`) | `check-demo-assets.py`, `check-nyc-demo.py` (timing equals `FILM.json`) |
+| Route, Met, NWS, chargers | `demo/fixtures/{route,nws,chargers}/` | yes | `scripts/fetch-nyc-met-fixtures.py`, `scripts/fetch-ev-chargers.py` (`python3 -I`) | `check-nyc-demo.py` (context) |
+| `nyc_met` chapter title ("Thursday at The Met") | `demo/cards/nyc_met-title.png` | yes | `render-demo-cards.py title` | `check-nyc-demo.py` |
+| `nyc_met` intermission ("Later that afternoon", "5:15 PM · back in the car") | `demo/cards/nyc_met-intermission.png` | yes | `render-demo-cards.py title` | `check-nyc-demo.py` (covers the chapter-2 switch, silent) |
 
 Generated `demo_*` media hold no third-party content (the placeholder video is not Big Buck Bunny).
 `bbb_passenger.mp4` is: Big Buck Bunny (c) copyright 2008, Blender Foundation / www.bigbuckbunny.org,
-CC BY 3.0, trimmed and re-encoded. ElevenLabs licensing is unverified for outward use.
+CC BY 3.0, trimmed and re-encoded. `nyc_met` credits: route, chargers and café © OpenStreetMap
+contributors (ODbL), routed by OSRM; café findings link their sources (`COFFEE.json`); artworks The Metropolitan Museum of Art Open Access (CC0); weather U.S.
+National Weather Service (public domain). The only mark is the Muse icon on the closing card's Muse
+badge, used to identify Meta's Muse (a Meta trademark); no endorsement implied. The six `met_guide_*`
+lines are Muse's, copied from `AUDIO_GUIDE.json`, each citing only The Met's page for that work
+(and Smarthistory's for Aristotle). ElevenLabs licensing is unverified for outward use.
 Regenerating spends credits: `--dry-run`, then `--verify-personas`, then bare.
 
 **Claims.** Proves Host B rendering, policy on injected phrases, parked confirmation, live

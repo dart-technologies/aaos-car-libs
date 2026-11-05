@@ -1,0 +1,14 @@
+Update scripts/fetch-met-open-access.py in this repository to the current Met Collection API (spec: https://metmuseum.github.io/). Modify only that file.
+
+Facts from the spec:
+- /public/collection/v1/search was retired on 2026-10-01 and now returns HTTP 410.
+- Use https://collectionapi.metmuseum.org/public/collection/v1.1/search instead. Same filters (q, isHighlight, title, tags, departmentId, isOnView, artistOrCulture, medium, hasImages, geoLocation, dateBegin+dateEnd); q is optional.
+- v1.1 pages with offset (zero-based, default 0) and limit (default 100, max 500); offset+limit must not exceed 10000. Response: total (all matches) and objectIDs (this page only). Ordering may differ from v1.
+- /v1/objects/<id> is unchanged. Keep requests well under 80 per second.
+
+Changes:
+- Search via v1.1 with isHighlight=true&hasImages=true&departmentId=11, paging with limit=100 until enough public-domain objects with images are collected or results run out (respect the 10000 cap).
+- Keep the --ids override, deterministic ordering (sort IDs ascending before fetching objects), the SOURCE.json format and all existing behaviour.
+- Add "apiVersion": "v1.1 search, v1 objects" to SOURCE.json.
+- Keep comments brief and keep the two licence header lines unchanged.
+Then run: python3 -m py_compile scripts/fetch-met-open-access.py and report. Do not run the script.
