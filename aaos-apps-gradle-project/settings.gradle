@@ -103,6 +103,8 @@ include ':car-messenger-common:model'
 // Dart fork additions. :a2ui-model is the shared surface model and prune policy, renderer-free so
 // it runs in a local JVM. Host A (androidx.car.app) renders through the stock templates host,
 // which can reject what it is given.
+include ':a2ui-model'
+project(':a2ui-model').projectDir = new File('../a2ui-model')
 
 
 // Host B: the same model rendered by car-ui-lib through the OEM plugin. Neither host depends on

@@ -1,0 +1,91 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// The A2UI surface model and the restriction policy that prunes it, shared by both hosts. It
+// depends on nothing that renders, so the whole policy layer runs in a local JVM.
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace = 'art.dart.a2ui'
+    compileSdk = gradle.ext.aaosLatestSDK
+
+
+    defaultConfig {
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+            // scripts/compare-providers.py's harness reads and writes files that exist only around
+            // a provider run, so it stays out of the unit suite; the two tasks below run it.
+            all {
+                exclude 'art/dart/a2ui/harness/UseCaseCorpusExport*'
+                exclude 'art/dart/a2ui/harness/GatewayOutputVerification.*'
+                exclude 'art/dart/a2ui/harness/GatewayOutputVerification$*'
+            }
+        }
+    }
+
+    // Tests only: A2uiRestrictionPolicyTest#constantsMatchThePlatform pins the duplicated
+    // UX_RESTRICTIONS_* constants against android.car.jar.
+    useLibrary 'android.car'
+}
+
+dependencies {
+    api libs.androidx.annotation
+
+    testImplementation libs.junit
+    testImplementation libs.truth
+    // The catalog contract test parses a2ui-automotive/conformance/automotive.yaml directly, so the
+    // Java policy and the published conformance suite cannot drift apart silently.
+    testImplementation libs.snakeyaml
+}
+
+// Operator harness for scripts/compare-providers.py. Each task runs one harness class on the debug
+// unit-test classpath and requires its -P path, so it can never pass by skipping.
+[
+    exportUseCaseCorpus: ['art.dart.a2ui.harness.UseCaseCorpusExport', 'a2ui.corpusExport'],
+    verifyGatewayOutputs: ['art.dart.a2ui.harness.GatewayOutputVerification', 'a2ui.providerRuns'],
+].each { taskName, spec ->
+    tasks.register(taskName, Test) {
+        group = 'verification'
+        description = "Runs ${spec[0]} (-P${spec[1]}=<path>)"
+        def unit = tasks.named('testDebugUnitTest', Test).get()
+        testClassesDirs = unit.testClassesDirs
+        classpath = unit.classpath
+        useJUnit()
+        filter { includeTestsMatching spec[0] }
+        outputs.upToDateWhen { false }
+        def required = providers.gradleProperty(spec[1])
+        def report = providers.gradleProperty('a2ui.providerVerification')
+        doFirst {
+            if (!required.isPresent()) {
+                throw new GradleException("${taskName} needs -P${spec[1]}=<absolute path>")
+            }
+            systemProperty spec[1], required.get()
+            if (report.isPresent()) systemProperty 'a2ui.providerVerification', report.get()
+        }
+    }
+}
