@@ -47,8 +47,58 @@ scripts/run-nyc-demo.py nyc_concierge /tmp/nyc-concierge.mp4 --display-id "$DISP
 
 `run-nyc-demo.py` refuses another AVD, a second device, an inferred display, a non-debuggable Host B,
 a stale STT fixture or a failed car-service transition (never substitutes `DEMO`), restores park on
-exit, checks the MP4 (60–90 s, near target, ≥5 distinct frames, H.264/AAC, audible) and writes a
-sidecar binding APK, manifest, fixtures and source state. MP4s stay outside git.
+exit, checks the MP4 (exactly the manifest's 60–180 s, ≥5 distinct frames, H.264/AAC, audible) and
+writes a sidecar binding APK, manifest, fixtures and source state. MP4s stay outside git.
+
+A scenario with `"recording": {"layout": "dual"}` also needs `--passenger-display-id` (reference AVD:
+`4619827551948147201`). It records both physical displays with two `screenrecord` streams and
+composes them at 1920×1080, driver left (1344×756), passenger right (504×756), labelled "Driver"
+and "Passenger". The passenger stream starts at its first `passenger` action; until then the panel
+shows a frame captured from that display 3 s earlier. Optional `chapterCards`: 1920×1080 PNGs over
+the driver's picture at their `atMs` on the timeline, each held 2–3.5 s; the first opens the
+timeline, and a later one with `fadeIn`/`fadeOut` eases in and out (an intermission that hides a case
+switch and a clock jump). Every card's fade-out dips through dark: for its first half the card's
+content eases to the background while the card is still opaque, then the dark lifts off the live
+screen, so its text never ghosts over the next chapter's. Optional `endCardHoldFromMs` freezes
+from there to the end. The canvas,
+panel boxes, label and disclaimer positions are module constants at the top of `run-nyc-demo.py`.
+
+Post-production, after capture and from the same raw recording, so it always matches the UI:
+
+- `preamble`: cards prepended before the timeline. Each names a `style` (`unsafe`: the frame tinted
+  red under a red "Driving · 40 mph" chip; `useless`: greyed under a lock and `lockText`; `answer`:
+  untouched), the `frameAtMs` of the raw driver frame it wraps, `seconds` and its narration
+  `clipId`. No caption is baked in: the burned-in captions carry the narration.
+- `outro`: a closing card after the timeline, fading in over its held last frame. A calm `note`
+  on top, the journey as vehicle-state segments from the `carState` actions (green parked, blue
+  driving, labelled with `places`), a real thumbnail at each `beats` time (driver above, passenger
+  below the driving segments; a placeholder tile if a frame cannot be extracted), and the
+  `architecture` as title-only boxes (one may be a `badge` pill, with the outro's optional
+  `badgeIcon`). It ends above the caption band. An optional `closingClipId` speaks after its `clipId`.
+- `disclaimer`: a PNG line in the canvas margin, outside both panels, for the whole video. In the
+  cockpit it sits in the rail band and is gone before the closing card fades in.
+- A narration clip may carry `spoken`, the words the voice says when the caption's would be
+  mangled; captions and the SRT keep `text`.
+- Clips take an optional `section`: `preamble` clips count from the start of the video, `outro`
+  clips from the closing card, the rest from the device timeline. The video is preamble + timeline +
+  outro and must stay within 60–180 s; `durationSeconds` is the device timeline.
+
+A dual recording is composed in a cockpit by default (`--no-cockpit` restores the side-by-side
+canvas): `cards/cockpit-frame.png`, one still frame for the whole video, with the driver (1312×738)
+and passenger (492×738) recordings in its windows at one scale (`cards/cockpit-layout.json`). When
+the layout names intro screens (its optional `intro`) the video opens on them, pushing in 2.5% for
+3.1 s with a screen glow; from 2.0 s an eased 1.1 s crossfade turns them into the first preamble
+card. The preamble plays inside the driver window, as do the chapter cards. The closing card covers
+the whole canvas. Captions (every section, from the real
+speech lengths; a "Passenger" tag on guest lines) and the story rail (the scenario's `storyBeats`:
+beat, progress, Parked or Driving) are PNGs from `scripts/demo_overlays.py` (Pillow, in a child process), and the SRT is
+written next to the video. An intro adds 2.0 s.
+
+`--render-only` composes an earlier capture without a device (`--from-raw <prefix>` names
+`<prefix>.raw.mp4`, `.passenger.raw.mp4`, `.passenger-idle.png`; `--passenger-start` its stream
+start). `python3 scripts/test_run_nyc_demo.py` checks the timeline, the composition, the preamble, the
+closing card (thumbnails and the placeholder fallback) and the disclaimer without a device
+(synthetic `lavfi` recordings, pixel read-back).
 
 ```bash
 scripts/record-demo.sh --list            # 10 corpus cases + restrictions, voice-a, voice-b, handoff
@@ -66,9 +116,17 @@ Recorders drive debug-only broadcasts and fail on a screen that never changed. T
 | Route preview, poster, album art, 8 s MP4, 12 s M4A | `a2ui-host-carui/src/main/res/{drawable-nodpi,raw}/demo_*` | yes | `scripts/generate-a2ui-demo-assets.sh` (ffmpeg, libx264, AAC) | `check-demo-assets.py` (SHA-256) |
 | 19 TTS clips, 6 STT fixtures, 4 SFX | `a2ui-automotive/demo/audio/elevenlabs/` | **no** | `scripts/prepare-elevenlabs-demo-audio.py` (`ELEVENLABS_API_KEY`, ≤10,000 credits) | `check-nyc-demo.py --require-audio` |
 | Claude corpus cache | `build/claude-corpus-cache/` | no | `scripts/claude-corpus-tester.py` | gateway schema on replay |
+| Passenger clip, 19.3 s 720p | `a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4` | yes | ffmpeg trim of Blender's MP4 (`demo/fixtures/bbb/SOURCE.json`) | `check-demo-assets.py` (SHA-256, source record) |
+| Passenger clip, portrait 480×720 (2:3, audio copied) | `res/raw/bbb_passenger_portrait.mp4` | yes | ffmpeg crop of `bbb_passenger.mp4`, window following the subject (`demo/fixtures/bbb/SOURCE.json` `portrait`, `SOURCE_PORTRAIT.json`) | `check-demo-assets.py` (SHA-256, record) |
+| Panel labels, a scenario's margin disclaimer | `a2ui-automotive/demo/cards/label-*.png`, its `disclaimer.image` | yes | `scripts/render-demo-cards.py labels`, `disclaimer` (Pillow; this ffmpeg has no drawtext) | `test_run_nyc_demo.py`, `check-nyc-demo.py` |
+| Preamble and closing cards | next to the output (`<out>.preamble-N.png`, `<out>.outro.png`) | no | `run-nyc-demo.py` → `render-demo-cards.py preamble`, `outro`, from the raw recording's frames | `test_run_nyc_demo.py` |
+| Cockpit frame, intro glow, layout | `demo/cards/cockpit-{frame,glow}.png`, `cockpit-layout.json` | yes | `scripts/demo_overlays.py cockpit` (procedural) | `test_demo_overlays.py` (windows are exactly the boxes) |
+| Captions, story rail, intro frames, SRT | next to the output (`<out>.overlays/`, `<out>.srt`) | no | `run-nyc-demo.py` → `demo_overlays.py overlays` | `test_demo_overlays.py`, `test_run_nyc_demo.py` |
 
-Generated media hold no third-party content (the video is not Big Buck Bunny footage). ElevenLabs licensing
-is unverified for outward use. Regenerating spends credits: `--dry-run`, then `--verify-personas`, then bare.
+Generated `demo_*` media hold no third-party content (the placeholder video is not Big Buck Bunny).
+`bbb_passenger.mp4` is: Big Buck Bunny (c) copyright 2008, Blender Foundation / www.bigbuckbunny.org,
+CC BY 3.0, trimmed and re-encoded. ElevenLabs licensing is unverified for outward use.
+Regenerating spends credits: `--dry-run`, then `--verify-personas`, then bare.
 
 **Claims.** Proves Host B rendering, policy on injected phrases, parked confirmation, live
 re-projection, audio continuity. Not a live agent, live location/inventory/payment, production
