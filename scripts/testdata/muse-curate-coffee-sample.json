@@ -1,0 +1,390 @@
+{
+ "note": "Recorded 2026-11-04 by scripts/muse-curate-coffee.py (muse-spark-1.3) for six of the nineteen cafés near the ChargePoint charger: Overpass elements (tags trimmed), each café's url_citation sources (findings cut to 400 characters) and the scoring call's raw answer. Replayed by test_muse_curate_coffee.py without network.",
+ "charger": {
+  "name": "ChargePoint",
+  "hostLabel": "ChargePoint",
+  "operator": "ChargePoint",
+  "osmId": "node/5620136933",
+  "osmUrl": "https://www.openstreetmap.org/node/5620136933",
+  "lat": 40.777871,
+  "lon": -73.957203,
+  "selection": "the first row Host B draws (nearest its origin), which \"take me to the first one\" selects"
+ },
+ "pick": "node/2620513899",
+ "overpass": {
+  "osm3s": {
+   "timestamp_osm_base": "2026-11-04T17:56:21Z",
+   "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+   {
+    "type": "node",
+    "id": 663355907,
+    "lat": 40.7786106,
+    "lon": -73.9606629,
+    "tags": {
+     "amenity": "cafe",
+     "name": "City Market Cafe"
+    }
+   },
+   {
+    "type": "node",
+    "id": 1020359759,
+    "lat": 40.780542,
+    "lon": -73.954568,
+    "tags": {
+     "addr:housenumber": "1309",
+     "addr:street": "Lexington Avenue",
+     "amenity": "cafe",
+     "brand": "Le Pain Quotidien",
+     "name": "Le Pain Quotidien"
+    }
+   },
+   {
+    "type": "node",
+    "id": 2620513899,
+    "lat": 40.7774839,
+    "lon": -73.9552436,
+    "tags": {
+     "addr:housenumber": "1488",
+     "addr:street": "3rd Avenue",
+     "amenity": "cafe",
+     "brand": "Starbucks",
+     "name": "Starbucks"
+    }
+   },
+   {
+    "type": "node",
+    "id": 6250062022,
+    "lat": 40.7788421,
+    "lon": -73.9558617,
+    "tags": {
+     "addr:housenumber": "1269",
+     "addr:street": "Lexington Avenue",
+     "amenity": "cafe",
+     "name": "Variety Coffee Roasters"
+    }
+   },
+   {
+    "type": "node",
+    "id": 9448907812,
+    "lat": 40.779167,
+    "lon": -73.9560063,
+    "tags": {
+     "addr:housenumber": "1270",
+     "addr:street": "Lexington Avenue",
+     "amenity": "cafe",
+     "brand": "Paris Baguette",
+     "name": "Paris Baguette"
+    }
+   },
+   {
+    "type": "node",
+    "id": 11281910248,
+    "lat": 40.7801272,
+    "lon": -73.9553231,
+    "tags": {
+     "addr:housenumber": "1280",
+     "addr:street": "Lexington Avenue",
+     "amenity": "cafe",
+     "brand": "Ole & Steen",
+     "name": "Ole & Steen"
+    }
+   }
+  ]
+ },
+ "found": {
+  "node/2620513899": {
+   "sources": [
+    {
+     "url": "https://www.hours-locations.com/starbucks/ny/new-york/1488-third-avenue-a/amp/",
+     "title": "Starbucks New York NY: 1488 Third Avenue #A - Hours & Locations"
+    },
+    {
+     "url": "https://unilocal.net/united-states/new-york/starbucks-67734",
+     "title": "Starbucks – New York, 1488 3rd Ave Ste A (20 reviews, address and phone number)"
+    }
+   ],
+   "findings": "The location is listed as the active Starbucks at 84th and Third at 1488 Third Avenue #A in New York with phone number 212-744-7458. No source found states that it has closed at this address. Thursday hours are reported as 6:00 AM to 10:00 PM. Another listing also reports Thursday as 6:00 am to 10:00 pm. A different listing reports Monday through Friday as 6:00 AM to 7:00 PM. Under either reported …"
+  },
+  "node/6250062022": {
+   "sources": [
+    {
+     "url": "https://wanderlog.com/place/details/474327/variety-coffee-roasters",
+     "title": "Variety Coffee Roasters"
+    },
+    {
+     "url": "https://www.restaurantji.com/ny/new-york/variety-coffee-roasters-/",
+     "title": "Variety Coffee Roasters"
+    },
+    {
+     "url": "https://www.doordash.com/store/variety-coffee-new-york-597855/en-US",
+     "title": "Order Variety Coffee - New York, NY Menu Delivery [Menu & Prices] | New York - DoorDash"
+    }
+   ],
+   "findings": "Variety Coffee Roasters still lists its Upper East Side shop at 1269 Lexington Ave, New York, NY 10028. Its listed Thursday hours are 7AM–9PM, so it is open between 5 and 6 pm on Thursday. Reviewers recommend trying the oat milk latte or iced oat flat white at this shop. A delivery menu for Variety Coffee at that address lists Latte at $4.50, but an oat-milk-specific price is not stated and those  …"
+  },
+  "node/11281910248": {
+   "sources": [
+    {
+     "url": "https://www.ubereats.com/store/ole-%26-steen-uess/l6no3ClkUr21139ouMPwgQ",
+     "title": "Order Ole & Steen UES Menu Delivery in New York | Menu & Prices | Uber Eats"
+    }
+   ],
+   "findings": "Ole & Steen UES is listed at 1280 Lexington Avenue in New York, indicating it still operates at that address. Uber Eats states that delivery from Ole & Steen UES is available in New York. Its listed hours are Sunday 08:00–19:00 and Monday through Friday 06:30–19:00, including Thursday. Those Thursday hours mean it is open between 5 and 6 pm, covering a 5:15 to 5:45 pm visit. The location’s deliver …"
+  },
+  "node/9448907812": {
+   "sources": [
+    {
+     "url": "https://parisbaguette.com/locations/ny/new-york/1270-lexington-avenue/",
+     "title": "Paris Baguette at 1270 Lexington Avenue, New York, NY | Cakes, Coffee, Pastries"
+    },
+    {
+     "url": "https://parisbaguette.com/menu/",
+     "title": "Paris Baguette Menu"
+    }
+   ],
+   "findings": "Paris Baguette still lists its 1270 Lexington café at 1270 Lexington Avenue, New York NY 10028 with contact number (551) 212-0404, indicating it operates at this address. Its official café hours show Thursday as 5:00 AM to 11:00 PM. The café is therefore open between 5 and 6 pm on Thursday, including the November 5, 2026 visit window around 5:15 to 5:45 pm. The brand’s official menu describes hot  …"
+  },
+  "node/663355907": {
+   "sources": [
+    {
+     "url": "http://menuwithprice.com/menu/city-market-cafe/new-york/new-york/391374/",
+     "title": "City Market Cafe at 1100 Madison Ave, New York, NY - Locations and Hours"
+    }
+   ],
+   "findings": "City Market Cafe is still listed at 1100 Madison Ave Frnt 5, New York, NY 10028, with directory listings describing it as open now and giving that address. A directory listing gives its hours as 6:00 am to 9:00 pm, so that listing indicates it is open between 5 and 6 pm on Thursday, although Thursday-specific hours for this Madison Avenue location are not stated. A menu for the 1100 Madison Ave lo …"
+  }
+ },
+ "shops": [
+  {
+   "id": "node/6250062022",
+   "oatMilkLatte": {
+    "evidence": "Reviewers recommend trying the oat milk latte or iced oat flat white at this shop.",
+    "score": 5,
+    "sources": [
+     1,
+     2
+    ]
+   },
+   "open": {
+    "closes": "21:00",
+    "evidence": "Listed Thursday hours are 7AM-9PM, covering 5-6pm.",
+    "score": 5,
+    "sources": [
+     1,
+     2
+    ],
+    "verdict": "open"
+   },
+   "operating": {
+    "evidence": "Variety Coffee Roasters still lists its shop at 1269 Lexington Ave.",
+    "sources": [
+     1,
+     2,
+     3
+    ],
+    "status": "operating"
+   },
+   "pickup": {
+    "evidence": "Shop is listed with take-out and an order-online link, but DoorDash does not take pickup orders here.",
+    "score": 3,
+    "sources": [
+     1,
+     2,
+     3
+    ]
+   },
+   "price": {
+    "price": "",
+    "sources": []
+   },
+   "reputation": {
+    "evidence": "Described as a gem with excellent coffee and friendly baristas with ratings of 4.1 and 4.4.",
+    "score": 5,
+    "sources": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "id": "node/2620513899",
+   "oatMilkLatte": {
+    "evidence": "Starbucks menu customization includes Caffe Latte with nondairy options including oat milk.",
+    "score": 5,
+    "sources": [
+     1,
+     2
+    ]
+   },
+   "open": {
+    "closes": "19:00",
+    "evidence": "Thursday is reported as 6AM-10PM but another listing gives Mon-Fri 6AM-7PM, so using earliest close 19:00 it still covers 5-6pm.",
+    "score": 5,
+    "sources": [
+     1,
+     2
+    ],
+    "verdict": "open"
+   },
+   "operating": {
+    "evidence": "Location is listed as the active Starbucks at 1488 Third Avenue with no closure stated.",
+    "sources": [
+     1,
+     2
+    ],
+    "status": "operating"
+   },
+   "pickup": {
+    "evidence": "Location accepts mobile orders with ordering ahead in the app and picking up without waiting.",
+    "score": 5,
+    "sources": [
+     1,
+     2
+    ]
+   },
+   "price": {
+    "price": "",
+    "sources": []
+   },
+   "reputation": {
+    "evidence": "Reviewers call staff extremely friendly and line very fast with efficient grab-and-go service.",
+    "score": 5,
+    "sources": [
+     2
+    ]
+   }
+  },
+  {
+   "id": "node/9448907812",
+   "oatMilkLatte": {
+    "evidence": "Delivery menu for this location lists a Pumpkin Chai Oatmilk Latte at 7.86 USD.",
+    "score": 5,
+    "sources": [
+     1,
+     2
+    ]
+   },
+   "open": {
+    "closes": "23:00",
+    "evidence": "Official cafe hours show Thursday 5:00AM to 11:00PM, covering 5-6pm.",
+    "score": 5,
+    "sources": [
+     1
+    ],
+    "verdict": "open"
+   },
+   "operating": {
+    "evidence": "Paris Baguette still lists its 1270 Lexington cafe at that address.",
+    "sources": [
+     1
+    ],
+    "status": "operating"
+   },
+   "pickup": {
+    "evidence": "Paris Baguette app says users can place individual orders for pickup or delivery in advance.",
+    "score": 5,
+    "sources": [
+     1,
+     2
+    ]
+   },
+   "price": {
+    "price": "$7.86",
+    "sources": [
+     1
+    ]
+   },
+   "reputation": {
+    "evidence": "Specific shop has 3.6 from 288 ratings with mixed rude/nice remarks and 4.4 from 492 reviews.",
+    "score": 3,
+    "sources": [
+     1
+    ]
+   }
+  },
+  {
+   "id": "node/11281910248",
+   "oatMilkLatte": {
+    "evidence": "Review page mentions Latte w/ Oat Milk as a solid beverage though menu listing lacks oat option.",
+    "score": 5,
+    "sources": [
+     1
+    ]
+   },
+   "open": {
+    "closes": "19:00",
+    "evidence": "Monday-Friday hours including Thursday are 06:30-19:00, covering a 5:15-5:45pm visit.",
+    "score": 5,
+    "sources": [
+     1
+    ],
+    "verdict": "open"
+   },
+   "operating": {
+    "evidence": "Ole & Steen UES is listed at 1280 Lexington Avenue with delivery available.",
+    "sources": [
+     1
+    ],
+    "status": "operating"
+   },
+   "pickup": {
+    "evidence": "Uber Eats shows a Pickup option and the app offers Click & Collect to pay and have order packed.",
+    "score": 5,
+    "sources": [
+     1
+    ]
+   },
+   "price": {
+    "price": "",
+    "sources": []
+   },
+   "reputation": {
+    "evidence": "Has 4.7 from over 500 ratings with food called fresh and delicious.",
+    "score": 5,
+    "sources": [
+     1
+    ]
+   }
+  },
+  {
+   "id": "node/663355907",
+   "oatMilkLatte": {
+    "evidence": "Menu lists Cafe Latte but oat milk is not stated.",
+    "score": 0,
+    "sources": []
+   },
+   "open": {
+    "closes": "",
+    "evidence": "Hours are given as 6am-9pm but Thursday-specific hours are not stated.",
+    "score": 0,
+    "sources": [],
+    "verdict": "unknown"
+   },
+   "operating": {
+    "evidence": "City Market Cafe is still listed at 1100 Madison Ave as open now.",
+    "sources": [
+     1
+    ],
+    "status": "operating"
+   },
+   "pickup": {
+    "evidence": "Whether ordering ahead online or counter service is offered is not stated.",
+    "score": 0,
+    "sources": []
+   },
+   "price": {
+    "price": "",
+    "sources": []
+   },
+   "reputation": {
+    "evidence": "Visitor review recommends it for a quick light meal at a reasonable price.",
+    "score": 3,
+    "sources": [
+     1
+    ]
+   }
+  }
+ ]
+}

@@ -49,7 +49,8 @@ Muse misses the 10 s realtime deadline on about one turn in five. Those turns ge
 as a labelled fallback, or wait up to 30 s when nothing is cached; none timed out. Per run, p50 was
 8.9, 8.6 and 8.1 s and p95 11.7, 15.3 and 18.5 s. The one host-invalid answer, `modal_confirmation`
 at 18.5 s, failed Host B's projection (`project.integrity`). The quality row omits the brief's web
-search (the comparison drops modes).
+search (the comparison drops modes); the committed cited brief took 37.7 s (`BRIEF.json`
+`elapsedMs`).
 
 ## What the gateway enforces
 

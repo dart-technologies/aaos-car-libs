@@ -37,6 +37,14 @@ EXPECTED = {
         "d553b28c8e86ce574d79e68f3cee220f4c234a5da3d2609a277fa205c77a551b",
     "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4":
         "8ca6121326adfc437ee9eb902344bd27e023f338f69202e4605d10844f6f4609",
+    "a2ui-host-carui/src/main/res/drawable-nodpi/route_met.png":
+        "ff7c13c499e839875693135369101391150045c91baa88d9cd2bf3f5db03a071",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4":
+        "aa1cbf2b9b919ea3e7f2b12c1992daf6d4d35aca25bcda586658d1a06db37997",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film_portrait.mp4":
+        "c762a2165032210612ed7e7f1bf9f151966cfd5c1e48e7e467c239245c37b95d",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film_wide.mp4":
+        "ab76e6f3d19e55b32625e0c50e528a8af4c83a749b4edbeb288130eed8e3cee4",
     "a2ui-host-carui/src/main/res/raw/bbb_passenger_portrait.mp4":
         "fe80570672a0be0508453ab93e309c514ad02e98b5d1bafc99b0bfa99b875ce5",
 }
@@ -44,11 +52,20 @@ EXPECTED = {
 PROVENANCE = {
     "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4":
         "a2ui-automotive/demo/fixtures/bbb/SOURCE.json",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4":
+        "a2ui-automotive/demo/fixtures/met/FILM.json",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film_portrait.mp4":
+        "a2ui-automotive/demo/fixtures/met/FILM_PORTRAIT.json",
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film_wide.mp4":
+        "a2ui-automotive/demo/fixtures/met/FILM_WIDE.json",
     "a2ui-host-carui/src/main/res/raw/bbb_passenger_portrait.mp4":
         "a2ui-automotive/demo/fixtures/bbb/SOURCE_PORTRAIT.json",
 }
 MAX_BYTES = {
     "a2ui-host-carui/src/main/res/raw/bbb_passenger.mp4": 4_000_000,
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film.mp4": 6_000_000,
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film_portrait.mp4": 6_000_000,
+    "a2ui-host-carui/src/main/res/raw/met_artwork_film_wide.mp4": 6_000_000,
     "a2ui-host-carui/src/main/res/raw/bbb_passenger_portrait.mp4": 4_000_000,
 }
 

@@ -1,0 +1,74 @@
+{
+  "source": "The Metropolitan Museum of Art Open Access",
+  "license": "CC0 1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "fetchedAt": "2026-11-04T15:48:02.045097Z",
+  "objects": [
+    {
+      "objectID": 436535,
+      "title": "Wheat Field with Cypresses",
+      "artistDisplayName": "Vincent van Gogh",
+      "objectDate": "1889",
+      "galleryNumber": "",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/436535",
+      "imageUrl": "https://images.metmuseum.org/CRDImages/ep/web-large/DP-42549-001.jpg",
+      "file": "436535.jpg",
+      "sha256": "af0e3486621c210b54932d055294051b5601aa3362af4b84ab97e2831f8163bc"
+    },
+    {
+      "objectID": 437881,
+      "title": "Young Woman with a Water Pitcher",
+      "artistDisplayName": "Johannes Vermeer",
+      "objectDate": "ca. 1662",
+      "galleryNumber": "",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/437881",
+      "imageUrl": "https://images.metmuseum.org/CRDImages/ep/web-large/DP353257.jpg",
+      "file": "437881.jpg",
+      "sha256": "13120aa067755f1f50d2b900417807ef9da3f8b2b63a1bbea428fe3f2d8d00a9"
+    },
+    {
+      "objectID": 437394,
+      "title": "Aristotle with a Bust of Homer",
+      "artistDisplayName": "Rembrandt (Rembrandt van Rijn)",
+      "objectDate": "1653",
+      "galleryNumber": "",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/437394",
+      "imageUrl": "https://images.metmuseum.org/CRDImages/ep/web-large/DP-30758-001.jpg",
+      "file": "437394.jpg",
+      "sha256": "06e64703d92fed63c6238d15ed32d582792397b238458bf1893530eb8d91e3f4"
+    },
+    {
+      "objectID": 435809,
+      "title": "The Harvesters",
+      "artistDisplayName": "Pieter Bruegel the Elder",
+      "objectDate": "1565",
+      "galleryNumber": "",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/435809",
+      "imageUrl": "https://images.metmuseum.org/CRDImages/ep/web-large/DP119115.jpg",
+      "file": "435809.jpg",
+      "sha256": "98dc6d6e23c008b23056108d04d9143b8c7f73fe6fa2a940fd09663290135e25"
+    },
+    {
+      "objectID": 436105,
+      "title": "The Death of Socrates",
+      "artistDisplayName": "Jacques Louis David",
+      "objectDate": "1787",
+      "galleryNumber": "",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/436105",
+      "imageUrl": "https://images.metmuseum.org/CRDImages/ep/web-large/DP-13139-001.jpg",
+      "file": "436105.jpg",
+      "sha256": "7d8d840424e3747c14b203b67192fff726c897bb05cf9d3f7fa227e1ee4510de"
+    },
+    {
+      "objectID": 435868,
+      "title": "The Card Players",
+      "artistDisplayName": "Paul C\u00e9zanne",
+      "objectDate": "1890\u201392",
+      "galleryNumber": "",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/435868",
+      "imageUrl": "https://images.metmuseum.org/CRDImages/ep/web-large/DP231550.jpg",
+      "file": "435868.jpg",
+      "sha256": "23257f41fb04bd058dd01cb51b2883847fbc877d5409c66b2aa0cfc985de2f71"
+    }
+  ]
+}

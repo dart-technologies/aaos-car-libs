@@ -73,6 +73,7 @@
         "brief": {
           "adapter": "meta_responses",
           "searchEffort": "low",
+          "asOf": "Thursday, November 5, 2026",
           "webSearch": {
             "search_context_size": "low",
             "user_location": { "type": "approximate", "city": "New York", "region": "New York", "country": "US", "timezone": "America/New_York" }

@@ -42,4 +42,7 @@ Third-party content:
 - car-ui-lib-plugin-apis 1.5.0 (car-ui-lib/oem-apis/prebuilts/), from Google Maven,
   Apache License 2.0.
 - Demo media and data (demo only, not part of the libraries):
-  Big Buck Bunny (c) copyright 2008, Blender Foundation, www.bigbuckbunny.org, CC BY 3.0.
+  Big Buck Bunny (c) copyright 2008, Blender Foundation, www.bigbuckbunny.org, CC BY 3.0;
+  route data (c) OpenStreetMap contributors, ODbL 1.0;
+  artworks from The Metropolitan Museum of Art Open Access, CC0 1.0;
+  weather from the U.S. National Weather Service, public domain.

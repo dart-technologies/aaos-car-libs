@@ -5,6 +5,9 @@
 
 The API key is accepted only from ELEVENLABS_API_KEY. Provider responses are reduced to the
 minimum reproducibility metadata; account data and request identifiers are never persisted.
+
+--stt muse instead transcribes the cached guest clips with Muse Voice Transcribe (key from
+META_API_KEY only) into the same transcript fixtures, and makes no ElevenLabs request.
 """
 
 from __future__ import annotations
@@ -16,7 +19,9 @@ import math
 import os
 import pathlib
 import re
+import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -26,6 +31,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 DEFAULT_MANIFEST = ROOT / "a2ui-automotive/demo/nyc-scenarios-v1.json"
 DEFAULT_OUTPUT = ROOT / "a2ui-automotive/demo/audio/elevenlabs"
 API = "https://api.elevenlabs.io"
+# https://dev.meta.ai/docs/speech-to-text: multipart "request" (JSON) + "audio" (WAV only: mono
+# 16-bit PCM at 16 or 24 kHz); the reply's "transcript" is the text.
+MUSE_STT_URL = "https://api.meta.ai/v1/asr/transcribe"
+MUSE_STT_MODEL = "muse-voice-transcribe-1.0"
 
 
 def canonical(value: object) -> bytes:
@@ -158,6 +167,95 @@ def verify_personas(key: str, personas: dict[str, dict]) -> None:
               f"{labels.get('accent', 'unlabelled accent')}")
 
 
+def wav_for_muse(mp3: pathlib.Path) -> bytes:
+    result = subprocess.run(["ffmpeg", "-v", "error", "-i", str(mp3), "-ac", "1", "-ar", "24000",
+                             "-c:a", "pcm_s16le", "-map_metadata", "-1", "-f", "wav", "-"],
+                            capture_output=True, timeout=60)
+    if result.returncode or len(result.stdout) < 1024:
+        raise RuntimeError(f"ffmpeg could not convert {mp3.name} to WAV")
+    return result.stdout
+
+
+def muse_transcribe(key: str, settings: dict, name: str, wav: bytes) -> tuple[dict, int]:
+    boundary = "----a2ui-" + digest(wav)[:24]
+    body = b"".join([
+        f"--{boundary}\r\n".encode(),
+        b'Content-Disposition: form-data; name="request"\r\n'
+        b"Content-Type: application/json\r\n\r\n", canonical(settings), b"\r\n",
+        f"--{boundary}\r\n".encode(),
+        f'Content-Disposition: form-data; name="audio"; filename="{name}.wav"\r\n'.encode(),
+        b"Content-Type: audio/wav\r\n\r\n", wav, b"\r\n", f"--{boundary}--\r\n".encode()])
+    req = urllib.request.Request(MUSE_STT_URL, data=body, method="POST", headers={
+        "Authorization": f"Bearer {key}", "Accept": "application/json",
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+        "User-Agent": "car-libs-fork-oem-demo/1"})
+    started = time.monotonic()
+    try:
+        with urllib.request.urlopen(req, timeout=120) as response:
+            raw = response.read()
+    except urllib.error.HTTPError as error:
+        # Status only: the body and headers stay out of logs.
+        raise RuntimeError(f"Meta POST /v1/asr/transcribe returned HTTP {error.code}") from None
+    except urllib.error.URLError as error:
+        raise RuntimeError(f"Meta request failed: {error.reason}") from None
+    return json.loads(raw), round((time.monotonic() - started) * 1000)
+
+
+def transcribe_with_muse(manifest: dict, args: argparse.Namespace) -> int:
+    """Guest clips (cached by the ElevenLabs run) through Muse Voice Transcribe."""
+    key = os.environ.get("META_API_KEY", "").strip()
+    if not key:
+        raise SystemExit("META_API_KEY is not set; no provider request was made")
+    utterances = [(sid, clip) for sid, clip in all_clips(manifest)
+                  if clip["role"] == "user_utterance" and (not args.clip or clip["id"] in args.clip)]
+    unknown = set(args.clip or []) - {clip["id"] for _, clip in utterances}
+    if unknown:
+        raise SystemExit(f"not guest utterance clips: {sorted(unknown)}")
+    settings = {"model": MUSE_STT_MODEL, "audioEncoding": "WAV", "mode": "PUSH_TO_TALK",
+                "languageBias": ["English"]}
+    transcribed = 0
+    for scenario_id, clip in utterances:
+        mp3 = args.output_dir / f"{clip['id']}.mp3"
+        meta = args.output_dir / f"{clip['id']}.tts.json"
+        audio = mp3.read_bytes() if mp3.exists() else b""
+        if not meta.exists() or read_json(meta).get("audioSha256") != digest(audio):
+            raise RuntimeError(f"no cached TTS clip for {clip['id']}; run without --stt muse first")
+        cache_key = digest(canonical({"audioSha256": digest(audio), "provider": "muse",
+                                      **settings}))
+        transcript_path = args.output_dir / "transcripts" / f"{clip['id']}.json"
+        cached = read_json(transcript_path) if transcript_path.exists() else {}
+        if cached.get("cacheKey") == cache_key and cached.get(
+                "dispatchText") == clip["expectedTranscript"]:
+            continue
+        response, latency_ms = muse_transcribe(key, settings, clip["id"], wav_for_muse(mp3))
+        transcript = str(response.get("transcript", "")).strip()
+        expected = normalized_transcript(clip["expectedTranscript"])
+        actual = normalized_transcript(transcript)
+        if actual != expected:
+            raise RuntimeError(f"STT mismatch for {clip['id']}: expected normalized "
+                               f"'{expected}', received '{actual}'")
+        write_json(transcript_path, {
+            "schemaVersion": 1,
+            "scenarioId": scenario_id,
+            "clipId": clip["id"],
+            "provider": "muse",
+            "modelId": MUSE_STT_MODEL,
+            "audioSha256": digest(audio),
+            "cacheKey": cache_key,
+            "expectedNormalized": expected,
+            "transcript": transcript,
+            "transcriptNormalized": actual,
+            "dispatchText": clip["expectedTranscript"],
+            "languageCode": None,
+            "audioDurationMs": response.get("audioDurationMs"),
+            "latencyMs": latency_ms,
+        })
+        transcribed += 1
+        print(f"muse stt {clip['id']}: '{transcript}' in {latency_ms} ms")
+    print(f"done: muse stt={transcribed}, cached={len(utterances) - transcribed}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=pathlib.Path, default=DEFAULT_MANIFEST)
@@ -170,6 +268,10 @@ def main() -> int:
                         help="Verify configured voice metadata without generating audio")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-stt", action="store_true")
+    parser.add_argument("--stt", choices=("elevenlabs", "muse"), default="elevenlabs",
+                        help="muse: Muse Voice Transcribe on the cached guest clips only")
+    parser.add_argument("--clip", action="append",
+                        help="with --stt muse: only this guest clip (repeatable)")
     args = parser.parse_args()
 
     manifest = read_json(args.manifest)
@@ -198,6 +300,8 @@ def main() -> int:
                          f"budget ({budget})")
     if args.dry_run:
         return 0
+    if args.stt == "muse":
+        return transcribe_with_muse(manifest, args)
 
     key = os.environ.get("ELEVENLABS_API_KEY", "").strip()
     if not key:

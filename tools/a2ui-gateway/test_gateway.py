@@ -432,13 +432,11 @@ class CliProfileOverrideTest(GatewayCase):
 class BriefAsOfTest(GatewayCase):
     def test_a_dated_snapshot_reaches_the_search_and_the_cache_key(self):
         gw = self.gateway(FakeVendor(), env={"META_API_KEY": KEY})
-        brief = self.config["providers"]["muse"]["modes"]["brief"]
-        brief.pop("asOf", None)
+        dated = gw.search("muse", "quality_cached")
+        self.assertIn("Today is Thursday, November 5, 2026", dated["instructions"])
+        self.config["providers"]["muse"]["modes"]["brief"].pop("asOf")
         undated = gw.search("muse", "quality_cached")
         self.assertNotIn("Today is", undated["instructions"])
-        brief["asOf"] = "Friday, January 1, 2027"
-        dated = gw.search("muse", "quality_cached")
-        self.assertIn("Today is Friday, January 1, 2027", dated["instructions"])
 
 
 class HttpTest(GatewayCase):
@@ -554,8 +552,8 @@ class AdapterShapeTest(unittest.TestCase):
         self.assertIsNone(adapters._NoRedirect().redirect_request(None, None, 302, "", {}, "x"))
 
 
-CITED = [("https://www.brooklynmuseum.org/visit", "Visit | Brooklyn Museum"),
-         ("https://en.wikipedia.org/wiki/Brooklyn_Museum", "Brooklyn Museum")]
+CITED = [("https://www.metmuseum.org/visit/plan-your-visit", "Plan Your Visit | The Met"),
+         ("https://en.wikipedia.org/wiki/Metropolitan_Museum_of_Art", "Metropolitan Museum of Art")]
 LOCATION = {"type": "approximate", "city": "New York", "region": "New York", "country": "US",
             "timezone": "America/New_York"}
 
@@ -565,7 +563,7 @@ def meta_reply(text, cited=(), commentary=True):
     output = [{"type": "message", "phase": "commentary", "role": "assistant", "content": [
         {"type": "output_text", "text": "I'll look that up.", "annotations": []}]},
         {"type": "web_search_call", "status": "completed",
-         "action": {"type": "search", "query": "museum hours"}}] if commentary else []
+         "action": {"type": "search", "query": "met hours"}}] if commentary else []
     output.append({"type": "message", "role": "assistant", "content": [{
         "type": "output_text", "text": text, "annotations": [
             {"type": "url_citation", "url": url, "title": title, "start_index": 0,
@@ -611,7 +609,7 @@ class MuseBriefTest(GatewayCase):
                                 meta_reply(json.dumps(GOOD), commentary=False))
         with patch:
             live = self.gateway(adapters.complete, env={"META_API_KEY": KEY}).handle(
-                turn(provider="muse", text="Visit the museum today"))
+                turn(provider="muse", text="Visit The Met today"))
         self.assertEqual((live.status, live.source), (200, "live"))
         tool = sent[0]["body"]["tools"][0]
         self.assertEqual((tool["type"], tool["search_context_size"], tool["user_location"]),
@@ -620,8 +618,8 @@ class MuseBriefTest(GatewayCase):
         components = live.body["messages"][1]["updateComponents"]["components"]
         rows = [c for c in components if c["id"].startswith("source_")]
         self.assertEqual([(r["component"], r["title"], r["subtitle"]) for r in rows], [
-            ("Text", "Source · brooklynmuseum.org", "Visit | Brooklyn Museum"),
-            ("Text", "Source · en.wikipedia.org", "Brooklyn Museum")])
+            ("Text", "Source · metmuseum.org", "Plan Your Visit | The Met"),
+            ("Text", "Source · en.wikipedia.org", "Metropolitan Museum of Art")])
         root = next(c for c in components if c["id"] == "root")
         self.assertEqual(root["children"][-2:], ["source_1", "source_2"])  # cut first by a limit
         entry = json.loads(next(pathlib.Path(self.tmp.name).rglob("*.json")).read_text())
@@ -629,9 +627,27 @@ class MuseBriefTest(GatewayCase):
         # Replays exactly with no key and no vendor: the mode, not the key, sets the cache key.
         replay = self.gateway(FakeVendor(error=AssertionError("called")), env={},
                               offline=True).handle(
-            turn(provider="muse", text="Visit the museum today", turn_id="t2"))
+            turn(provider="muse", text="Visit The Met today", turn_id="t2"))
         self.assertEqual((replay.status, replay.source), (200, "cache"))
         self.assertEqual(replay.body["messages"], live.body["messages"])
+
+    def test_the_committed_met_brief_replays_offline_with_no_key(self):
+        # demo/fixtures/met/BRIEF.json is the cached answer the recording replays: its key must
+        # still be what this gateway computes for its request, or the recording would miss it.
+        brief = json.loads((contract.ROOT / "a2ui-automotive/demo/fixtures/met/BRIEF.json")
+                           .read_text(encoding="utf-8"))
+        path = (pathlib.Path(self.tmp.name) / brief["provider"] / brief["profile"]
+                / f"{brief['cacheKey']}.json")
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps(brief), encoding="utf-8")
+        request = dict(turn(provider="muse", text=brief["request"]["inputText"]),
+                       display=brief["request"]["display"])
+        replay = self.gateway(FakeVendor(error=AssertionError("called")), env={},
+                              offline=True).handle(request)
+        self.assertEqual((replay.status, replay.source), (200, "cache"))
+        self.assertEqual(replay.body["messages"], brief["output"]["messages"])
+        components = brief["output"]["messages"][1]["updateComponents"]["components"]
+        self.assertIn("Source · metmuseum.org", [c.get("title") for c in components])
 
     def test_plain_prompt_and_keys_hold_and_realtime_is_minimal_without_search(self):
         system, user = contract.build_prompt("find coffee", turn()["display"])
@@ -650,14 +666,14 @@ class MuseBriefTest(GatewayCase):
 
     def test_source_rows_are_bounded_unique_and_new_hosts_first(self):
         rows = contract.source_rows([
-            ("https://www.brooklynmuseum.org/visit", "Plan Your Visit"),
-            ("https://brooklynmuseum.org/visit#hours", "Plan Your Visit"),  # the same row: once
-            ("https://www.brooklynmuseum.org/exhibitions", "Exhibitions"),
+            ("https://www.metmuseum.org/visit", "Plan Your Visit"),
+            ("https://metmuseum.org/visit#hours", "Plan Your Visit"),  # the same row: once
+            ("https://www.metmuseum.org/exhibitions", "Exhibitions"),
             ("ftp://example.org/x", "not web"), ("javascript:alert(1)", "x"),
-            ("https://en.wikipedia.org/wiki/Brooklyn_Museum", "Brooklyn\n Museum\tof Art"),
-            ("https://nyc.gov/parks", "")])
-        self.assertEqual(rows, [("Source · brooklynmuseum.org", "Plan Your Visit"),
-                                ("Source · en.wikipedia.org", "Brooklyn Museum of Art"),
+            ("https://en.wikipedia.org/wiki/Met", "Metropolitan\n Museum\tof Art"),
+            ("https://nyc.gov/met", "")])
+        self.assertEqual(rows, [("Source · metmuseum.org", "Plan Your Visit"),
+                                ("Source · en.wikipedia.org", "Metropolitan Museum of Art"),
                                 ("Source · nyc.gov", "")])
         long_host = "https://" + ".".join(["abcdefghij"] * 7) + ".org/"  # labels under 64
         (title, subtitle), = contract.source_rows([(long_host, "é" * 90)])

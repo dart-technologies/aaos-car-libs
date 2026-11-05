@@ -60,7 +60,7 @@ that ship without one (mostly translated `strings.xml`) are left alone. Every ad
 Dart Technologies Apache-2.0 header, and every modified upstream file says so ("Modified by Dart
 Technologies, 2026"), per Apache-2.0 §4(b). `scripts/check-license-headers.py` enforces both and fails
 when a modified file loses its header; exceptions with reasons in `scripts/license-header-baseline.txt`.
-Third-party content (A2UI schemas, the plugin-apis AAR, demo media) is listed in NOTICE.
+Third-party content (A2UI schemas, the plugin-apis AAR, demo media and data) is listed in NOTICE.
 
 ## Re-syncing
 

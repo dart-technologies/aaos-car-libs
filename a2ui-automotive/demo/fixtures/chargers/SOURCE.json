@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "source": "OpenStreetMap via the Overpass API",
+  "license": "ODbL 1.0",
+  "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "attribution": "\u00a9 OpenStreetMap contributors",
+  "endpoint": "https://overpass-api.de/api/interpreter",
+  "query": "[out:json][timeout:25];nwr[\"amenity\"=\"charging_station\"](around:1500,40.7794,-73.9634);out center tags;",
+  "fetchedAt": "2026-11-04T16:36:41Z",
+  "osmBase": "2026-11-04T16:35:07Z",
+  "responseSha256": "19b1250dde81a7a689b085ccc4184a50b64e701809bf9305e1d910e7b097017e",
+  "candidates": 6,
+  "kept": 3,
+  "selection": "named stations within 1.5 km, one per name; tagged socket output first (highest kW), then tagged capacity, then nearest",
+  "fastChargersTagged": 1,
+  "caveat": "Only stations with a tagged socket output of 50 kW or more may be called fast; an untagged station's power is unknown, not slow."
+}

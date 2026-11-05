@@ -1,0 +1,1510 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-04T18:59:42Z",
+  "generator": "scripts/muse-curate-coffee.py",
+  "model": "muse-spark-1.3",
+  "servedModel": "muse-spark-1.3",
+  "reasoningEffort": {
+    "research": "low",
+    "scoring": "medium"
+  },
+  "webSearch": {
+    "search_context_size": "medium",
+    "user_location": {
+      "type": "approximate",
+      "city": "New York",
+      "region": "New York",
+      "country": "US",
+      "timezone": "America/New_York"
+    }
+  },
+  "asOf": {
+    "date": "2026-11-05",
+    "day": "Thursday",
+    "from": "17:15",
+    "to": "17:45",
+    "timezone": "America/New_York",
+    "chargingMinutes": 22,
+    "usual": "oat milk latte"
+  },
+  "charger": {
+    "name": "ChargePoint",
+    "hostLabel": "ChargePoint",
+    "operator": "ChargePoint",
+    "osmId": "node/5620136933",
+    "osmUrl": "https://www.openstreetmap.org/node/5620136933",
+    "lat": 40.777871,
+    "lon": -73.957203,
+    "selection": "the first row Host B draws (nearest its origin), which \"take me to the first one\" selects"
+  },
+  "walking": {
+    "gridFactor": 1.3,
+    "metresPerMinute": 80,
+    "capMinutes": 6,
+    "radiusMetres": 400,
+    "method": "great-circle metres x grid factor / metres per minute, rounded up; computed by the script, never by the model"
+  },
+  "scoring": {
+    "weights": {
+      "oatMilkLatte": 0.3,
+      "reputation": 0.25,
+      "walk": 0.2,
+      "pickup": 0.15,
+      "open": 0.1
+    },
+    "walkScore": {
+      "1": 5,
+      "2": 5,
+      "3": 4,
+      "4": 3,
+      "5": 2,
+      "6": 1
+    },
+    "scale": "each criterion 0-5; total = 100 x sum(weight x score / 5)",
+    "gate": "open Thursday 5-6 pm with a cited source, else disqualified",
+    "openScore": "from the cited Thursday closing time: 7 pm or later 5, 6:30 pm 4, 6 pm 3; without one the model's score, at most 3",
+    "uncited": "a criterion without a valid citation scores 0",
+    "tieBreak": "total, then shorter walk, then nearer, then OSM id"
+  },
+  "calls": [
+    {
+      "stage": "research",
+      "osmId": "node/3448911320",
+      "ms": 22757,
+      "sources": 1,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/10010270931",
+      "ms": 23267,
+      "sources": 2,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/5090743953",
+      "ms": 32171,
+      "sources": 1,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/6250062022",
+      "ms": 32545,
+      "sources": 3,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/2620513899",
+      "ms": 24275,
+      "sources": 2,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/2724181868",
+      "ms": 26517,
+      "sources": 4,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/9448907812",
+      "ms": 18643,
+      "sources": 2,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/10755612112",
+      "ms": 24252,
+      "sources": 2,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/8333736496",
+      "ms": 31760,
+      "sources": 2,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/11281910248",
+      "ms": 25556,
+      "sources": 1,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/9571769981",
+      "ms": 29352,
+      "sources": 4,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/663355907",
+      "ms": 26189,
+      "sources": 1,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/2689474985",
+      "ms": 26421,
+      "sources": 1,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/2620513907",
+      "ms": 35269,
+      "sources": 3,
+      "cached": true
+    },
+    {
+      "stage": "research",
+      "osmId": "node/5932754534",
+      "ms": 19121,
+      "sources": 2,
+      "cached": true
+    },
+    {
+      "stage": "scoring",
+      "ms": 104336,
+      "cafes": 15,
+      "cached": true
+    }
+  ],
+  "display": {
+    "name": "Starbucks, 1488 3rd Ave",
+    "walkMinutes": 3,
+    "why": "Muse compared 15 cafés · open till 7 · oat milk · 3 min walk",
+    "source": "Runner-up: Variety Coffee Roasters",
+    "sourceUrl": "https://www.hours-locations.com/starbucks/ny/new-york/1488-third-avenue-a/amp/",
+    "price": null,
+    "charger": "ChargePoint"
+  },
+  "pick": "node/2620513899",
+  "ranked": [
+    {
+      "osmId": "node/2620513899",
+      "osmUrl": "https://www.openstreetmap.org/node/2620513899",
+      "name": "Starbucks",
+      "brand": "Starbucks",
+      "address": "1488 3rd Avenue",
+      "walkMinutes": 3,
+      "walkMetres": 222,
+      "straightMetres": 171,
+      "lat": 40.777484,
+      "lon": -73.955244,
+      "total": 96.0,
+      "walkScore": 4,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Thursday is reported as 6AM-10PM but another listing gives Mon-Fri 6AM-7PM, so using earliest close 19:00 it still covers 5-6pm.",
+          "sources": [
+            {
+              "url": "https://www.hours-locations.com/starbucks/ny/new-york/1488-third-avenue-a/amp/",
+              "title": "Starbucks New York NY: 1488 Third Avenue #A - Hours & Locations"
+            },
+            {
+              "url": "https://unilocal.net/united-states/new-york/starbucks-67734",
+              "title": "Starbucks – New York, 1488 3rd Ave Ste A (20 reviews, address and phone number)"
+            }
+          ],
+          "verdict": "open",
+          "closes": "19:00"
+        },
+        "oatMilkLatte": {
+          "score": 5,
+          "evidence": "Starbucks menu customization includes Caffe Latte with nondairy options including oat milk.",
+          "sources": [
+            {
+              "url": "https://www.hours-locations.com/starbucks/ny/new-york/1488-third-avenue-a/amp/",
+              "title": "Starbucks New York NY: 1488 Third Avenue #A - Hours & Locations"
+            },
+            {
+              "url": "https://unilocal.net/united-states/new-york/starbucks-67734",
+              "title": "Starbucks – New York, 1488 3rd Ave Ste A (20 reviews, address and phone number)"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 5,
+          "evidence": "Reviewers call staff extremely friendly and line very fast with efficient grab-and-go service.",
+          "sources": [
+            {
+              "url": "https://unilocal.net/united-states/new-york/starbucks-67734",
+              "title": "Starbucks – New York, 1488 3rd Ave Ste A (20 reviews, address and phone number)"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "Location accepts mobile orders with ordering ahead in the app and picking up without waiting.",
+          "sources": [
+            {
+              "url": "https://www.hours-locations.com/starbucks/ny/new-york/1488-third-avenue-a/amp/",
+              "title": "Starbucks New York NY: 1488 Third Avenue #A - Hours & Locations"
+            },
+            {
+              "url": "https://unilocal.net/united-states/new-york/starbucks-67734",
+              "title": "Starbucks – New York, 1488 3rd Ave Ste A (20 reviews, address and phone number)"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Location is listed as the active Starbucks at 1488 Third Avenue with no closure stated.",
+          "sources": [
+            {
+              "url": "https://www.hours-locations.com/starbucks/ny/new-york/1488-third-avenue-a/amp/",
+              "title": "Starbucks New York NY: 1488 Third Avenue #A - Hours & Locations"
+            },
+            {
+              "url": "https://unilocal.net/united-states/new-york/starbucks-67734",
+              "title": "Starbucks – New York, 1488 3rd Ave Ste A (20 reviews, address and phone number)"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 1
+    },
+    {
+      "osmId": "node/6250062022",
+      "osmUrl": "https://www.openstreetmap.org/node/6250062022",
+      "name": "Variety Coffee Roasters",
+      "brand": null,
+      "address": "1269 Lexington Avenue",
+      "walkMinutes": 3,
+      "walkMetres": 203,
+      "straightMetres": 156,
+      "lat": 40.778842,
+      "lon": -73.955862,
+      "total": 90.0,
+      "walkScore": 4,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Listed Thursday hours are 7AM-9PM, covering 5-6pm.",
+          "sources": [
+            {
+              "url": "https://wanderlog.com/place/details/474327/variety-coffee-roasters",
+              "title": "Variety Coffee Roasters"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/variety-coffee-roasters-/",
+              "title": "Variety Coffee Roasters"
+            }
+          ],
+          "verdict": "open",
+          "closes": "21:00"
+        },
+        "oatMilkLatte": {
+          "score": 5,
+          "evidence": "Reviewers recommend trying the oat milk latte or iced oat flat white at this shop.",
+          "sources": [
+            {
+              "url": "https://wanderlog.com/place/details/474327/variety-coffee-roasters",
+              "title": "Variety Coffee Roasters"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/variety-coffee-roasters-/",
+              "title": "Variety Coffee Roasters"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 5,
+          "evidence": "Described as a gem with excellent coffee and friendly baristas with ratings of 4.1 and 4.4.",
+          "sources": [
+            {
+              "url": "https://wanderlog.com/place/details/474327/variety-coffee-roasters",
+              "title": "Variety Coffee Roasters"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/variety-coffee-roasters-/",
+              "title": "Variety Coffee Roasters"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 3,
+          "evidence": "Shop is listed with take-out and an order-online link, but DoorDash does not take pickup orders here.",
+          "sources": [
+            {
+              "url": "https://wanderlog.com/place/details/474327/variety-coffee-roasters",
+              "title": "Variety Coffee Roasters"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/variety-coffee-roasters-/",
+              "title": "Variety Coffee Roasters"
+            },
+            {
+              "url": "https://www.doordash.com/store/variety-coffee-new-york-597855/en-US",
+              "title": "Order Variety Coffee - New York, NY Menu Delivery [Menu & Prices] | New York - DoorDash"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Variety Coffee Roasters still lists its shop at 1269 Lexington Ave.",
+          "sources": [
+            {
+              "url": "https://wanderlog.com/place/details/474327/variety-coffee-roasters",
+              "title": "Variety Coffee Roasters"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/variety-coffee-roasters-/",
+              "title": "Variety Coffee Roasters"
+            },
+            {
+              "url": "https://www.doordash.com/store/variety-coffee-new-york-597855/en-US",
+              "title": "Order Variety Coffee - New York, NY Menu Delivery [Menu & Prices] | New York - DoorDash"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 2
+    },
+    {
+      "osmId": "node/11281910248",
+      "osmUrl": "https://www.openstreetmap.org/node/11281910248",
+      "name": "Ole & Steen",
+      "brand": "Ole & Steen",
+      "address": "1280 Lexington Avenue",
+      "walkMinutes": 5,
+      "walkMetres": 386,
+      "straightMetres": 297,
+      "lat": 40.780127,
+      "lon": -73.955323,
+      "total": 88.0,
+      "walkScore": 2,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Monday-Friday hours including Thursday are 06:30-19:00, covering a 5:15-5:45pm visit.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/ole-%26-steen-uess/l6no3ClkUr21139ouMPwgQ",
+              "title": "Order Ole & Steen UES Menu Delivery in New York | Menu & Prices | Uber Eats"
+            }
+          ],
+          "verdict": "open",
+          "closes": "19:00"
+        },
+        "oatMilkLatte": {
+          "score": 5,
+          "evidence": "Review page mentions Latte w/ Oat Milk as a solid beverage though menu listing lacks oat option.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/ole-%26-steen-uess/l6no3ClkUr21139ouMPwgQ",
+              "title": "Order Ole & Steen UES Menu Delivery in New York | Menu & Prices | Uber Eats"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 5,
+          "evidence": "Has 4.7 from over 500 ratings with food called fresh and delicious.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/ole-%26-steen-uess/l6no3ClkUr21139ouMPwgQ",
+              "title": "Order Ole & Steen UES Menu Delivery in New York | Menu & Prices | Uber Eats"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "Uber Eats shows a Pickup option and the app offers Click & Collect to pay and have order packed.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/ole-%26-steen-uess/l6no3ClkUr21139ouMPwgQ",
+              "title": "Order Ole & Steen UES Menu Delivery in New York | Menu & Prices | Uber Eats"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Ole & Steen UES is listed at 1280 Lexington Avenue with delivery available.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/ole-%26-steen-uess/l6no3ClkUr21139ouMPwgQ",
+              "title": "Order Ole & Steen UES Menu Delivery in New York | Menu & Prices | Uber Eats"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 3
+    },
+    {
+      "osmId": "node/9448907812",
+      "osmUrl": "https://www.openstreetmap.org/node/9448907812",
+      "name": "Paris Baguette",
+      "brand": "Paris Baguette",
+      "address": "1270 Lexington Avenue",
+      "walkMinutes": 3,
+      "walkMetres": 229,
+      "straightMetres": 176,
+      "lat": 40.779167,
+      "lon": -73.956006,
+      "total": 86.0,
+      "walkScore": 4,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Official cafe hours show Thursday 5:00AM to 11:00PM, covering 5-6pm.",
+          "sources": [
+            {
+              "url": "https://parisbaguette.com/locations/ny/new-york/1270-lexington-avenue/",
+              "title": "Paris Baguette at 1270 Lexington Avenue, New York, NY | Cakes, Coffee, Pastries"
+            }
+          ],
+          "verdict": "open",
+          "closes": "23:00"
+        },
+        "oatMilkLatte": {
+          "score": 5,
+          "evidence": "Delivery menu for this location lists a Pumpkin Chai Oatmilk Latte at 7.86 USD.",
+          "sources": [
+            {
+              "url": "https://parisbaguette.com/locations/ny/new-york/1270-lexington-avenue/",
+              "title": "Paris Baguette at 1270 Lexington Avenue, New York, NY | Cakes, Coffee, Pastries"
+            },
+            {
+              "url": "https://parisbaguette.com/menu/",
+              "title": "Paris Baguette Menu"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 3,
+          "evidence": "Specific shop has 3.6 from 288 ratings with mixed rude/nice remarks and 4.4 from 492 reviews.",
+          "sources": [
+            {
+              "url": "https://parisbaguette.com/locations/ny/new-york/1270-lexington-avenue/",
+              "title": "Paris Baguette at 1270 Lexington Avenue, New York, NY | Cakes, Coffee, Pastries"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "Paris Baguette app says users can place individual orders for pickup or delivery in advance.",
+          "sources": [
+            {
+              "url": "https://parisbaguette.com/locations/ny/new-york/1270-lexington-avenue/",
+              "title": "Paris Baguette at 1270 Lexington Avenue, New York, NY | Cakes, Coffee, Pastries"
+            },
+            {
+              "url": "https://parisbaguette.com/menu/",
+              "title": "Paris Baguette Menu"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Paris Baguette still lists its 1270 Lexington cafe at that address.",
+          "sources": [
+            {
+              "url": "https://parisbaguette.com/locations/ny/new-york/1270-lexington-avenue/",
+              "title": "Paris Baguette at 1270 Lexington Avenue, New York, NY | Cakes, Coffee, Pastries"
+            }
+          ]
+        },
+        "price": {
+          "price": "$7.86",
+          "sources": [
+            {
+              "url": "https://parisbaguette.com/locations/ny/new-york/1270-lexington-avenue/",
+              "title": "Paris Baguette at 1270 Lexington Avenue, New York, NY | Cakes, Coffee, Pastries"
+            }
+          ]
+        }
+      },
+      "rank": 4
+    },
+    {
+      "osmId": "node/9571769981",
+      "osmUrl": "https://www.openstreetmap.org/node/9571769981",
+      "name": "Cafè Blériot",
+      "brand": null,
+      "address": "226 East 83rd Street",
+      "walkMinutes": 5,
+      "walkMetres": 393,
+      "straightMetres": 302,
+      "lat": 40.77629,
+      "lon": -73.954281,
+      "total": 84.0,
+      "walkScore": 2,
+      "openScore": 3,
+      "scores": {
+        "open": {
+          "score": 3,
+          "evidence": "Listed Thursday hours are 7:30AM to 6PM, covering the 5:15-5:45pm visit.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/caf-bl-riot-xi-/",
+              "title": "Café Blériot XI"
+            },
+            {
+              "url": "https://www.menupix.com/nyc/restaurants/30388488/Cafe-Bleriot-XI-New-York-NY",
+              "title": "Cafe Bleriot XI"
+            }
+          ],
+          "verdict": "open",
+          "closes": "18:00"
+        },
+        "oatMilkLatte": {
+          "score": 5,
+          "evidence": "Third-party menu lists Cafe Latte with a choice including oat milk.",
+          "sources": [
+            {
+              "url": "https://www.menupix.com/nyc/restaurants/30388488/Cafe-Bleriot-XI-New-York-NY",
+              "title": "Cafe Bleriot XI"
+            },
+            {
+              "url": "https://www.doordash.com/store/cafe-bleriot-new-york-24909609/",
+              "title": "Order CAFE BLERIOT - New York, NY Menu Delivery [Menu & Prices] | New York - DoorDash"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 5,
+          "evidence": "Described as charming and elegant with 4.5 from 183 ratings and 4.5 from 50+ delivery ratings.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/caf-bl-riot-xi-/",
+              "title": "Café Blériot XI"
+            },
+            {
+              "url": "https://www.menupix.com/nyc/restaurants/30388488/Cafe-Bleriot-XI-New-York-NY",
+              "title": "Cafe Bleriot XI"
+            },
+            {
+              "url": "https://www.doordash.com/store/cafe-bleriot-new-york-24909609/",
+              "title": "Order CAFE BLERIOT - New York, NY Menu Delivery [Menu & Prices] | New York - DoorDash"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "DoorDash states both delivery and pickup orders can be placed with take-out also listed.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/caf-bl-riot-xi-/",
+              "title": "Café Blériot XI"
+            },
+            {
+              "url": "https://www.doordash.com/store/cafe-bleriot-new-york-24909609/",
+              "title": "Order CAFE BLERIOT - New York, NY Menu Delivery [Menu & Prices] | New York - DoorDash"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Cafe Bleriot continues to be listed at 226 East 83rd Street with hours updated October 10, 2026.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/caf-bl-riot-xi-/",
+              "title": "Café Blériot XI"
+            },
+            {
+              "url": "https://www.menupix.com/nyc/restaurants/30388488/Cafe-Bleriot-XI-New-York-NY",
+              "title": "Cafe Bleriot XI"
+            },
+            {
+              "url": "https://www.doordash.com/store/cafe-bleriot-new-york-24909609/",
+              "title": "Order CAFE BLERIOT - New York, NY Menu Delivery [Menu & Prices] | New York - DoorDash"
+            }
+          ]
+        },
+        "price": {
+          "price": "$5.75",
+          "sources": [
+            {
+              "url": "https://www.menupix.com/nyc/restaurants/30388488/Cafe-Bleriot-XI-New-York-NY",
+              "title": "Cafe Bleriot XI"
+            }
+          ]
+        }
+      },
+      "rank": 5
+    },
+    {
+      "osmId": "node/5090743953",
+      "osmUrl": "https://www.openstreetmap.org/node/5090743953",
+      "name": "Starbucks",
+      "brand": "Starbucks",
+      "address": "1261 Lexington Avenue",
+      "walkMinutes": 3,
+      "walkMetres": 172,
+      "straightMetres": 132,
+      "lat": 40.778618,
+      "lon": -73.955984,
+      "total": 80.0,
+      "walkScore": 4,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Thursday hours are shown as 5AM to 9PM, covering 5-6pm.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/starbucks-72/",
+              "title": "Starbucks 1261 Lexington Avenue, New York - Menu, Reviews (190), Photos (55) - Restaurantji"
+            }
+          ],
+          "verdict": "open",
+          "closes": "21:00"
+        },
+        "oatMilkLatte": {
+          "score": 5,
+          "evidence": "Starbucks lists milks including oat as a customization option for Caffe Latte.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/starbucks-72/",
+              "title": "Starbucks 1261 Lexington Avenue, New York - Menu, Reviews (190), Photos (55) - Restaurantji"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 3,
+          "evidence": "Rating is 3.8 from 190 ratings with praise for friendly staff but notes of inconsistent preparation.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/starbucks-72/",
+              "title": "Starbucks 1261 Lexington Avenue, New York - Menu, Reviews (190), Photos (55) - Restaurantji"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 3,
+          "evidence": "Listing offers Order Online with take-out and delivery but does not say pickup for app ordering ahead.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/starbucks-72/",
+              "title": "Starbucks 1261 Lexington Avenue, New York - Menu, Reviews (190), Photos (55) - Restaurantji"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Starbucks at 1261 Lexington Avenue is still listed as operating with update October 14, 2026.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/starbucks-72/",
+              "title": "Starbucks 1261 Lexington Avenue, New York - Menu, Reviews (190), Photos (55) - Restaurantji"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 6
+    },
+    {
+      "osmId": "node/2620513907",
+      "osmUrl": "https://www.openstreetmap.org/node/2620513907",
+      "name": "Starbucks",
+      "brand": "Starbucks",
+      "address": "1542 3rd Avenue",
+      "walkMinutes": 6,
+      "walkMetres": 443,
+      "straightMetres": 341,
+      "lat": 40.779482,
+      "lon": -73.953757,
+      "total": 78.0,
+      "walkScore": 1,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Listed hours Monday-Sunday 05:00-21:00 include Thursday, covering the visit window.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1542-third-avenues/onb5SbKVQxiaBCPhZvfNAQ",
+              "title": "Starbucks (1542 Third Avenue)"
+            },
+            {
+              "url": "https://www.atly.com/location/new-york/Starbucks148",
+              "title": "Starbucks Coffee Company in New York - Coffee shop | Atly"
+            }
+          ],
+          "verdict": "open",
+          "closes": "21:00"
+        },
+        "oatMilkLatte": {
+          "score": 5,
+          "evidence": "Menu notes non-dairy alternatives including oat milk that can be used in beverages with Caffe Latte listed.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1542-third-avenues/onb5SbKVQxiaBCPhZvfNAQ",
+              "title": "Starbucks (1542 Third Avenue)"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 5,
+          "evidence": "Called most efficient with excellent coffee and friendly staff with 4.8 from 1000 reviews and 7.1 score.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1542-third-avenues/onb5SbKVQxiaBCPhZvfNAQ",
+              "title": "Starbucks (1542 Third Avenue)"
+            },
+            {
+              "url": "https://www.atly.com/location/new-york/Starbucks148",
+              "title": "Starbucks Coffee Company in New York - Coffee shop | Atly"
+            },
+            {
+              "url": "https://foursquare.com/annie_werner/list/the-86th-st-drag",
+              "title": "The 86th St Drag"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 3,
+          "evidence": "Mobile ordering to skip the line is described but pickup is not explicitly stated.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1542-third-avenues/onb5SbKVQxiaBCPhZvfNAQ",
+              "title": "Starbucks (1542 Third Avenue)"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Location is listed as Starbucks at 1542 Third Avenue with active hours and no closure stated.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1542-third-avenues/onb5SbKVQxiaBCPhZvfNAQ",
+              "title": "Starbucks (1542 Third Avenue)"
+            },
+            {
+              "url": "https://www.atly.com/location/new-york/Starbucks148",
+              "title": "Starbucks Coffee Company in New York - Coffee shop | Atly"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 7
+    },
+    {
+      "osmId": "node/8333736496",
+      "osmUrl": "https://www.openstreetmap.org/node/8333736496",
+      "name": "Modern Bread and Bagel",
+      "brand": null,
+      "address": "1427 3rd Avenue",
+      "walkMinutes": 5,
+      "walkMetres": 382,
+      "straightMetres": 294,
+      "lat": 40.775317,
+      "lon": -73.956315,
+      "total": 76.0,
+      "walkScore": 2,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Ordering page lists Thursday 8:00am-12:00am, covering 5-6pm.",
+          "sources": [
+            {
+              "url": "http://toasttab.com/local/order/modern-b-b-ues-1427-3rd-avenue/item-latte_5ebc8c7a-3a48-4426-aeca-6a4d1b32c7b0",
+              "title": "Modern Bread & Bagel 1427 3rd Avenue - Latte"
+            },
+            {
+              "url": "https://www.modernbreadandbagel.com/",
+              "title": "HOME | Modern Bread & Bagel"
+            }
+          ],
+          "verdict": "open",
+          "closes": "00:00"
+        },
+        "oatMilkLatte": {
+          "score": 3,
+          "evidence": "Menu Latte does not state oat milk, but guide says shop uses Oatly and has plant milk for coffee and tea.",
+          "sources": [
+            {
+              "url": "http://toasttab.com/local/order/modern-b-b-ues-1427-3rd-avenue/item-latte_5ebc8c7a-3a48-4426-aeca-6a4d1b32c7b0",
+              "title": "Modern Bread & Bagel 1427 3rd Avenue - Latte"
+            },
+            {
+              "url": "https://www.modernbreadandbagel.com/",
+              "title": "HOME | Modern Bread & Bagel"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 5,
+          "evidence": "Uber Eats shows 4.6 from over 1,000 ratings with praise for amazing gluten-free bagels.",
+          "sources": [
+            {
+              "url": "http://toasttab.com/local/order/modern-b-b-ues-1427-3rd-avenue/item-latte_5ebc8c7a-3a48-4426-aeca-6a4d1b32c7b0",
+              "title": "Modern Bread & Bagel 1427 3rd Avenue - Latte"
+            },
+            {
+              "url": "https://www.modernbreadandbagel.com/",
+              "title": "HOME | Modern Bread & Bagel"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "Toast ordering page offers Pickup and Delivery with same-day orders to Toast for pickup.",
+          "sources": [
+            {
+              "url": "http://toasttab.com/local/order/modern-b-b-ues-1427-3rd-avenue/item-latte_5ebc8c7a-3a48-4426-aeca-6a4d1b32c7b0",
+              "title": "Modern Bread & Bagel 1427 3rd Avenue - Latte"
+            },
+            {
+              "url": "https://www.modernbreadandbagel.com/",
+              "title": "HOME | Modern Bread & Bagel"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Modern Bread and Bagel still operates at 1427 3rd Avenue with ordering page open now.",
+          "sources": [
+            {
+              "url": "http://toasttab.com/local/order/modern-b-b-ues-1427-3rd-avenue/item-latte_5ebc8c7a-3a48-4426-aeca-6a4d1b32c7b0",
+              "title": "Modern Bread & Bagel 1427 3rd Avenue - Latte"
+            },
+            {
+              "url": "https://www.modernbreadandbagel.com/",
+              "title": "HOME | Modern Bread & Bagel"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 8
+    },
+    {
+      "osmId": "node/2724181868",
+      "osmUrl": "https://www.openstreetmap.org/node/2724181868",
+      "name": "Juice Generation",
+      "brand": null,
+      "address": "1486 3rd Avenue",
+      "walkMinutes": 3,
+      "walkMetres": 222,
+      "straightMetres": 171,
+      "lat": 40.777384,
+      "lon": -73.955281,
+      "total": 74.0,
+      "walkScore": 4,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Thursday hours are stated as 7am to 9pm, covering the 5:15-5:45pm visit.",
+          "sources": [
+            {
+              "url": "https://www.juicegeneration.com/locations?location_id=20",
+              "title": "Locations   | Juice Generation"
+            },
+            {
+              "url": "https://www.foodbevg.com/US/New-York/409943242422523/Juice-Generation",
+              "title": "Juice Generation, 1486 Third Avenue, New York, NY (2026)"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/juice-generation-4/",
+              "title": "Juice Generation, New York - Menu, Reviews (154), Photos (50) - Restaurantji"
+            }
+          ],
+          "verdict": "open",
+          "closes": "21:00"
+        },
+        "oatMilkLatte": {
+          "score": 3,
+          "evidence": "Menu shows PB & Joe with cold brew and plant milk but no latte with oat milk is stated.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/juice-generation-4/",
+              "title": "Juice Generation, New York - Menu, Reviews (154), Photos (50) - Restaurantji"
+            },
+            {
+              "url": "http://www.allmenus.com/ny/new-york/354956-juice-generation-3rd-ave/menu/",
+              "title": "Juice Generation (3rd Ave) menu - New York NY 10028 - (212) 531-1110"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 3,
+          "evidence": "Shows 3.7 from 154 ratings with praise for kind staff and fresh ingredients and 8.6 from 47 tips.",
+          "sources": [
+            {
+              "url": "https://www.foodbevg.com/US/New-York/409943242422523/Juice-Generation",
+              "title": "Juice Generation, 1486 Third Avenue, New York, NY (2026)"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/juice-generation-4/",
+              "title": "Juice Generation, New York - Menu, Reviews (154), Photos (50) - Restaurantji"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "Ordering ahead in the JG app is advertised and DoorDash allows delivery and pickup orders.",
+          "sources": [
+            {
+              "url": "https://www.juicegeneration.com/locations?location_id=20",
+              "title": "Locations   | Juice Generation"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/juice-generation-4/",
+              "title": "Juice Generation, New York - Menu, Reviews (154), Photos (50) - Restaurantji"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Juice Generation still lists its 3rd Avenue shop at 1486 Third Avenue with current hours.",
+          "sources": [
+            {
+              "url": "https://www.juicegeneration.com/locations?location_id=20",
+              "title": "Locations   | Juice Generation"
+            },
+            {
+              "url": "https://www.foodbevg.com/US/New-York/409943242422523/Juice-Generation",
+              "title": "Juice Generation, 1486 Third Avenue, New York, NY (2026)"
+            },
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/juice-generation-4/",
+              "title": "Juice Generation, New York - Menu, Reviews (154), Photos (50) - Restaurantji"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 9
+    },
+    {
+      "osmId": "node/5932754534",
+      "osmUrl": "https://www.openstreetmap.org/node/5932754534",
+      "name": "Le Pain Quotidien",
+      "brand": "Le Pain Quotidien",
+      "address": "1535 3rd Avenue",
+      "walkMinutes": 6,
+      "walkMetres": 467,
+      "straightMetres": 359,
+      "lat": 40.779296,
+      "lon": -73.953376,
+      "total": 74.0,
+      "walkScore": 1,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Official Thursday hours are 06:30AM until 07:00PM, covering 5-6pm.",
+          "sources": [
+            {
+              "url": "https://www.lepainquotidien.com/us/en/locations/3004:%2087_&_3rd/1535-3rd-avenue",
+              "title": "Le Pain Quotidien Restaurant | New York | 87 & 3rd"
+            }
+          ],
+          "verdict": "open",
+          "closes": "19:00"
+        },
+        "oatMilkLatte": {
+          "score": 5,
+          "evidence": "Brand menu lists LATTE with oat milk or almond milk for +1.",
+          "sources": [
+            {
+              "url": "https://www.lepainquotidien.com/us/en/locations/3004:%2087_&_3rd/1535-3rd-avenue",
+              "title": "Le Pain Quotidien Restaurant | New York | 87 & 3rd"
+            },
+            {
+              "url": "https://www.lepainquotidien.com/us/wp-content/uploads/sites/27/2024/09/LPQ24-102_0925_ExteriorMenu_NYAD_02.pdf",
+              "title": "DINE I N"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 3,
+          "evidence": "Has 3.9 from 136 reviews and 4.6 from 160+ ratings with notes service could be better.",
+          "sources": [
+            {
+              "url": "https://www.lepainquotidien.com/us/en/locations/3004:%2087_&_3rd/1535-3rd-avenue",
+              "title": "Le Pain Quotidien Restaurant | New York | 87 & 3rd"
+            },
+            {
+              "url": "https://www.lepainquotidien.com/us/wp-content/uploads/sites/27/2024/09/LPQ24-102_0925_ExteriorMenu_NYAD_02.pdf",
+              "title": "DINE I N"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "App advertises ORDER AHEAD SKIP THE WAIT for pickup with in-app payment and scheduled collection.",
+          "sources": [
+            {
+              "url": "https://www.lepainquotidien.com/us/en/locations/3004:%2087_&_3rd/1535-3rd-avenue",
+              "title": "Le Pain Quotidien Restaurant | New York | 87 & 3rd"
+            },
+            {
+              "url": "https://www.lepainquotidien.com/us/wp-content/uploads/sites/27/2024/09/LPQ24-102_0925_ExteriorMenu_NYAD_02.pdf",
+              "title": "DINE I N"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Le Pain Quotidien continues to be listed at 1535 3rd Avenue as 87 & 3rd.",
+          "sources": [
+            {
+              "url": "https://www.lepainquotidien.com/us/en/locations/3004:%2087_&_3rd/1535-3rd-avenue",
+              "title": "Le Pain Quotidien Restaurant | New York | 87 & 3rd"
+            },
+            {
+              "url": "https://www.lepainquotidien.com/us/wp-content/uploads/sites/27/2024/09/LPQ24-102_0925_ExteriorMenu_NYAD_02.pdf",
+              "title": "DINE I N"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 10
+    },
+    {
+      "osmId": "node/2689474985",
+      "osmUrl": "https://www.openstreetmap.org/node/2689474985",
+      "name": "Starbucks",
+      "brand": "Starbucks",
+      "address": "1142 Madison Avenue",
+      "walkMinutes": 6,
+      "walkMetres": 402,
+      "straightMetres": 309,
+      "lat": 40.779904,
+      "lon": -73.959704,
+      "total": 72.0,
+      "walkScore": 1,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Listed hours Monday-Sunday 05:00-20:00 include Thursday, covering 5-6pm.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1142-madison-aves/veNiv_weTLm5Fn6W57Hplg",
+              "title": "Starbucks (1142 Madison Ave)"
+            }
+          ],
+          "verdict": "open",
+          "closes": "20:00"
+        },
+        "oatMilkLatte": {
+          "score": 3,
+          "evidence": "Menu lists oatmilk cortado and shaken espresso but no plain oat milk latte item.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1142-madison-aves/veNiv_weTLm5Fn6W57Hplg",
+              "title": "Starbucks (1142 Madison Ave)"
+            }
+          ]
+        },
+        "reputation": {
+          "score": 5,
+          "evidence": "Delivery listing gives 4.6 from 700+ ratings with notes staff were careful and helpful.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1142-madison-aves/veNiv_weTLm5Fn6W57Hplg",
+              "title": "Starbucks (1142 Madison Ave)"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "Listing shows Delivery and Pickup options with ordering through the app or website.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1142-madison-aves/veNiv_weTLm5Fn6W57Hplg",
+              "title": "Starbucks (1142 Madison Ave)"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Shop appears to still operate at 1142 Madison Ave with delivery listing and phone.",
+          "sources": [
+            {
+              "url": "https://www.ubereats.com/store/starbucks-1142-madison-aves/veNiv_weTLm5Fn6W57Hplg",
+              "title": "Starbucks (1142 Madison Ave)"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 11
+    },
+    {
+      "osmId": "node/3448911320",
+      "osmUrl": "https://www.openstreetmap.org/node/3448911320",
+      "name": "Tal Bagels",
+      "brand": null,
+      "address": "1228 Lexington Avenue",
+      "walkMinutes": 1,
+      "walkMetres": 26,
+      "straightMetres": 20,
+      "lat": 40.777713,
+      "lon": -73.957094,
+      "total": 60.0,
+      "walkScore": 5,
+      "openScore": 5,
+      "scores": {
+        "open": {
+          "score": 5,
+          "evidence": "Thursday hours are given as 6AM-8PM but a delivery listing gives 06:00-19:30 daily, so using earliest close 19:30 the 5:15-5:45pm visit is inside hours.",
+          "sources": [
+            {
+              "url": "https://www.talbagelsny.com",
+              "title": "Best Online Casinos in Saudi Arabia: Guide to Safe KSA Gaming"
+            }
+          ],
+          "verdict": "open",
+          "closes": "19:30"
+        },
+        "oatMilkLatte": {
+          "score": 0,
+          "evidence": "No source states whether oat milk is offered for the latte.",
+          "sources": [],
+          "uncited": true
+        },
+        "reputation": {
+          "score": 3,
+          "evidence": "Described as a neighborhood favorite with 4 of 5 bubbles from 106 reviews and 4.6 from 1000+ ratings but 3.9 from 1,276 Google reviews.",
+          "sources": [
+            {
+              "url": "https://www.talbagelsny.com",
+              "title": "Best Online Casinos in Saudi Arabia: Guide to Safe KSA Gaming"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 5,
+          "evidence": "DoorDash states customers can browse the menu and place an order for both delivery and pickup.",
+          "sources": [
+            {
+              "url": "https://www.talbagelsny.com",
+              "title": "Best Online Casinos in Saudi Arabia: Guide to Safe KSA Gaming"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Tal Bagels still operates at 1228 Lexington Avenue with listings updated October 2026.",
+          "sources": [
+            {
+              "url": "https://www.talbagelsny.com",
+              "title": "Best Online Casinos in Saudi Arabia: Guide to Safe KSA Gaming"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 12
+    },
+    {
+      "osmId": "node/10010270931",
+      "osmUrl": "https://www.openstreetmap.org/node/10010270931",
+      "name": "Dear Coffee",
+      "brand": null,
+      "address": "1246 Lexington Avenue",
+      "walkMinutes": 1,
+      "walkMetres": 65,
+      "straightMetres": 50,
+      "lat": 40.778152,
+      "lon": -73.956739,
+      "total": 60.0,
+      "walkScore": 5,
+      "openScore": 3,
+      "scores": {
+        "open": {
+          "score": 3,
+          "evidence": "Listed Thursday hours are 7am to 6pm, covering the 5:15-5:45pm visit.",
+          "sources": [
+            {
+              "url": "https://laptopfriendlycafe.com/cafes/new-york/dear-coffee",
+              "title": "Laptop Friendly Cafe - Dear Coffee, New York"
+            }
+          ],
+          "verdict": "open",
+          "closes": "18:00"
+        },
+        "oatMilkLatte": {
+          "score": 0,
+          "evidence": "Own-site menu lists Latte but does not state an oat-milk option.",
+          "sources": [],
+          "uncited": true
+        },
+        "reputation": {
+          "score": 5,
+          "evidence": "Guide calls it a laptop-friendly haven with expertly crafted drinks and reports 4.7 from 236 reviews.",
+          "sources": [
+            {
+              "url": "https://laptopfriendlycafe.com/cafes/new-york/dear-coffee",
+              "title": "Laptop Friendly Cafe - Dear Coffee, New York"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 3,
+          "evidence": "Takeaway is listed alongside dine-in, but ordering ahead online or in an app is not stated.",
+          "sources": [
+            {
+              "url": "https://laptopfriendlycafe.com/cafes/new-york/dear-coffee",
+              "title": "Laptop Friendly Cafe - Dear Coffee, New York"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Dear Coffee still appears as an operating cafe at 1246 Lexington Ave with a page updated October 27, 2026.",
+          "sources": [
+            {
+              "url": "https://laptopfriendlycafe.com/cafes/new-york/dear-coffee",
+              "title": "Laptop Friendly Cafe - Dear Coffee, New York"
+            },
+            {
+              "url": "https://www.dearcoffeenyc.com/",
+              "title": "Dear Coffee NYC | Specialty Coffee Upper East Side"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 13
+    },
+    {
+      "osmId": "node/10755612112",
+      "osmUrl": "https://www.openstreetmap.org/node/10755612112",
+      "name": "Maman",
+      "brand": "Maman",
+      "address": "1424 3rd Avenue",
+      "walkMinutes": 5,
+      "walkMetres": 346,
+      "straightMetres": 266,
+      "lat": 40.775517,
+      "lon": -73.956635,
+      "total": 38.0,
+      "walkScore": 2,
+      "openScore": 3,
+      "scores": {
+        "open": {
+          "score": 3,
+          "evidence": "Listed Thursday hours are 7:30AM to 6PM, covering the 5:15-5:45pm visit.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/maman-10/",
+              "title": "Maman, New York - Menu, Reviews (343), Photos (111) - Restaurantji"
+            }
+          ],
+          "verdict": "open",
+          "closes": "18:00"
+        },
+        "oatMilkLatte": {
+          "score": 0,
+          "evidence": "Whether this location offers latte with oat milk is not stated in the location menu excerpt.",
+          "sources": [],
+          "uncited": true
+        },
+        "reputation": {
+          "score": 3,
+          "evidence": "Has 3.9 from 343 ratings with praise for cookies and coffee and 4.2 stars from 918 reviews.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/maman-10/",
+              "title": "Maman, New York - Menu, Reviews (343), Photos (111) - Restaurantji"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 3,
+          "evidence": "Own site promotes ordering online and skipping the line with take-out offered but pickup not stated.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/maman-10/",
+              "title": "Maman, New York - Menu, Reviews (343), Photos (111) - Restaurantji"
+            },
+            {
+              "url": "https://mamannyc.com/",
+              "title": "Maman - Maman"
+            }
+          ]
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "Maman continues to be listed at 1424 3rd Avenue with listing updated November 3, 2026.",
+          "sources": [
+            {
+              "url": "https://www.restaurantji.com/ny/new-york/maman-10/",
+              "title": "Maman, New York - Menu, Reviews (343), Photos (111) - Restaurantji"
+            },
+            {
+              "url": "https://mamannyc.com/",
+              "title": "Maman - Maman"
+            }
+          ]
+        },
+        "price": null
+      },
+      "rank": 14
+    }
+  ],
+  "disqualified": [
+    {
+      "osmId": "node/663355907",
+      "osmUrl": "https://www.openstreetmap.org/node/663355907",
+      "name": "City Market Cafe",
+      "brand": null,
+      "address": null,
+      "walkMinutes": 5,
+      "walkMetres": 394,
+      "straightMetres": 303,
+      "reason": "no cited evidence it is open Thursday 5-6 pm",
+      "scores": {
+        "open": {
+          "score": 0,
+          "evidence": "Hours are given as 6am-9pm but Thursday-specific hours are not stated.",
+          "sources": [],
+          "uncited": true,
+          "verdict": "unknown",
+          "closes": ""
+        },
+        "oatMilkLatte": {
+          "score": 0,
+          "evidence": "Menu lists Cafe Latte but oat milk is not stated.",
+          "sources": [],
+          "uncited": true
+        },
+        "reputation": {
+          "score": 3,
+          "evidence": "Visitor review recommends it for a quick light meal at a reasonable price.",
+          "sources": [
+            {
+              "url": "http://menuwithprice.com/menu/city-market-cafe/new-york/new-york/391374/",
+              "title": "City Market Cafe at 1100 Madison Ave, New York, NY - Locations and Hours"
+            }
+          ]
+        },
+        "pickup": {
+          "score": 0,
+          "evidence": "Whether ordering ahead online or counter service is offered is not stated.",
+          "sources": [],
+          "uncited": true
+        },
+        "operating": {
+          "status": "operating",
+          "evidence": "City Market Cafe is still listed at 1100 Madison Ave as open now.",
+          "sources": [
+            {
+              "url": "http://menuwithprice.com/menu/city-market-cafe/new-york/new-york/391374/",
+              "title": "City Market Cafe at 1100 Madison Ave, New York, NY - Locations and Hours"
+            }
+          ]
+        },
+        "price": null
+      }
+    },
+    {
+      "osmId": "node/1020359759",
+      "osmUrl": "https://www.openstreetmap.org/node/1020359759",
+      "name": "Le Pain Quotidien",
+      "brand": "Le Pain Quotidien",
+      "address": "1309 Lexington Avenue",
+      "walkMinutes": 7,
+      "walkMetres": 482,
+      "straightMetres": 371,
+      "reason": "7 min walk is over the 6 min cap"
+    },
+    {
+      "osmId": "node/8333736504",
+      "osmUrl": "https://www.openstreetmap.org/node/8333736504",
+      "name": "E.A.T.",
+      "brand": "Eli Zabar",
+      "address": "1064 Madison Avenue",
+      "walkMinutes": 7,
+      "walkMetres": 486,
+      "straightMetres": 374,
+      "reason": "7 min walk is over the 6 min cap"
+    },
+    {
+      "osmId": "node/13643792686",
+      "osmUrl": "https://www.openstreetmap.org/node/13643792686",
+      "name": "Opening Move Cafe",
+      "brand": null,
+      "address": "208 East 87th Street",
+      "walkMinutes": 7,
+      "walkMetres": 506,
+      "straightMetres": 389,
+      "reason": "7 min walk is over the 6 min cap"
+    },
+    {
+      "osmId": "node/9770640988",
+      "osmUrl": "https://www.openstreetmap.org/node/9770640988",
+      "name": "Bonjour Crepes & Waffles",
+      "brand": null,
+      "address": "1585 2nd Avenue",
+      "walkMinutes": 7,
+      "walkMetres": 514,
+      "straightMetres": 396,
+      "reason": "7 min walk is over the 6 min cap"
+    }
+  ],
+  "osm": {
+    "source": "OpenStreetMap via the Overpass API",
+    "license": "ODbL 1.0",
+    "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "attribution": "© OpenStreetMap contributors",
+    "endpoint": "https://overpass-api.de/api/interpreter",
+    "query": "[out:json][timeout:25];nwr[\"amenity\"=\"cafe\"](around:400,40.777871,-73.957203);out center tags;",
+    "fetchedAt": "2026-11-04T17:57:27Z",
+    "osmBase": "2026-11-04T17:56:21Z",
+    "responseSha256": "4c29f93059f95349b3ffb1c23cb8f476451e0304a0bca719955a2189212689f5",
+    "candidates": 19
+  },
+  "attribution": {
+    "osm": "© OpenStreetMap contributors (ODbL 1.0)",
+    "citedSources": [
+      "https://www.hours-locations.com/starbucks/ny/new-york/1488-third-avenue-a/amp/",
+      "https://unilocal.net/united-states/new-york/starbucks-67734",
+      "https://wanderlog.com/place/details/474327/variety-coffee-roasters",
+      "https://www.restaurantji.com/ny/new-york/variety-coffee-roasters-/",
+      "https://www.doordash.com/store/variety-coffee-new-york-597855/en-US",
+      "https://www.ubereats.com/store/ole-%26-steen-uess/l6no3ClkUr21139ouMPwgQ",
+      "https://parisbaguette.com/locations/ny/new-york/1270-lexington-avenue/",
+      "https://parisbaguette.com/menu/",
+      "https://www.restaurantji.com/ny/new-york/caf-bl-riot-xi-/",
+      "https://www.menupix.com/nyc/restaurants/30388488/Cafe-Bleriot-XI-New-York-NY",
+      "https://www.doordash.com/store/cafe-bleriot-new-york-24909609/",
+      "https://www.restaurantji.com/ny/new-york/starbucks-72/",
+      "https://www.ubereats.com/store/starbucks-1542-third-avenues/onb5SbKVQxiaBCPhZvfNAQ",
+      "https://www.atly.com/location/new-york/Starbucks148",
+      "https://foursquare.com/annie_werner/list/the-86th-st-drag",
+      "http://toasttab.com/local/order/modern-b-b-ues-1427-3rd-avenue/item-latte_5ebc8c7a-3a48-4426-aeca-6a4d1b32c7b0",
+      "https://www.modernbreadandbagel.com/",
+      "https://www.juicegeneration.com/locations?location_id=20",
+      "https://www.foodbevg.com/US/New-York/409943242422523/Juice-Generation",
+      "https://www.restaurantji.com/ny/new-york/juice-generation-4/",
+      "http://www.allmenus.com/ny/new-york/354956-juice-generation-3rd-ave/menu/",
+      "https://www.lepainquotidien.com/us/en/locations/3004:%2087_&_3rd/1535-3rd-avenue",
+      "https://www.lepainquotidien.com/us/wp-content/uploads/sites/27/2024/09/LPQ24-102_0925_ExteriorMenu_NYAD_02.pdf",
+      "https://www.ubereats.com/store/starbucks-1142-madison-aves/veNiv_weTLm5Fn6W57Hplg",
+      "https://www.talbagelsny.com",
+      "https://laptopfriendlycafe.com/cafes/new-york/dear-coffee",
+      "https://www.restaurantji.com/ny/new-york/maman-10/",
+      "https://mamannyc.com/"
+    ]
+  },
+  "note": "Demo data. No order is placed and nothing is sent to any café; hours, menu and reputation are as cited when generated, not live."
+}
