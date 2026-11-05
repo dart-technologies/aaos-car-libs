@@ -1,0 +1,14 @@
+# Machine-written by scripts/record-instrumented-counts.py --record. Do not hand-edit.
+#
+# The instrumented (androidTest) suites the gate runs, and what each one must produce. The JVM
+# equivalent is docs/gate-counts.tsv; this file exists because the instrumented expectations were
+# shell literals inside run-bump-gate.sh, which is the arrangement that file's own comments reject.
+#
+# max_failures is the CEILING, not the observation. car-ui-lib's 3 are a recorded baseline whose
+# membership step 3 diffs by name -- the count alone would let a new failure replace an old one.
+#
+# module	expected	max_failures	recorded	commit
+car-media-common	33	0	2026-08-21	a37f247ba-dirty
+car-rotary-lib	100	0	2026-08-21	a37f247ba-dirty
+car-telephony-common	26	0	2026-08-21	a37f247ba-dirty
+car-ui-lib	504	3	2026-08-21	a37f247ba-dirty

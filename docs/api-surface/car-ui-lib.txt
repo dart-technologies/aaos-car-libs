@@ -1,0 +1,1651 @@
+# AndroidManifest package
+com.android.car.ui
+
+public class com.android.car.ui.AlertDialogBuilder {
+    public android.app.AlertDialog create();
+    public android.app.AlertDialog show();
+    public android.content.Context getContext();
+    public com.android.car.ui.AlertDialogBuilder setAdapter(android.widget.ListAdapter, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setAdapter(com.android.car.ui.recyclerview.CarUiListItemAdapter);
+    public com.android.car.ui.AlertDialogBuilder setAllowDismissButton(boolean);
+    public com.android.car.ui.AlertDialogBuilder setAutoDescUpdateForWidescreen(boolean);
+    public com.android.car.ui.AlertDialogBuilder setCancelable(boolean);
+    public com.android.car.ui.AlertDialogBuilder setCursor(android.database.Cursor, android.content.DialogInterface$OnClickListener, java.lang.String);
+    public com.android.car.ui.AlertDialogBuilder setEditBox(java.lang.String, android.text.TextWatcher, android.text.InputFilter[]);
+    public com.android.car.ui.AlertDialogBuilder setEditBox(java.lang.String, android.text.TextWatcher, android.text.InputFilter[], int);
+    public com.android.car.ui.AlertDialogBuilder setEditTextTitleAndDescForWideScreen(java.lang.String, java.lang.String);
+    public com.android.car.ui.AlertDialogBuilder setIcon(android.graphics.drawable.Drawable);
+    public com.android.car.ui.AlertDialogBuilder setIcon(int);
+    public com.android.car.ui.AlertDialogBuilder setIconAttribute(int);
+    public com.android.car.ui.AlertDialogBuilder setIconTinted(boolean);
+    public com.android.car.ui.AlertDialogBuilder setItems(int, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setItems(java.lang.CharSequence[], android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setMessage(int);
+    public com.android.car.ui.AlertDialogBuilder setMessage(java.lang.CharSequence);
+    public com.android.car.ui.AlertDialogBuilder setMultiChoiceItems(android.database.Cursor, java.lang.String, java.lang.String, android.content.DialogInterface$OnMultiChoiceClickListener);
+    public com.android.car.ui.AlertDialogBuilder setMultiChoiceItems(int, boolean[], android.content.DialogInterface$OnMultiChoiceClickListener);
+    public com.android.car.ui.AlertDialogBuilder setMultiChoiceItems(java.lang.CharSequence[], boolean[], android.content.DialogInterface$OnMultiChoiceClickListener);
+    public com.android.car.ui.AlertDialogBuilder setNegativeButton(int, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setNegativeButton(java.lang.CharSequence, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setNeutralButton(int, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setNeutralButton(java.lang.CharSequence, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setOnCancelListener(android.content.DialogInterface$OnCancelListener);
+    public com.android.car.ui.AlertDialogBuilder setOnDismissListener(android.content.DialogInterface$OnDismissListener);
+    public com.android.car.ui.AlertDialogBuilder setOnItemSelectedListener(android.widget.AdapterView$OnItemSelectedListener);
+    public com.android.car.ui.AlertDialogBuilder setOnKeyListener(android.content.DialogInterface$OnKeyListener);
+    public com.android.car.ui.AlertDialogBuilder setPositiveButton(int, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setPositiveButton(java.lang.CharSequence, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setSingleChoiceItems(android.database.Cursor, int, java.lang.String, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setSingleChoiceItems(android.widget.ListAdapter, int, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setSingleChoiceItems(com.android.car.ui.recyclerview.CarUiRadioButtonListItemAdapter);
+    public com.android.car.ui.AlertDialogBuilder setSingleChoiceItems(com.android.car.ui.recyclerview.CarUiRadioButtonListItemAdapter, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setSingleChoiceItems(int, int, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setSingleChoiceItems(java.lang.CharSequence[], int, android.content.DialogInterface$OnClickListener);
+    public com.android.car.ui.AlertDialogBuilder setSubtitle(int);
+    public com.android.car.ui.AlertDialogBuilder setSubtitle(java.lang.CharSequence);
+    public com.android.car.ui.AlertDialogBuilder setTitle(int);
+    public com.android.car.ui.AlertDialogBuilder setTitle(java.lang.CharSequence);
+    public com.android.car.ui.AlertDialogBuilder(android.content.Context);
+    public com.android.car.ui.AlertDialogBuilder(android.content.Context, int);
+public class com.android.car.ui.CarUiLayoutInflaterFactory extends androidx.appcompat.app.AppCompatViewInflater implements android.view.LayoutInflater$Factory2 {
+    protected android.view.View createView(android.content.Context, java.lang.String, android.util.AttributeSet);
+    protected androidx.appcompat.widget.AppCompatTextView createTextView(android.content.Context, android.util.AttributeSet);
+    public android.view.View onCreateView(android.view.View, java.lang.String, android.content.Context, android.util.AttributeSet);
+    public android.view.View onCreateView(java.lang.String, android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.CarUiLayoutInflaterFactory();
+public class com.android.car.ui.CarUiText {
+    public com.android.car.ui.CarUiText(java.lang.CharSequence);
+    public com.android.car.ui.CarUiText(java.lang.CharSequence, int);
+    public com.android.car.ui.CarUiText(java.util.List<java.lang.CharSequence>, int);
+    public com.android.car.ui.CarUiText(java.util.List<java.lang.CharSequence>, int, int);
+    public int getMaxChars();
+    public int getMaxLines();
+    public java.lang.CharSequence getPreferredText();
+    public java.util.List<java.lang.CharSequence> getTextVariants();
+    public static java.lang.CharSequence combineMultiLine(java.util.List<com.android.car.ui.CarUiText>);
+public final class com.android.car.ui.CarUiText$Builder {
+    public com.android.car.ui.CarUiText build();
+    public com.android.car.ui.CarUiText$Builder setMaxChars(int);
+    public com.android.car.ui.CarUiText$Builder setMaxLines(int);
+    public com.android.car.ui.CarUiText$Builder(java.lang.CharSequence);
+    public com.android.car.ui.CarUiText$Builder(java.util.List<java.lang.CharSequence>);
+public class com.android.car.ui.FocusAreaAdapterV1 implements com.android.car.ui.plugin.oemapis.FocusAreaOEMV1 {
+    public android.widget.LinearLayout getView();
+    public com.android.car.ui.FocusAreaAdapterV1(com.android.car.ui.FocusArea);
+    public void setBoundsOffset(int, int, int, int);
+    public void setDefaultFocus(android.view.View);
+    public void setHighlightPadding(int, int, int, int);
+    public void setNudgeShortcut(int, android.view.View);
+    public void setWrapAround(boolean);
+public class com.android.car.ui.FocusParkingViewAdapterV1 implements com.android.car.ui.plugin.oemapis.FocusParkingViewOEMV1 {
+    public android.view.View getView();
+    public com.android.car.ui.FocusParkingViewAdapterV1(com.android.car.ui.FocusParkingView);
+    public void setShouldRestoreFocus(boolean);
+public class com.android.car.ui.SecureView extends android.view.View {
+    public boolean isSecure();
+    public boolean onFilterTouchEventForSecurity(android.view.MotionEvent);
+    public com.android.car.ui.SecureView(android.content.Context);
+    public com.android.car.ui.SecureView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.SecureView(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.SecureView(android.content.Context, android.util.AttributeSet, int, int);
+    public void setSecure(boolean);
+public final class com.android.car.ui.appstyledview.AppStyledDialogController {
+    public com.android.car.ui.appstyledview.AppStyledDialogController(android.content.Context);
+    public int getAppStyledViewDialogHeight();
+    public int getAppStyledViewDialogWidth();
+    public void dismiss();
+    public void setContentView(android.view.View);
+    public void setNavIcon(int);
+    public void setOnDismissListener(java.lang.Runnable);
+    public void setOnNavIconClickListener(java.lang.Runnable);
+    public void show();
+public class com.android.car.ui.appstyledview.AppStyledRecyclerViewAdapter extends androidx.recyclerview.widget.RecyclerView$Adapter<com.android.car.ui.appstyledview.AppStyledRecyclerViewAdapter$AppStyledRecyclerViewHolder> {
+    public androidx.recyclerview.widget.RecyclerView$ViewHolder onCreateViewHolder(android.view.ViewGroup, int);
+    public com.android.car.ui.appstyledview.AppStyledRecyclerViewAdapter$AppStyledRecyclerViewHolder onCreateViewHolder(android.view.ViewGroup, int);
+    public com.android.car.ui.appstyledview.AppStyledRecyclerViewAdapter(android.view.View);
+    public int getItemCount();
+    public void onBindViewHolder(androidx.recyclerview.widget.RecyclerView$ViewHolder, int);
+    public void onBindViewHolder(com.android.car.ui.appstyledview.AppStyledRecyclerViewAdapter$AppStyledRecyclerViewHolder, int);
+public class com.android.car.ui.appstyledview.AppStyledRecyclerViewAdapter$AppStyledRecyclerViewHolder extends androidx.recyclerview.widget.RecyclerView$ViewHolder {
+public interface com.android.car.ui.appstyledview.AppStyledViewController {
+    public abstract android.view.View getAppStyledView(android.view.View);
+    public abstract android.view.WindowManager$LayoutParams getDialogWindowLayoutParam(android.view.WindowManager$LayoutParams);
+    public abstract void setNavIcon(int);
+    public abstract void setOnNavIconClickListener(java.lang.Runnable);
+public interface com.android.car.ui.appstyledview.AppStyledViewController$AppStyledViewNavIcon extends java.lang.annotation.Annotation {
+    public static final int BACK = 0;
+    public static final int CLOSE = 1;
+public class com.android.car.ui.appstyledview.AppStyledViewControllerAdapterV1 implements com.android.car.ui.appstyledview.AppStyledViewController {
+    public android.view.View getAppStyledView(android.view.View);
+    public android.view.WindowManager$LayoutParams getDialogWindowLayoutParam(android.view.WindowManager$LayoutParams);
+    public com.android.car.ui.appstyledview.AppStyledViewControllerAdapterV1(com.android.car.ui.plugin.oemapis.appstyledview.AppStyledViewControllerOEMV1);
+    public void setNavIcon(int);
+    public void setOnNavIconClickListener(java.lang.Runnable);
+public class com.android.car.ui.appstyledview.AppStyledViewControllerImpl implements com.android.car.ui.appstyledview.AppStyledViewController {
+    public android.view.View getAppStyledView(android.view.View);
+    public android.view.WindowManager$LayoutParams getDialogWindowLayoutParam(android.view.WindowManager$LayoutParams);
+    public com.android.car.ui.appstyledview.AppStyledViewControllerImpl(android.content.Context);
+    public void setNavIcon(int);
+    public void setOnNavIconClickListener(java.lang.Runnable);
+public class com.android.car.ui.baselayout.ClickBlockingView extends android.view.View {
+    public boolean onHoverEvent(android.view.MotionEvent);
+    public boolean onTouchEvent(android.view.MotionEvent);
+    public com.android.car.ui.baselayout.ClickBlockingView(android.content.Context);
+    public com.android.car.ui.baselayout.ClickBlockingView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.baselayout.ClickBlockingView(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.baselayout.ClickBlockingView(android.content.Context, android.util.AttributeSet, int, int);
+public final class com.android.car.ui.baselayout.Insets {
+    public boolean equals(java.lang.Object);
+    public com.android.car.ui.baselayout.Insets();
+    public com.android.car.ui.baselayout.Insets(int, int, int, int);
+    public int getBottom();
+    public int getLeft();
+    public int getRight();
+    public int getTop();
+    public int hashCode();
+    public java.lang.String toString();
+public interface com.android.car.ui.baselayout.InsetsChangedListener {
+    public abstract void onCarUiInsetsChanged(com.android.car.ui.baselayout.Insets);
+public final class com.android.car.ui.core.BaseLayoutController {
+public final class com.android.car.ui.core.BaseLayoutController$InsetsUpdater implements com.android.car.ui.baselayout.InsetsChangedListener {
+    public void onCarUiInsetsChanged(com.android.car.ui.baselayout.Insets);
+    public void replaceInsetsChangedListenerWith(com.android.car.ui.baselayout.InsetsChangedListener);
+public class com.android.car.ui.core.CarUi {
+    public static <T> T findCarUiComponentById(android.view.View, int);
+    public static <T> T requireCarUiComponentById(android.view.View, int);
+    public static androidx.recyclerview.widget.RecyclerView$Adapter<? extends androidx.recyclerview.widget.RecyclerView$ViewHolder> createListItemAdapter(android.content.Context, java.util.List<? extends com.android.car.ui.recyclerview.CarUiListItem>);
+    public static com.android.car.ui.baselayout.Insets getInsets(android.app.Activity);
+    public static com.android.car.ui.baselayout.Insets requireInsets(android.app.Activity);
+    public static com.android.car.ui.toolbar.ToolbarController getToolbar(android.app.Activity);
+    public static com.android.car.ui.toolbar.ToolbarController installBaseLayoutAround(android.view.View, com.android.car.ui.baselayout.InsetsChangedListener, boolean);
+    public static com.android.car.ui.toolbar.ToolbarController installBaseLayoutAround(android.view.View, com.android.car.ui.baselayout.InsetsChangedListener, boolean, boolean);
+    public static com.android.car.ui.toolbar.ToolbarController requireToolbar(android.app.Activity);
+    public static final int MIN_TARGET_API = 28;
+    public static final int TARGET_API_R = 30;
+    public static void replaceInsetsChangedListenerWith(android.app.Activity, com.android.car.ui.baselayout.InsetsChangedListener);
+public class com.android.car.ui.core.CarUiInstaller extends android.content.ContentProvider {
+    public android.database.Cursor query(android.net.Uri, java.lang.String[], java.lang.String, java.lang.String[], java.lang.String);
+    public android.net.Uri insert(android.net.Uri, android.content.ContentValues);
+    public boolean onCreate();
+    public com.android.car.ui.core.CarUiInstaller();
+    public int delete(android.net.Uri, java.lang.String, java.lang.String[]);
+    public int update(android.net.Uri, android.content.ContentValues, java.lang.String, java.lang.String[]);
+    public java.lang.String getType(android.net.Uri);
+    public static void register(android.app.Application);
+public class com.android.car.ui.core.SearchResultsProvider extends android.content.ContentProvider {
+    public android.database.Cursor query(android.net.Uri, java.lang.String[], java.lang.String, java.lang.String[], java.lang.String);
+    public android.net.Uri insert(android.net.Uri, android.content.ContentValues);
+    public boolean onCreate();
+    public com.android.car.ui.core.SearchResultsProvider();
+    public int delete(android.net.Uri, java.lang.String, java.lang.String[]);
+    public int update(android.net.Uri, android.content.ContentValues, java.lang.String, java.lang.String[]);
+    public java.lang.String getType(android.net.Uri);
+    public static android.net.Uri getSearchResultsTableUri(android.content.Context);
+    public static final java.lang.String ITEM_ID = "primaryId";
+    public static final java.lang.String PRIMARY_IMAGE_BLOB = "primary_image";
+    public static final java.lang.String SECONDARY_IMAGE_BLOB = "secondary_image";
+    public static final java.lang.String SECONDARY_IMAGE_ID = "secondary";
+    public static final java.lang.String SUBTITLE = "subtitle";
+    public static final java.lang.String TITLE = "title";
+    public static java.lang.String getAuthority(java.lang.String);
+public class com.android.car.ui.imewidescreen.CarUiImeSearchListItem extends com.android.car.ui.recyclerview.CarUiContentListItem {
+    public com.android.car.ui.imewidescreen.CarUiImeSearchListItem(com.android.car.ui.recyclerview.CarUiContentListItem$Action);
+    public int getIconResId();
+    public int getSupplementalIconResId();
+    public void setIcon(android.graphics.drawable.Drawable);
+    public void setIconResId(int);
+    public void setSupplementalIcon(android.graphics.drawable.Drawable, com.android.car.ui.recyclerview.CarUiContentListItem$OnClickListener);
+    public void setSupplementalIconResId(int);
+public class com.android.car.ui.imewidescreen.CarUiImeWideScreenController {
+    public android.view.View createWideScreenImeView(android.view.View);
+    public boolean isWideScreenMode();
+    public boolean onEvaluateFullscreenMode(boolean);
+    public com.android.car.ui.imewidescreen.CarUiImeWideScreenController(android.content.Context, android.inputmethodservice.InputMethodService);
+    public static final java.lang.String ADD_DESC_TITLE_TO_CONTENT_AREA = "add_desc_title_to_content_area";
+    public static final java.lang.String ADD_DESC_TO_CONTENT_AREA = "add_desc_to_content_area";
+    public static final java.lang.String ADD_ERROR_DESC_TO_INPUT_AREA = "add_error_desc_to_input_area";
+    public static final java.lang.String CONTENT_AREA_SURFACE_DISPLAY_ID = "content_area_surface_display_id";
+    public static final java.lang.String CONTENT_AREA_SURFACE_HEIGHT = "content_area_surface_height";
+    public static final java.lang.String CONTENT_AREA_SURFACE_HOST_TOKEN = "content_area_surface_host_token";
+    public static final java.lang.String CONTENT_AREA_SURFACE_PACKAGE = "content_area_surface_package";
+    public static final java.lang.String CONTENT_AREA_SURFACE_WIDTH = "content_area_surface_width";
+    public static final java.lang.String REQUEST_RENDER_CONTENT_AREA = "request_render_content_area";
+    public static final java.lang.String SEARCH_RESULT_ITEM_ID_LIST = "search_result_item_id_list";
+    public static final java.lang.String SEARCH_RESULT_SUPPLEMENTAL_ICON_ID_LIST = "search_result_supplemental_icon_id_list";
+    public static final java.lang.String WIDE_SCREEN_ACTION = "automotive_wide_screen";
+    public static final java.lang.String WIDE_SCREEN_CLEAR_DATA_ACTION = "automotive_wide_screen_clear_data";
+    public static final java.lang.String WIDE_SCREEN_EXTRACTED_TEXT_ICON = "extracted_text_icon";
+    public static final java.lang.String WIDE_SCREEN_EXTRACTED_TEXT_ICON_RES_ID = "extracted_text_icon_res_id";
+    public static final java.lang.String WIDE_SCREEN_ON_BACK_CLICKED_ACTION = "automotive_wide_screen_back_clicked";
+    public static final java.lang.String WIDE_SCREEN_POST_LOAD_SEARCH_RESULTS_ACTION = "automotive_wide_screen_post_load_search_results";
+    public static final java.lang.String WIDE_SCREEN_SEARCH_RESULTS = "wide_screen_search_results";
+    public void onAppPrivateCommand(java.lang.String, android.os.Bundle);
+    public void onComputeInsets(android.inputmethodservice.InputMethodService$Insets);
+    public void onFinishInputView();
+    public void onStartInputView(android.view.inputmethod.EditorInfo, android.view.inputmethod.InputConnection, java.lang.CharSequence);
+    public void setExtractViewShown(boolean);
+public interface com.android.car.ui.pluginsupport.PluginConfigProvider {
+    public abstract java.util.Set<com.android.car.ui.pluginsupport.PluginSpecifier> getPluginDenyList();
+public interface com.android.car.ui.pluginsupport.PluginFactory {
+    public abstract androidx.recyclerview.widget.RecyclerView$Adapter<? extends androidx.recyclerview.widget.RecyclerView$ViewHolder> createListItemAdapter(java.util.List<? extends com.android.car.ui.recyclerview.CarUiListItem>);
+    public abstract com.android.car.ui.appstyledview.AppStyledViewController createAppStyledView(android.content.Context);
+    public abstract com.android.car.ui.recyclerview.CarUiRecyclerView createRecyclerView(android.content.Context, android.util.AttributeSet);
+    public abstract com.android.car.ui.toolbar.ToolbarController installBaseLayoutAround(android.view.View, com.android.car.ui.baselayout.InsetsChangedListener, boolean, boolean);
+    public abstract com.android.car.ui.widget.CarUiTextView createTextView(android.content.Context, android.util.AttributeSet);
+public final class com.android.car.ui.pluginsupport.PluginFactoryAdapterV1 implements com.android.car.ui.pluginsupport.PluginFactory {
+    public androidx.recyclerview.widget.RecyclerView$Adapter<? extends androidx.recyclerview.widget.RecyclerView$ViewHolder> createListItemAdapter(java.util.List<? extends com.android.car.ui.recyclerview.CarUiListItem>);
+    public com.android.car.ui.appstyledview.AppStyledViewController createAppStyledView(android.content.Context);
+    public com.android.car.ui.pluginsupport.PluginFactoryAdapterV1(com.android.car.ui.plugin.oemapis.PluginFactoryOEMV1);
+    public com.android.car.ui.recyclerview.CarUiRecyclerView createRecyclerView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.toolbar.ToolbarController installBaseLayoutAround(android.view.View, com.android.car.ui.baselayout.InsetsChangedListener, boolean, boolean);
+    public com.android.car.ui.widget.CarUiTextView createTextView(android.content.Context, android.util.AttributeSet);
+public final class com.android.car.ui.pluginsupport.PluginFactoryAdapterV2 implements com.android.car.ui.pluginsupport.PluginFactory {
+    public androidx.recyclerview.widget.RecyclerView$Adapter<? extends androidx.recyclerview.widget.RecyclerView$ViewHolder> createListItemAdapter(java.util.List<? extends com.android.car.ui.recyclerview.CarUiListItem>);
+    public com.android.car.ui.appstyledview.AppStyledViewController createAppStyledView(android.content.Context);
+    public com.android.car.ui.pluginsupport.PluginFactoryAdapterV2(com.android.car.ui.plugin.oemapis.PluginFactoryOEMV2);
+    public com.android.car.ui.recyclerview.CarUiRecyclerView createRecyclerView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.toolbar.ToolbarController installBaseLayoutAround(android.view.View, com.android.car.ui.baselayout.InsetsChangedListener, boolean, boolean);
+    public com.android.car.ui.widget.CarUiTextView createTextView(android.content.Context, android.util.AttributeSet);
+public final class com.android.car.ui.pluginsupport.PluginFactorySingleton {
+    public static android.content.Context getPluginContext();
+    public static boolean isPluginEnabled(android.content.Context);
+    public static com.android.car.ui.pluginsupport.PluginFactory get(android.content.Context);
+    public static java.lang.String getPluginPackageName(android.content.Context);
+    public static void setPluginEnabledForTesting(boolean);
+public final class com.android.car.ui.pluginsupport.PluginFactoryStub implements com.android.car.ui.pluginsupport.PluginFactory {
+    public androidx.recyclerview.widget.RecyclerView$Adapter createListItemAdapter(java.util.List);
+    public com.android.car.ui.appstyledview.AppStyledViewController createAppStyledView(android.content.Context);
+    public com.android.car.ui.pluginsupport.PluginFactoryStub();
+    public com.android.car.ui.recyclerview.CarUiListItemAdapter createListItemAdapter(java.util.List<? extends com.android.car.ui.recyclerview.CarUiListItem>);
+    public com.android.car.ui.recyclerview.CarUiRecyclerView createRecyclerView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.toolbar.ToolbarController installBaseLayoutAround(android.view.View, com.android.car.ui.baselayout.InsetsChangedListener, boolean, boolean);
+    public com.android.car.ui.widget.CarUiTextView createTextView(android.content.Context, android.util.AttributeSet);
+public final class com.android.car.ui.pluginsupport.PluginSpecifier {
+    public static com.android.car.ui.pluginsupport.PluginSpecifier$Builder builder();
+public class com.android.car.ui.pluginsupport.PluginSpecifier$Builder {
+    public com.android.car.ui.pluginsupport.PluginSpecifier build();
+    public com.android.car.ui.pluginsupport.PluginSpecifier$Builder setMaxVersion(long);
+    public com.android.car.ui.pluginsupport.PluginSpecifier$Builder setPackageName(java.lang.String);
+public interface com.android.car.ui.pluginsupport.PluginVersionProvider {
+    public abstract java.lang.Object getPluginFactory(int, android.content.Context, java.lang.String);
+public abstract class com.android.car.ui.preference.CarUiDialogFragment extends androidx.fragment.app.DialogFragment implements android.content.DialogInterface$OnClickListener {
+    protected abstract void onDialogClosed(boolean);
+    protected android.graphics.drawable.BitmapDrawable mDialogIcon;
+    protected android.view.View onCreateDialogView(android.content.Context);
+    protected boolean needInputMethod();
+    protected int mDialogLayoutRes;
+    protected java.lang.CharSequence mDialogMessage;
+    protected java.lang.CharSequence mDialogTitle;
+    protected java.lang.CharSequence mNegativeButtonText;
+    protected java.lang.CharSequence mPositiveButtonText;
+    protected void onBindDialogView(android.view.View);
+    protected void onPrepareDialogBuilder(android.app.AlertDialog$Builder);
+    public android.app.Dialog onCreateDialog(android.os.Bundle);
+    public com.android.car.ui.preference.CarUiDialogFragment();
+    public void onClick(android.content.DialogInterface, int);
+    public void onCreate(android.os.Bundle);
+    public void onDismiss(android.content.DialogInterface);
+    public void onSaveInstanceState(android.os.Bundle);
+public class com.android.car.ui.preference.CarUiDropDownPreference extends androidx.preference.DropDownPreference implements com.android.car.ui.preference.UxRestrictablePreference {
+    protected void onClick();
+    public boolean isUxRestricted();
+    public com.android.car.ui.preference.CarUiDropDownPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiDropDownPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiDropDownPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiDropDownPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public void onAttached();
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void performClick();
+    public void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setUxRestricted(boolean);
+public class com.android.car.ui.preference.CarUiEditTextPreference extends androidx.preference.EditTextPreference implements com.android.car.ui.preference.UxRestrictablePreference {
+    protected void setTwoActionLayout();
+    public android.view.View getWidgetActionContainer(androidx.preference.PreferenceViewHolder);
+    public boolean isUxRestricted();
+    public com.android.car.ui.preference.CarUiEditTextPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiEditTextPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiEditTextPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiEditTextPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public void onAttached();
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void performClick();
+    public void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setShowChevron(boolean);
+    public void setUxRestricted(boolean);
+public class com.android.car.ui.preference.CarUiListPreference extends androidx.preference.ListPreference implements com.android.car.ui.preference.UxRestrictablePreference {
+    public boolean isUxRestricted();
+    public com.android.car.ui.preference.CarUiListPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiListPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiListPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiListPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public void onAttached();
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void performClick();
+    public void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setUxRestricted(boolean);
+public class com.android.car.ui.preference.CarUiMultiSelectListPreference extends androidx.preference.MultiSelectListPreference implements com.android.car.ui.preference.UxRestrictablePreference {
+    protected boolean[] getSelectedItems();
+    public boolean isUxRestricted();
+    public com.android.car.ui.preference.CarUiMultiSelectListPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiMultiSelectListPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiMultiSelectListPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiMultiSelectListPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public void onAttached();
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void performClick();
+    public void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setUxRestricted(boolean);
+public class com.android.car.ui.preference.CarUiPreference extends androidx.preference.Preference implements com.android.car.ui.preference.DisabledPreferenceCallback,com.android.car.ui.preference.ClickableWhileDisabledPreference {
+    public boolean isClickableWhileDisabled();
+    public boolean isUxRestricted();
+    public com.android.car.ui.preference.CarUiPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public java.util.function.Consumer<androidx.preference.Preference> getDisabledClickListener();
+    public java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public void onAttached();
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void performClick();
+    public void setClickableWhileDisabled(boolean);
+    public void setDisabledClickListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setShouldDisableView(boolean);
+    public void setShowChevron(boolean);
+    public void setUxRestricted(boolean);
+public class com.android.car.ui.preference.CarUiPrimarySwitchPreference extends com.android.car.ui.preference.CarUiSwitchPreference {
+    public com.android.car.ui.preference.CarUiPrimarySwitchPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiPrimarySwitchPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiPrimarySwitchPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiPrimarySwitchPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void setChecked(boolean);
+public class com.android.car.ui.preference.CarUiRadioButtonPreference extends androidx.preference.TwoStatePreference implements com.android.car.ui.preference.UxRestrictablePreference {
+    public boolean isUxRestricted();
+    public com.android.car.ui.preference.CarUiRadioButtonPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiRadioButtonPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiRadioButtonPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiRadioButtonPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void performClick();
+    public void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setUxRestricted(boolean);
+public class com.android.car.ui.preference.CarUiSeekBarDialogPreference extends androidx.preference.DialogPreference implements com.android.car.ui.preference.DialogFragmentCallbacks,com.android.car.ui.preference.UxRestrictablePreference {
+    public boolean isUxRestricted();
+    public com.android.car.ui.preference.CarUiSeekBarDialogPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiSeekBarDialogPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiSeekBarDialogPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiSeekBarDialogPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public int getMaxProgress();
+    public int getProgress();
+    public java.lang.String getSeekBarLeftTextViewText();
+    public java.lang.String getSeekBarRightTextViewText();
+    public java.lang.String getSeekBarTopTextViewText();
+    public java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public void onAttached();
+    public void onBindDialogView(android.view.View);
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void onDialogClosed(boolean);
+    public void performClick();
+    public void setMaxProgress(int);
+    public void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setOnSeekBarChangeListener(android.widget.SeekBar$OnSeekBarChangeListener);
+    public void setProgress(int);
+    public void setSeekBarLeftTextViewText(java.lang.String);
+    public void setSeekBarLeftTextViewVisibility(int);
+    public void setSeekBarRightTextViewText(java.lang.String);
+    public void setSeekBarRightTextViewVisibility(int);
+    public void setSeekBarTopTextViewText(java.lang.String);
+    public void setSeekBarTopTextViewVisibility(int);
+    public void setUxRestricted(boolean);
+public class com.android.car.ui.preference.CarUiSwitchPreference extends androidx.preference.SwitchPreference implements com.android.car.ui.preference.DisabledPreferenceCallback,com.android.car.ui.preference.ClickableWhileDisabledPreference {
+    public boolean isClickableWhileDisabled();
+    public boolean isUxRestricted();
+    public com.android.car.ui.preference.CarUiSwitchPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiSwitchPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiSwitchPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiSwitchPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public java.util.function.Consumer<androidx.preference.Preference> getDisabledClickListener();
+    public java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void performClick();
+    public void setClickableWhileDisabled(boolean);
+    public void setDisabledClickListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public void setShouldDisableView(boolean);
+    public void setUxRestricted(boolean);
+public abstract class com.android.car.ui.preference.CarUiTwoActionBasePreference extends com.android.car.ui.preference.CarUiPreference {
+    protected abstract void performSecondaryActionClickInternal();
+    protected boolean mSecondaryActionEnabled;
+    protected boolean mSecondaryActionVisible;
+    protected void init(android.util.AttributeSet);
+    protected void setLayoutResourceInternal(int);
+    public boolean isSecondaryActionEnabled();
+    public boolean isSecondaryActionVisible();
+    public com.android.car.ui.preference.CarUiTwoActionBasePreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiTwoActionBasePreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiTwoActionBasePreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiTwoActionBasePreference(android.content.Context, android.util.AttributeSet, int, int);
+    public void performSecondaryActionClick();
+    public void setLayoutResource(int);
+    public void setSecondaryActionEnabled(boolean);
+    public void setSecondaryActionVisible(boolean);
+    public void setWidgetLayoutResource(int);
+public class com.android.car.ui.preference.CarUiTwoActionIconPreference extends com.android.car.ui.preference.CarUiTwoActionBasePreference {
+    protected java.lang.Runnable mSecondaryActionOnClickListener;
+    protected void init(android.util.AttributeSet);
+    protected void performSecondaryActionClickInternal();
+    public com.android.car.ui.preference.CarUiTwoActionIconPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiTwoActionIconPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiTwoActionIconPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiTwoActionIconPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void setOnSecondaryActionClickListener(java.lang.Runnable);
+    public void setSecondaryActionIcon(android.graphics.drawable.Drawable);
+    public void setSecondaryActionIcon(int);
+public class com.android.car.ui.preference.CarUiTwoActionPreference extends com.android.car.ui.preference.CarUiPreference {
+    protected void onBindWidgetFrame(android.view.View);
+    public boolean isActionShown();
+    public com.android.car.ui.preference.CarUiTwoActionPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiTwoActionPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiTwoActionPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiTwoActionPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void showAction(boolean);
+public class com.android.car.ui.preference.CarUiTwoActionSwitchPreference extends com.android.car.ui.preference.CarUiTwoActionBasePreference {
+    protected java.util.function.Consumer<java.lang.Boolean> mSecondaryActionOnClickListener;
+    protected void init(android.util.AttributeSet);
+    protected void performSecondaryActionClickInternal();
+    public boolean isSecondaryActionChecked();
+    public com.android.car.ui.preference.CarUiTwoActionSwitchPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiTwoActionSwitchPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiTwoActionSwitchPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiTwoActionSwitchPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void setOnSecondaryActionClickListener(java.util.function.Consumer<java.lang.Boolean>);
+    public void setSecondaryActionChecked(boolean);
+public class com.android.car.ui.preference.CarUiTwoActionTextPreference extends com.android.car.ui.preference.CarUiTwoActionBasePreference {
+    protected java.lang.Runnable mSecondaryActionOnClickListener;
+    protected void init(android.util.AttributeSet);
+    protected void performSecondaryActionClickInternal();
+    public com.android.car.ui.preference.CarUiTwoActionTextPreference(android.content.Context);
+    public com.android.car.ui.preference.CarUiTwoActionTextPreference(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.preference.CarUiTwoActionTextPreference(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.preference.CarUiTwoActionTextPreference(android.content.Context, android.util.AttributeSet, int, int);
+    public java.lang.CharSequence getSecondaryActionText();
+    public void onBindViewHolder(androidx.preference.PreferenceViewHolder);
+    public void setOnSecondaryActionClickListener(java.lang.Runnable);
+    public void setSecondaryActionText(int);
+    public void setSecondaryActionText(java.lang.CharSequence);
+public interface com.android.car.ui.preference.ClickableWhileDisabledPreference {
+    public abstract boolean isClickableWhileDisabled();
+    public abstract java.util.function.Consumer<androidx.preference.Preference> getDisabledClickListener();
+    public abstract void setClickableWhileDisabled(boolean);
+    public abstract void setDisabledClickListener(java.util.function.Consumer<androidx.preference.Preference>);
+public interface com.android.car.ui.preference.DialogFragmentCallbacks extends android.content.DialogInterface$OnClickListener {
+    public default void onBindDialogView(android.view.View);
+    public default void onClick(android.content.DialogInterface, int);
+    public default void onDialogClosed(boolean);
+    public default void onPrepareDialogBuilder(android.app.AlertDialog$Builder);
+public interface com.android.car.ui.preference.DisabledPreferenceCallback extends com.android.car.ui.preference.UxRestrictablePreference {
+    public default void setMessageToShowWhenDisabledPreferenceClicked(java.lang.String);
+public class com.android.car.ui.preference.EditTextPreferenceDialogFragment extends com.android.car.ui.preference.PreferenceDialogFragment implements android.widget.TextView$OnEditorActionListener {
+    protected boolean needInputMethod();
+    protected void onBindDialogView(android.view.View);
+    protected void onDialogClosed(boolean);
+    public boolean getAllowEnterToSubmit();
+    public boolean onEditorAction(android.widget.TextView, int, android.view.KeyEvent);
+    public com.android.car.ui.preference.EditTextPreferenceDialogFragment();
+    public static com.android.car.ui.preference.EditTextPreferenceDialogFragment newInstance(java.lang.String);
+    public void onCreate(android.os.Bundle);
+    public void onSaveInstanceState(android.os.Bundle);
+    public void setAllowEnterToSubmit(boolean);
+public class com.android.car.ui.preference.ListPreferenceFragment extends androidx.fragment.app.Fragment implements com.android.car.ui.baselayout.InsetsChangedListener {
+    public android.view.View onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
+    public com.android.car.ui.preference.ListPreferenceFragment();
+    public void onCarUiInsetsChanged(com.android.car.ui.baselayout.Insets);
+    public void onStart();
+    public void onStop();
+    public void onViewCreated(android.view.View, android.os.Bundle);
+public class com.android.car.ui.preference.MultiSelectListPreferenceFragment extends androidx.fragment.app.Fragment implements com.android.car.ui.baselayout.InsetsChangedListener {
+    public android.view.View onCreateView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
+    public com.android.car.ui.preference.MultiSelectListPreferenceFragment();
+    public void onCarUiInsetsChanged(com.android.car.ui.baselayout.Insets);
+    public void onStart();
+    public void onStop();
+    public void onViewCreated(android.view.View, android.os.Bundle);
+public abstract class com.android.car.ui.preference.PreferenceDialogFragment extends com.android.car.ui.preference.CarUiDialogFragment implements android.content.DialogInterface$OnClickListener {
+    protected static final java.lang.String ARG_KEY = "key";
+    public androidx.preference.DialogPreference getPreference();
+    public com.android.car.ui.preference.PreferenceDialogFragment();
+    public void onCreate(android.os.Bundle);
+public abstract class com.android.car.ui.preference.PreferenceFragment extends androidx.preference.PreferenceFragmentCompat implements com.android.car.ui.baselayout.InsetsChangedListener {
+    protected com.android.car.ui.baselayout.Insets getPreferenceInsets(androidx.fragment.app.Fragment);
+    protected com.android.car.ui.toolbar.ToolbarController getPreferenceToolbar(androidx.fragment.app.Fragment);
+    protected void setupToolbar(com.android.car.ui.toolbar.ToolbarController);
+    public androidx.recyclerview.widget.RecyclerView onCreateRecyclerView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
+    public boolean onPreferenceTreeClick(androidx.preference.Preference);
+    public com.android.car.ui.preference.PreferenceFragment();
+    public com.android.car.ui.recyclerview.CarUiRecyclerView getCarUiRecyclerView();
+    public com.android.car.ui.recyclerview.CarUiRecyclerView onCreateCarUiRecyclerView(android.view.LayoutInflater, android.view.ViewGroup, android.os.Bundle);
+    public void onCarUiInsetsChanged(com.android.car.ui.baselayout.Insets);
+    public void onDisplayPreferenceDialog(androidx.preference.Preference);
+    public void onResume();
+    public void onStart();
+    public void onViewCreated(android.view.View, android.os.Bundle);
+    public void setPreferenceScreen(androidx.preference.PreferenceScreen);
+public interface com.android.car.ui.preference.PreferenceFragment$AndroidxRecyclerViewProvider {
+    public abstract androidx.recyclerview.widget.RecyclerView getRecyclerView();
+public class com.android.car.ui.preference.SeekbarPreferenceDialogFragment extends com.android.car.ui.preference.PreferenceDialogFragment {
+    protected void onBindDialogView(android.view.View);
+    protected void onDialogClosed(boolean);
+    protected void onPrepareDialogBuilder(android.app.AlertDialog$Builder);
+    public com.android.car.ui.preference.SeekbarPreferenceDialogFragment();
+    public static com.android.car.ui.preference.SeekbarPreferenceDialogFragment newInstance(java.lang.String);
+    public void onClick(android.content.DialogInterface, int);
+public interface com.android.car.ui.preference.UxRestrictablePreference {
+    public abstract boolean isUxRestricted();
+    public abstract java.util.function.Consumer<androidx.preference.Preference> getOnClickWhileRestrictedListener();
+    public abstract void setOnClickWhileRestrictedListener(java.util.function.Consumer<androidx.preference.Preference>);
+    public abstract void setUxRestricted(boolean);
+public class com.android.car.ui.recyclerview.CarUiCheckBoxListItem extends com.android.car.ui.recyclerview.CarUiContentListItem {
+    public com.android.car.ui.recyclerview.CarUiCheckBoxListItem();
+public class com.android.car.ui.recyclerview.CarUiContentListItem extends com.android.car.ui.recyclerview.CarUiListItem {
+    public android.graphics.drawable.Drawable getIcon();
+    public android.graphics.drawable.Drawable getSupplementalIcon();
+    public boolean isActionDividerVisible();
+    public boolean isActivated();
+    public boolean isChecked();
+    public boolean isEnabled();
+    public boolean isSecure();
+    public com.android.car.ui.CarUiText getTitle();
+    public com.android.car.ui.recyclerview.CarUiContentListItem$Action getAction();
+    public com.android.car.ui.recyclerview.CarUiContentListItem$IconType getPrimaryIconType();
+    public com.android.car.ui.recyclerview.CarUiContentListItem$OnCheckedChangeListener getOnCheckedChangeListener();
+    public com.android.car.ui.recyclerview.CarUiContentListItem$OnClickListener getOnClickListener();
+    public com.android.car.ui.recyclerview.CarUiContentListItem$OnClickListener getSupplementalIconOnClickListener();
+    public com.android.car.ui.recyclerview.CarUiContentListItem(com.android.car.ui.recyclerview.CarUiContentListItem$Action);
+    public java.util.List<com.android.car.ui.CarUiText> getBody();
+    public void setActionDividerVisible(boolean);
+    public void setActivated(boolean);
+    public void setBody(com.android.car.ui.CarUiText);
+    public void setBody(java.lang.CharSequence);
+    public void setBody(java.util.List<com.android.car.ui.CarUiText>);
+    public void setChecked(boolean);
+    public void setEnabled(boolean);
+    public void setIcon(android.graphics.drawable.Drawable);
+    public void setOnCheckedChangeListener(com.android.car.ui.recyclerview.CarUiContentListItem$OnCheckedChangeListener);
+    public void setOnItemClickedListener(com.android.car.ui.recyclerview.CarUiContentListItem$OnClickListener);
+    public void setPrimaryIconType(com.android.car.ui.recyclerview.CarUiContentListItem$IconType);
+    public void setSecure(boolean);
+    public void setSupplementalIcon(android.graphics.drawable.Drawable);
+    public void setSupplementalIcon(android.graphics.drawable.Drawable, com.android.car.ui.recyclerview.CarUiContentListItem$OnClickListener);
+    public void setTitle(com.android.car.ui.CarUiText);
+    public void setTitle(java.lang.CharSequence);
+public final class com.android.car.ui.recyclerview.CarUiContentListItem$Action extends java.lang.Enum<com.android.car.ui.recyclerview.CarUiContentListItem$Action> {
+    public static com.android.car.ui.recyclerview.CarUiContentListItem$Action valueOf(java.lang.String);
+    public static com.android.car.ui.recyclerview.CarUiContentListItem$Action[] values();
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$Action CHECK_BOX;
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$Action CHEVRON;
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$Action ICON;
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$Action NONE;
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$Action RADIO_BUTTON;
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$Action SWITCH;
+public final class com.android.car.ui.recyclerview.CarUiContentListItem$IconType extends java.lang.Enum<com.android.car.ui.recyclerview.CarUiContentListItem$IconType> {
+    public static com.android.car.ui.recyclerview.CarUiContentListItem$IconType valueOf(java.lang.String);
+    public static com.android.car.ui.recyclerview.CarUiContentListItem$IconType[] values();
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$IconType AVATAR;
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$IconType CONTENT;
+    public static final com.android.car.ui.recyclerview.CarUiContentListItem$IconType STANDARD;
+public interface com.android.car.ui.recyclerview.CarUiContentListItem$OnCheckedChangeListener {
+    public abstract void onCheckedChanged(com.android.car.ui.recyclerview.CarUiContentListItem, boolean);
+public interface com.android.car.ui.recyclerview.CarUiContentListItem$OnClickListener {
+    public abstract void onClick(com.android.car.ui.recyclerview.CarUiContentListItem);
+public final class com.android.car.ui.recyclerview.CarUiGridLayoutStyle implements com.android.car.ui.recyclerview.CarUiLayoutStyle {
+    public androidx.recyclerview.widget.GridLayoutManager$SpanSizeLookup getSpanSizeLookup();
+    public boolean getReverseLayout();
+    public com.android.car.ui.recyclerview.CarUiGridLayoutStyle();
+    public int getLayoutType();
+    public int getOrientation();
+    public int getSize();
+    public int getSpanCount();
+    public static com.android.car.ui.recyclerview.CarUiGridLayoutStyle from(androidx.recyclerview.widget.RecyclerView$LayoutManager);
+    public void setOrientation(int);
+    public void setReverseLayout(boolean);
+    public void setSize(int);
+    public void setSpanCount(int);
+    public void setSpanSizeLookup(androidx.recyclerview.widget.GridLayoutManager$SpanSizeLookup);
+public class com.android.car.ui.recyclerview.CarUiHeaderListItem extends com.android.car.ui.recyclerview.CarUiListItem {
+    public com.android.car.ui.recyclerview.CarUiHeaderListItem(java.lang.CharSequence);
+    public com.android.car.ui.recyclerview.CarUiHeaderListItem(java.lang.CharSequence, java.lang.CharSequence);
+    public java.lang.CharSequence getBody();
+    public java.lang.CharSequence getTitle();
+public interface com.android.car.ui.recyclerview.CarUiLayoutStyle {
+    public abstract boolean getReverseLayout();
+    public abstract int getLayoutType();
+    public abstract int getOrientation();
+    public abstract int getSize();
+    public abstract int getSpanCount();
+    public static final int HORIZONTAL = 0;
+    public static final int VERTICAL = 1;
+public interface com.android.car.ui.recyclerview.CarUiLayoutStyle$Orientation extends java.lang.annotation.Annotation {
+public final class com.android.car.ui.recyclerview.CarUiLinearLayoutStyle implements com.android.car.ui.recyclerview.CarUiLayoutStyle {
+    public boolean getReverseLayout();
+    public com.android.car.ui.recyclerview.CarUiLinearLayoutStyle();
+    public int getLayoutType();
+    public int getOrientation();
+    public int getSize();
+    public int getSpanCount();
+    public static com.android.car.ui.recyclerview.CarUiLinearLayoutStyle from(androidx.recyclerview.widget.RecyclerView$LayoutManager);
+    public void setOrientation(int);
+    public void setReverseLayout(boolean);
+    public void setSize(int);
+public abstract class com.android.car.ui.recyclerview.CarUiListItem {
+    public com.android.car.ui.recyclerview.CarUiListItem();
+public class com.android.car.ui.recyclerview.CarUiListItemAdapter extends androidx.recyclerview.widget.RecyclerView$Adapter<androidx.recyclerview.widget.RecyclerView$ViewHolder> implements com.android.car.ui.recyclerview.CarUiRecyclerView$ItemCap {
+    public androidx.recyclerview.widget.RecyclerView$ViewHolder onCreateViewHolder(android.view.ViewGroup, int);
+    public com.android.car.ui.recyclerview.CarUiListItemAdapter(java.util.List<? extends com.android.car.ui.recyclerview.CarUiListItem>);
+    public com.android.car.ui.recyclerview.CarUiListItemAdapter(java.util.List<? extends com.android.car.ui.recyclerview.CarUiListItem>, boolean);
+    public int getItemCount();
+    public int getItemViewType(int);
+    public java.util.List<? extends com.android.car.ui.recyclerview.CarUiListItem> getItems();
+    public void onBindViewHolder(androidx.recyclerview.widget.RecyclerView$ViewHolder, int);
+    public void setMaxItems(int);
+public final class com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1 extends androidx.recyclerview.widget.RecyclerView$Adapter<com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1$ViewHolderWrapper> {
+    public androidx.recyclerview.widget.RecyclerView$ViewHolder onCreateViewHolder(android.view.ViewGroup, int);
+    public boolean onFailedToRecycleView(androidx.recyclerview.widget.RecyclerView$ViewHolder);
+    public boolean onFailedToRecycleView(com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1$ViewHolderWrapper);
+    public com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1$ViewHolderWrapper onCreateViewHolder(android.view.ViewGroup, int);
+    public com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1(com.android.car.ui.plugin.oemapis.recyclerview.AdapterOEMV1);
+    public int getItemCount();
+    public int getItemViewType(int);
+    public long getItemId(int);
+    public void onAttachedToRecyclerView(androidx.recyclerview.widget.RecyclerView);
+    public void onBindViewHolder(androidx.recyclerview.widget.RecyclerView$ViewHolder, int);
+    public void onBindViewHolder(com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1$ViewHolderWrapper, int);
+    public void onDetachedFromRecyclerView(androidx.recyclerview.widget.RecyclerView);
+    public void onViewAttachedToWindow(androidx.recyclerview.widget.RecyclerView$ViewHolder);
+    public void onViewAttachedToWindow(com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1$ViewHolderWrapper);
+    public void onViewDetachedFromWindow(androidx.recyclerview.widget.RecyclerView$ViewHolder);
+    public void onViewDetachedFromWindow(com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1$ViewHolderWrapper);
+    public void onViewRecycled(androidx.recyclerview.widget.RecyclerView$ViewHolder);
+    public void onViewRecycled(com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1$ViewHolderWrapper);
+public class com.android.car.ui.recyclerview.CarUiListItemAdapterAdapterV1$ViewHolderWrapper extends androidx.recyclerview.widget.RecyclerView$ViewHolder {
+    public com.android.car.ui.plugin.oemapis.recyclerview.ViewHolderOEMV1 getViewHolder();
+public class com.android.car.ui.recyclerview.CarUiRadioButtonListItem extends com.android.car.ui.recyclerview.CarUiContentListItem {
+    public com.android.car.ui.recyclerview.CarUiRadioButtonListItem();
+public class com.android.car.ui.recyclerview.CarUiRadioButtonListItemAdapter extends com.android.car.ui.recyclerview.CarUiListItemAdapter {
+    public androidx.recyclerview.widget.RecyclerView$ViewHolder onCreateViewHolder(android.view.ViewGroup, int);
+    public com.android.car.ui.recyclerview.CarUiRadioButtonListItemAdapter(java.util.List<com.android.car.ui.recyclerview.CarUiRadioButtonListItem>);
+    public int getSelectedItemPosition();
+    public void onBindViewHolder(androidx.recyclerview.widget.RecyclerView$ViewHolder, int);
+public interface com.android.car.ui.recyclerview.CarUiRadioButtonListItemAdapter$RadioButtonListItemViewHolder$OnCheckedChangeListener {
+    public abstract void onCheckedChanged(boolean);
+public interface com.android.car.ui.recyclerview.CarUiRecyclerView {
+    public abstract <T extends android.view.View> T findViewById(int);
+    public abstract <T extends android.view.View> T requireViewById(int);
+    public abstract android.content.Context getContext();
+    public abstract android.view.View getChildAt(int);
+    public abstract android.view.View getRecyclerViewChildAt(int);
+    public abstract android.view.View getView();
+    public abstract android.view.ViewParent getParent();
+    public abstract android.view.ViewTreeObserver getViewTreeObserver();
+    public abstract androidx.recyclerview.widget.RecyclerView$Adapter<?> getAdapter();
+    public abstract androidx.recyclerview.widget.RecyclerView$ItemDecoration getItemDecorationAt(int);
+    public abstract androidx.recyclerview.widget.RecyclerView$LayoutManager getLayoutManager();
+    public abstract androidx.recyclerview.widget.RecyclerView$ViewHolder findViewHolderForAdapterPosition(int);
+    public abstract androidx.recyclerview.widget.RecyclerView$ViewHolder findViewHolderForLayoutPosition(int);
+    public abstract boolean hasFixedSize();
+    public abstract boolean post(java.lang.Runnable);
+    public abstract com.android.car.ui.recyclerview.CarUiLayoutStyle getLayoutStyle();
+    public abstract float getAlpha();
+    public abstract int findFirstCompletelyVisibleItemPosition();
+    public abstract int findFirstVisibleItemPosition();
+    public abstract int findLastCompletelyVisibleItemPosition();
+    public abstract int findLastVisibleItemPosition();
+    public abstract int getChildCount();
+    public abstract int getChildLayoutPosition(android.view.View);
+    public abstract int getEndAfterPadding();
+    public abstract int getHeight();
+    public abstract int getItemDecorationCount();
+    public abstract int getPaddingBottom();
+    public abstract int getPaddingEnd();
+    public abstract int getPaddingLeft();
+    public abstract int getPaddingRight();
+    public abstract int getPaddingStart();
+    public abstract int getPaddingTop();
+    public abstract int getRecyclerViewChildCount();
+    public abstract int getScrollState();
+    public abstract int getStartAfterPadding();
+    public abstract int getTotalSpace();
+    public abstract java.lang.CharSequence getContentDescription();
+    public abstract java.lang.Object getTag();
+    public abstract void addItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration);
+    public abstract void addItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration, int);
+    public abstract void addOnChildAttachStateChangeListener(androidx.recyclerview.widget.RecyclerView$OnChildAttachStateChangeListener);
+    public abstract void addOnLayoutChangeListener(android.view.View$OnLayoutChangeListener);
+    public abstract void addOnScrollListener(com.android.car.ui.recyclerview.CarUiRecyclerView$OnScrollListener);
+    public abstract void clearOnChildAttachStateChangeListeners();
+    public abstract void clearOnScrollListeners();
+    public abstract void focusableViewAvailable(android.view.View);
+    public abstract void invalidateItemDecorations();
+    public abstract void removeItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration);
+    public abstract void removeItemDecorationAt(int);
+    public abstract void removeOnChildAttachStateChangeListener(androidx.recyclerview.widget.RecyclerView$OnChildAttachStateChangeListener);
+    public abstract void removeOnLayoutChangeListener(android.view.View$OnLayoutChangeListener);
+    public abstract void removeOnScrollListener(com.android.car.ui.recyclerview.CarUiRecyclerView$OnScrollListener);
+    public abstract void requestLayout();
+    public abstract void scrollBy(int, int);
+    public abstract void scrollToPosition(int);
+    public abstract void setAdapter(androidx.recyclerview.widget.RecyclerView$Adapter<?>);
+    public abstract void setAlpha(float);
+    public abstract void setClipToPadding(boolean);
+    public abstract void setContentDescription(java.lang.CharSequence);
+    public abstract void setFadingEdgeLength(int);
+    public abstract void setHasFixedSize(boolean);
+    public abstract void setId(int);
+    public abstract void setItemAnimator(androidx.recyclerview.widget.RecyclerView$ItemAnimator);
+    public abstract void setLayoutStyle(com.android.car.ui.recyclerview.CarUiLayoutStyle);
+    public abstract void setOnFlingListener(androidx.recyclerview.widget.RecyclerView$OnFlingListener);
+    public abstract void setOnTouchListener(android.view.View$OnTouchListener);
+    public abstract void setPadding(int, int, int, int);
+    public abstract void setPaddingRelative(int, int, int, int);
+    public abstract void setSpanSizeLookup(androidx.recyclerview.widget.GridLayoutManager$SpanSizeLookup);
+    public abstract void setTag(java.lang.Object);
+    public abstract void setVerticalFadingEdgeEnabled(boolean);
+    public abstract void setVerticalScrollBarEnabled(boolean);
+    public abstract void setVerticalScrollbarPosition(int);
+    public abstract void setVisibility(int);
+    public abstract void smoothScrollBy(int, int);
+    public abstract void smoothScrollToPosition(int);
+    public default void setLayoutManager(androidx.recyclerview.widget.RecyclerView$LayoutManager);
+    public static com.android.car.ui.recyclerview.CarUiRecyclerView create(android.content.Context);
+    public static com.android.car.ui.recyclerview.CarUiRecyclerView create(android.content.Context, android.util.AttributeSet);
+    public static final int SCROLL_STATE_DRAGGING = 1;
+    public static final int SCROLL_STATE_IDLE = 0;
+    public static final int SCROLL_STATE_SETTLING = 2;
+    public static final int SIZE_LARGE = 2;
+    public static final int SIZE_MEDIUM = 1;
+    public static final int SIZE_SMALL = 0;
+public interface com.android.car.ui.recyclerview.CarUiRecyclerView$CarUiRecyclerViewLayout extends java.lang.annotation.Annotation {
+    public static final int GRID = 1;
+    public static final int LINEAR = 0;
+public interface com.android.car.ui.recyclerview.CarUiRecyclerView$ItemCap {
+    public abstract void setMaxItems(int);
+    public static final int UNLIMITED = -1;
+public interface com.android.car.ui.recyclerview.CarUiRecyclerView$OnAttachListener {
+    public abstract void onAttachedToCarUiRecyclerView(com.android.car.ui.recyclerview.CarUiRecyclerView);
+    public abstract void onDetachedFromCarUiRecyclerView(com.android.car.ui.recyclerview.CarUiRecyclerView);
+public interface com.android.car.ui.recyclerview.CarUiRecyclerView$OnScrollListener {
+    public abstract void onScrollStateChanged(com.android.car.ui.recyclerview.CarUiRecyclerView, int);
+    public abstract void onScrolled(com.android.car.ui.recyclerview.CarUiRecyclerView, int, int);
+public interface com.android.car.ui.recyclerview.CarUiRecyclerView$Size extends java.lang.annotation.Annotation {
+public class com.android.car.ui.recyclerview.CarUiRecyclerViewContainer extends android.widget.FrameLayout {
+    public com.android.car.ui.recyclerview.CarUiRecyclerViewContainer(android.content.Context);
+    public com.android.car.ui.recyclerview.CarUiRecyclerViewContainer(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.recyclerview.CarUiRecyclerViewContainer(android.content.Context, android.util.AttributeSet, int);
+public final class com.android.car.ui.recyclerview.CarUiRecyclerViewImpl extends android.widget.FrameLayout implements com.android.car.ui.recyclerview.CarUiRecyclerView,com.android.car.ui.utils.ViewUtils$LazyLayoutView,com.android.car.ui.preference.PreferenceFragment$AndroidxRecyclerViewProvider {
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    public android.view.View getRecyclerViewChildAt(int);
+    public android.view.View getView();
+    public androidx.recyclerview.widget.RecyclerView getRecyclerView();
+    public androidx.recyclerview.widget.RecyclerView$Adapter<?> getAdapter();
+    public androidx.recyclerview.widget.RecyclerView$ItemDecoration getItemDecorationAt(int);
+    public androidx.recyclerview.widget.RecyclerView$LayoutManager getLayoutManager();
+    public androidx.recyclerview.widget.RecyclerView$ViewHolder findViewHolderForAdapterPosition(int);
+    public androidx.recyclerview.widget.RecyclerView$ViewHolder findViewHolderForLayoutPosition(int);
+    public boolean canScrollHorizontally(int);
+    public boolean canScrollVertically(int);
+    public boolean hasFixedSize();
+    public boolean isLayoutCompleted();
+    public boolean post(java.lang.Runnable);
+    public com.android.car.ui.recyclerview.CarUiLayoutStyle getLayoutStyle();
+    public com.android.car.ui.recyclerview.CarUiRecyclerViewImpl(android.content.Context);
+    public com.android.car.ui.recyclerview.CarUiRecyclerViewImpl(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.recyclerview.CarUiRecyclerViewImpl(android.content.Context, android.util.AttributeSet, int);
+    public int findFirstCompletelyVisibleItemPosition();
+    public int findFirstVisibleItemPosition();
+    public int findLastCompletelyVisibleItemPosition();
+    public int findLastVisibleItemPosition();
+    public int getChildLayoutPosition(android.view.View);
+    public int getEndAfterPadding();
+    public int getItemDecorationCount();
+    public int getPaddingBottom();
+    public int getPaddingTop();
+    public int getRecyclerViewChildCount();
+    public int getScrollState();
+    public int getStartAfterPadding();
+    public int getTotalSpace();
+    public void addItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration);
+    public void addItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration, int);
+    public void addOnChildAttachStateChangeListener(androidx.recyclerview.widget.RecyclerView$OnChildAttachStateChangeListener);
+    public void addOnLayoutCompleteListener(java.lang.Runnable);
+    public void addOnScrollListener(com.android.car.ui.recyclerview.CarUiRecyclerView$OnScrollListener);
+    public void clearOnChildAttachStateChangeListeners();
+    public void clearOnScrollListeners();
+    public void invalidateItemDecorations();
+    public void removeItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration);
+    public void removeItemDecorationAt(int);
+    public void removeOnChildAttachStateChangeListener(androidx.recyclerview.widget.RecyclerView$OnChildAttachStateChangeListener);
+    public void removeOnLayoutCompleteListener(java.lang.Runnable);
+    public void removeOnScrollListener(com.android.car.ui.recyclerview.CarUiRecyclerView$OnScrollListener);
+    public void requestLayout();
+    public void scrollBy(int, int);
+    public void scrollToPosition(int);
+    public void setAdapter(androidx.recyclerview.widget.RecyclerView$Adapter<?>);
+    public void setContentDescription(java.lang.CharSequence);
+    public void setHasFixedSize(boolean);
+    public void setItemAnimator(androidx.recyclerview.widget.RecyclerView$ItemAnimator);
+    public void setLayoutManager(androidx.recyclerview.widget.RecyclerView$LayoutManager);
+    public void setLayoutStyle(com.android.car.ui.recyclerview.CarUiLayoutStyle);
+    public void setOnFlingListener(androidx.recyclerview.widget.RecyclerView$OnFlingListener);
+    public void setPadding(int, int, int, int);
+    public void setPaddingRelative(int, int, int, int);
+    public void setSpanSizeLookup(androidx.recyclerview.widget.GridLayoutManager$SpanSizeLookup);
+    public void smoothScrollBy(int, int);
+    public void smoothScrollToPosition(int);
+public class com.android.car.ui.recyclerview.CarUiSmoothScroller extends androidx.recyclerview.widget.LinearSmoothScroller {
+    protected int calculateTimeForDeceleration(int);
+    protected int calculateTimeForScrolling(int);
+    protected int getVerticalSnapPreference();
+    protected void onTargetFound(android.view.View, androidx.recyclerview.widget.RecyclerView$State, androidx.recyclerview.widget.RecyclerView$SmoothScroller$Action);
+    public com.android.car.ui.recyclerview.CarUiSmoothScroller(android.content.Context);
+public interface com.android.car.ui.recyclerview.ContentLimiting {
+    public abstract int getConfigurationId();
+    public abstract void setMaxItems(int);
+    public abstract void setScrollingLimitedMessageResId(int);
+    public static final int UNLIMITED = -1;
+public abstract class com.android.car.ui.recyclerview.ContentLimitingAdapter<T extends androidx.recyclerview.widget.RecyclerView$ViewHolder> extends androidx.recyclerview.widget.RecyclerView$Adapter<androidx.recyclerview.widget.RecyclerView$ViewHolder> implements com.android.car.ui.recyclerview.ContentLimiting {
+    protected abstract T onCreateViewHolderImpl(android.view.ViewGroup, int);
+    protected abstract int getUnrestrictedItemCount();
+    protected abstract void onBindViewHolderImpl(T, int);
+    protected boolean onFailedToRecycleViewImpl(T);
+    protected int computeAnchorIndexWhenRestricting();
+    protected int getItemViewTypeImpl(int);
+    protected int getScrollToPositionWhenRestricted();
+    protected int getScrollingLimitedMessagePosition();
+    protected int indexToPosition(int);
+    protected int positionToIndex(int);
+    protected void onViewAttachedToWindowImpl(T);
+    protected void onViewDetachedFromWindowImpl(T);
+    protected void onViewRecycledImpl(T);
+    public com.android.car.ui.recyclerview.ContentLimitingAdapter();
+    public final androidx.recyclerview.widget.RecyclerView$ViewHolder onCreateViewHolder(android.view.ViewGroup, int);
+    public final boolean onFailedToRecycleView(androidx.recyclerview.widget.RecyclerView$ViewHolder);
+    public final int getItemCount();
+    public final int getItemViewType(int);
+    public final void onBindViewHolder(androidx.recyclerview.widget.RecyclerView$ViewHolder, int);
+    public final void onViewAttachedToWindow(androidx.recyclerview.widget.RecyclerView$ViewHolder);
+    public final void onViewDetachedFromWindow(androidx.recyclerview.widget.RecyclerView$ViewHolder);
+    public final void onViewRecycled(androidx.recyclerview.widget.RecyclerView$ViewHolder);
+    public int getScrollingLimitedMessageViewType();
+    public void notifyLimitingAnchorChanged(int);
+    public void onAttachedToRecyclerView(androidx.recyclerview.widget.RecyclerView);
+    public void setMaxItems(int);
+    public void setScrollingLimitedMessageResId(int);
+    public void updateUnderlyingDataChanged(int, int);
+public class com.android.car.ui.recyclerview.DelegatingContentLimitingAdapter<T extends androidx.recyclerview.widget.RecyclerView$ViewHolder> extends com.android.car.ui.recyclerview.ContentLimitingAdapter<T> {
+    protected boolean onFailedToRecycleViewImpl(T);
+    protected int computeAnchorIndexWhenRestricting();
+    protected int getScrollToPositionWhenRestricted();
+    protected int getScrollingLimitedMessagePosition();
+    protected void onViewAttachedToWindowImpl(T);
+    protected void onViewDetachedFromWindowImpl(T);
+    protected void onViewRecycledImpl(T);
+    public T onCreateViewHolderImpl(android.view.ViewGroup, int);
+    public com.android.car.ui.recyclerview.DelegatingContentLimitingAdapter(androidx.recyclerview.widget.RecyclerView$Adapter<T>, int);
+    public com.android.car.ui.recyclerview.DelegatingContentLimitingAdapter(androidx.recyclerview.widget.RecyclerView$Adapter<T>, int, int, int);
+    public int getConfigurationId();
+    public int getItemViewTypeImpl(int);
+    public int getScrollingLimitedMessageViewType();
+    public int getUnrestrictedItemCount();
+    public long getItemId(int);
+    public void onAttachedToRecyclerView(androidx.recyclerview.widget.RecyclerView);
+    public void onBindViewHolderImpl(T, int);
+    public void onDetachedFromRecyclerView(androidx.recyclerview.widget.RecyclerView);
+    public void registerAdapterDataObserver(androidx.recyclerview.widget.RecyclerView$AdapterDataObserver);
+    public void setHasStableIds(boolean);
+    public void unregisterAdapterDataObserver(androidx.recyclerview.widget.RecyclerView$AdapterDataObserver);
+public interface com.android.car.ui.recyclerview.DelegatingContentLimitingAdapter$ContentLimiting {
+    public abstract int computeAnchorIndexWhenRestricting();
+    public abstract int getScrollToPositionWhenRestricted();
+public class com.android.car.ui.recyclerview.OnContinuousScrollListener implements android.view.View$OnTouchListener {
+    public boolean onTouch(android.view.View, android.view.MotionEvent);
+    public com.android.car.ui.recyclerview.OnContinuousScrollListener(android.content.Context, android.view.View$OnClickListener);
+    public void cancelPendingScroll();
+public class com.android.car.ui.recyclerview.PassThroughFilter implements com.android.car.ui.recyclerview.RangeFilter {
+    public com.android.car.ui.recyclerview.PassThroughFilter();
+    public int getFilteredCount();
+    public int indexToPosition(int);
+    public int positionToIndex(int);
+    public void applyFilter();
+    public void invalidateMessagePositions();
+    public void notifyPivotIndexChanged(int);
+    public void recompute(int, int);
+    public void removeFilter();
+public final class com.android.car.ui.recyclerview.ProxyRecyclerView extends androidx.recyclerview.widget.RecyclerView {
+    public androidx.recyclerview.widget.RecyclerView$Adapter getAdapter();
+    public com.android.car.ui.recyclerview.ProxyRecyclerView(android.content.Context, com.android.car.ui.recyclerview.CarUiRecyclerView);
+    public void addItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration);
+    public void focusableViewAvailable(android.view.View);
+    public void invalidateItemDecorations();
+    public void scrollToPosition(int);
+    public void setAdapter(androidx.recyclerview.widget.RecyclerView$Adapter);
+public interface com.android.car.ui.recyclerview.RangeFilter {
+    public abstract int getFilteredCount();
+    public abstract int indexToPosition(int);
+    public abstract int positionToIndex(int);
+    public abstract void applyFilter();
+    public abstract void invalidateMessagePositions();
+    public abstract void notifyPivotIndexChanged(int);
+    public abstract void recompute(int, int);
+    public abstract void removeFilter();
+    public static final int INVALID_INDEX = -1;
+    public static final int INVALID_POSITION = -1;
+public class com.android.car.ui.recyclerview.RangeFilterImpl implements com.android.car.ui.recyclerview.RangeFilter {
+    public com.android.car.ui.recyclerview.RangeFilterImpl(androidx.recyclerview.widget.RecyclerView$Adapter<?>, int);
+    public int getFilteredCount();
+    public int indexToPosition(int);
+    public int positionToIndex(int);
+    public java.lang.String toString();
+    public void applyFilter();
+    public void invalidateMessagePositions();
+    public void notifyPivotIndexChanged(int);
+    public void recompute(int, int);
+    public void removeFilter();
+public final class com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1 implements com.android.car.ui.plugin.oemapis.recyclerview.AdapterOEMV1<com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1$ViewHolderAdapterV1> {
+    public androidx.recyclerview.widget.RecyclerView$Adapter getAdapter();
+    public boolean hasStableIds();
+    public boolean onFailedToRecycleView(com.android.car.ui.plugin.oemapis.recyclerview.ViewHolderOEMV1);
+    public boolean onFailedToRecycleView(com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1$ViewHolderAdapterV1);
+    public com.android.car.ui.plugin.oemapis.recyclerview.ViewHolderOEMV1 createViewHolder(android.view.ViewGroup, int);
+    public com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1$ViewHolderAdapterV1 createViewHolder(android.view.ViewGroup, int);
+    public com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1(android.content.Context, androidx.recyclerview.widget.RecyclerView$Adapter<?>);
+    public int getItemCount();
+    public int getItemViewType(int);
+    public int getStateRestorationPolicyInt();
+    public long getItemId(int);
+    public void bindViewHolder(com.android.car.ui.plugin.oemapis.recyclerview.ViewHolderOEMV1, int);
+    public void bindViewHolder(com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1$ViewHolderAdapterV1, int);
+    public void onAttachedToRecyclerView(com.android.car.ui.plugin.oemapis.recyclerview.RecyclerViewOEMV1);
+    public void onDetachedFromRecyclerView(com.android.car.ui.plugin.oemapis.recyclerview.RecyclerViewOEMV1);
+    public void onViewAttachedToWindow(com.android.car.ui.plugin.oemapis.recyclerview.ViewHolderOEMV1);
+    public void onViewAttachedToWindow(com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1$ViewHolderAdapterV1);
+    public void onViewDetachedFromWindow(com.android.car.ui.plugin.oemapis.recyclerview.ViewHolderOEMV1);
+    public void onViewDetachedFromWindow(com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1$ViewHolderAdapterV1);
+    public void onViewRecycled(com.android.car.ui.plugin.oemapis.recyclerview.ViewHolderOEMV1);
+    public void onViewRecycled(com.android.car.ui.recyclerview.RecyclerViewAdapterAdapterV1$ViewHolderAdapterV1);
+    public void registerAdapterDataObserver(com.android.car.ui.plugin.oemapis.recyclerview.AdapterDataObserverOEMV1);
+    public void setMaxItems(int);
+    public void unregisterAdapterDataObserver(com.android.car.ui.plugin.oemapis.recyclerview.AdapterDataObserverOEMV1);
+public final class com.android.car.ui.recyclerview.RecyclerViewAdapterV1 extends android.widget.FrameLayout implements com.android.car.ui.recyclerview.CarUiRecyclerView,com.android.car.ui.plugin.oemapis.recyclerview.OnScrollListenerOEMV1,com.android.car.ui.preference.PreferenceFragment$AndroidxRecyclerViewProvider,com.android.car.ui.plugin.oemapis.recyclerview.OnChildAttachStateChangeListenerOEMV1 {
+    public android.view.View getRecyclerViewChildAt(int);
+    public android.view.View getView();
+    public androidx.recyclerview.widget.RecyclerView getRecyclerView();
+    public androidx.recyclerview.widget.RecyclerView$Adapter<?> getAdapter();
+    public androidx.recyclerview.widget.RecyclerView$ItemDecoration getItemDecorationAt(int);
+    public androidx.recyclerview.widget.RecyclerView$LayoutManager getLayoutManager();
+    public androidx.recyclerview.widget.RecyclerView$ViewHolder findViewHolderForAdapterPosition(int);
+    public androidx.recyclerview.widget.RecyclerView$ViewHolder findViewHolderForLayoutPosition(int);
+    public boolean canScrollHorizontally(int);
+    public boolean canScrollVertically(int);
+    public boolean hasFixedSize();
+    public com.android.car.ui.recyclerview.CarUiLayoutStyle getLayoutStyle();
+    public com.android.car.ui.recyclerview.RecyclerViewAdapterV1(android.content.Context);
+    public com.android.car.ui.recyclerview.RecyclerViewAdapterV1(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.recyclerview.RecyclerViewAdapterV1(android.content.Context, android.util.AttributeSet, int);
+    public int findFirstCompletelyVisibleItemPosition();
+    public int findFirstVisibleItemPosition();
+    public int findLastCompletelyVisibleItemPosition();
+    public int findLastVisibleItemPosition();
+    public int getChildLayoutPosition(android.view.View);
+    public int getEndAfterPadding();
+    public int getItemDecorationCount();
+    public int getPaddingBottom();
+    public int getPaddingEnd();
+    public int getPaddingLeft();
+    public int getPaddingRight();
+    public int getPaddingStart();
+    public int getPaddingTop();
+    public int getRecyclerViewChildCount();
+    public int getScrollState();
+    public int getStartAfterPadding();
+    public int getTotalSpace();
+    public void addItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration);
+    public void addItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration, int);
+    public void addOnChildAttachStateChangeListener(androidx.recyclerview.widget.RecyclerView$OnChildAttachStateChangeListener);
+    public void addOnScrollListener(com.android.car.ui.recyclerview.CarUiRecyclerView$OnScrollListener);
+    public void clearOnChildAttachStateChangeListeners();
+    public void clearOnScrollListeners();
+    public void invalidateItemDecorations();
+    public void onChildViewAttachedToWindow(android.view.View);
+    public void onChildViewDetachedFromWindow(android.view.View);
+    public void onScrollStateChanged(com.android.car.ui.plugin.oemapis.recyclerview.RecyclerViewOEMV1, int);
+    public void onScrolled(com.android.car.ui.plugin.oemapis.recyclerview.RecyclerViewOEMV1, int, int);
+    public void removeItemDecoration(androidx.recyclerview.widget.RecyclerView$ItemDecoration);
+    public void removeItemDecorationAt(int);
+    public void removeOnChildAttachStateChangeListener(androidx.recyclerview.widget.RecyclerView$OnChildAttachStateChangeListener);
+    public void removeOnScrollListener(com.android.car.ui.recyclerview.CarUiRecyclerView$OnScrollListener);
+    public void scrollToPosition(int);
+    public void setAdapter(androidx.recyclerview.widget.RecyclerView$Adapter<?>);
+    public void setAlpha(float);
+    public void setBackground(android.graphics.drawable.Drawable);
+    public void setBackgroundColor(int);
+    public void setBackgroundResource(int);
+    public void setClipToPadding(boolean);
+    public void setContentDescription(java.lang.CharSequence);
+    public void setHasFixedSize(boolean);
+    public void setItemAnimator(androidx.recyclerview.widget.RecyclerView$ItemAnimator);
+    public void setLayoutManager(androidx.recyclerview.widget.RecyclerView$LayoutManager);
+    public void setLayoutParams(android.view.ViewGroup$LayoutParams);
+    public void setLayoutStyle(com.android.car.ui.recyclerview.CarUiLayoutStyle);
+    public void setOnFlingListener(androidx.recyclerview.widget.RecyclerView$OnFlingListener);
+    public void setPadding(int, int, int, int);
+    public void setPaddingRelative(int, int, int, int);
+    public void setRecyclerViewOEMV1(com.android.car.ui.plugin.oemapis.recyclerview.RecyclerViewOEMV1, com.android.car.ui.plugin.oemapis.recyclerview.RecyclerViewAttributesOEMV1);
+    public void setSpanSizeLookup(androidx.recyclerview.widget.GridLayoutManager$SpanSizeLookup);
+    public void smoothScrollBy(int, int);
+    public void smoothScrollToPosition(int);
+public interface com.android.car.ui.recyclerview.ScrollBar {
+    public abstract boolean isAtStart();
+    public abstract void adapterChanged(androidx.recyclerview.widget.RecyclerView$Adapter);
+    public abstract void initialize(android.content.Context, androidx.recyclerview.widget.RecyclerView, android.view.View);
+    public abstract void requestLayout();
+    public abstract void setHighlightThumb(boolean);
+    public abstract void setPadding(int, int);
+public final class com.android.car.ui.recyclerview.ScrollingLimitedViewHolder extends androidx.recyclerview.widget.RecyclerView$ViewHolder {
+    public static com.android.car.ui.recyclerview.ScrollingLimitedViewHolder create(android.view.ViewGroup);
+    public void bind(java.lang.Integer);
+public class com.android.car.ui.recyclerview.decorations.grid.GridDividerItemDecoration extends androidx.recyclerview.widget.RecyclerView$ItemDecoration {
+    public com.android.car.ui.recyclerview.decorations.grid.GridDividerItemDecoration(android.graphics.drawable.Drawable, android.graphics.drawable.Drawable, int);
+    public void getItemOffsets(android.graphics.Rect, android.view.View, androidx.recyclerview.widget.RecyclerView, androidx.recyclerview.widget.RecyclerView$State);
+    public void onDrawOver(android.graphics.Canvas, androidx.recyclerview.widget.RecyclerView, androidx.recyclerview.widget.RecyclerView$State);
+    public void setNumOfColumns(int);
+public class com.android.car.ui.recyclerview.decorations.linear.LinearDividerItemDecoration extends androidx.recyclerview.widget.RecyclerView$ItemDecoration {
+    public com.android.car.ui.recyclerview.decorations.linear.LinearDividerItemDecoration(android.graphics.drawable.Drawable);
+    public void getItemOffsets(android.graphics.Rect, android.view.View, androidx.recyclerview.widget.RecyclerView, androidx.recyclerview.widget.RecyclerView$State);
+    public void onDraw(android.graphics.Canvas, androidx.recyclerview.widget.RecyclerView, androidx.recyclerview.widget.RecyclerView$State);
+public class com.android.car.ui.toolbar.DeprecatedTabWrapper {
+    public com.android.car.ui.toolbar.DeprecatedTabWrapper(android.content.Context, com.android.car.ui.toolbar.TabLayout$Tab, java.lang.Runnable, java.util.function.Consumer<com.android.car.ui.toolbar.Tab>);
+    public com.android.car.ui.toolbar.Tab getModernTab();
+    public com.android.car.ui.toolbar.TabLayout$Tab getDeprecatedTab();
+public final class com.android.car.ui.toolbar.ImageViewListener extends android.widget.ImageView {
+    public com.android.car.ui.toolbar.ImageViewListener(android.content.Context);
+    public void setImageDrawable(android.graphics.drawable.Drawable);
+    public void setImageDrawableListener(java.util.function.Consumer<android.graphics.drawable.Drawable>);
+public class com.android.car.ui.toolbar.MenuItem {
+    public android.graphics.drawable.Drawable getIcon();
+    public boolean isActivatable();
+    public boolean isActivated();
+    public boolean isCheckable();
+    public boolean isChecked();
+    public boolean isEnabled();
+    public boolean isPrimary();
+    public boolean isRestricted();
+    public boolean isSearch();
+    public boolean isShowingIconAndTitle();
+    public boolean isTinted();
+    public boolean isVisible();
+    public com.android.car.ui.toolbar.MenuItem$DisplayBehavior getDisplayBehavior();
+    public com.android.car.ui.toolbar.MenuItem$OnClickListener getOnClickListener();
+    public int getId();
+    public int getUxRestrictions();
+    public java.lang.CharSequence getTitle();
+    public static com.android.car.ui.toolbar.MenuItem$Builder builder(android.content.Context);
+    public void performClick();
+    public void setActivated(boolean);
+    public void setChecked(boolean);
+    public void setEnabled(boolean);
+    public void setIcon(android.graphics.drawable.Drawable);
+    public void setIcon(int);
+    public void setId(int);
+    public void setListener(com.android.car.ui.toolbar.MenuItem$Listener);
+    public void setOnClickListener(com.android.car.ui.toolbar.MenuItem$OnClickListener);
+    public void setTitle(int);
+    public void setTitle(java.lang.CharSequence);
+    public void setUxRestrictions(int);
+    public void setVisible(boolean);
+public final class com.android.car.ui.toolbar.MenuItem$Builder {
+    public com.android.car.ui.toolbar.MenuItem build();
+    public com.android.car.ui.toolbar.MenuItem$Builder setActivatable();
+    public com.android.car.ui.toolbar.MenuItem$Builder setActivated(boolean);
+    public com.android.car.ui.toolbar.MenuItem$Builder setCheckable();
+    public com.android.car.ui.toolbar.MenuItem$Builder setChecked(boolean);
+    public com.android.car.ui.toolbar.MenuItem$Builder setDisplayBehavior(com.android.car.ui.toolbar.MenuItem$DisplayBehavior);
+    public com.android.car.ui.toolbar.MenuItem$Builder setEnabled(boolean);
+    public com.android.car.ui.toolbar.MenuItem$Builder setIcon(android.graphics.drawable.Drawable);
+    public com.android.car.ui.toolbar.MenuItem$Builder setIcon(int);
+    public com.android.car.ui.toolbar.MenuItem$Builder setId(int);
+    public com.android.car.ui.toolbar.MenuItem$Builder setOnClickListener(com.android.car.ui.toolbar.MenuItem$OnClickListener);
+    public com.android.car.ui.toolbar.MenuItem$Builder setPrimary(boolean);
+    public com.android.car.ui.toolbar.MenuItem$Builder setShowIconAndTitle(boolean);
+    public com.android.car.ui.toolbar.MenuItem$Builder setTinted(boolean);
+    public com.android.car.ui.toolbar.MenuItem$Builder setTitle(int);
+    public com.android.car.ui.toolbar.MenuItem$Builder setTitle(java.lang.CharSequence);
+    public com.android.car.ui.toolbar.MenuItem$Builder setToSearch();
+    public com.android.car.ui.toolbar.MenuItem$Builder setToSettings();
+    public com.android.car.ui.toolbar.MenuItem$Builder setUxRestrictions(int);
+    public com.android.car.ui.toolbar.MenuItem$Builder setVisible(boolean);
+    public com.android.car.ui.toolbar.MenuItem$Builder(android.content.Context);
+    public static com.android.car.ui.toolbar.MenuItem createSearch(android.content.Context, com.android.car.ui.toolbar.MenuItem$OnClickListener);
+    public static com.android.car.ui.toolbar.MenuItem createSettings(android.content.Context, com.android.car.ui.toolbar.MenuItem$OnClickListener);
+public final class com.android.car.ui.toolbar.MenuItem$DisplayBehavior extends java.lang.Enum<com.android.car.ui.toolbar.MenuItem$DisplayBehavior> {
+    public static com.android.car.ui.toolbar.MenuItem$DisplayBehavior valueOf(java.lang.String);
+    public static com.android.car.ui.toolbar.MenuItem$DisplayBehavior[] values();
+    public static final com.android.car.ui.toolbar.MenuItem$DisplayBehavior ALWAYS;
+    public static final com.android.car.ui.toolbar.MenuItem$DisplayBehavior NEVER;
+public interface com.android.car.ui.toolbar.MenuItem$Listener {
+    public abstract void onMenuItemChanged(com.android.car.ui.toolbar.MenuItem);
+public interface com.android.car.ui.toolbar.MenuItem$OnClickListener {
+    public abstract void onClick(com.android.car.ui.toolbar.MenuItem);
+public class com.android.car.ui.toolbar.MenuItemAdapterV1 {
+    public boolean isVisible();
+    public com.android.car.ui.plugin.oemapis.toolbar.MenuItemOEMV1 getPluginMenuItem();
+    public com.android.car.ui.toolbar.MenuItem getClientMenuItem();
+    public com.android.car.ui.toolbar.MenuItemAdapterV1(com.android.car.ui.toolbar.ToolbarControllerAdapterV1, com.android.car.ui.toolbar.MenuItem);
+public class com.android.car.ui.toolbar.MenuItemXmlParserUtil {
+    public static java.util.List<com.android.car.ui.toolbar.MenuItem> readMenuItemList(android.content.Context, int);
+public final class com.android.car.ui.toolbar.NavButtonMode extends java.lang.Enum<com.android.car.ui.toolbar.NavButtonMode> {
+    public static com.android.car.ui.toolbar.NavButtonMode valueOf(java.lang.String);
+    public static com.android.car.ui.toolbar.NavButtonMode[] values();
+    public static final com.android.car.ui.toolbar.NavButtonMode BACK;
+    public static final com.android.car.ui.toolbar.NavButtonMode CLOSE;
+    public static final com.android.car.ui.toolbar.NavButtonMode DISABLED;
+    public static final com.android.car.ui.toolbar.NavButtonMode DOWN;
+public interface com.android.car.ui.toolbar.ProgressBarController {
+    public abstract boolean isIndeterminate();
+    public abstract boolean isVisible();
+    public abstract int getMax();
+    public abstract int getMin();
+    public abstract int getProgress();
+    public abstract void setIndeterminate(boolean);
+    public abstract void setMax(int);
+    public abstract void setMin(int);
+    public abstract void setProgress(int);
+    public abstract void setVisible(boolean);
+public final class com.android.car.ui.toolbar.SearchCapabilities {
+    public boolean canShowSearchResultItems();
+    public boolean canShowSearchResultsView();
+    public static com.android.car.ui.toolbar.SearchCapabilities$SearchCapabilitiesBuilder builder();
+public final class com.android.car.ui.toolbar.SearchCapabilities$SearchCapabilitiesBuilder {
+    public com.android.car.ui.toolbar.SearchCapabilities build();
+    public com.android.car.ui.toolbar.SearchCapabilities$SearchCapabilitiesBuilder setCanShowSearchResultItems(boolean);
+    public com.android.car.ui.toolbar.SearchCapabilities$SearchCapabilitiesBuilder setCanShowSearchResultsView(boolean);
+public final class com.android.car.ui.toolbar.SearchConfig {
+    public android.graphics.drawable.Drawable getSearchResultsInputViewIcon();
+    public android.view.View getSearchResultsView();
+    public com.android.car.ui.toolbar.SearchConfig$OnBackClickedListener getOnBackClickedListener();
+    public java.util.List<? extends com.android.car.ui.imewidescreen.CarUiImeSearchListItem> getSearchResultItems();
+    public static com.android.car.ui.toolbar.SearchConfig$SearchConfigBuilder builder();
+public interface com.android.car.ui.toolbar.SearchConfig$OnBackClickedListener {
+    public abstract void onClick();
+public final class com.android.car.ui.toolbar.SearchConfig$SearchConfigBuilder {
+    public com.android.car.ui.toolbar.SearchConfig build();
+    public com.android.car.ui.toolbar.SearchConfig$SearchConfigBuilder setOnBackClickedListener(com.android.car.ui.toolbar.SearchConfig$OnBackClickedListener);
+    public com.android.car.ui.toolbar.SearchConfig$SearchConfigBuilder setSearchResultItems(java.util.List<? extends com.android.car.ui.imewidescreen.CarUiImeSearchListItem>);
+    public com.android.car.ui.toolbar.SearchConfig$SearchConfigBuilder setSearchResultsInputViewIcon(android.graphics.drawable.Drawable);
+    public com.android.car.ui.toolbar.SearchConfig$SearchConfigBuilder setSearchResultsView(android.view.View);
+public final class com.android.car.ui.toolbar.SearchMode extends java.lang.Enum<com.android.car.ui.toolbar.SearchMode> {
+    public static com.android.car.ui.toolbar.SearchMode valueOf(java.lang.String);
+    public static com.android.car.ui.toolbar.SearchMode[] values();
+    public static final com.android.car.ui.toolbar.SearchMode DISABLED;
+    public static final com.android.car.ui.toolbar.SearchMode EDIT;
+    public static final com.android.car.ui.toolbar.SearchMode SEARCH;
+public class com.android.car.ui.toolbar.SearchView extends androidx.constraintlayout.widget.ConstraintLayout {
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    public com.android.car.ui.toolbar.SearchView(android.content.Context);
+    public com.android.car.ui.toolbar.SearchView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.toolbar.SearchView(android.content.Context, android.util.AttributeSet, int);
+    public void onVisibilityChanged(android.view.View, int);
+    public void setHint(java.lang.CharSequence);
+    public void setIcon(android.graphics.drawable.Drawable);
+    public void setPlainText(boolean);
+    public void setSearchCompletedListeners(java.util.Set<com.android.car.ui.toolbar.Toolbar$OnSearchCompletedListener>, java.util.Set<java.lang.Runnable>);
+    public void setSearchConfig(com.android.car.ui.toolbar.SearchConfig);
+    public void setSearchListeners(java.util.Set<com.android.car.ui.toolbar.Toolbar$OnSearchListener>, java.util.Set<java.util.function.Consumer<java.lang.String>>);
+    public void setSearchQuery(java.lang.String);
+public class com.android.car.ui.toolbar.SearchWidescreenController {
+    public com.android.car.ui.toolbar.SearchCapabilities getSearchCapabilities();
+    public com.android.car.ui.toolbar.SearchWidescreenController(android.content.Context);
+    public java.util.function.BiConsumer<java.lang.String, android.os.Bundle> getOnPrivateImeCommandListener();
+    public static com.android.car.ui.toolbar.SearchCapabilities getSearchCapabilities(android.content.Context);
+    public void setSearchConfig(com.android.car.ui.toolbar.SearchConfig);
+    public void setTextView(android.widget.TextView);
+public final class com.android.car.ui.toolbar.Tab {
+    public android.graphics.drawable.Drawable getIcon();
+    public boolean isTinted();
+    public com.android.car.ui.toolbar.Tab$Builder copy();
+    public java.lang.String getText();
+    public java.util.function.Consumer<com.android.car.ui.toolbar.Tab> getSelectedListener();
+    public static com.android.car.ui.toolbar.Tab$Builder builder();
+public class com.android.car.ui.toolbar.Tab$Builder {
+    public com.android.car.ui.toolbar.Tab build();
+    public com.android.car.ui.toolbar.Tab$Builder setIcon(android.graphics.drawable.Drawable);
+    public com.android.car.ui.toolbar.Tab$Builder setSelectedListener(java.util.function.Consumer<com.android.car.ui.toolbar.Tab>);
+    public com.android.car.ui.toolbar.Tab$Builder setText(java.lang.String);
+    public com.android.car.ui.toolbar.Tab$Builder setTinted(boolean);
+public class com.android.car.ui.toolbar.TabLayout extends android.widget.LinearLayout {
+    public boolean hasTabs();
+    public com.android.car.ui.toolbar.TabLayout(android.content.Context);
+    public com.android.car.ui.toolbar.TabLayout(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.toolbar.TabLayout(android.content.Context, android.util.AttributeSet, int);
+    public int getSelectedTab();
+    public java.util.List<com.android.car.ui.toolbar.Tab> getTabs();
+    public void selectTab(int);
+    public void setTabs(java.util.List<com.android.car.ui.toolbar.Tab>, int);
+public class com.android.car.ui.toolbar.TabLayout$Tab {
+    protected void bindIcon(android.widget.ImageView);
+    protected void bindText(android.widget.TextView);
+    public com.android.car.ui.toolbar.TabLayout$Tab(android.graphics.drawable.Drawable, java.lang.CharSequence);
+public final class com.android.car.ui.toolbar.TextViewListener extends android.widget.TextView {
+    public com.android.car.ui.toolbar.TextViewListener(android.content.Context);
+    public void setText(java.lang.CharSequence, android.widget.TextView$BufferType);
+    public void setTextListener(java.util.function.Consumer<java.lang.CharSequence>);
+public final class com.android.car.ui.toolbar.Toolbar {
+    public com.android.car.ui.toolbar.Toolbar();
+public final class com.android.car.ui.toolbar.Toolbar$NavButtonMode extends java.lang.Enum<com.android.car.ui.toolbar.Toolbar$NavButtonMode> {
+    public static com.android.car.ui.toolbar.Toolbar$NavButtonMode valueOf(java.lang.String);
+    public static com.android.car.ui.toolbar.Toolbar$NavButtonMode[] values();
+    public static final com.android.car.ui.toolbar.Toolbar$NavButtonMode BACK;
+    public static final com.android.car.ui.toolbar.Toolbar$NavButtonMode CLOSE;
+    public static final com.android.car.ui.toolbar.Toolbar$NavButtonMode DISABLED;
+    public static final com.android.car.ui.toolbar.Toolbar$NavButtonMode DOWN;
+public interface com.android.car.ui.toolbar.Toolbar$OnBackListener {
+    public abstract boolean onBack();
+public interface com.android.car.ui.toolbar.Toolbar$OnHeightChangedListener {
+    public abstract void onHeightChanged(int);
+public interface com.android.car.ui.toolbar.Toolbar$OnSearchCompletedListener {
+    public abstract void onSearchCompleted();
+public interface com.android.car.ui.toolbar.Toolbar$OnSearchListener {
+    public abstract void onSearch(java.lang.String);
+public interface com.android.car.ui.toolbar.Toolbar$OnTabSelectedListener {
+    public abstract void onTabSelected(com.android.car.ui.toolbar.TabLayout$Tab);
+public final class com.android.car.ui.toolbar.Toolbar$State extends java.lang.Enum<com.android.car.ui.toolbar.Toolbar$State> {
+    public static com.android.car.ui.toolbar.Toolbar$State valueOf(java.lang.String);
+    public static com.android.car.ui.toolbar.Toolbar$State[] values();
+    public static final com.android.car.ui.toolbar.Toolbar$State EDIT;
+    public static final com.android.car.ui.toolbar.Toolbar$State HOME;
+    public static final com.android.car.ui.toolbar.Toolbar$State SEARCH;
+    public static final com.android.car.ui.toolbar.Toolbar$State SUBPAGE;
+public interface com.android.car.ui.toolbar.ToolbarController {
+    public abstract boolean canShowSearchResultItems();
+    public abstract boolean canShowSearchResultsView();
+    public abstract boolean getBackgroundShown();
+    public abstract boolean getShowMenuItemsWhileSearching();
+    public abstract boolean getShowTabsInSubpage();
+    public abstract boolean isStateSet();
+    public abstract boolean unregisterBackListener(java.util.function.Supplier<java.lang.Boolean>);
+    public abstract boolean unregisterOnBackListener(com.android.car.ui.toolbar.Toolbar$OnBackListener);
+    public abstract boolean unregisterOnSearchCompletedListener(com.android.car.ui.toolbar.Toolbar$OnSearchCompletedListener);
+    public abstract boolean unregisterOnSearchListener(com.android.car.ui.toolbar.Toolbar$OnSearchListener);
+    public abstract boolean unregisterOnTabSelectedListener(com.android.car.ui.toolbar.Toolbar$OnTabSelectedListener);
+    public abstract boolean unregisterSearchCompletedListener(java.lang.Runnable);
+    public abstract boolean unregisterSearchListener(java.util.function.Consumer<java.lang.String>);
+    public abstract com.android.car.ui.toolbar.MenuItem findMenuItemById(int);
+    public abstract com.android.car.ui.toolbar.MenuItem requireMenuItemById(int);
+    public abstract com.android.car.ui.toolbar.NavButtonMode getNavButtonMode();
+    public abstract com.android.car.ui.toolbar.ProgressBarController getProgressBar();
+    public abstract com.android.car.ui.toolbar.SearchCapabilities getSearchCapabilities();
+    public abstract com.android.car.ui.toolbar.SearchMode getSearchMode();
+    public abstract com.android.car.ui.toolbar.TabLayout$Tab getTab(int);
+    public abstract com.android.car.ui.toolbar.Toolbar$State getState();
+    public abstract int getSelectedTab();
+    public abstract int getTabCount();
+    public abstract int getTabPosition(com.android.car.ui.toolbar.TabLayout$Tab);
+    public abstract java.lang.CharSequence getSearchHint();
+    public abstract java.lang.CharSequence getSubtitle();
+    public abstract java.lang.CharSequence getTitle();
+    public abstract java.util.List<com.android.car.ui.toolbar.MenuItem> getMenuItems();
+    public abstract java.util.List<com.android.car.ui.toolbar.MenuItem> setMenuItems(int);
+    public abstract java.util.List<com.android.car.ui.toolbar.Tab> getTabs();
+    public abstract void addTab(com.android.car.ui.toolbar.TabLayout$Tab);
+    public abstract void clearAllTabs();
+    public abstract void registerBackListener(java.util.function.Supplier<java.lang.Boolean>);
+    public abstract void registerOnBackListener(com.android.car.ui.toolbar.Toolbar$OnBackListener);
+    public abstract void registerOnSearchCompletedListener(com.android.car.ui.toolbar.Toolbar$OnSearchCompletedListener);
+    public abstract void registerOnSearchListener(com.android.car.ui.toolbar.Toolbar$OnSearchListener);
+    public abstract void registerOnTabSelectedListener(com.android.car.ui.toolbar.Toolbar$OnTabSelectedListener);
+    public abstract void registerSearchCompletedListener(java.lang.Runnable);
+    public abstract void registerSearchListener(java.util.function.Consumer<java.lang.String>);
+    public abstract void selectTab(int);
+    public abstract void setBackgroundShown(boolean);
+    public abstract void setLogo(android.graphics.drawable.Drawable);
+    public abstract void setLogo(int);
+    public abstract void setMenuItems(java.util.List<com.android.car.ui.toolbar.MenuItem>);
+    public abstract void setNavButtonMode(com.android.car.ui.toolbar.NavButtonMode);
+    public abstract void setNavButtonMode(com.android.car.ui.toolbar.Toolbar$NavButtonMode);
+    public abstract void setSearchConfig(com.android.car.ui.toolbar.SearchConfig);
+    public abstract void setSearchHint(int);
+    public abstract void setSearchHint(java.lang.CharSequence);
+    public abstract void setSearchIcon(android.graphics.drawable.Drawable);
+    public abstract void setSearchIcon(int);
+    public abstract void setSearchMode(com.android.car.ui.toolbar.SearchMode);
+    public abstract void setSearchQuery(java.lang.String);
+    public abstract void setSearchResultItems(java.util.List<? extends com.android.car.ui.imewidescreen.CarUiImeSearchListItem>);
+    public abstract void setSearchResultsInputViewIcon(android.graphics.drawable.Drawable);
+    public abstract void setSearchResultsView(android.view.View);
+    public abstract void setShowMenuItemsWhileSearching(boolean);
+    public abstract void setShowTabsInSubpage(boolean);
+    public abstract void setState(com.android.car.ui.toolbar.Toolbar$State);
+    public abstract void setSubtitle(com.android.car.ui.CarUiText);
+    public abstract void setSubtitle(int);
+    public abstract void setSubtitle(java.lang.CharSequence);
+    public abstract void setTabs(java.util.List<com.android.car.ui.toolbar.Tab>);
+    public abstract void setTabs(java.util.List<com.android.car.ui.toolbar.Tab>, int);
+    public abstract void setTitle(com.android.car.ui.CarUiText);
+    public abstract void setTitle(int);
+    public abstract void setTitle(java.lang.CharSequence);
+public final class com.android.car.ui.toolbar.ToolbarControllerAdapterV1 implements com.android.car.ui.toolbar.ToolbarController {
+    public boolean canShowSearchResultItems();
+    public boolean canShowSearchResultsView();
+    public boolean getBackgroundShown();
+    public boolean getShowMenuItemsWhileSearching();
+    public boolean getShowTabsInSubpage();
+    public boolean isStateSet();
+    public boolean unregisterBackListener(java.util.function.Supplier<java.lang.Boolean>);
+    public boolean unregisterOnBackListener(com.android.car.ui.toolbar.Toolbar$OnBackListener);
+    public boolean unregisterOnSearchCompletedListener(com.android.car.ui.toolbar.Toolbar$OnSearchCompletedListener);
+    public boolean unregisterOnSearchListener(com.android.car.ui.toolbar.Toolbar$OnSearchListener);
+    public boolean unregisterOnTabSelectedListener(com.android.car.ui.toolbar.Toolbar$OnTabSelectedListener);
+    public boolean unregisterSearchCompletedListener(java.lang.Runnable);
+    public boolean unregisterSearchListener(java.util.function.Consumer<java.lang.String>);
+    public com.android.car.ui.toolbar.MenuItem findMenuItemById(int);
+    public com.android.car.ui.toolbar.MenuItem requireMenuItemById(int);
+    public com.android.car.ui.toolbar.NavButtonMode getNavButtonMode();
+    public com.android.car.ui.toolbar.ProgressBarController getProgressBar();
+    public com.android.car.ui.toolbar.SearchCapabilities getSearchCapabilities();
+    public com.android.car.ui.toolbar.SearchMode getSearchMode();
+    public com.android.car.ui.toolbar.TabLayout$Tab getTab(int);
+    public com.android.car.ui.toolbar.Toolbar$State getState();
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1(android.content.Context, com.android.car.ui.plugin.oemapis.toolbar.ToolbarControllerOEMV1);
+    public int getSelectedTab();
+    public int getTabCount();
+    public int getTabPosition(com.android.car.ui.toolbar.TabLayout$Tab);
+    public java.lang.CharSequence getSearchHint();
+    public java.lang.CharSequence getSubtitle();
+    public java.lang.CharSequence getTitle();
+    public java.util.List<com.android.car.ui.toolbar.MenuItem> getMenuItems();
+    public java.util.List<com.android.car.ui.toolbar.MenuItem> setMenuItems(int);
+    public java.util.List<com.android.car.ui.toolbar.Tab> getTabs();
+    public void addTab(com.android.car.ui.toolbar.TabLayout$Tab);
+    public void clearAllTabs();
+    public void registerBackListener(java.util.function.Supplier<java.lang.Boolean>);
+    public void registerOnBackListener(com.android.car.ui.toolbar.Toolbar$OnBackListener);
+    public void registerOnSearchCompletedListener(com.android.car.ui.toolbar.Toolbar$OnSearchCompletedListener);
+    public void registerOnSearchListener(com.android.car.ui.toolbar.Toolbar$OnSearchListener);
+    public void registerOnTabSelectedListener(com.android.car.ui.toolbar.Toolbar$OnTabSelectedListener);
+    public void registerSearchCompletedListener(java.lang.Runnable);
+    public void registerSearchListener(java.util.function.Consumer<java.lang.String>);
+    public void selectTab(int);
+    public void setBackgroundShown(boolean);
+    public void setLogo(android.graphics.drawable.Drawable);
+    public void setLogo(int);
+    public void setMenuItems(java.util.List<com.android.car.ui.toolbar.MenuItem>);
+    public void setNavButtonMode(com.android.car.ui.toolbar.NavButtonMode);
+    public void setNavButtonMode(com.android.car.ui.toolbar.Toolbar$NavButtonMode);
+    public void setSearchConfig(com.android.car.ui.toolbar.SearchConfig);
+    public void setSearchHint(int);
+    public void setSearchHint(java.lang.CharSequence);
+    public void setSearchIcon(android.graphics.drawable.Drawable);
+    public void setSearchIcon(int);
+    public void setSearchMode(com.android.car.ui.toolbar.SearchMode);
+    public void setSearchQuery(java.lang.String);
+    public void setSearchResultItems(java.util.List<? extends com.android.car.ui.imewidescreen.CarUiImeSearchListItem>);
+    public void setSearchResultsInputViewIcon(android.graphics.drawable.Drawable);
+    public void setSearchResultsView(android.view.View);
+    public void setShowMenuItemsWhileSearching(boolean);
+    public void setShowTabsInSubpage(boolean);
+    public void setState(com.android.car.ui.toolbar.Toolbar$State);
+    public void setSubtitle(com.android.car.ui.CarUiText);
+    public void setSubtitle(int);
+    public void setSubtitle(java.lang.CharSequence);
+    public void setTabs(java.util.List<com.android.car.ui.toolbar.Tab>);
+    public void setTabs(java.util.List<com.android.car.ui.toolbar.Tab>, int);
+    public void setTitle(com.android.car.ui.CarUiText);
+    public void setTitle(int);
+    public void setTitle(java.lang.CharSequence);
+    public void updateMenuItems();
+public class com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder {
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState build();
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder addTab(com.android.car.ui.toolbar.TabAdapterV1);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setLogo(android.graphics.drawable.Drawable);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setMenuItems(java.util.List<com.android.car.ui.toolbar.MenuItemAdapterV1>);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setNavButtonMode(com.android.car.ui.toolbar.NavButtonMode);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setSearchMode(com.android.car.ui.toolbar.SearchMode);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setSelectedTab(int);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setShowMenuItemsWhileSearching(boolean);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setShowTabsInSubpage(boolean);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setState(com.android.car.ui.toolbar.Toolbar$State);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setSubtitle(java.lang.String);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setTabs(java.util.List<com.android.car.ui.toolbar.TabAdapterV1>);
+    public com.android.car.ui.toolbar.ToolbarControllerAdapterV1$ToolbarAdapterState$Builder setTitle(java.lang.String);
+public final class com.android.car.ui.toolbar.ToolbarControllerImpl implements com.android.car.ui.toolbar.ToolbarController {
+    public boolean canShowSearchResultItems();
+    public boolean canShowSearchResultsView();
+    public boolean getBackgroundShown();
+    public boolean getShowMenuItemsWhileSearching();
+    public boolean getShowTabsInSubpage();
+    public boolean isStateSet();
+    public boolean unregisterBackListener(java.util.function.Supplier<java.lang.Boolean>);
+    public boolean unregisterOnBackListener(com.android.car.ui.toolbar.Toolbar$OnBackListener);
+    public boolean unregisterOnSearchCompletedListener(com.android.car.ui.toolbar.Toolbar$OnSearchCompletedListener);
+    public boolean unregisterOnSearchListener(com.android.car.ui.toolbar.Toolbar$OnSearchListener);
+    public boolean unregisterOnTabSelectedListener(com.android.car.ui.toolbar.Toolbar$OnTabSelectedListener);
+    public boolean unregisterSearchCompletedListener(java.lang.Runnable);
+    public boolean unregisterSearchListener(java.util.function.Consumer<java.lang.String>);
+    public com.android.car.ui.toolbar.MenuItem findMenuItemById(int);
+    public com.android.car.ui.toolbar.MenuItem requireMenuItemById(int);
+    public com.android.car.ui.toolbar.NavButtonMode getNavButtonMode();
+    public com.android.car.ui.toolbar.ProgressBarController getProgressBar();
+    public com.android.car.ui.toolbar.SearchCapabilities getSearchCapabilities();
+    public com.android.car.ui.toolbar.SearchMode getSearchMode();
+    public com.android.car.ui.toolbar.TabLayout$Tab getTab(int);
+    public com.android.car.ui.toolbar.Toolbar$State getState();
+    public com.android.car.ui.toolbar.ToolbarControllerImpl(android.view.View);
+    public int getSelectedTab();
+    public int getTabCount();
+    public int getTabPosition(com.android.car.ui.toolbar.TabLayout$Tab);
+    public java.lang.CharSequence getSearchHint();
+    public java.lang.CharSequence getSubtitle();
+    public java.lang.CharSequence getTitle();
+    public java.util.List<com.android.car.ui.toolbar.MenuItem> getMenuItems();
+    public java.util.List<com.android.car.ui.toolbar.MenuItem> setMenuItems(int);
+    public java.util.List<com.android.car.ui.toolbar.Tab> getTabs();
+    public void addTab(com.android.car.ui.toolbar.TabLayout$Tab);
+    public void clearAllTabs();
+    public void registerBackListener(java.util.function.Supplier<java.lang.Boolean>);
+    public void registerOnBackListener(com.android.car.ui.toolbar.Toolbar$OnBackListener);
+    public void registerOnSearchCompletedListener(com.android.car.ui.toolbar.Toolbar$OnSearchCompletedListener);
+    public void registerOnSearchListener(com.android.car.ui.toolbar.Toolbar$OnSearchListener);
+    public void registerOnTabSelectedListener(com.android.car.ui.toolbar.Toolbar$OnTabSelectedListener);
+    public void registerSearchCompletedListener(java.lang.Runnable);
+    public void registerSearchListener(java.util.function.Consumer<java.lang.String>);
+    public void selectTab(int);
+    public void setBackgroundShown(boolean);
+    public void setLogo(android.graphics.drawable.Drawable);
+    public void setLogo(int);
+    public void setMenuItems(java.util.List<com.android.car.ui.toolbar.MenuItem>);
+    public void setNavButtonMode(com.android.car.ui.toolbar.NavButtonMode);
+    public void setNavButtonMode(com.android.car.ui.toolbar.Toolbar$NavButtonMode);
+    public void setSearchConfig(com.android.car.ui.toolbar.SearchConfig);
+    public void setSearchHint(int);
+    public void setSearchHint(java.lang.CharSequence);
+    public void setSearchIcon(android.graphics.drawable.Drawable);
+    public void setSearchIcon(int);
+    public void setSearchMode(com.android.car.ui.toolbar.SearchMode);
+    public void setSearchQuery(java.lang.String);
+    public void setSearchResultItems(java.util.List<? extends com.android.car.ui.imewidescreen.CarUiImeSearchListItem>);
+    public void setSearchResultsInputViewIcon(android.graphics.drawable.Drawable);
+    public void setSearchResultsView(android.view.View);
+    public void setShowMenuItemsWhileSearching(boolean);
+    public void setShowTabsInSubpage(boolean);
+    public void setState(com.android.car.ui.toolbar.Toolbar$State);
+    public void setSubtitle(com.android.car.ui.CarUiText);
+    public void setSubtitle(int);
+    public void setSubtitle(java.lang.CharSequence);
+    public void setTabs(java.util.List<com.android.car.ui.toolbar.Tab>);
+    public void setTabs(java.util.List<com.android.car.ui.toolbar.Tab>, int);
+    public void setTitle(com.android.car.ui.CarUiText);
+    public void setTitle(int);
+    public void setTitle(java.lang.CharSequence);
+public final class com.android.car.ui.utils.CarUiUtils {
+    public static <T extends android.view.View> T findViewByRefId(android.view.View, int);
+    public static <T extends android.view.View> T requireViewByRefId(android.view.View, int);
+    public static <T, U> java.util.List<U> convertList(java.util.List<T>, java.util.function.Function<T, U>);
+    public static android.app.Activity getActivity(android.content.Context);
+    public static android.graphics.Bitmap drawableToBitmap(android.graphics.drawable.Drawable);
+    public static boolean getBooleanSystemProperty(android.content.res.Resources, int, boolean);
+    public static boolean getThemeBoolean(android.app.Activity, int);
+    public static float getFloat(android.content.res.Resources, int);
+    public static int getAttr(android.content.Context, int, int);
+    public static int getAttrResourceId(android.content.Context, int);
+    public static int getAttrResourceId(android.content.Context, int, int);
+    public static java.lang.String charSequenceToString(java.lang.CharSequence);
+    public static java.lang.String getSystemProperty(android.content.res.Resources, int);
+    public static void applyDrawableStatesToAllViews(android.view.View, int[], int[]);
+    public static void makeAllViewsEnabled(android.view.View, boolean);
+    public static void makeAllViewsEnabledAndUxRestricted(android.view.View, boolean, boolean);
+    public static void makeAllViewsUxRestricted(android.view.View, boolean);
+public interface com.android.car.ui.utils.CarUxRestrictionsInfo extends java.lang.annotation.Annotation {
+public class com.android.car.ui.utils.CarUxRestrictionsUtil {
+    public android.car.drivingstate.CarUxRestrictions getCurrentRestrictions();
+    public com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSnapshot getRestrictionsSnapshot();
+    public com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource getRestrictionsSource();
+    public int getDisplayId();
+    public int observerCountForTesting();
+    public static boolean hasAllRestrictions(int, android.car.drivingstate.CarUxRestrictions);
+    public static boolean isRestricted(int, android.car.drivingstate.CarUxRestrictions);
+    public static com.android.car.ui.utils.CarUxRestrictionsUtil getInstance(android.content.Context);
+    public static com.android.car.ui.utils.CarUxRestrictionsUtil getInstanceForDisplay(android.content.Context, int);
+    public static java.lang.String complyString(android.content.Context, java.lang.String, android.car.drivingstate.CarUxRestrictions);
+    public static void clearInstancesForTesting();
+    public void disconnect();
+    public void register(com.android.car.ui.utils.CarUxRestrictionsUtil$OnUxRestrictionsChangedListener);
+    public void setDemoUxRestrictions(android.car.drivingstate.CarUxRestrictions);
+    public void setUxRestrictions(android.car.drivingstate.CarUxRestrictions);
+    public void unregister(com.android.car.ui.utils.CarUxRestrictionsUtil$OnUxRestrictionsChangedListener);
+public interface com.android.car.ui.utils.CarUxRestrictionsUtil$OnUxRestrictionsChangedListener {
+    public abstract void onRestrictionsChanged(android.car.drivingstate.CarUxRestrictions);
+public final class com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSnapshot {
+    public android.car.drivingstate.CarUxRestrictions getRestrictions();
+    public com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource getSource();
+public final class com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource extends java.lang.Enum<com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource> {
+    public static com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource valueOf(java.lang.String);
+    public static com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource[] values();
+    public static final com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource DELIVERED;
+    public static final com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource DEMO;
+    public static final com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource DISCONNECTED;
+    public static final com.android.car.ui.utils.CarUxRestrictionsUtil$RestrictionsSource NEVER_DELIVERED;
+public class com.android.car.ui.uxr.DrawableStateButton extends android.widget.Button implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateButton(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateButton(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateButton(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateConstraintLayout extends androidx.constraintlayout.widget.ConstraintLayout implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateConstraintLayout(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateConstraintLayout(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateConstraintLayout(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateFrameLayout extends android.widget.FrameLayout implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateFrameLayout(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateFrameLayout(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateFrameLayout(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateImageView extends android.widget.ImageView implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateImageView(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateImageView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateImageView(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateLinearLayout extends android.widget.LinearLayout implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateLinearLayout(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateLinearLayout(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateLinearLayout(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateRelativeLayout extends android.widget.RelativeLayout implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateRelativeLayout(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateRelativeLayout(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateRelativeLayout(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateSeekBar extends android.widget.SeekBar implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateSeekBar(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateSeekBar(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateSeekBar(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.uxr.DrawableStateSeekBar(android.content.Context, android.util.AttributeSet, int, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateSwitch extends android.widget.Switch implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateSwitch(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateSwitch(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateSwitch(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateTextView extends android.widget.TextView implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateTextView(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateTextView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateTextView(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public class com.android.car.ui.uxr.DrawableStateToggleButton extends android.widget.ToggleButton implements com.android.car.ui.uxr.DrawableStateView {
+    public com.android.car.ui.uxr.DrawableStateToggleButton(android.content.Context);
+    public com.android.car.ui.uxr.DrawableStateToggleButton(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.uxr.DrawableStateToggleButton(android.content.Context, android.util.AttributeSet, int);
+    public int[] onCreateDrawableState(int);
+    public void setExtraDrawableState(int[], int[]);
+public interface com.android.car.ui.uxr.DrawableStateView {
+    public abstract void setExtraDrawableState(int[], int[]);
+public abstract class com.android.car.ui.widget.CarUiTextView extends androidx.appcompat.widget.AppCompatTextView {
+    public abstract void setText(com.android.car.ui.CarUiText);
+    public abstract void setText(java.util.List<com.android.car.ui.CarUiText>);
+    public com.android.car.ui.widget.CarUiTextView(android.content.Context);
+    public com.android.car.ui.widget.CarUiTextView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.widget.CarUiTextView(android.content.Context, android.util.AttributeSet, int);
+    public static com.android.car.ui.widget.CarUiTextView create(android.content.Context);
+    public static com.android.car.ui.widget.CarUiTextView create(android.content.Context, android.util.AttributeSet);
+public final class com.android.car.ui.widget.CarUiTextViewImpl extends com.android.car.ui.widget.CarUiTextView {
+    public com.android.car.ui.widget.CarUiTextViewImpl(android.content.Context);
+    public com.android.car.ui.widget.CarUiTextViewImpl(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.widget.CarUiTextViewImpl(android.content.Context, android.util.AttributeSet, int);
+    public void setText(com.android.car.ui.CarUiText);
+    public void setText(java.util.List<com.android.car.ui.CarUiText>);
+
+# annotations.zip
+    com.android.car.ui.appstyledview.AppStyledDialogController void setNavIcon(int) 0  androidx.annotation.IntDef value={com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.BACK, com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.CLOSE}
+    com.android.car.ui.appstyledview.AppStyledViewController void setNavIcon(int) 0  androidx.annotation.IntDef value={com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.BACK, com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.CLOSE}
+    com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon  androidx.annotation.IntDef value={com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.BACK, com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.CLOSE}
+    com.android.car.ui.appstyledview.AppStyledViewControllerAdapterV1 void setNavIcon(int) 0  androidx.annotation.IntDef value={com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.BACK, com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.CLOSE}
+    com.android.car.ui.appstyledview.AppStyledViewControllerImpl mAppStyleViewNavIcon  androidx.annotation.IntDef value={com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.BACK, com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.CLOSE}
+    com.android.car.ui.appstyledview.AppStyledViewControllerImpl void setNavIcon(int) 0  androidx.annotation.IntDef value={com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.BACK, com.android.car.ui.appstyledview.AppStyledViewController.AppStyledViewNavIcon.CLOSE}
+    com.android.car.ui.recyclerview.CarUiGridLayoutStyle mLayoutOrientation  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiLayoutStyle.HORIZONTAL, com.android.car.ui.recyclerview.CarUiLayoutStyle.VERTICAL}
+    com.android.car.ui.recyclerview.CarUiGridLayoutStyle mSize  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_SMALL, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_MEDIUM, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_LARGE}
+    com.android.car.ui.recyclerview.CarUiGridLayoutStyle void setOrientation(int) 0  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiLayoutStyle.HORIZONTAL, com.android.car.ui.recyclerview.CarUiLayoutStyle.VERTICAL}
+    com.android.car.ui.recyclerview.CarUiLayoutStyle int getLayoutType()  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiRecyclerView.CarUiRecyclerViewLayout.LINEAR, com.android.car.ui.recyclerview.CarUiRecyclerView.CarUiRecyclerViewLayout.GRID}
+    com.android.car.ui.recyclerview.CarUiLayoutStyle int getOrientation()  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiLayoutStyle.HORIZONTAL, com.android.car.ui.recyclerview.CarUiLayoutStyle.VERTICAL}
+    com.android.car.ui.recyclerview.CarUiLayoutStyle int getSize()  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_SMALL, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_MEDIUM, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_LARGE}
+    com.android.car.ui.recyclerview.CarUiLayoutStyle.Orientation  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiLayoutStyle.HORIZONTAL, com.android.car.ui.recyclerview.CarUiLayoutStyle.VERTICAL}
+    com.android.car.ui.recyclerview.CarUiLinearLayoutStyle mLayoutOrientation  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiLayoutStyle.HORIZONTAL, com.android.car.ui.recyclerview.CarUiLayoutStyle.VERTICAL}
+    com.android.car.ui.recyclerview.CarUiLinearLayoutStyle mSize  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_SMALL, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_MEDIUM, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_LARGE}
+    com.android.car.ui.recyclerview.CarUiLinearLayoutStyle void setOrientation(int) 0  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiLayoutStyle.HORIZONTAL, com.android.car.ui.recyclerview.CarUiLayoutStyle.VERTICAL}
+    com.android.car.ui.recyclerview.CarUiRecyclerView.CarUiRecyclerViewLayout  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiRecyclerView.CarUiRecyclerViewLayout.LINEAR, com.android.car.ui.recyclerview.CarUiRecyclerView.CarUiRecyclerViewLayout.GRID}
+    com.android.car.ui.recyclerview.CarUiRecyclerView.Size  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_SMALL, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_MEDIUM, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_LARGE}
+    com.android.car.ui.recyclerview.CarUiRecyclerViewImpl mSize  androidx.annotation.IntDef value={com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_SMALL, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_MEDIUM, com.android.car.ui.recyclerview.CarUiRecyclerView.SIZE_LARGE}
+    com.android.car.ui.toolbar.MenuItem int getUxRestrictions()  androidx.annotation.IntDef flag=true value={android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_BASELINE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_DIALPAD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_FILTERING, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VIDEO, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_CONTENT, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_TEXT_MESSAGE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION}
+    com.android.car.ui.toolbar.MenuItem mId  androidx.annotation.IntDef flag=true value={android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_BASELINE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_DIALPAD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_FILTERING, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VIDEO, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_CONTENT, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_TEXT_MESSAGE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION}
+    com.android.car.ui.toolbar.MenuItem void setUxRestrictions(int) 0  androidx.annotation.IntDef flag=true value={android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_BASELINE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_DIALPAD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_FILTERING, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VIDEO, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_CONTENT, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_TEXT_MESSAGE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION}
+    com.android.car.ui.toolbar.MenuItem.Builder com.android.car.ui.toolbar.MenuItem.Builder setUxRestrictions(int) 0  androidx.annotation.IntDef flag=true value={android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_BASELINE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_DIALPAD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_FILTERING, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VIDEO, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_CONTENT, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_TEXT_MESSAGE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION}
+    com.android.car.ui.toolbar.MenuItem.Builder mUxRestrictions  androidx.annotation.IntDef flag=true value={android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_BASELINE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_DIALPAD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_FILTERING, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VIDEO, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_CONTENT, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_TEXT_MESSAGE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION}
+    com.android.car.ui.utils.CarUxRestrictionsInfo  androidx.annotation.IntDef flag=true value={android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_BASELINE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_DIALPAD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_FILTERING, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VIDEO, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_CONTENT, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_TEXT_MESSAGE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION}
+    com.android.car.ui.utils.CarUxRestrictionsUtil boolean hasAllRestrictions(int, android.car.drivingstate.CarUxRestrictions) 0  androidx.annotation.IntDef flag=true value={android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_BASELINE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_DIALPAD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_FILTERING, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VIDEO, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_CONTENT, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_TEXT_MESSAGE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION}
+    com.android.car.ui.utils.CarUxRestrictionsUtil boolean isRestricted(int, android.car.drivingstate.CarUxRestrictions) 0  androidx.annotation.IntDef flag=true value={android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_BASELINE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_DIALPAD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_FILTERING, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_STRING_LENGTH, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VIDEO, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_LIMIT_CONTENT, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_SETUP, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_TEXT_MESSAGE, android.car.drivingstate.CarUxRestrictions.UX_RESTRICTIONS_NO_VOICE_TRANSCRIPTION}

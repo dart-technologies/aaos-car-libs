@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0 — see scripts/check-build-coverage.py.
+"""Fails if a file this fork ADDED lacks an Apache header and is not baselined with a reason.
+
+Scoped to files added since the fork point on purpose. The inherited AOSP tree ships ~124 resource
+files — mostly translated `values-XX/strings.xml` — with no header, and adding one to those would
+assert authorship over someone else's work and create noise against upstream for no benefit. What
+this fork writes is a different matter: publishing an Apache-2.0 project means the files it
+contributes carry the licence.
+
+A STALE baseline entry also fails. A list of exemptions that outlives its subject is how an
+exemption becomes permanent without anyone deciding that.
+
+Exit codes: 0 pass, 1 something is unheadered or the baseline is stale, 2 provenance could not be
+determined (which is not a pass).
+"""
+
+import subprocess
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+FORK_POINT = 'e120cb74e'
+BASELINE = ROOT / 'scripts' / 'license-header-baseline.txt'
+SUFFIXES = {'.java', '.py', '.sh', '.gradle', '.xml', '.yml', '.yaml', '.dart', '.properties'}
+MARKERS = ('Apache License', 'SPDX-License-Identifier')
+
+
+def headers_removed():
+    """Files that carried a licence header in HEAD and no longer do in the WORKING TREE.
+
+    The check above only looks at files this fork ADDED, and only at HEAD. That leaves the
+    likelier failure uncovered in both directions: rewriting an existing file and dropping its
+    header is invisible to it, and by the time the change is committed the damage is in history.
+
+    It is not hypothetical. Rewriting eight robolectric.properties files to explain a removed
+    `sdk=NEWEST_SDK` pin replaced all eight wholesale, deleting upstream's 2018 Google Inc.
+    Apache-2.0 notice from car-media-common's and this fork's own 2026 notice from
+    car-messenger-common/model's. Every test still passed; this script still said OK, because
+    .properties was not even a checked suffix and neither file was newly added.
+
+    Working tree vs HEAD, deliberately: this must fail BEFORE the commit that would bury it.
+    """
+    listed = subprocess.run(['git', 'ls-tree', '-r', '--name-only', 'HEAD'],
+                            cwd=ROOT, capture_output=True, text=True)
+    if listed.returncode != 0:
+        return None
+    gone = []
+    for f in listed.stdout.split():
+        if Path(f).suffix not in SUFFIXES:
+            continue
+        blob = subprocess.run(['git', 'show', f'HEAD:{f}'], cwd=ROOT,
+                              capture_output=True, text=True, errors='replace')
+        if blob.returncode != 0 or not any(m in blob.stdout[:1400] for m in MARKERS):
+            continue                      # had no header in HEAD: nothing to lose
+        p = ROOT / f
+        if not p.is_file():
+            continue                      # deleted outright is a different review question
+        if not any(m in p.read_text(errors='replace')[:1400] for m in MARKERS):
+            gone.append(f)
+    return sorted(gone)
+
+
+def main() -> int:
+    added = subprocess.run(
+        ['git', 'diff', '--name-only', '--diff-filter=A', f'{FORK_POINT}..HEAD'],
+        cwd=ROOT, capture_output=True, text=True)
+    if added.returncode != 0:
+        print(f'FAIL: could not list files added since {FORK_POINT}: {added.stderr.strip()}',
+              file=sys.stderr)
+        return 2
+    files = [f for f in added.stdout.split() if Path(f).suffix in SUFFIXES]
+    if not files:
+        print(f'FAIL: no added files found since {FORK_POINT} — nothing was checked, '
+              'which is not a pass', file=sys.stderr)
+        return 2
+
+    baseline = set()
+    if BASELINE.is_file():
+        baseline = {ln.strip() for ln in BASELINE.read_text().splitlines()
+                    if ln.strip() and not ln.lstrip().startswith('#')}
+
+    unheadered, present = [], set()
+    for f in files:
+        p = ROOT / f
+        if not p.is_file():
+            continue          # deleted later in history; not our problem now
+        present.add(f)
+        if not any(m in p.read_text(errors='replace')[:1400] for m in MARKERS):
+            unheadered.append(f)
+
+    missing = sorted(set(unheadered) - baseline)
+    # Stale = baselined but either gone, or now headered.
+    stale = sorted(b for b in baseline if b not in present or b not in unheadered)
+
+    if missing or stale:
+        if missing:
+            print(f'FAIL: {len(missing)} file(s) added by this fork have no Apache header:',
+                  file=sys.stderr)
+            for m in missing:
+                print(f'  {m}', file=sys.stderr)
+            print('\nAdd the header, or add the path to scripts/license-header-baseline.txt '
+                  'WITH A REASON.', file=sys.stderr)
+        if stale:
+            print(f'\nFAIL: {len(stale)} stale baseline entr(ies) — headered or gone, '
+                  'so the exemption no longer describes anything:', file=sys.stderr)
+            for s in stale:
+                print(f'  {s}', file=sys.stderr)
+        return 1
+
+    removed = headers_removed()
+    if removed is None:
+        print('FAIL: could not read HEAD to check for removed headers', file=sys.stderr)
+        return 2
+    if removed:
+        print(f'FAIL: {len(removed)} file(s) had an Apache header in HEAD and do not now:',
+              file=sys.stderr)
+        for r in removed:
+            print(f'  {r}', file=sys.stderr)
+        print('\nA licence header is not editorial. Restore it verbatim, or say in the commit '
+              'why the file may lose it.', file=sys.stderr)
+        return 1
+
+    print(f'OK: {len(present)} file(s) added since {FORK_POINT} carry an Apache header '
+          f'({len(baseline)} baselined with a reason); no header removed from a file that had one.')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

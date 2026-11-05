@@ -1,0 +1,9 @@
+// Baseline format: 1.0
+//
+// DELIBERATELY EMPTY. Every metalava api-lint finding against :a2ui-model is resolved at
+// source -- fixed, or suppressed at its declaration with the reason written there. Nothing is
+// waived here, because a waiver in this file is read by nobody whereas a @SuppressWarnings
+// sits next to the thing it excuses and shows up in every future diff of it.
+//
+// The header is kept rather than truncating to zero bytes: an empty file and a disabled
+// mechanism look identical, and check-api-lint.py passes --baseline at whatever is here.

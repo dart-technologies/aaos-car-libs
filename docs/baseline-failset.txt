@@ -1,0 +1,15 @@
+# Known-failing instrumented tests, with the failure SIGNATURE that is known.
+#
+# Format: ClassName#methodName<TAB>exception-type
+#
+# The signature closes a hole identity alone cannot: the gate detects new failing test IDENTITIES,
+# but not a changed failure MODE inside a test already on this list. Without it, a baselined test
+# that starts throwing something entirely different keeps the failing set unchanged, comm(1) reports
+# no newly-failing test, and the gate goes green over a regression hiding inside a known failure.
+#
+# Baselining a test means "this specific failure is known", not "this test may fail for any reason".
+#
+# Sorted and unique — the gate diffs identities with comm(1), which silently misreads unsorted input.
+AlertDialogBuilderTest#test_setCursor_works	androidx.test.espresso.NoMatchingViewException
+CarUiRecyclerViewTest#testAlphaJumpToMiddleForThumbWhenTrackClicked[0]	androidx.test.espresso.NoMatchingViewException
+CarUiRecyclerViewTest#testAlphaJumpToMiddleForThumbWhenTrackClicked[1]	androidx.test.espresso.NoMatchingViewException

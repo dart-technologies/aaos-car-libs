@@ -1,0 +1,220 @@
+# AndroidManifest package
+com.android.car.telephony.common
+
+public class com.android.car.telephony.common.AsyncEntityLoader<T> extends androidx.loader.content.AsyncTaskLoader<T> {
+    protected void onReset();
+    protected void onStartLoading();
+    protected void onStopLoading();
+    public T loadInBackground();
+    public com.android.car.telephony.common.AsyncEntityLoader(android.content.Context, com.android.car.telephony.common.QueryParam$Provider, com.android.car.telephony.common.AsyncEntityLoader$EntityConverter<T>, androidx.loader.content.Loader$OnLoadCompleteListener<T>);
+    public void cancelLoadInBackground();
+    public void deliverResult(T);
+public interface com.android.car.telephony.common.AsyncEntityLoader$EntityConverter<T> {
+    public abstract T convertToEntity(android.database.Cursor);
+public abstract class com.android.car.telephony.common.AsyncQueryLiveData<T> extends androidx.lifecycle.LiveData<T> {
+    protected abstract T convertToEntity(android.database.Cursor);
+    protected void onActive();
+    protected void onInactive();
+    public com.android.car.telephony.common.AsyncQueryLiveData(android.content.Context, com.android.car.telephony.common.QueryParam$Provider);
+public class com.android.car.telephony.common.CallDetail {
+    public android.net.Uri getGatewayInfoOriginalAddress();
+    public android.telecom.PhoneAccountHandle getPhoneAccountHandle();
+    public boolean isConference();
+    public int getScoState();
+    public java.lang.CharSequence getDisconnectCause();
+    public java.lang.String getNumber();
+    public long getConnectTimeMillis();
+    public static com.android.car.telephony.common.CallDetail fromTelecomCallDetail(android.telecom.Call$Details);
+    public static final int STATE_AUDIO_CONNECTED = 2;
+    public static final int STATE_AUDIO_CONNECTING = 1;
+    public static final int STATE_AUDIO_DISCONNECTED = 0;
+    public static final int STATE_AUDIO_ERROR = -1;
+public class com.android.car.telephony.common.Contact implements android.os.Parcelable, java.lang.Comparable<com.android.car.telephony.common.Contact> {
+    public android.net.Uri getAvatarUri();
+    public android.net.Uri getLookupUri();
+    public boolean equals(java.lang.Object);
+    public boolean hasPrimaryPhoneNumber();
+    public boolean isStarred();
+    public boolean isVoicemail();
+    public com.android.car.telephony.common.Contact();
+    public com.android.car.telephony.common.PhoneNumber getPhoneNumber(android.content.Context, java.lang.String);
+    public com.android.car.telephony.common.PhoneNumber getPrimaryPhoneNumber();
+    public int compareBySortKeyAlt(com.android.car.telephony.common.Contact);
+    public int compareBySortKeyPrimary(com.android.car.telephony.common.Contact);
+    public int compareTo(com.android.car.telephony.common.Contact);
+    public int compareTo(java.lang.Object);
+    public int describeContents();
+    public int getPinnedPosition();
+    public int hashCode();
+    public java.lang.String getAccountName();
+    public java.lang.String getDisplayName();
+    public java.lang.String getDisplayNameAlt();
+    public java.lang.String getFamilyName();
+    public java.lang.String getGivenName();
+    public java.lang.String getInitials();
+    public java.lang.String getInitialsBasedOnDisplayOrder(boolean);
+    public java.lang.String getLookupKey();
+    public java.lang.String getPhonebookLabel();
+    public java.lang.String getPhonebookLabelAlt();
+    public java.lang.String toString();
+    public java.util.List<com.android.car.telephony.common.PhoneNumber> getNumbers();
+    public java.util.List<com.android.car.telephony.common.PostalAddress> getPostalAddresses();
+    public long getId();
+    public long getRawContactId();
+    public static com.android.car.telephony.common.Contact fromCursor(android.content.Context, android.database.Cursor);
+    public static com.android.car.telephony.common.Contact fromCursor(android.content.Context, android.database.Cursor, com.android.car.telephony.common.Contact);
+    public static final android.os.Parcelable$Creator<com.android.car.telephony.common.Contact> CREATOR;
+    public void writeToParcel(android.os.Parcel, int);
+public class com.android.car.telephony.common.I18nPhoneNumberWrapper implements android.os.Parcelable {
+    public boolean equals(java.lang.Object);
+    public int describeContents();
+    public int hashCode();
+    public java.lang.String getNumber();
+    public java.lang.String getRawNumber();
+    public static android.os.Parcelable$Creator<com.android.car.telephony.common.I18nPhoneNumberWrapper> CREATOR;
+    public void writeToParcel(android.os.Parcel, int);
+public final class com.android.car.telephony.common.I18nPhoneNumberWrapper$Factory extends java.lang.Enum<com.android.car.telephony.common.I18nPhoneNumberWrapper$Factory> {
+    public com.android.car.telephony.common.I18nPhoneNumberWrapper get(android.content.Context, java.lang.String);
+    public static com.android.car.telephony.common.I18nPhoneNumberWrapper$Factory valueOf(java.lang.String);
+    public static com.android.car.telephony.common.I18nPhoneNumberWrapper$Factory[] values();
+    public static final com.android.car.telephony.common.I18nPhoneNumberWrapper$Factory INSTANCE;
+public class com.android.car.telephony.common.InMemoryPhoneBook implements androidx.lifecycle.Observer<java.util.List<com.android.car.telephony.common.Contact>> {
+    public androidx.lifecycle.LiveData<java.util.List<com.android.car.telephony.common.Contact>> getContactsLiveData();
+    public androidx.lifecycle.LiveData<java.util.List<com.android.car.telephony.common.Contact>> getContactsLiveDataByAccount(java.lang.String);
+    public boolean isLoaded();
+    public com.android.car.telephony.common.Contact lookupContactByKey(java.lang.String, java.lang.String);
+    public com.android.car.telephony.common.Contact lookupContactEntry(java.lang.String);
+    public java.util.List<com.android.car.telephony.common.Contact> lookupContactByKey(java.lang.String);
+    public static boolean isInitialized();
+    public static com.android.car.telephony.common.InMemoryPhoneBook get();
+    public static com.android.car.telephony.common.InMemoryPhoneBook init(android.content.Context);
+    public static void tearDown();
+    public void onChanged(java.lang.Object);
+    public void onChanged(java.util.List<com.android.car.telephony.common.Contact>);
+public class com.android.car.telephony.common.PhoneCallLog {
+    public boolean equals(java.lang.Object);
+    public boolean merge(com.android.car.telephony.common.PhoneCallLog, boolean);
+    public com.android.car.telephony.common.PhoneCallLog();
+    public int getTimeRange();
+    public int hashCode();
+    public java.lang.String getAccountName();
+    public java.lang.String getPhoneNumberString();
+    public java.lang.String toString();
+    public java.util.List<com.android.car.telephony.common.PhoneCallLog$Record> getAllCallRecords();
+    public long getLastCallEndTimestamp();
+    public long getPhoneLogId();
+    public static com.android.car.telephony.common.PhoneCallLog fromCursor(android.content.Context, android.database.Cursor);
+public class com.android.car.telephony.common.PhoneCallLog$Record implements java.lang.Comparable<com.android.car.telephony.common.PhoneCallLog$Record> {
+    public com.android.car.telephony.common.PhoneCallLog$Record(long, int);
+    public int compareTo(com.android.car.telephony.common.PhoneCallLog$Record);
+    public int compareTo(java.lang.Object);
+    public int getCallType();
+    public long getCallEndTimestamp();
+public interface com.android.car.telephony.common.PhoneCallLog$TimeRange extends java.lang.annotation.Annotation {
+    public static final int OLDER = 2;
+    public static final int TODAY = 0;
+    public static final int YESTERDAY = 1;
+public class com.android.car.telephony.common.PhoneNumber implements android.os.Parcelable {
+    public boolean equals(java.lang.Object);
+    public boolean isFavorite();
+    public boolean isPrimary();
+    public com.android.car.telephony.common.I18nPhoneNumberWrapper getI18nPhoneNumberWrapper();
+    public com.android.car.telephony.common.PhoneNumber merge(com.android.car.telephony.common.PhoneNumber);
+    public int describeContents();
+    public int getType();
+    public int hashCode();
+    public java.lang.CharSequence getReadableLabel(android.content.res.Resources);
+    public java.lang.String getAccountName();
+    public java.lang.String getAccountType();
+    public java.lang.String getLabel();
+    public java.lang.String getNumber();
+    public java.lang.String getRawNumber();
+    public java.lang.String toString();
+    public long getId();
+    public static android.os.Parcelable$Creator<com.android.car.telephony.common.PhoneNumber> CREATOR;
+    public static com.android.car.telephony.common.PhoneNumber newInstance(android.content.Context, java.lang.String, int, java.lang.String, boolean, long, java.lang.String, java.lang.String, int);
+    public void setIsFavorite(boolean);
+    public void writeToParcel(android.os.Parcel, int);
+public class com.android.car.telephony.common.PostalAddress implements android.os.Parcelable {
+    public android.content.Intent getAddressIntent(android.content.res.Resources);
+    public android.content.Intent getNavigationIntent(android.content.res.Resources);
+    public boolean equals(java.lang.Object);
+    public com.android.car.telephony.common.PostalAddress();
+    public int describeContents();
+    public int getType();
+    public java.lang.CharSequence getReadableLabel(android.content.res.Resources);
+    public java.lang.String getFormattedAddress();
+    public java.lang.String getLabel();
+    public static android.os.Parcelable$Creator<com.android.car.telephony.common.PostalAddress> CREATOR;
+    public static com.android.car.telephony.common.PostalAddress fromCursor(android.database.Cursor);
+    public void writeToParcel(android.os.Parcel, int);
+public class com.android.car.telephony.common.QueryParam {
+    public com.android.car.telephony.common.QueryParam(android.net.Uri, java.lang.String[], java.lang.String, java.lang.String[], java.lang.String, java.lang.String);
+    public static com.android.car.telephony.common.QueryParam$Provider of(com.android.car.telephony.common.QueryParam);
+public interface com.android.car.telephony.common.QueryParam$Provider {
+    public abstract com.android.car.telephony.common.QueryParam getQueryParam();
+public class com.android.car.telephony.common.QueryParam$QueryBuilder {
+    public com.android.car.telephony.common.QueryParam toQueryParam();
+    public com.android.car.telephony.common.QueryParam$QueryBuilder checkPermission(java.lang.String);
+    public com.android.car.telephony.common.QueryParam$QueryBuilder orderAscBy(java.lang.String);
+    public com.android.car.telephony.common.QueryParam$QueryBuilder orderBy(java.lang.String);
+    public com.android.car.telephony.common.QueryParam$QueryBuilder orderDescBy(java.lang.String);
+    public com.android.car.telephony.common.QueryParam$QueryBuilder project(java.lang.String);
+    public com.android.car.telephony.common.QueryParam$QueryBuilder projectAll();
+    public com.android.car.telephony.common.QueryParam$QueryBuilder where(com.android.car.telephony.common.QueryParam$QueryBuilder$Condition);
+    public com.android.car.telephony.common.QueryParam$QueryBuilder(android.net.Uri);
+    public static final java.lang.String AND = "AND";
+    public static final java.lang.String OR = "OR";
+public class com.android.car.telephony.common.QueryParam$QueryBuilder$Condition {
+    public com.android.car.telephony.common.QueryParam$QueryBuilder$Condition and(java.lang.String, java.lang.String, java.lang.Object);
+    public com.android.car.telephony.common.QueryParam$QueryBuilder$Condition or(java.lang.String, java.lang.String, java.lang.Object);
+    public java.lang.String getSelection();
+    public java.lang.String[] getWhereArgs();
+    public static com.android.car.telephony.common.QueryParam$QueryBuilder$Condition is(java.lang.String, java.lang.String, java.lang.Object);
+public class com.android.car.telephony.common.TelecomUtils {
+    public com.android.car.telephony.common.TelecomUtils();
+    public static android.graphics.drawable.Icon createFromRoundedBitmapDrawable(androidx.core.graphics.drawable.RoundedBitmapDrawable, int, float);
+    public static android.graphics.drawable.Icon createLetterTile(android.content.Context, java.lang.String, java.lang.String, int, float);
+    public static android.telephony.TelephonyManager getTelephonyManager(android.content.Context);
+    public static boolean isAirplaneModeOn(android.content.Context);
+    public static boolean isNetworkAvailable(android.content.Context);
+    public static boolean isSortByFirstName(java.lang.Integer);
+    public static boolean isVoicemailNumber(android.content.Context, java.lang.String);
+    public static com.android.car.apps.common.LetterTileDrawable createLetterTile(android.content.Context, java.lang.String, java.lang.String);
+    public static com.android.car.telephony.common.TelecomUtils$PhoneNumberInfo lookupNumberInBackground(android.content.Context, java.lang.String);
+    public static com.google.i18n.phonenumbers.Phonenumber$PhoneNumber createI18nPhoneNumber(android.content.Context, java.lang.String);
+    public static final java.lang.Integer SORT_BY_FIRST_NAME;
+    public static final java.lang.Integer SORT_BY_LAST_NAME;
+    public static java.lang.String callStateToUiString(android.content.Context, int);
+    public static java.lang.String getBidiWrappedNumber(java.lang.String);
+    public static java.lang.String getFormattedNumber(android.content.Context, java.lang.String);
+    public static java.lang.String getInitials(java.lang.String, java.lang.String);
+    public static java.lang.String getReadableNumber(android.content.Context, java.lang.String);
+    public static java.lang.String getVoicemailNumber(android.content.Context);
+    public static java.lang.String piiLog(java.lang.Object);
+    public static java.util.concurrent.CompletableFuture<com.android.car.telephony.common.TelecomUtils$PhoneNumberInfo> getPhoneNumberInfo(android.content.Context, java.lang.String);
+    public static void markCallLogAsRead(android.content.Context, java.lang.String);
+    public static void markCallLogAsRead(android.content.Context, long);
+    public static void setAsPrimaryPhoneNumber(android.content.Context, com.android.car.telephony.common.PhoneNumber);
+    public static void setContactBitmapAsync(android.content.Context, android.widget.ImageView, android.net.Uri, java.lang.String, java.lang.String);
+    public static void setContactBitmapAsync(android.content.Context, android.widget.ImageView, com.android.car.telephony.common.Contact, java.lang.Integer);
+    public static void setContactBitmapAsync(android.content.Context, android.widget.ImageView, com.android.car.telephony.common.Contact, java.lang.String);
+    public static void setContactBitmapAsync(android.content.Context, android.widget.ImageView, com.android.car.telephony.common.Contact, java.lang.String, java.lang.Integer);
+public final class com.android.car.telephony.common.TelecomUtils$PhoneNumberInfo {
+    public android.net.Uri getAvatarUri();
+    public com.android.car.telephony.common.TelecomUtils$PhoneNumberInfo(java.lang.String, java.lang.String, java.lang.String, java.lang.String, android.net.Uri, java.lang.String, java.lang.String);
+    public java.lang.String getDisplayName();
+    public java.lang.String getDisplayNameAlt();
+    public java.lang.String getInitials();
+    public java.lang.String getLookupKey();
+    public java.lang.String getPhoneNumber();
+    public java.lang.String getTypeLabel();
+public class com.android.car.telephony.common.WorkerExecutor {
+    public java.util.concurrent.ExecutorService getSingleThreadExecutor();
+    public static com.android.car.telephony.common.WorkerExecutor getInstance();
+    public void tearDown();
+
+# annotations.zip
+    com.android.car.telephony.common.PhoneCallLog int getTimeRange()  androidx.annotation.IntDef value={com.android.car.telephony.common.PhoneCallLog.TimeRange.TODAY, com.android.car.telephony.common.PhoneCallLog.TimeRange.YESTERDAY, com.android.car.telephony.common.PhoneCallLog.TimeRange.OLDER}
+    com.android.car.telephony.common.PhoneCallLog int getTimeRange(long)  androidx.annotation.IntDef value={com.android.car.telephony.common.PhoneCallLog.TimeRange.TODAY, com.android.car.telephony.common.PhoneCallLog.TimeRange.YESTERDAY, com.android.car.telephony.common.PhoneCallLog.TimeRange.OLDER}
+    com.android.car.telephony.common.PhoneCallLog.TimeRange  androidx.annotation.IntDef value={com.android.car.telephony.common.PhoneCallLog.TimeRange.TODAY, com.android.car.telephony.common.PhoneCallLog.TimeRange.YESTERDAY, com.android.car.telephony.common.PhoneCallLog.TimeRange.OLDER}

@@ -1,0 +1,182 @@
+# AndroidManifest package
+com.android.car.ui.rotary
+
+public class com.android.car.ui.ConstraintFocusArea extends androidx.constraintlayout.widget.ConstraintLayout implements com.android.car.ui.IFocusArea {
+    protected boolean onRequestFocusInDescendants(int, android.graphics.Rect);
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    protected void onFinishInflate();
+    protected void onLayout(boolean, int, int, int, int);
+    public android.view.View focusSearch(android.view.View, int);
+    public android.view.View getDefaultFocusView();
+    public boolean performAccessibilityAction(int, android.os.Bundle);
+    public boolean restoreDefaultFocus();
+    public com.android.car.ui.ConstraintFocusArea(android.content.Context);
+    public com.android.car.ui.ConstraintFocusArea(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.ConstraintFocusArea(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.ConstraintFocusArea(android.content.Context, android.util.AttributeSet, int, int);
+    public com.android.car.ui.FocusAreaHelper getHelper();
+    public java.lang.CharSequence getAccessibilityClassName();
+    public void draw(android.graphics.Canvas);
+    public void onDraw(android.graphics.Canvas);
+    public void onInitializeAccessibilityNodeInfo(android.view.accessibility.AccessibilityNodeInfo);
+    public void onWindowFocusChanged(boolean);
+    public void setBoundsOffset(int, int, int, int);
+    public void setDefaultFocus(android.view.View);
+    public void setDefaultFocusOverridesHistory(boolean);
+    public void setHighlightPadding(int, int, int, int);
+    public void setNudgeShortcut(int, android.view.View);
+    public void setNudgeTargetFocusArea(int, com.android.car.ui.IFocusArea);
+    public void setWrapAround(boolean);
+public class com.android.car.ui.FocusArea extends android.widget.LinearLayout implements com.android.car.ui.IFocusArea {
+    protected boolean onRequestFocusInDescendants(int, android.graphics.Rect);
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    protected void onFinishInflate();
+    protected void onLayout(boolean, int, int, int, int);
+    public android.view.View focusSearch(android.view.View, int);
+    public android.view.View getDefaultFocusView();
+    public boolean performAccessibilityAction(int, android.os.Bundle);
+    public boolean restoreDefaultFocus();
+    public com.android.car.ui.FocusArea(android.content.Context);
+    public com.android.car.ui.FocusArea(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.FocusArea(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.FocusArea(android.content.Context, android.util.AttributeSet, int, int);
+    public com.android.car.ui.FocusAreaHelper getHelper();
+    public java.lang.CharSequence getAccessibilityClassName();
+    public void draw(android.graphics.Canvas);
+    public void onDraw(android.graphics.Canvas);
+    public void onInitializeAccessibilityNodeInfo(android.view.accessibility.AccessibilityNodeInfo);
+    public void onWindowFocusChanged(boolean);
+    public void setBoundsOffset(int, int, int, int);
+    public void setDefaultFocus(android.view.View);
+    public void setDefaultFocusOverridesHistory(boolean);
+    public void setHighlightPadding(int, int, int, int);
+    public void setNudgeShortcut(int, android.view.View);
+    public void setNudgeTargetFocusArea(int, com.android.car.ui.IFocusArea);
+    public void setWrapAround(boolean);
+public class com.android.car.ui.FocusParkingView extends android.view.View {
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    protected void onMeasure(int, int);
+    public boolean performAccessibilityAction(int, android.os.Bundle);
+    public boolean requestFocus(int, android.graphics.Rect);
+    public boolean restoreDefaultFocus();
+    public com.android.car.ui.FocusParkingView(android.content.Context);
+    public com.android.car.ui.FocusParkingView(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.FocusParkingView(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.FocusParkingView(android.content.Context, android.util.AttributeSet, int, int);
+    public java.lang.CharSequence getAccessibilityClassName();
+    public void onWindowFocusChanged(boolean);
+    public void setOnPopupWindowDismiss(com.android.car.ui.FocusParkingView$OnDismissPopupWindow);
+    public void setShouldRestoreFocus(boolean);
+public interface com.android.car.ui.FocusParkingView$OnDismissPopupWindow {
+    public abstract void onDismiss();
+public class com.android.car.ui.FrameFocusArea extends android.widget.FrameLayout implements com.android.car.ui.IFocusArea {
+    protected boolean onRequestFocusInDescendants(int, android.graphics.Rect);
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    protected void onFinishInflate();
+    protected void onLayout(boolean, int, int, int, int);
+    public android.view.View focusSearch(android.view.View, int);
+    public android.view.View getDefaultFocusView();
+    public boolean performAccessibilityAction(int, android.os.Bundle);
+    public boolean restoreDefaultFocus();
+    public com.android.car.ui.FocusAreaHelper getHelper();
+    public com.android.car.ui.FrameFocusArea(android.content.Context);
+    public com.android.car.ui.FrameFocusArea(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.FrameFocusArea(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.FrameFocusArea(android.content.Context, android.util.AttributeSet, int, int);
+    public java.lang.CharSequence getAccessibilityClassName();
+    public void draw(android.graphics.Canvas);
+    public void onDraw(android.graphics.Canvas);
+    public void onInitializeAccessibilityNodeInfo(android.view.accessibility.AccessibilityNodeInfo);
+    public void onWindowFocusChanged(boolean);
+    public void setBoundsOffset(int, int, int, int);
+    public void setDefaultFocus(android.view.View);
+    public void setDefaultFocusOverridesHistory(boolean);
+    public void setHighlightPadding(int, int, int, int);
+    public void setNudgeShortcut(int, android.view.View);
+    public void setNudgeTargetFocusArea(int, com.android.car.ui.IFocusArea);
+    public void setWrapAround(boolean);
+public interface com.android.car.ui.IFocusArea {
+    public abstract android.view.View getDefaultFocusView();
+    public abstract com.android.car.ui.FocusAreaHelper getHelper();
+    public abstract void setBoundsOffset(int, int, int, int);
+    public abstract void setDefaultFocus(android.view.View);
+    public abstract void setDefaultFocusOverridesHistory(boolean);
+    public abstract void setHighlightPadding(int, int, int, int);
+    public abstract void setNudgeShortcut(int, android.view.View);
+    public abstract void setNudgeTargetFocusArea(int, com.android.car.ui.IFocusArea);
+    public abstract void setWrapAround(boolean);
+public class com.android.car.ui.NestedContainer extends android.widget.FrameLayout {
+    protected void onAttachedToWindow();
+    protected void onDetachedFromWindow();
+    public android.view.View focusSearch(android.view.View, int);
+    public boolean dispatchKeyEvent(android.view.KeyEvent);
+    public com.android.car.ui.NestedContainer(android.content.Context);
+    public com.android.car.ui.NestedContainer(android.content.Context, android.util.AttributeSet);
+    public com.android.car.ui.NestedContainer(android.content.Context, android.util.AttributeSet, int);
+    public com.android.car.ui.NestedContainer(android.content.Context, android.util.AttributeSet, int, int);
+public interface com.android.car.ui.RotaryCache$CacheType extends java.lang.annotation.Annotation {
+public final class com.android.car.ui.utils.DirectManipulationHelper {
+    public static boolean enableDirectManipulationMode(android.view.View, boolean);
+    public static boolean isDirectManipulation(android.view.accessibility.AccessibilityEvent);
+    public static boolean supportDirectManipulation(android.view.accessibility.AccessibilityNodeInfo);
+    public static boolean supportRotateDirectly(android.view.accessibility.AccessibilityNodeInfo);
+    public static final java.lang.String DIRECT_MANIPULATION = "com.android.car.ui.utils.DIRECT_MANIPULATION";
+    public static void setSupportsDirectManipulation(android.view.View, boolean);
+    public static void setSupportsRotateDirectly(android.view.View, boolean);
+public final class com.android.car.ui.utils.RotaryConstants {
+    public static final int ACTION_DISMISS_POPUP_WINDOW = 268435456;
+    public static final int ACTION_HIDE_IME = 134217728;
+    public static final int ACTION_NUDGE_SHORTCUT = 16777216;
+    public static final int ACTION_NUDGE_TO_ANOTHER_FOCUS_AREA = 33554432;
+    public static final int ACTION_RESTORE_DEFAULT_FOCUS = 67108864;
+    public static final java.lang.String BOTTOM_BOUND_OFFSET_FOR_NUDGE = "com.android.car.ui.utils.BOTTOM_BOUND_OFFSET_FOR_NUDGE";
+    public static final java.lang.String FOCUS_AREA_BOTTOM_BOUND_OFFSET = "com.android.car.ui.utils.FOCUS_AREA_BOTTOM_BOUND_OFFSET";
+    public static final java.lang.String FOCUS_AREA_LEFT_BOUND_OFFSET = "com.android.car.ui.utils.FOCUS_AREA_LEFT_BOUND_OFFSET";
+    public static final java.lang.String FOCUS_AREA_RIGHT_BOUND_OFFSET = "com.android.car.ui.utils.FOCUS_AREA_RIGHT_BOUND_OFFSET";
+    public static final java.lang.String FOCUS_AREA_TOP_BOUND_OFFSET = "com.android.car.ui.utils.FOCUS_AREA_TOP_BOUND_OFFSET";
+    public static final java.lang.String I_FOCUS_AREA_CLASS_NAME = "com.android.car.ui.FocusArea";
+    public static final java.lang.String LEFT_BOUND_OFFSET_FOR_NUDGE = "com.android.car.ui.utils.LEFT_BOUND_OFFSET_FOR_NUDGE";
+    public static final java.lang.String NUDGE_DIRECTION = "com.android.car.ui.utils.NUDGE_DIRECTION";
+    public static final java.lang.String RIGHT_BOUND_OFFSET_FOR_NUDGE = "com.android.car.ui.utils.RIGHT_BOUND_OFFSET_FOR_NUDGE";
+    public static final java.lang.String ROTARY_CONTAINER = "com.android.car.ui.utils.ROTARY_CONTAINER";
+    public static final java.lang.String ROTARY_FOCUS_DELEGATING_CONTAINER = "com.android.car.ui.utils.FOCUS_DELEGATING_CONTAINER";
+    public static final java.lang.String ROTARY_HORIZONTALLY_SCROLLABLE = "com.android.car.ui.utils.HORIZONTALLY_SCROLLABLE";
+    public static final java.lang.String ROTARY_VERTICALLY_SCROLLABLE = "com.android.car.ui.utils.VERTICALLY_SCROLLABLE";
+    public static final java.lang.String TOP_BOUND_OFFSET_FOR_NUDGE = "com.android.car.ui.utils.TOP_BOUND_OFFSET_FOR_NUDGE";
+public final class com.android.car.ui.utils.ViewUtils {
+    public static android.app.Activity findActivity(android.content.Context);
+    public static android.view.ViewGroup getAncestorScrollableContainer(android.view.View);
+    public static boolean adjustFocus(android.view.View, android.view.View);
+    public static boolean adjustFocus(android.view.View, android.view.View, boolean);
+    public static boolean adjustFocusImmediately(android.view.View, android.view.View);
+    public static boolean focusOnFirstRegularView(android.view.View);
+    public static boolean hideFocus(android.view.View);
+    public static boolean initFocus(android.view.View, android.view.View);
+    public static boolean isDescendant(android.view.View, android.view.View);
+    public static boolean isInMultiWindowMode(android.view.View);
+    public static boolean requestFocus(android.view.View);
+    public static com.android.car.ui.FocusParkingView findFocusParkingView(android.view.View);
+    public static com.android.car.ui.IFocusArea getAncestorFocusArea(android.view.View);
+    public static void initFocus(com.android.car.ui.utils.ViewUtils$LazyLayoutView);
+    public static void setRotaryScrollEnabled(android.view.View, boolean);
+public interface com.android.car.ui.utils.ViewUtils$LazyLayoutView {
+    public abstract boolean isLayoutCompleted();
+    public abstract void addOnLayoutCompleteListener(java.lang.Runnable);
+    public abstract void removeOnLayoutCompleteListener(java.lang.Runnable);
+
+# annotations.zip
+    com.android.car.ui.RotaryCache RotaryCache(int, int, int, int) 0  androidx.annotation.IntDef flag=true value={com.android.car.ui.RotaryCache.CACHE_TYPE_DISABLED, com.android.car.ui.RotaryCache.CACHE_TYPE_EXPIRED_AFTER_SOME_TIME, com.android.car.ui.RotaryCache.CACHE_TYPE_NEVER_EXPIRE}
+    com.android.car.ui.RotaryCache RotaryCache(int, int, int, int) 2  androidx.annotation.IntDef flag=true value={com.android.car.ui.RotaryCache.CACHE_TYPE_DISABLED, com.android.car.ui.RotaryCache.CACHE_TYPE_EXPIRED_AFTER_SOME_TIME, com.android.car.ui.RotaryCache.CACHE_TYPE_NEVER_EXPIRE}
+    com.android.car.ui.RotaryCache.CacheType  androidx.annotation.IntDef flag=true value={com.android.car.ui.RotaryCache.CACHE_TYPE_DISABLED, com.android.car.ui.RotaryCache.CACHE_TYPE_EXPIRED_AFTER_SOME_TIME, com.android.car.ui.RotaryCache.CACHE_TYPE_NEVER_EXPIRE}
+    com.android.car.ui.RotaryCache.FocusAreaCache FocusAreaCache(int, int) 0  androidx.annotation.IntDef flag=true value={com.android.car.ui.RotaryCache.CACHE_TYPE_DISABLED, com.android.car.ui.RotaryCache.CACHE_TYPE_EXPIRED_AFTER_SOME_TIME, com.android.car.ui.RotaryCache.CACHE_TYPE_NEVER_EXPIRE}
+    com.android.car.ui.RotaryCache.FocusAreaCache mCacheType  androidx.annotation.IntDef flag=true value={com.android.car.ui.RotaryCache.CACHE_TYPE_DISABLED, com.android.car.ui.RotaryCache.CACHE_TYPE_EXPIRED_AFTER_SOME_TIME, com.android.car.ui.RotaryCache.CACHE_TYPE_NEVER_EXPIRE}
+    com.android.car.ui.RotaryCache.FocusCache FocusCache(int, long) 0  androidx.annotation.IntDef flag=true value={com.android.car.ui.RotaryCache.CACHE_TYPE_DISABLED, com.android.car.ui.RotaryCache.CACHE_TYPE_EXPIRED_AFTER_SOME_TIME, com.android.car.ui.RotaryCache.CACHE_TYPE_NEVER_EXPIRE}
+    com.android.car.ui.RotaryCache.FocusCache mCacheType  androidx.annotation.IntDef flag=true value={com.android.car.ui.RotaryCache.CACHE_TYPE_DISABLED, com.android.car.ui.RotaryCache.CACHE_TYPE_EXPIRED_AFTER_SOME_TIME, com.android.car.ui.RotaryCache.CACHE_TYPE_NEVER_EXPIRE}
+    com.android.car.ui.utils.ViewUtils boolean adjustFocus(android.view.View, int) 1  androidx.annotation.IntDef flag=true value={com.android.car.ui.utils.ViewUtils.NO_FOCUS, com.android.car.ui.utils.ViewUtils.SCROLLABLE_CONTAINER_FOCUS, com.android.car.ui.utils.ViewUtils.REGULAR_FOCUS, com.android.car.ui.utils.ViewUtils.SELECTED_FOCUS, com.android.car.ui.utils.ViewUtils.IMPLICIT_DEFAULT_FOCUS, com.android.car.ui.utils.ViewUtils.DEFAULT_FOCUS, com.android.car.ui.utils.ViewUtils.FOCUSED_BY_DEFAULT}
+    com.android.car.ui.utils.ViewUtils boolean adjustFocus(android.view.View, int, android.view.View, boolean) 1  androidx.annotation.IntDef flag=true value={com.android.car.ui.utils.ViewUtils.NO_FOCUS, com.android.car.ui.utils.ViewUtils.SCROLLABLE_CONTAINER_FOCUS, com.android.car.ui.utils.ViewUtils.REGULAR_FOCUS, com.android.car.ui.utils.ViewUtils.SELECTED_FOCUS, com.android.car.ui.utils.ViewUtils.IMPLICIT_DEFAULT_FOCUS, com.android.car.ui.utils.ViewUtils.DEFAULT_FOCUS, com.android.car.ui.utils.ViewUtils.FOCUSED_BY_DEFAULT}
+    com.android.car.ui.utils.ViewUtils boolean adjustFocus(android.view.View, int, android.view.View, boolean, boolean) 1  androidx.annotation.IntDef flag=true value={com.android.car.ui.utils.ViewUtils.NO_FOCUS, com.android.car.ui.utils.ViewUtils.SCROLLABLE_CONTAINER_FOCUS, com.android.car.ui.utils.ViewUtils.REGULAR_FOCUS, com.android.car.ui.utils.ViewUtils.SELECTED_FOCUS, com.android.car.ui.utils.ViewUtils.IMPLICIT_DEFAULT_FOCUS, com.android.car.ui.utils.ViewUtils.DEFAULT_FOCUS, com.android.car.ui.utils.ViewUtils.FOCUSED_BY_DEFAULT}
+    com.android.car.ui.utils.ViewUtils int getFocusLevel(android.view.View)  androidx.annotation.IntDef flag=true value={com.android.car.ui.utils.ViewUtils.NO_FOCUS, com.android.car.ui.utils.ViewUtils.SCROLLABLE_CONTAINER_FOCUS, com.android.car.ui.utils.ViewUtils.REGULAR_FOCUS, com.android.car.ui.utils.ViewUtils.SELECTED_FOCUS, com.android.car.ui.utils.ViewUtils.IMPLICIT_DEFAULT_FOCUS, com.android.car.ui.utils.ViewUtils.DEFAULT_FOCUS, com.android.car.ui.utils.ViewUtils.FOCUSED_BY_DEFAULT}

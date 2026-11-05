@@ -1,0 +1,81 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+#
+# The repo is private without GitHub Advanced Security, so this produces no results until GHAS is
+# enabled or the repo is public. It is ready so that publishing turns scanning on.
+
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly. Catches newly-published queries against unchanged code.
+    - cron: '41 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: CodeQL (java)
+    runs-on: ubuntu-latest
+    # A job-level permissions block replaces the workflow default, so contents: read is re-listed.
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: platform-tools  # default also asks for 'tools', which Google removed
+
+      - name: Install platform 37
+        # "platforms;android-37.0": the bare "android-37" id does not exist. See ci.yml.
+        run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@7e3036b9cd87fc26dd06747b7aa4b96c27aaef3a # codeql-bundle-v2.20.3
+        with:
+          languages: java-kotlin
+          queries: security-and-quality
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Validate Gradle wrapper jars
+        # The committed wrapper jar runs before any build logic can inspect it. Validates the one
+        # tracked jar (the flutter example's is gitignored); min-wrapper-count keeps that asserted.
+        # distributionSha256Sum pins the download, not the wrapper; neither catches a genuine jar
+        # of the wrong version. Same pinned action as setup-gradle: one review covers both.
+        uses: gradle/actions/wrapper-validation@8379f6a1328ee0e06e2bb424dadb7b159856a326 # v4.4.0
+        with:
+          min-wrapper-count: 1
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8379f6a1328ee0e06e2bb424dadb7b159856a326 # v4.4.0
+
+      - name: Build for analysis
+        # Manual build: autobuild guessing wrong yields an empty database that analyses cleanly.
+        # --no-build-cache: CodeQL extracts by watching javac, and a FROM-CACHE task never runs it.
+        working-directory: aaos-apps-gradle-project
+        run: ./gradlew assembleDebug --no-daemon --no-build-cache
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@7e3036b9cd87fc26dd06747b7aa4b96c27aaef3a # codeql-bundle-v2.20.3
+        with:
+          category: /language:java-kotlin

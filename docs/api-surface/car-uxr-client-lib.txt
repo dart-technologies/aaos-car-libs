@@ -1,0 +1,29 @@
+# AndroidManifest package
+com.android.car.uxr
+
+public class com.android.car.uxr.CarUxRestrictionsAppConfig {
+    public java.util.Map<java.lang.Integer, com.android.car.uxr.CarUxRestrictionsAppConfig$ListConfig> getMapping();
+    public static com.android.car.uxr.CarUxRestrictionsAppConfig getInstance(android.content.Context, int);
+public class com.android.car.uxr.CarUxRestrictionsAppConfig$ListConfig {
+    public int getId();
+    public java.lang.Integer getContentLimit();
+    public java.lang.Integer getScrollingLimitedMessageResId();
+    public static com.android.car.uxr.CarUxRestrictionsAppConfig$ListConfig$Builder builder(int);
+public class com.android.car.uxr.CarUxRestrictionsAppConfig$ListConfig$Builder {
+    public com.android.car.uxr.CarUxRestrictionsAppConfig$ListConfig build();
+    public com.android.car.uxr.CarUxRestrictionsAppConfig$ListConfig$Builder setContentLimit(int);
+    public com.android.car.uxr.CarUxRestrictionsAppConfig$ListConfig$Builder setScrollingLimitedMessageResId(int);
+public class com.android.car.uxr.CarUxRestrictionsAppConfigParser {
+    public com.android.car.uxr.CarUxRestrictionsAppConfigParser();
+public class com.android.car.uxr.LifeCycleObserverUxrContentLimiter implements com.android.car.uxr.UxrContentLimiter,androidx.lifecycle.DefaultLifecycleObserver {
+    public com.android.car.uxr.LifeCycleObserverUxrContentLimiter(com.android.car.uxr.UxrContentLimiterImpl);
+    public void onStart(androidx.lifecycle.LifecycleOwner);
+    public void onStop(androidx.lifecycle.LifecycleOwner);
+    public void setAdapter(com.android.car.ui.recyclerview.ContentLimiting);
+public interface com.android.car.uxr.UxrContentLimiter {
+    public abstract void setAdapter(com.android.car.ui.recyclerview.ContentLimiting);
+public class com.android.car.uxr.UxrContentLimiterImpl implements com.android.car.uxr.UxrContentLimiter {
+    public com.android.car.uxr.UxrContentLimiterImpl(android.content.Context, int);
+    public void setAdapter(com.android.car.ui.recyclerview.ContentLimiting);
+    public void start();
+    public void stop();

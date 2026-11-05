@@ -1,0 +1,20 @@
+# Machine-written by scripts/record-gate-counts.py --record. Do not hand-edit.
+#
+# A count here is an assertion that the module's JVM suite still runs that many tests. It is
+# recorded only from a run with zero failures; see the script's docstring for why that matters.
+#
+# module	count	recorded	commit   (a -dirty suffix means the tree had uncommitted changes,
+#                                    so the counts are NOT reproducible from that commit alone)
+a2ui-host-carapp	165	2026-11-04	adf8fc951
+a2ui-host-carui	126	2026-11-04	adf8fc951
+a2ui-model	271	2026-11-04	adf8fc951
+car-apps-common	24	2026-11-04	adf8fc951
+car-assist-lib	9	2026-11-04	adf8fc951
+car-media-common	92	2026-11-04	adf8fc951
+car-rotary-lib	6	2026-11-04	adf8fc951
+car-telephony-common	3	2026-11-04	adf8fc951
+car-ui-lib	54	2026-11-04	adf8fc951
+car-uxr-client-lib	20	2026-11-04	adf8fc951
+model	17	2026-11-04	adf8fc951
+oem-apis	15	2026-11-04	adf8fc951
+plugin	29	2026-11-04	adf8fc951

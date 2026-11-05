@@ -1,0 +1,26 @@
+# Declared <overlayable> surfaces that are NOT in any built artifact, and why.
+#
+# An overlayable is a promise to OEMs: these resources are yours to override. A promise absent from
+# the APK is not a promise. Everything here is a known, reasoned exception; anything NOT here that
+# is unpackaged is a hard failure in scripts/check-overlayable-packaged.py.
+#
+# Adding a line requires the reason to be a real obstacle, not an intention. "Not done yet" is not a
+# reason — that is a failure with a note attached.
+#
+# Format: overlayable-name<TAB>owning-module<TAB>reason
+#
+# The MODULE column is not decoration. An earlier version keyed exemptions by name alone, and a
+# second module declaring the same overlayable name silently inherited this waiver — two
+# declarations excused by one reason that had only ever been written about one of them.
+
+car-ui-lib	car-ui-lib/car-ui-lib	res-overlayable/ also holds removed_resources.xml, whose <item> entries AGP compiles as real resource definitions; layout/car_ui_base_layout_toolbar_legacy then collides with res-private and the build fails. Soong (upstream) does not have this problem. Fixing it means restructuring vendored upstream resources — a decision about library behaviour, not build plumbing — so it is recorded rather than forced.
+
+# Scale of what this line costs: 604 items, including 43 whole layouts. It is the largest declared
+# OEM seam in the repository and it reaches nothing. Two sibling modules with the SAME directory
+# layout — paintbooth and car-rotary-lib — were fixed by simply declaring the directory, because
+# neither carries removed_resources.xml. That is the whole difference.
+#
+# If this is ever closed, the likely route is upstream: removed_resources.xml lists resources that
+# were deleted from the overlayable, and car_ui_base_layout_toolbar_legacy being listed there while
+# still existing in res-private looks like an upstream inconsistency rather than a Gradle quirk.
+# That is a report to file, not a patch to carry.

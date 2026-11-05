@@ -1,0 +1,77 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Emits what metalava needs to parse a module: its main source roots and the compile classpath
+// Gradle actually resolved for it. Asked of Gradle rather than reconstructed, because of srcDirs
+// overrides, a module compiling its parent's directory, and android.jar arriving via compileSdk.
+//
+//   ./gradlew -I ../scripts/dump-api-lint-inputs.gradle help -q
+//
+// Output, tab-separated and prefixed so it survives being mixed with other output:
+//   APILINT_SRC<TAB>:project:path<TAB>absolute/source/dir
+//   APILINT_CP<TAB>:project:path<TAB>absolute/jar/or/dir
+
+gradle.projectsEvaluated { g ->
+    // Printed at configuration time, so a configuration-cache hit would print nothing.
+    g.rootProject.tasks.named('help') {
+        it.notCompatibleWithConfigurationCache('dump-api-lint-inputs.gradle prints at configuration time')
+    }
+    g.rootProject.allprojects { p ->
+        def android = p.extensions.findByName('android')
+        if (android == null) return
+        def main = android.sourceSets.findByName('main')
+        if (main == null) return
+
+        main.java.srcDirs.each { dir ->
+            if (dir.exists()) println "APILINT_SRC\t${p.path}\t${dir}"
+        }
+
+        // android.jar first, or every android.* type is unresolved. AGP 9 hides the legacy
+        // extension (`android.bootClasspath` throws), so ask androidComponents.sdkComponents and
+        // fall back to the AGP 8 property. askedNewApi records whether the call returned: an
+        // empty answer is still an answer.
+        boolean askedNewApi = false
+        try {
+            def boot = p.extensions.findByName('androidComponents').sdkComponents.bootClasspath.get()
+            askedNewApi = true
+            boot.each { f -> println "APILINT_CP\t${p.path}\t${f}" }
+        } catch (MissingPropertyException | MissingMethodException e) {
+            // The AGP 8 shape. Narrow on purpose: a real failure must not pass as an older AGP.
+            println "APILINT_NOTE\t${p.path}\tnew SDK API unavailable (${e.class.simpleName}); trying AGP 8 bootClasspath"
+        }
+        if (!askedNewApi) {
+            try {
+                android.bootClasspath.each { f -> println "APILINT_CP\t${p.path}\t${f}" }
+            } catch (MissingPropertyException | MissingMethodException e) {
+                println "APILINT_NOTE\t${p.path}\tno bootClasspath from either API (${e.class.simpleName})"
+            }
+        }
+
+        // The debug compile classpath, as classes jars: metalava rejects .aar. Resolution
+        // failures are swallowed so the driver reports the module as unlintable.
+        p.configurations.findAll { it.name == 'debugCompileClasspath' }.each { cfg ->
+            try {
+                cfg.incoming.artifactView { v ->
+                    v.lenient(true)
+                    v.attributes { it.attribute(Attribute.of('artifactType', String), 'android-classes-jar') }
+                }.files.each { f ->
+                    println "APILINT_CP\t${p.path}\t${f}"
+                }
+            } catch (Exception ignored) {
+            }
+        }
+    }
+}

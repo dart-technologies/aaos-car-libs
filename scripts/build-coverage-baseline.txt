@@ -1,0 +1,22 @@
+# Source files knowingly compiled by NO module.
+#
+# Every entry is a DECISION, and the reason is required. An unexplained line here is the thing this
+# baseline exists to prevent: an exclusion that reads as a consequence of the build's structure
+# rather than as a choice somebody made. Adding a path without a reason defeats the check.
+#
+# Paths are repository-relative. Lines starting with '#' are comments.
+#
+# ---------------------------------------------------------------------------------------------
+# PaintBooth: two @hide platform-API users, excluded by upstream via filter.excludes.
+#
+# ActivityTaskManagerImpl calls IActivityTaskManager and OverlayManagerImpl calls
+# IOverlayManager.Stub.asInterface(ServiceManager.getService(...)). Neither interface exists in
+# the public SDK — they resolve only against AOSP's internal android.jar, which this fork
+# deliberately does not have on the boot classpath (removing -Xbootclasspath/p: was Phase 1).
+#
+# Consequence, stated rather than implied: PaintBooth's "current activity" and "overlays" demo
+# screens are non-functional in this fork's build. The gallery runs; those two features do not.
+# Restoring them needs either a system-signed build against internal APIs or a reimplementation
+# on public APIs — neither is on the current roadmap.
+car-ui-lib/paintbooth/src/main/java/com/android/car/ui/paintbooth/currentactivity/ActivityTaskManagerImpl.java
+car-ui-lib/paintbooth/src/main/java/com/android/car/ui/paintbooth/overlays/OverlayManagerImpl.java

@@ -1,0 +1,33 @@
+# The JVM suites the acceptance gate runs. ONE source of truth, read by both
+# run-bump-gate.sh (to build its gradle task list) and record-gate-counts.py (to decide which
+# results on disk are the gate's).
+#
+# Why this file exists rather than a list in each place:
+#
+# record-gate-counts.py used to take "every module with results on disk" as the gate's set. That is
+# a different set from "every module the gate ran", and the difference is silent in both directions.
+# Running an ungated suite by hand left its XML in the shared build directory, and the next record
+# picked it up and then failed the gate on a module the gate never runs -- an auditor hit exactly
+# that. The reverse is worse: a module dropped from the gate's task list keeps its stale results on
+# disk and keeps being counted, so the ledger goes on asserting a suite that no longer runs.
+#
+# With one list, the two cannot disagree: a module here is run AND counted, and a listed module with
+# no results is an error rather than a silent zero.
+#
+# car-apps-common, car-assist-lib and plugin were added 2026-08-18. They had 52 green tests between
+# them and were in neither the gate's task list nor the ledger.
+#
+# columns: gradle project path<TAB>build directory name
+:oem-apis	oem-apis
+:car-uxr-client-lib	car-uxr-client-lib
+:car-messenger-common:model	model
+:car-media-common	car-media-common
+:car-ui-lib	car-ui-lib
+:car-rotary-lib	car-rotary-lib
+:a2ui-model	a2ui-model
+:a2ui-host-carapp	a2ui-host-carapp
+:a2ui-host-carui	a2ui-host-carui
+:car-apps-common	car-apps-common
+:car-assist-lib	car-assist-lib
+:plugin	plugin
+:car-telephony-common	car-telephony-common

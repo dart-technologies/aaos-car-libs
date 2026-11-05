@@ -1,0 +1,84 @@
+# AndroidManifest package
+com.android.car.messenger.common.model
+
+public final class com.android.car.messenger.common.Conversation {
+    public android.os.Bundle getExtras();
+    public android.os.Bundle toBundle();
+    public androidx.core.app.Person getUser();
+    public androidx.core.graphics.drawable.IconCompat getConversationIcon();
+    public boolean isMuted();
+    public com.android.car.messenger.common.Conversation$Builder toBuilder();
+    public com.android.car.messenger.common.Conversation(java.lang.String, androidx.core.app.Person, java.lang.String, androidx.core.graphics.drawable.IconCompat, java.util.List<com.android.car.messenger.common.Conversation$Message>, java.util.List<androidx.core.app.Person>, java.util.List<com.android.car.messenger.common.Conversation$ConversationAction>, int, boolean, android.os.Bundle);
+    public int getUnreadCount();
+    public java.lang.String getConversationTitle();
+    public java.lang.String getId();
+    public java.util.List<androidx.core.app.Person> getParticipants();
+    public java.util.List<com.android.car.messenger.common.Conversation$ConversationAction> getActions();
+    public java.util.List<com.android.car.messenger.common.Conversation$Message> getMessages();
+    public static com.android.car.messenger.common.Conversation fromBundle(android.os.Bundle);
+public class com.android.car.messenger.common.Conversation$Builder {
+    public com.android.car.messenger.common.Conversation build();
+    public com.android.car.messenger.common.Conversation$Builder setActions(java.util.List<com.android.car.messenger.common.Conversation$ConversationAction>);
+    public com.android.car.messenger.common.Conversation$Builder setConversationIcon(androidx.core.graphics.drawable.IconCompat);
+    public com.android.car.messenger.common.Conversation$Builder setConversationTitle(java.lang.String);
+    public com.android.car.messenger.common.Conversation$Builder setExtras(android.os.Bundle);
+    public com.android.car.messenger.common.Conversation$Builder setMessages(java.util.List<com.android.car.messenger.common.Conversation$Message>);
+    public com.android.car.messenger.common.Conversation$Builder setMuted(boolean);
+    public com.android.car.messenger.common.Conversation$Builder setParticipants(java.util.List<androidx.core.app.Person>);
+    public com.android.car.messenger.common.Conversation$Builder setUnreadCount(int);
+    public com.android.car.messenger.common.Conversation$Builder(androidx.core.app.Person, java.lang.String);
+public class com.android.car.messenger.common.Conversation$ConversationAction {
+    public android.app.RemoteAction getRemoteAction();
+    public android.app.RemoteInput getRemoteInput();
+    public android.os.Bundle getExtras();
+    public com.android.car.messenger.common.Conversation$ConversationAction(int, android.app.RemoteAction, android.app.RemoteInput);
+    public int getActionType();
+public interface com.android.car.messenger.common.Conversation$ConversationAction$ActionType extends java.lang.annotation.Annotation {
+    public static final int ACTION_TYPE_ARCHIVE = 5;
+    public static final int ACTION_TYPE_DELETE = 4;
+    public static final int ACTION_TYPE_MARK_AS_READ = 2;
+    public static final int ACTION_TYPE_MARK_AS_UNREAD = 3;
+    public static final int ACTION_TYPE_MUTE = 6;
+    public static final int ACTION_TYPE_NONE = 0;
+    public static final int ACTION_TYPE_REPLY = 1;
+    public static final int ACTION_TYPE_UNMUTE = 7;
+public final class com.android.car.messenger.common.Conversation$Message {
+    public android.net.Uri getDataUri();
+    public android.os.Bundle getExtras();
+    public androidx.core.app.Person getPerson();
+    public com.android.car.messenger.common.Conversation$Message setData(java.lang.String, android.net.Uri);
+    public com.android.car.messenger.common.Conversation$Message setMessageStatus(int);
+    public com.android.car.messenger.common.Conversation$Message setMessageType(int);
+    public com.android.car.messenger.common.Conversation$Message(java.lang.String, long, androidx.core.app.Person);
+    public int getMessageStatus();
+    public int getMessageType();
+    public java.lang.String getDataMimeType();
+    public java.lang.String getText();
+    public long getTimestamp();
+public interface com.android.car.messenger.common.Conversation$Message$MessageStatus extends java.lang.annotation.Annotation {
+    public static final int MESSAGE_STATUS_NONE = 0;
+    public static final int MESSAGE_STATUS_READ = 3;
+    public static final int MESSAGE_STATUS_SEEN = 2;
+    public static final int MESSAGE_STATUS_UNREAD = 1;
+public interface com.android.car.messenger.common.Conversation$Message$MessageType extends java.lang.annotation.Annotation {
+    public static final int MESSAGE_TYPE_ALL = 0;
+    public static final int MESSAGE_TYPE_DRAFT = 3;
+    public static final int MESSAGE_TYPE_FAILED = 5;
+    public static final int MESSAGE_TYPE_INBOX = 1;
+    public static final int MESSAGE_TYPE_OUTBOX = 4;
+    public static final int MESSAGE_TYPE_QUEUED = 6;
+    public static final int MESSAGE_TYPE_SENT = 2;
+
+# annotations.zip
+    com.android.car.messenger.common.Conversation.ConversationAction ConversationAction(int, android.app.RemoteAction, android.app.RemoteInput) 0  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_NONE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_REPLY, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MARK_AS_READ, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MARK_AS_UNREAD, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_DELETE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_ARCHIVE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MUTE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_UNMUTE}
+    com.android.car.messenger.common.Conversation.ConversationAction int getActionType()  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_NONE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_REPLY, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MARK_AS_READ, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MARK_AS_UNREAD, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_DELETE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_ARCHIVE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MUTE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_UNMUTE}
+    com.android.car.messenger.common.Conversation.ConversationAction mActionType  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_NONE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_REPLY, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MARK_AS_READ, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MARK_AS_UNREAD, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_DELETE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_ARCHIVE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MUTE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_UNMUTE}
+    com.android.car.messenger.common.Conversation.ConversationAction.ActionType  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_NONE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_REPLY, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MARK_AS_READ, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MARK_AS_UNREAD, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_DELETE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_ARCHIVE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_MUTE, com.android.car.messenger.common.Conversation.ConversationAction.ActionType.ACTION_TYPE_UNMUTE}
+    com.android.car.messenger.common.Conversation.Message com.android.car.messenger.common.Conversation.Message setMessageStatus(int) 0  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_NONE, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_UNREAD, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_SEEN, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_READ}
+    com.android.car.messenger.common.Conversation.Message com.android.car.messenger.common.Conversation.Message setMessageType(int) 0  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_ALL, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_INBOX, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_SENT, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_DRAFT, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_FAILED, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_OUTBOX, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_QUEUED}
+    com.android.car.messenger.common.Conversation.Message int getMessageStatus()  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_NONE, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_UNREAD, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_SEEN, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_READ}
+    com.android.car.messenger.common.Conversation.Message int getMessageType()  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_ALL, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_INBOX, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_SENT, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_DRAFT, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_FAILED, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_OUTBOX, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_QUEUED}
+    com.android.car.messenger.common.Conversation.Message mMessageStatus  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_NONE, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_UNREAD, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_SEEN, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_READ}
+    com.android.car.messenger.common.Conversation.Message mMessageType  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_ALL, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_INBOX, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_SENT, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_DRAFT, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_FAILED, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_OUTBOX, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_QUEUED}
+    com.android.car.messenger.common.Conversation.Message.MessageStatus  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_NONE, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_UNREAD, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_SEEN, com.android.car.messenger.common.Conversation.Message.MessageStatus.MESSAGE_STATUS_READ}
+    com.android.car.messenger.common.Conversation.Message.MessageType  androidx.annotation.IntDef value={com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_ALL, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_INBOX, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_SENT, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_DRAFT, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_FAILED, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_OUTBOX, com.android.car.messenger.common.Conversation.Message.MessageType.MESSAGE_TYPE_QUEUED}
