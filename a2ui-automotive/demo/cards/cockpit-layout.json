@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "canvas": [
+    1920,
+    1080
+  ],
+  "driver": [
+    34,
+    82,
+    1312,
+    738
+  ],
+  "passenger": [
+    1394,
+    82,
+    492,
+    738
+  ],
+  "railBand": [
+    0,
+    0,
+    1920,
+    56
+  ],
+  "captionBand": [
+    0,
+    944,
+    1920,
+    136
+  ],
+  "bezelPx": 12,
+  "screenScale": 0.931818,
+  "sources": {
+    "driver": [
+      1408,
+      792
+    ],
+    "passenger": [
+      528,
+      792
+    ]
+  },
+  "frame": "a2ui-automotive/demo/cards/cockpit-frame.png",
+  "glow": "a2ui-automotive/demo/cards/cockpit-glow.png",
+  "windows": "alpha 0 exactly at driver and passenger; opaque everywhere else",
+  "composite": "background, recordings scaled into the boxes, then the frame on top (or the frame first and the recordings over it: same pixels)",
+  "renderer": "scripts/demo_overlays.py cockpit",
+  "approach": {
+    "chosen": "procedural",
+    "why": "Legibility first, so the frame is drawn here around the largest boxes that fit."
+  }
+}
