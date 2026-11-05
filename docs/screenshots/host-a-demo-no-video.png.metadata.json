@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-09-07T13:54:59.451756+00:00",
+  "command": "SET active=0x10 on Host A",
+  "commit": "5d8d2ea140709339c85284446e0d5b84c2525f2f",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "60b3fbe1377b6fcff2345fa5bd076717ee556d89328c66523c687e4a5261c90a",
+  "state": "demo"
+}
