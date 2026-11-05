@@ -14,6 +14,10 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+<!--
+  Dart fork note: 76dp literals replaced by @dimen/car_ui_touch_target_width/_height (also 76dp),
+  so an OEM overlay of the touch target reaches these pressable controls too.
+-->
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
     <androidx.recyclerview.widget.RecyclerView
@@ -34,8 +38,8 @@
 
         <ImageView
             android:id="@+id/car_ui_scrollbar_page_up"
-            android:layout_width="76dp"
-            android:layout_height="76dp"
+            android:layout_width="@dimen/car_ui_touch_target_width"
+            android:layout_height="@dimen/car_ui_touch_target_height"
             android:background="@drawable/car_ui_recyclerview_button_ripple_background_private"
             android:contentDescription="Scroll up"
             android:focusable="false"
@@ -72,8 +76,8 @@
 
         <ImageView
             android:id="@+id/car_ui_scrollbar_page_down"
-            android:layout_width="76dp"
-            android:layout_height="76dp"
+            android:layout_width="@dimen/car_ui_touch_target_width"
+            android:layout_height="@dimen/car_ui_touch_target_height"
             android:background="@drawable/car_ui_recyclerview_button_ripple_background_private"
             android:contentDescription="Scroll down"
             android:focusable="false"

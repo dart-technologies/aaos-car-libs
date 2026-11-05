@@ -24,12 +24,15 @@ import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isChecked;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isFocused;
+import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
 import static androidx.test.espresso.matcher.ViewMatchers.isNotChecked;
 import static androidx.test.espresso.matcher.ViewMatchers.withContentDescription;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
 import static com.android.car.ui.actions.ViewActions.setProgress;
+
+import com.android.car.ui.actions.CarUiRecyclerViewActions;
 import static com.android.car.ui.core.CarUi.MIN_TARGET_API;
 import static com.android.car.ui.matchers.ViewMatchers.isActivated;
 import static com.android.car.ui.matchers.ViewMatchers.withIndex;
@@ -96,10 +99,31 @@ public class PreferenceTest {
     @Test
     public void testListPreference() {
         // Scroll until list preference is visible
-        mActivity.runOnUiThread(() -> mActivity.scrollToPreference("list"));
+        // Scroll and click as ONE synchronised RecyclerView action.
+        //
+        // This replaces `runOnUiThread(scrollToPreference("list"))` followed by a separate
+        // `onView(...).perform(click())`. Those are two operations with nothing between them:
+        // a RecyclerView scroll is an animation across frames, not a backlog of looper messages, so
+        // Espresso considers the main thread idle while the target row is still moving and the click
+        // lands on nothing. The dialog never opens, and the failure surfaces several assertions
+        // later as a missing option row — which reads like a rendering bug rather than a timing one,
+        // and was misdiagnosed twice as exactly that.
+        //
+        // An IdlingResource was tried first and does NOT fix it: the scroll has not started when
+        // Espresso next polls, so the resource reports idle and synchronises nothing. Arming it
+        // explicitly only moves the same problem to the next frame. A fixed sleep passes and is
+        // worse — it encodes frame timing measured on one machine.
+        //
+        // CarUiRecyclerViewActions is this repo's own helper (espresso-contrib already resolves on
+        // the test classpath, so nothing new is required), and it scrolls the item into view and
+        // acts on it atomically, so there is no window to race.
+        onView(withId(R.id.recycler_view)).perform(
+                CarUiRecyclerViewActions.actionOnItem(
+                        hasDescendant(withText(R.string.title_list_preference)), click()));
 
-        // Display full screen list preference.
-        onView(withText(R.string.title_list_preference)).perform(click());
+        // Dart fork note: a diagnostic, not a fix. A failure here means the click did not open the
+        // dialog; a failure at the radio-button checks below means the list was not bound.
+        onView(withText(mEntries[0])).check(matches(isDisplayed()));
 
         Preference.OnPreferenceChangeListener mockListener = mock(
                 Preference.OnPreferenceChangeListener.class);
@@ -166,6 +190,12 @@ public class PreferenceTest {
         // Return to main screen and turn off touch mode.
         onView(withContentDescription("Back")).perform(click());
         InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
+
+        // Dart fork note: the residual intermittent fails at the radio-button assertion below,
+        // after the dialog has opened once. Candidates: focus not landing before the first
+        // DPAD_CENTER, the list not yet bound, or IndexMatcher's stateful index across reopened
+        // dialogs. Record whether it is a NoMatchingViewException or an AssertionFailedError.
+        // Asserting focus between the presses would also idle Espresso and mask the timing.
         // Return to list preference screen. Requires two inputs to focus and then click.
         InstrumentationRegistry.getInstrumentation()
                 .sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_CENTER);
@@ -200,11 +230,16 @@ public class PreferenceTest {
 
     @Test
     public void testMultiSelectListPreference() {
-        // Scroll until multi-select preference is visible
-        mActivity.runOnUiThread(() -> mActivity.scrollToPreference("multi_select_list"));
-
-        // Display full screen list preference.
-        onView(withText(R.string.title_multi_list_preference)).perform(click());
+        // Dart fork fix (2026-08-20): the SAME two-step scroll-then-click that testListPreference
+        // was changed for, left unchanged here. An upstream report was prepared describing the
+        // race and patching one of the two occurrences; a review of that report found the other.
+        //
+        // A RecyclerView scroll is an animation across frames, not a backlog of looper messages, so
+        // Espresso considers the main thread idle while the target row is still moving and the
+        // click can land on nothing. Scroll and click as one synchronised action instead.
+        onView(withId(R.id.recycler_view)).perform(
+                CarUiRecyclerViewActions.actionOnItem(
+                        hasDescendant(withText(R.string.title_multi_list_preference)), click()));
 
         Preference.OnPreferenceChangeListener mockListener = mock(
                 Preference.OnPreferenceChangeListener.class);

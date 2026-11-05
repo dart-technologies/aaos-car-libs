@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<!--
+  Dart fork addition (2026-08-20): the reference OEM plugin had NO overlayable surface at all.
+
+  That is the one place it matters most. car-ui-lib publishes a 604-item surface so an OEM can
+  re-theme it by RRO; this plugin, which is the starting point an OEM actually forks, published
+  nothing. It also carries a fully parallel renamed token set (toolbar_margin, list_item_height,
+  rotary_focus_*, ripple_color) rather than referencing car-ui-lib's, and
+  PluginFactoryImpl.customizesBaseLayout() returns true, so for the surfaces the plugin claims it
+  WINS over car-ui-lib and over the 33 RROs shipped alongside it in product.mk. An OEM wanting a
+  different toolbar margin therefore had to fork and rebuild the plugin.
+
+  Declaring these changes no pixel. It states which of the plugin's own resources an RRO may
+  replace, which is exactly what car-ui-lib and car-rotary-lib already do for theirs.
+
+  Scope: the plugin's own value resources, enumerated from res/values/*.xml. Layouts and drawables
+  are deliberately NOT listed. car-ui-lib includes 43 layout entries in its surface, but those are
+  a published contract that has been stable for years; this plugin's layouts are its private
+  implementation and freezing their ids now would be inventing a contract nobody asked for.
+-->
+<resources>
+  <overlayable name="ReferenceDesignPlugin">
+    <policy type="public">
+      <item type="bool" name="scrollbar_enable"/>
+      <item type="bool" name="toolbar_logo_fills_nav_icon_space"/>
+      <item type="bool" name="toolbar_nav_icon_space_reserved"/>
+      <item type="bool" name="toolbar_title_and_tabs_mutually_exclusive"/>
+      <item type="color" name="ripple_color"/>
+      <item type="color" name="rotary_focus_fill_color"/>
+      <item type="color" name="rotary_focus_fill_secondary_color"/>
+      <item type="color" name="rotary_focus_pressed_fill_color"/>
+      <item type="color" name="rotary_focus_pressed_fill_secondary_color"/>
+      <item type="color" name="rotary_focus_pressed_stroke_color"/>
+      <item type="color" name="rotary_focus_pressed_stroke_secondary_color"/>
+      <item type="color" name="rotary_focus_stroke_color"/>
+      <item type="color" name="rotary_focus_stroke_secondary_color"/>
+      <item type="dimen" name="app_styled_dialog_height"/>
+      <item type="dimen" name="app_styled_dialog_position_x"/>
+      <item type="dimen" name="app_styled_dialog_position_y"/>
+      <item type="dimen" name="app_styled_dialog_width"/>
+      <item type="dimen" name="header_list_item_text_start_margin"/>
+      <item type="dimen" name="list_item_action_divider_height"/>
+      <item type="dimen" name="list_item_action_divider_width"/>
+      <item type="dimen" name="list_item_avatar_icon_height"/>
+      <item type="dimen" name="list_item_avatar_icon_width"/>
+      <item type="dimen" name="list_item_content_icon_height"/>
+      <item type="dimen" name="list_item_content_icon_width"/>
+      <item type="dimen" name="list_item_header_height"/>
+      <item type="dimen" name="list_item_height"/>
+      <item type="dimen" name="list_item_icon_container_width"/>
+      <item type="dimen" name="list_item_icon_size"/>
+      <item type="dimen" name="list_item_supplemental_icon_size"/>
+      <item type="dimen" name="list_item_text_no_icon_start_margin"/>
+      <item type="dimen" name="list_item_text_start_margin"/>
+      <item type="dimen" name="primary_icon_size"/>
+      <item type="dimen" name="rotary_focus_pressed_stroke_width"/>
+      <item type="dimen" name="rotary_focus_stroke_width"/>
+      <item type="dimen" name="scrollbar_button_size"/>
+      <item type="dimen" name="scrollbar_container_width"/>
+      <item type="dimen" name="scrollbar_margin"/>
+      <item type="dimen" name="scrollbar_min_thumb_height"/>
+      <item type="dimen" name="scrollbar_separator_margin"/>
+      <item type="dimen" name="scrollbar_thumb_width"/>
+      <item type="dimen" name="toolbar_margin"/>
+      <item type="dimen" name="toolbar_menu_item_icon_ripple_radius"/>
+      <item type="dimen" name="toolbar_row_height"/>
+      <item type="dimen" name="toolbar_search_close_icon_container_width"/>
+      <item type="dimen" name="toolbar_search_icon_container_width"/>
+      <item type="dimen" name="touch_target_size"/>
+      <item type="integer" name="scrollbar_longpress_initial_delay"/>
+      <item type="integer" name="scrollbar_longpress_repeat_interval"/>
+      <item type="style" name="TextAppearance.CarUi"/>
+      <item type="style" name="TextAppearance.CarUi.Body1"/>
+      <item type="style" name="TextAppearance.CarUi.Body2"/>
+      <item type="style" name="TextAppearance.CarUi.Body3"/>
+      <item type="style" name="TextAppearance.CarUi.ListItem"/>
+      <item type="style" name="TextAppearance.CarUi.ListItem.Body"/>
+      <item type="style" name="TextAppearance.CarUi.ListItem.Header"/>
+      <item type="style" name="TextAppearance.CarUi.Sub1"/>
+      <item type="style" name="TextAppearance.CarUi.Sub2"/>
+      <item type="style" name="TextAppearance.CarUi.Sub3"/>
+      <item type="style" name="TextAppearance.CarUi.Widget.Toolbar.Tab"/>
+      <item type="style" name="TextAppearance.CarUi.Widget.Toolbar.Tab.Selected"/>
+      <item type="style" name="Toolbar.MenuItem.Text"/>
+      <item type="style" name="Toolbar.MenuItem.Text.Borderless"/>
+    </policy>
+  </overlayable>
+</resources>

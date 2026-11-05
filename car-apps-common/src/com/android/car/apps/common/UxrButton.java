@@ -28,6 +28,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import com.android.car.ui.utils.CarUxRestrictionsUtil;
+import com.android.car.ui.utils.CarUxRestrictionsInfo;
 
 /**
  * UX Restrictions compliant Button.
@@ -48,7 +49,7 @@ public class UxrButton extends TextView {
     private CarUxRestrictions mActiveCarUxRestrictions;
     private View.OnClickListener mOnClickListenerDelegate;
 
-    @CarUxRestrictions.CarUxRestrictionsInfo
+    @CarUxRestrictionsInfo
     private int mRestrictions;
 
     private final Handler mHandler = new Handler();

@@ -1,0 +1,90 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+#
+# Every external version this build declares. car-uxr-flutter/example/android imports this file
+# too, because it builds car-ui-lib and the Flutter binding from their own build.gradle files.
+
+[versions]
+agp = "9.3.1"
+androidx-annotation = "1.10.0"
+androidx-appcompat = "1.8.0"
+androidx-arch-core = "2.2.0"
+androidx-asynclayoutinflater = "1.1.0"
+androidx-carapp = "1.7.0"
+androidx-cardview = "1.0.0"
+androidx-constraintlayout = "2.2.2"
+androidx-core = "1.19.0"
+androidx-fragment = "1.8.9"
+androidx-interpolator = "1.0.0"
+lifecycle = "2.9.4"
+androidx-media = "1.8.0"
+androidx-media3 = "1.11.0"
+androidx-preference = "1.2.1"
+androidx-recyclerview = "1.4.0"
+androidx-test-core = "1.6.1"
+androidx-test-espresso = "3.6.1"
+androidx-test-ext-junit = "1.2.1"
+androidx-test-rules = "1.6.1"
+androidx-test-runner = "1.6.2"
+carui-plugin-apis = "1.5.0"
+# 2.28.6 + Mockito 5 aborts ART in LocationImpl.stackWalk (car-ui-lib androidTest).
+dexmaker = "2.28.1"
+glide = "5.0.9"
+guava = "33.2.1-android"
+hamcrest = "2.2"
+junit = "4.13.2"
+leakcanary = "2.14"
+libphonenumber = "9.0.42"
+mockito = "5.14.2"
+mockitoLegacy = "2.19.0"
+robolectric = "4.16.1"
+snakeyaml = "2.3"
+truth = "1.4.4"
+
+[libraries]
+androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidx-appcompat" }
+androidx-arch-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "androidx-arch-core" }
+androidx-asynclayoutinflater = { module = "androidx.asynclayoutinflater:asynclayoutinflater", version.ref = "androidx-asynclayoutinflater" }
+androidx-carapp-app = { module = "androidx.car.app:app", version.ref = "androidx-carapp" }
+androidx-carapp-automotive = { module = "androidx.car.app:app-automotive", version.ref = "androidx-carapp" }
+androidx-carapp-testing = { module = "androidx.car.app:app-testing", version.ref = "androidx-carapp" }
+androidx-cardview = { module = "androidx.cardview:cardview", version.ref = "androidx-cardview" }
+androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "androidx-constraintlayout" }
+androidx-core = { module = "androidx.core:core", version.ref = "androidx-core" }
+androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "androidx-fragment" }
+androidx-interpolator = { module = "androidx.interpolator:interpolator", version.ref = "androidx-interpolator" }
+androidx-lifecycle-common-java8 = { module = "androidx.lifecycle:lifecycle-common-java8", version.ref = "lifecycle" }
+androidx-lifecycle-livedataCore = { module = "androidx.lifecycle:lifecycle-livedata-core", version.ref = "lifecycle" }
+androidx-lifecycle-runtime = { module = "androidx.lifecycle:lifecycle-runtime", version.ref = "lifecycle" }
+androidx-lifecycle-livedata = { module = "androidx.lifecycle:lifecycle-livedata", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle" }
+androidx-media = { module = "androidx.media:media", version.ref = "androidx-media" }
+androidx-media3-common = { module = "androidx.media3:media3-common", version.ref = "androidx-media3" }
+androidx-media3-session = { module = "androidx.media3:media3-session", version.ref = "androidx-media3" }
+androidx-preference = { module = "androidx.preference:preference", version.ref = "androidx-preference" }
+androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "androidx-recyclerview" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test-core" }
+androidx-test-espresso-contrib = { module = "androidx.test.espresso:espresso-contrib", version.ref = "androidx-test-espresso" }
+androidx-test-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "androidx-test-espresso" }
+androidx-test-ext-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
+androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidx-test-rules" }
+androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
+carui-plugin-apis = { module = "com.android.car.ui:car-ui-lib-plugin-apis", version.ref = "carui-plugin-apis" }
+dexmaker-mockito-inline = { module = "com.linkedin.dexmaker:dexmaker-mockito-inline", version.ref = "dexmaker" }
+glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
+junit = { module = "junit:junit", version.ref = "junit" }
+leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
+libphonenumber = { module = "com.googlecode.libphonenumber:libphonenumber", version.ref = "libphonenumber" }
+mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockito" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-legacy = { module = "org.mockito:mockito-core", version.ref = "mockitoLegacy" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
+truth = { module = "com.google.truth:truth", version.ref = "truth" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }

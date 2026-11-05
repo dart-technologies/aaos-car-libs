@@ -742,14 +742,19 @@ public class CarUiRecyclerViewTest {
         onView(withText(adapter.getItemText(0))).check(matches(isDisplayed()));
 
         AtomicInteger trackViewHeight = new AtomicInteger();
+        AtomicInteger trackViewWidth = new AtomicInteger();
         mActivityRule.getScenario().onActivity(activity -> {
             View trackView = activity.requireViewById(getId("car_ui_scrollbar_track"));
             trackViewHeight.set(trackView.getHeight());
+            trackViewWidth.set(trackView.getWidth());
         });
 
+        // Dart fork note: tap the track's centre. Taps at x = 0, the track's boundary pixel, are
+        // not reliably delivered (cause unknown; not the back-gesture zone).
+        int trackCentreX = trackViewWidth.get() / 2;
         // scroll to the middle
         onView(withId(getId("car_ui_scrollbar_track"))).perform(
-                touchDownAndUp(0f, (trackViewHeight.get() / 2f)));
+                touchDownAndUp(trackCentreX, (trackViewHeight.get() / 2f)));
         onView(withText(adapter.getItemText(25))).check(matches(isDisplayed()));
     }
 
@@ -772,19 +777,27 @@ public class CarUiRecyclerViewTest {
         onView(withText(adapter.getItemText(0))).check(matches(isDisplayed()));
 
         AtomicInteger trackViewHeight = new AtomicInteger();
+        AtomicInteger trackViewWidth = new AtomicInteger();
         mActivityRule.getScenario().onActivity(activity -> {
             View trackView = activity.requireViewById(getId("car_ui_scrollbar_track"));
             trackViewHeight.set(trackView.getHeight());
+            trackViewWidth.set(trackView.getWidth());
         });
+
+        // Centre, not x = 0, for the reason recorded in
+        // testAlphaJumpToMiddleForThumbWhenTrackClicked. These two passed at x = 0, but only
+        // because a tap at either extreme overshoots by ~17% and clamps — they would keep passing
+        // even if the proportional mapping were badly wrong, so passing there said little.
+        int trackCentreX = trackViewWidth.get() / 2;
 
         // scroll to the end
         onView(withId(getId("car_ui_scrollbar_track"))).perform(
-                touchDownAndUp(0f, trackViewHeight.get() - 1));
+                touchDownAndUp(trackCentreX, trackViewHeight.get() - 1));
         onView(withText(adapter.getItemText(49))).check(matches(isDisplayed()));
 
         // scroll to the start
         onView(withId(getId("car_ui_scrollbar_track"))).perform(
-                touchDownAndUp(0f, 1));
+                touchDownAndUp(trackCentreX, 1));
         onView(withText(adapter.getItemText(0))).check(matches(isDisplayed()));
     }
 
@@ -1064,10 +1077,7 @@ public class CarUiRecyclerViewTest {
 
         onView(withText(adapter.getItemText(0))).check(matches(isDisplayed()));
 
-        // 20 is just an arbitrary number to make sure we reach the end of the recyclerview.
-        for (int i = 0; i < 20; i++) {
-            onView(withId(getId("car_ui_scrollbar_page_down"))).perform(click());
-        }
+        pageDownToTheEnd();
 
         onView(withId(getId("car_ui_scrollbar_page_down"))).check(matches(not(isEnabled())));
 
@@ -1277,10 +1287,7 @@ public class CarUiRecyclerViewTest {
 
         onView(withText(adapter.getItemText(0))).check(matches(isDisplayed()));
 
-        // 20 is just an arbitrary number to make sure we reach the end of the recyclerview.
-        for (int i = 0; i < 20; i++) {
-            onView(withId(getId("car_ui_scrollbar_page_down"))).perform(click());
-        }
+        pageDownToTheEnd();
 
         onView(withId(getId("car_ui_scrollbar_page_down"))).check(matches(not(isEnabled())));
 
@@ -2987,6 +2994,36 @@ public class CarUiRecyclerViewTest {
         public LayoutParams generateDefaultLayoutParams() {
             return null;
         }
+    }
+
+    /**
+     * Pages down until the control disables itself, which is the end of the list.
+     *
+     * <p>Replaces {@code for (int i = 0; i < 20; i++)} with its own comment admitting 20 was "just
+     * an arbitrary number to make sure we reach the end". Two things were wrong with that. It is
+     * unbounded in the wrong direction -- a list needing 21 pages would leave the view mid-scroll
+     * and fail the assertion below for a reason nothing states -- and every click past the end is a
+     * full Espresso view lookup, click and idle sync against a control that is already disabled.
+     * Those two tests were the slowest in the suite at roughly 12s each.
+     *
+     * <p>The bound is kept at 20 as a runaway guard rather than as the loop's purpose, and the exit
+     * condition is exactly what the caller asserts next, so the end state this leaves behind is the
+     * same one the fixed count was reaching for.
+     */
+    private void pageDownToTheEnd() {
+        for (int i = 0; i < 20 && isPageDownEnabled(); i++) {
+            onView(withId(getId("car_ui_scrollbar_page_down"))).perform(click());
+        }
+    }
+
+    /** Reads the control's state directly, because a failed Espresso check throws rather than answers. */
+    private boolean isPageDownEnabled() {
+        boolean[] enabled = {false};
+        mActivityRule.getScenario().onActivity(activity -> {
+            View button = activity.findViewById(getId("car_ui_scrollbar_page_down"));
+            enabled[0] = button != null && button.isEnabled();
+        });
+        return enabled[0];
     }
 
     private int getId(String resourceName) {

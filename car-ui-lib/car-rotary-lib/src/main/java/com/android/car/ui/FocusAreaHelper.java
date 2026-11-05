@@ -51,6 +51,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import com.android.car.ui.rotary.R;
 import com.android.car.ui.utils.ViewUtils;
 
 import java.util.Arrays;

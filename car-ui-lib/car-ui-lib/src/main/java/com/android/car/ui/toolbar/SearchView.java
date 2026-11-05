@@ -35,6 +35,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.android.car.ui.R;
@@ -286,8 +287,32 @@ public class SearchView extends ConstraintLayout {
         }
     }
 
+    /**
+     * The last query handed to the search listeners, so an unchanged one is not delivered twice.
+     *
+     * <p>Dart fork addition. {@code afterTextChanged} fires on every edit, including edits that
+     * leave the text identical — committing an IME action on a single-line field produces exactly
+     * that, because the newline is filtered out and the resulting text is what it already was. The
+     * listener then receives the same query twice in a row, which for any real client means two
+     * identical searches: two network requests, two result sets, and whichever arrives second wins.
+     *
+     * <p>Inherited, not introduced here: {@code SearchView.java} is unmodified since the fork point,
+     * and four instrumented tests have been red on it since. See docs/STATUS.md.
+     */
+    @Nullable
+    private String mLastNotifiedQuery;
+
     private void onSearch(String query) {
+        // Outside the dedupe on purpose: the close icon tracks the field's CURRENT emptiness, and
+        // must stay correct even on an edit that does not change the query text.
         mCloseIcon.setVisibility(TextUtils.isEmpty(query) ? View.GONE : View.VISIBLE);
+
+        // Consecutive only. "hello" -> "" -> "hello" still delivers the second "hello", because the
+        // empty string was delivered in between and the client's state moved with it.
+        if (TextUtils.equals(query, mLastNotifiedQuery)) {
+            return;
+        }
+        mLastNotifiedQuery = query;
 
         for (Consumer<String> listener : mSearchListeners) {
             listener.accept(query);

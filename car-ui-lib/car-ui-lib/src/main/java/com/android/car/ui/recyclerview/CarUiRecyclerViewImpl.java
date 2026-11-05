@@ -26,6 +26,7 @@ import static com.android.car.ui.utils.ViewUtils.setRotaryScrollEnabled;
 import android.annotation.SuppressLint;
 import android.car.drivingstate.CarUxRestrictions;
 import android.content.Context;
+import android.os.Looper;
 import android.content.res.TypedArray;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -820,6 +821,20 @@ public final class CarUiRecyclerViewImpl extends FrameLayout
 
         @Override
         public void onRestrictionsChanged(@NonNull CarUxRestrictions carUxRestrictions) {
+            // POSTED. RecyclerView's adapter-notification contract is main-thread-only, and this
+            // callback is delivered by CarUxRestrictionsUtil, whose delivery path reaches a BINDER
+            // thread -- so notifyItemRangeRemoved/Inserted below were being called off the main
+            // thread at exactly the moment LIMIT_CONTENT trims the list, i.e. when the vehicle
+            // starts moving. The symptom is an inconsistency crash inside RecyclerView with nothing
+            // in the stack naming the vehicle.
+            //
+            // UxrButton already does this for the identical callback (mHandler.post ->
+            // refreshDrawableState); UxrTextView does not. The repository contained both the bug
+            // and its fix, three files apart.
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                mRecyclerView.post(() -> onRestrictionsChanged(carUxRestrictions));
+                return;
+            }
             Adapter<?> adapter = mRecyclerView.getAdapter();
             // If the adapter does not implement ItemCap, then the max items on it cannot be
             // updated.

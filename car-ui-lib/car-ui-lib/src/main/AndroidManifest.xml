@@ -16,12 +16,10 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="com.android.car.ui">
-    <!-- This is set to 16, because this is the lowest supported version across all our clients.
-     We're setting this so we don't get lint errors for non-gradle builds. -->
-    <uses-sdk
-        android:minSdkVersion="16" />
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Dart fork note: <uses-sdk android:minSdkVersion="16"> removed; AGP 9 rejects it and
+         minSdk comes from defaultConfig. Upstream set it for non-Gradle lint, and Soong sets
+         min_sdk_version in car-ui-lib/Android.bp, so it is unaffected. -->
     <queries>
       <provider
           android:name="com.android.car.ui.plugin.PluginNameProvider"

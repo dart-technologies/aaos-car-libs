@@ -210,6 +210,16 @@ public class CarUiImeWideScreenController {
     private View mFullscreenArea;
     @NonNull
     private SurfaceView mContentAreaSurfaceView;
+
+    /**
+     * The surface package currently attached to {@link #mContentAreaSurfaceView}, if any.
+     *
+     * <p>Dart fork addition. Upstream tracked nothing: it attached whatever arrived and detached by
+     * passing null, which both leaked every previous package and crashed on API 34+. Holding the
+     * reference is what makes an orderly release possible.
+     */
+    @Nullable
+    private SurfacePackage mContentAreaSurfacePackage;
     @NonNull
     private FrameLayout mInputExtractEditTextContainer;
     private final InputMethodService mInputMethodService;
@@ -362,7 +372,12 @@ public class CarUiImeWideScreenController {
                 && Build.VERSION.SDK_INT >= VERSION_CODES.R) {
             SurfacePackage surfacePackage = (SurfacePackage) data.getParcelable(
                     CONTENT_AREA_SURFACE_PACKAGE);
+            // Release whatever was attached before replacing it. Upstream overwrote without
+            // releasing, so every wide-screen content update leaked the previous package for the
+            // life of the IME process.
+            releaseContentAreaSurfacePackage();
             mContentAreaSurfaceView.setChildSurfacePackage(surfacePackage);
+            mContentAreaSurfacePackage = surfacePackage;
             mContentAreaSurfaceView.setVisibility(View.VISIBLE);
             mContentAreaAutomotive.setVisibility(View.GONE);
         }
@@ -821,11 +836,26 @@ public class CarUiImeWideScreenController {
         resetAutomotiveWideScreenViews();
     }
 
+    /**
+     * Releases the attached content-area surface package, if there is one. Idempotent, and a no-op
+     * when nothing was ever attached — which is the case in every one of the six tests this fixes.
+     */
+    @RequiresApi(TARGET_API_R)
+    private void releaseContentAreaSurfacePackage() {
+        if (mContentAreaSurfacePackage != null) {
+            mContentAreaSurfacePackage.release();
+            mContentAreaSurfacePackage = null;
+        }
+    }
+
     @RequiresApi(TARGET_API_R)
     private void resetAutomotiveWideScreenViews() {
         mWideScreenDescriptionTitle.setVisibility(View.GONE);
         mContentAreaSurfaceView.setVisibility(View.GONE);
-        mContentAreaSurfaceView.setChildSurfacePackage(null);
+        // Dart fork note: upstream called setChildSurfacePackage(null), whose parameter is
+        // @NonNull; on API 34+ that NPEs inside the IME process. clearChildSurfacePackage() needs
+        // API 36, so release the package instead (the view is already GONE).
+        releaseContentAreaSurfacePackage();
         mWideScreenErrorMessage.setVisibility(View.GONE);
         mRecyclerView.setVisibility(View.GONE);
         mWideScreenDescription.setVisibility(View.GONE);

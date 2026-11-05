@@ -18,6 +18,7 @@ package com.android.car.apps.common;
 
 import android.car.drivingstate.CarUxRestrictions;
 import android.content.Context;
+import android.os.Looper;
 import android.graphics.Rect;
 import android.text.method.TransformationMethod;
 import android.util.AttributeSet;
@@ -71,6 +72,14 @@ public class UxrTextView extends TextView {
     }
 
     private void updateCarUxRestrictions(CarUxRestrictions carUxRestrictions) {
+        // POSTED, matching UxrButton's handling of the identical callback. This mutated the View
+        // on whatever thread delivered the restriction change, and CarUxRestrictionsUtil's delivery
+        // path reaches a BINDER thread. UxrButton in this same package already posts; this one did
+        // not, so the package contained the bug and its fix side by side.
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            post(() -> updateCarUxRestrictions(carUxRestrictions));
+            return;
+        }
         mCarUxRestrictions = carUxRestrictions;
 
         // setTransformationMethod doesn't do anything when passed the same instance...

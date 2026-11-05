@@ -75,6 +75,10 @@ public final class ToolbarControllerAdapterV1 implements ToolbarController {
     private final Set<OnSearchCompletedListener> mDeprecatedSearchCompletedListeners =
             new HashSet<>();
     private final Set<Consumer<String>> mSearchListeners = new HashSet<>();
+
+    /** Last query passed to the search listeners; a consecutive repeat from the plugin is dropped. */
+    @Nullable
+    private String mLastNotifiedSearchQuery;
     private final Set<Runnable> mSearchCompletedListeners = new HashSet<>();
     private final ProgressBarControllerAdapterV1 mProgressBar;
     private String mSearchHint;
@@ -117,6 +121,23 @@ public final class ToolbarControllerAdapterV1 implements ToolbarController {
         });
 
         oemToolbar.setSearchListener(query -> {
+            // Dart fork addition: drop a query identical to the one just delivered.
+            //
+            // The same defect as SearchView's, reached from the other side of the plugin boundary.
+            // There it was this library's own TextWatcher firing on an edit that left the text
+            // unchanged; here the duplicate arrives from the OEM's implementation, which this
+            // library does not own and cannot fix. Two identical searches in a row means two
+            // network requests and two result sets, with whichever returns second winning.
+            //
+            // Deduping here rather than only in the reference plugin is deliberate: it protects
+            // apps from EVERY plugin, including the ones shipping on head units today, and it is
+            // the same reasoning that put the fail-closed default on the library side of this
+            // boundary rather than trusting each plugin to get it right.
+            if (TextUtils.equals(query, mLastNotifiedSearchQuery)) {
+                return;
+            }
+            mLastNotifiedSearchQuery = query;
+
             for (OnSearchListener listener : mDeprecatedSearchListeners) {
                 listener.onSearch(query);
             }

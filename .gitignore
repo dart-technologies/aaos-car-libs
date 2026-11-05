@@ -1,6 +1,10 @@
 # Local configuration
 local.properties
-gradle-wrapper.properties
+.env
+.env.*
+!.env.example
+
+# Dart fork note: gradle-wrapper.properties is tracked; upstream ignored it because AOSP injects it.
 
 # Gradle
 .gradle/
@@ -14,9 +18,27 @@ gradle-app.setting
 
 # Python
 *.pyc
+__pycache__/
+
+# Script and tool output
+output/
 
 # Android studio's layout inspector captures
 captures/
 
 # A file created when launching android emulators
 read-snapshot.txt
+
+# macOS
+.DS_Store
+
+# Dart fork note: scripts/record-demo.sh output; regenerate with `scripts/record-demo.sh --all`.
+demo-recordings/
+
+# Dev gateway (tools/a2ui-gateway) TLS material and the debug-only CA resource.
+tools/a2ui-gateway/certs/
+a2ui-host-carui/src/debug/devca/res/raw/
+
+# Paid ElevenLabs output: operator evidence whose voice-licence provenance the repo must not assume.
+# Keep the accepted MP4/metadata pair out of git too.
+a2ui-automotive/demo/audio/elevenlabs/

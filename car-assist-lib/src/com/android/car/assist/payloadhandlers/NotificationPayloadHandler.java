@@ -107,6 +107,22 @@ public class NotificationPayloadHandler {
      */
     @Nullable
     public Action getAction(Notification notification, int semanticAction) {
+        // Dart fork fix: both of these were unguarded NPEs, found by this module's first tests.
+        //
+        // Notification.actions is NULL — not empty — when a notification carries no actions, which
+        // is the ordinary case for a plain notification. And getAction(Bundle, int) below resolves
+        // to null whenever the payload has no notification under KEY_NOTIFICATION, which is the
+        // ordinary case for a malformed or foreign payload.
+        //
+        // Both threw from the voice-assistant reply path — driver speaks, assistant reads the
+        // notification, looks for the reply action — so an absent or unexpected payload took the
+        // assistant down mid-drive instead of reporting "I couldn't do that". The javadoc already
+        // promises null here; it just was not true.
+        if (notification == null || notification.actions == null) {
+            Log.w(TAG, String.format("No actions to search for semantic action: %d",
+                    semanticAction));
+            return null;
+        }
         for (Action action : notification.actions) {
             if (action.getSemanticAction() == semanticAction) {
                 return action;
@@ -139,6 +155,14 @@ public class NotificationPayloadHandler {
      * @return true if the {@link PendingIntent} was sent successfully; false otherwise.
      */
     public boolean fireAction(Action action, @Nullable Intent additionalData) {
+        // Dart fork fix: unguarded NPE. This is the end of the reply path and its callers pass
+        // whatever getAction returned — which is documented as nullable and, after the fix above,
+        // genuinely is. The method already returns false to mean "could not send", so an absent
+        // action has a correct answer available; it simply was not given.
+        if (action == null || action.actionIntent == null) {
+            Log.w(TAG, "Cannot fire a null action or an action with no PendingIntent");
+            return false;
+        }
         PendingIntent pendingIntent = action.actionIntent;
         int resultCode = 0;
         try {

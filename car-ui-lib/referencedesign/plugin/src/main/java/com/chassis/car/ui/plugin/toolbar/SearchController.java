@@ -307,6 +307,14 @@ class SearchController {
 
         @Override
         public void onRestrictionsChanged(@NonNull CarUxRestrictions carUxRestrictions) {
+            if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+                mStub.post(() -> applyRestrictions(carUxRestrictions));
+                return;
+            }
+            applyRestrictions(carUxRestrictions);
+        }
+
+        private void applyRestrictions(@NonNull CarUxRestrictions carUxRestrictions) {
             boolean isKeyboardRestricted = (carUxRestrictions.getActiveRestrictions()
                     & CarUxRestrictions.UX_RESTRICTIONS_NO_KEYBOARD) != 0;
             if (isKeyboardRestricted) {

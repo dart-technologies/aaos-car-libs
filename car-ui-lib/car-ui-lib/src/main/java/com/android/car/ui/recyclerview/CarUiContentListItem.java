@@ -127,6 +127,10 @@ public class CarUiContentListItem extends CarUiListItem {
     private OnCheckedChangeListener mOnCheckedChangeListener;
     @Nullable
     private OnClickListener mSupplementalIconOnClickListener;
+    // Dart fork note: SecureView defaults to secure but this field does not, and the adapter
+    // overwrites the view's default on every bind (docs/upstream/AOSP-SECURE-DEFAULT-REPORT.md).
+    // Defaulting it to true made CarUiListItemTest drop clicks intermittently (touches filtered as
+    // obscured, cause unknown), so it stays false.
     private boolean mIsSecure;
 
     public CarUiContentListItem(@NonNull Action action) {

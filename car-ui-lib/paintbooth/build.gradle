@@ -17,18 +17,31 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 30
+
+    sourceSets {
+        main {
+            // Dart fork fix. res-overlayable/ is where AOSP keeps the <overlayable> declaration and
+            // Soong knows the path; Gradle does not, so without this line the declaration compiles
+            // to nothing and the module ships an OEM seam that is not there. Verified absent with
+            // `aapt2 dump overlayable` before this was added.
+            //
+            // `+=` rather than `=`: the default src/main/res must survive.
+            res.srcDirs += 'src/main/res-overlayable'
+        }
+    }
+    namespace = 'com.android.car.ui.paintbooth'
+    compileSdk = gradle.ext.aaosLatestSDK
     defaultConfig {
         applicationId "com.android.car.ui.paintbooth"
-        minSdkVersion 28
-        targetSdkVersion 30
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
@@ -48,8 +61,10 @@ android {
 
 dependencies {
     implementation project(':car-ui-lib')
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0'
-    api 'androidx.annotation:annotation:1.2.0'
-    api 'androidx.constraintlayout:constraintlayout:2.1.0'
-    api 'androidx.recyclerview:recyclerview:1.2.1'
+    // Dart fork note: bumped from 2.0, whose unexported <activity-alias> the manifest merger
+    // rejects at targetSdk >= 31. Debug-only.
+    debugImplementation libs.leakcanary.android
+    api libs.androidx.annotation
+    api libs.androidx.constraintlayout
+    api libs.androidx.recyclerview
 }

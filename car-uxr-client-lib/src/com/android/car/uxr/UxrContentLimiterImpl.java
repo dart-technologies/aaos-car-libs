@@ -22,6 +22,7 @@ import android.util.Log;
 
 import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import androidx.annotation.XmlRes;
 
 import com.android.car.ui.recyclerview.ContentLimiting;
@@ -108,8 +109,37 @@ public class UxrContentLimiterImpl implements UxrContentLimiter {
      * @param xmlRes  - the UXR override config XML resource
      */
     public UxrContentLimiterImpl(Context context, @XmlRes int xmlRes) {
-        mCarUxRestrictionsUtil = CarUxRestrictionsUtil.getInstance(context);
-        mCarUxRestrictionsAppConfig = CarUxRestrictionsAppConfig.getInstance(context, xmlRes);
+        this(CarUxRestrictionsUtil.getInstance(context),
+                CarUxRestrictionsAppConfig.getInstance(context, xmlRes));
+    }
+
+    /**
+     * Dart fork addition: the seam.
+     *
+     * <p>The public constructor resolves both collaborators from static factories that need a
+     * {@link Context} and a parsed XML resource, which makes every behaviour in this class an
+     * input a test would have to <em>stage</em> rather than <em>set</em> — and by the rule in
+     * {@code docs/VERIFICATION.md} that means born unobservable. Upstream shipped this class
+     * with no tests, which is the predicted outcome rather than a coincidence.
+     *
+     * <p>This constructor converts both into settable inputs. It is the only reason the delegation
+     * below can be tested at all, and it is deliberately added <em>before</em> the tests rather
+     * than discovered as missing while writing them.
+     */
+    @VisibleForTesting
+    UxrContentLimiterImpl(CarUxRestrictionsUtil carUxRestrictionsUtil,
+            CarUxRestrictionsAppConfig carUxRestrictionsAppConfig) {
+        mCarUxRestrictionsUtil = carUxRestrictionsUtil;
+        mCarUxRestrictionsAppConfig = carUxRestrictionsAppConfig;
+    }
+
+    /**
+     * Dart fork addition: exposes the listener this class registers, so a test can drive the
+     * delegation without reaching into a private field.
+     */
+    @VisibleForTesting
+    CarUxRestrictionsUtil.OnUxRestrictionsChangedListener getListenerForTesting() {
+        return mListener;
     }
 
     @Override

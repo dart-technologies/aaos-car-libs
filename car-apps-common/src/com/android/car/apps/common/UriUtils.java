@@ -316,7 +316,15 @@ public final class UriUtils {
             builder.appendQueryParameter(DETAIL_DIALOG_URI_DIALOG_TITLE, dialogTitle);
         }
 
-        if (!TextUtils.isEmpty(DETAIL_DIALOG_URI_DIALOG_DESCRIPTION)) {
+        // dialogDescription, not the CONSTANT. This tested DETAIL_DIALOG_URI_DIALOG_DESCRIPTION --
+        // the query-parameter NAME, which is a non-empty literal -- so the guard always passed and
+        // a null description was appended as the four-character string "null".
+        //
+        // The consequence is on the read side: getSubactionDialogDescription then returns "null"
+        // where its own javadoc promises null, and a caller checking for absence with == null or
+        // TextUtils.isEmpty gets a value that is neither. The line directly above tests
+        // `dialogTitle` correctly, which is what makes this a slip rather than a convention.
+        if (!TextUtils.isEmpty(dialogDescription)) {
             builder.appendQueryParameter(DETAIL_DIALOG_URI_DIALOG_DESCRIPTION, dialogDescription);
         }
 

@@ -17,25 +17,43 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion gradle.ext.aaosLatestSDK
+    // Distinct from the parent module's namespace: AGP requires each module to
+    // declare a unique one. Only affects generated R/BuildConfig identifiers —
+    // Conversation.java stays in package com.android.car.messenger.common.
+    namespace = 'com.android.car.messenger.common.model'
+    compileSdk = gradle.ext.aaosLatestSDK
 
     defaultConfig {
-        minSdkVersion 28
-        targetSdkVersion gradle.ext.aaosTargetSDK
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
         versionCode 1
         versionName "1.0"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     sourceSets {
         main {
             manifest.srcFile '../AndroidManifest-unbundled.xml'
+            // Dart fork note: compiles exactly one file from the parent's source directory, which
+            // :car-messenger-common excludes. scripts/check-build-coverage.py sees both.
             java.srcDirs = ['../src']
             java.includes = ['com/android/car/messenger/common/Conversation.java']
+        }
+        // Conversation's tests live HERE, with the module that compiles it — not in
+        // :car-messenger-common, which deliberately does not have the class on its classpath.
+        test {
+            java.srcDirs = ['tests/unit/src']
+            resources.srcDirs = ['tests/unit/config']
+        }
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
         }
     }
 
@@ -45,7 +63,15 @@ android {
 }
 
 dependencies {
-    runtimeOnly 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'androidx.annotation:annotation:1.2.0'
-    implementation 'androidx.core:core:1.6.0'
+    // Dart fork note: androidx.legacy:legacy-support-v4 removed. It shipped no code and pulled in
+    // androidx.media 1.0.0; a javap scan found no reference to anything it supplied. See FORK.md.
+    implementation libs.androidx.annotation
+    implementation libs.androidx.core
+
+    // Conversation is a Bundle/Parcelable round-trip surface, so its tests need real Bundle
+    // semantics rather than mocks — Robolectric, matching car-media-common's setup.
+    testImplementation libs.junit
+    testImplementation libs.robolectric
+    testImplementation libs.truth
+    testImplementation libs.androidx.test.core
 }

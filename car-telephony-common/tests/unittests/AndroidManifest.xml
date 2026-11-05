@@ -15,17 +15,13 @@
   ~ limitations under the License.
   -->
 
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.car.telephony.common.unittests">
-    <uses-sdk android:minSdkVersion="28" android:targetSdkVersion="29" />
-
-    <application android:testOnly="false"
-                 android:debuggable="true">
+<!--
+  Dart fork note: package=, <instrumentation> and <uses-sdk> removed. AGP 8 rejects package=;
+  the namespace comes from android.testNamespace, and the runner and SDK levels from
+  defaultConfig.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
     </application>
-
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="com.android.car.telephony.common.unittests"
-                     android:label="Car telephony common lib Unit Tests" />
 </manifest>

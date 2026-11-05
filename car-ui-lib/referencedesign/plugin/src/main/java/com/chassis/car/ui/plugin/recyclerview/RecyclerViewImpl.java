@@ -206,6 +206,26 @@ public final class RecyclerViewImpl extends FrameLayout implements RecyclerViewO
                 public boolean getReverseLayout() {
                     return false;
                 }
+
+                /**
+                 * Dart fork fix: the second site that relied on
+                 * {@code LayoutStyleOEMV1}'s {@code default int getSpanSize(int)}.
+                 *
+                 * <p>That default exists only in the AOSP source tree; every published
+                 * {@code plugin-apis} (1.0.1–1.5.0) and the AAOS system image's proxy plugin
+                 * declare it {@code PUBLIC ABSTRACT}. See the fuller note on the same fix in
+                 * {@code PluginFactoryAdapterV2}.
+                 *
+                 * <p>This one is on the plugin side of the boundary, so it breaks in the mirror
+                 * direction: an app built against published artifacts calling into this plugin.
+                 * Note line ~313 of this same file already <em>calls</em>
+                 * {@code layoutStyle.getSpanSize(position)} — the file both produced an
+                 * incomplete implementation and consumed the method.
+                 */
+                @Override
+                public int getSpanSize(int position) {
+                    return 1;
+                }
             };
         }
 
@@ -398,6 +418,80 @@ public final class RecyclerViewImpl extends FrameLayout implements RecyclerViewO
         // description should be set on its inner recyclerview in this case.
         if (!rotaryScrollEnabled) {
             super.setContentDescription(contentDescription);
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------
+    // Dart fork addition: the nine RecyclerViewOEMV1 methods present in every published
+    // car-ui-lib-plugin-apis artifact and absent from the AOSP source tree. See
+    // FORK.md.
+    //
+    // Each follows the delegation style already used by findFirstVisibleItemPosition and its
+    // siblings above: reach the inner RecyclerView's LayoutManager, guard the type, and return a
+    // neutral value rather than throwing when the layout manager is absent or of another kind.
+    // Throwing from a plugin runs inside the HOST app's process, so an exception here takes down
+    // an app the plugin author does not own.
+    // ---------------------------------------------------------------------------------------
+
+    @Override
+    public View findViewByPosition(int position) {
+        RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
+        return layoutManager == null ? null : layoutManager.findViewByPosition(position);
+    }
+
+    @Override
+    public int getDecoratedStart(View child) {
+        if (mLayoutStyle == null || mRecyclerView.getLayoutManager() == null) return 0;
+        return createOrientationHelper().getDecoratedStart(child);
+    }
+
+    @Override
+    public int getDecoratedEnd(View child) {
+        if (mLayoutStyle == null || mRecyclerView.getLayoutManager() == null) return 0;
+        return createOrientationHelper().getDecoratedEnd(child);
+    }
+
+    @Override
+    public int getDecoratedMeasurement(View child) {
+        if (mLayoutStyle == null || mRecyclerView.getLayoutManager() == null) return 0;
+        return createOrientationHelper().getDecoratedMeasurement(child);
+    }
+
+    @Override
+    public int getDecoratedMeasurementInOther(View child) {
+        if (mLayoutStyle == null || mRecyclerView.getLayoutManager() == null) return 0;
+        return createOrientationHelper().getDecoratedMeasurementInOther(child);
+    }
+
+    @Override
+    public int getDecoratedMeasuredWidth(View child) {
+        RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
+        return layoutManager == null ? 0 : layoutManager.getDecoratedMeasuredWidth(child);
+    }
+
+    @Override
+    public int getDecoratedMeasuredHeight(View child) {
+        RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
+        return layoutManager == null ? 0 : layoutManager.getDecoratedMeasuredHeight(child);
+    }
+
+    @Override
+    public int getRecyclerViewChildPosition(View child) {
+        // NO_POSITION (-1), not 0, when the child is not in this RecyclerView. Zero is a valid
+        // position and would silently name the first item.
+        return mRecyclerView.getChildAdapterPosition(child);
+    }
+
+    @Override
+    public void scrollToPositionWithOffset(int position, int offset) {
+        RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
+        if (layoutManager instanceof LinearLayoutManager) {
+            ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(position, offset);
+        } else {
+            // GridLayoutManager extends LinearLayoutManager, so this branch is only reached by a
+            // layout manager that has no offset concept. Honour the position half rather than
+            // dropping the call entirely.
+            mRecyclerView.scrollToPosition(position);
         }
     }
 
@@ -625,6 +719,15 @@ public final class RecyclerViewImpl extends FrameLayout implements RecyclerViewO
 
         @Override
         public void onRestrictionsChanged(@NonNull CarUxRestrictions carUxRestrictions) {
+            if (!mRecyclerView.isAttachedToWindow()
+                    || android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                applyRestrictions(carUxRestrictions);
+            } else {
+                mRecyclerView.post(() -> applyRestrictions(carUxRestrictions));
+            }
+        }
+
+        private void applyRestrictions(@NonNull CarUxRestrictions carUxRestrictions) {
             Adapter<?> adapter = mRecyclerView.getAdapter();
             if (adapter == null) return;
 

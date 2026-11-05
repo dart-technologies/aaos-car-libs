@@ -829,7 +829,7 @@ public class FocusAreaTest {
     }
 
     @Test
-    public void testBoundsOffset() {
+    public void testBoundsOffset() throws Exception {
         assertThat(mFocusArea1.getLayoutDirection()).isEqualTo(LAYOUT_DIRECTION_LTR);
 
         // FocusArea's bounds offset specified in layout file:
@@ -838,7 +838,7 @@ public class FocusAreaTest {
         int right = dp2Px(20);
         int top = dp2Px(30);
         int bottom = dp2Px(40);
-        AccessibilityNodeInfo node = mFocusArea1.createAccessibilityNodeInfo();
+        AccessibilityNodeInfo node = nodeOn(mFocusArea1);
         assertBoundsOffset(node, left, top, right, bottom);
         node.recycle();
     }
@@ -859,28 +859,28 @@ public class FocusAreaTest {
         int right = dp2Px(10);
         int top = dp2Px(30);
         int bottom = dp2Px(40);
-        AccessibilityNodeInfo node = mFocusArea1.createAccessibilityNodeInfo();
+        AccessibilityNodeInfo node = nodeOn(mFocusArea1);
         assertBoundsOffset(node, left, top, right, bottom);
         node.recycle();
     }
 
     @Test
-    public void testSetBoundsOffset() {
+    public void testSetBoundsOffset() throws Exception {
         mFocusArea1.setBoundsOffset(50, 60, 70, 80);
-        AccessibilityNodeInfo node = mFocusArea1.createAccessibilityNodeInfo();
+        AccessibilityNodeInfo node = nodeOn(mFocusArea1);
         assertBoundsOffset(node, 50, 60, 70, 80);
         node.recycle();
     }
 
     @Test
-    public void testHighlightPadding() {
+    public void testHighlightPadding() throws Exception {
         assertThat(mFocusArea2.getLayoutDirection()).isEqualTo(LAYOUT_DIRECTION_LTR);
 
         int left = dp2Px(50);
         int right = dp2Px(10);
         int top = dp2Px(40);
         int bottom = dp2Px(20);
-        AccessibilityNodeInfo node = mFocusArea2.createAccessibilityNodeInfo();
+        AccessibilityNodeInfo node = nodeOn(mFocusArea2);
         assertBoundsOffset(node, left, top, right, bottom);
         node.recycle();
     }
@@ -991,6 +991,39 @@ public class FocusAreaTest {
 
         focusSearch = mView1.focusSearch(View.FOCUS_BACKWARD);
         assertWithMessage("Backward wrap-around").that(focusSearch).isNotEqualTo(mButton1);
+    }
+
+    /**
+     * Creates the node on the view's OWN thread.
+     *
+     * <p>{@code ViewGroup.onInitializeAccessibilityNodeInfoInternal} reads the child count and then
+     * indexes the child list, so a layout that detaches a child between those two steps throws
+     * IndexOutOfBoundsException from inside a platform frame. Called from the instrumentation
+     * thread, as these tests used to, that walk races whatever the UI thread is still doing.
+     *
+     * <p>testBoundsOffsetWithRtl is the one that hit it: setLayoutDirection requests a relayout,
+     * and posting once only guarantees another pass of the message loop, not that layout has
+     * settled. Observed at unchanged rotary source on 2026-08-16 (where it killed the
+     * instrumentation process and truncated the suite at 9 of 100) and again on 2026-08-17
+     * (complete run, 1 failure) -- 1 run in 20 by the retained gate logs.
+     *
+     * <p>All four call sites go through here, not just the one observed to fail. The other three
+     * carry the same hazard and differ only in not having a relayout in flight to lose the race
+     * to, which is a property of the test rather than a guarantee from the platform.
+     *
+     * <p>This removes the interleave structurally rather than making it rarer. That claim is
+     * reasoned, not observed: a 1-in-20 failure cannot be shown absent by watching it not happen.
+     */
+    private AccessibilityNodeInfo nodeOn(View view) throws Exception {
+        AccessibilityNodeInfo[] node = new AccessibilityNodeInfo[1];
+        CountDownLatch created = new CountDownLatch(1);
+        view.post(() -> {
+            node[0] = view.createAccessibilityNodeInfo();
+            created.countDown();
+        });
+        assertWithMessage("node was not created within " + WAIT_TIME_MS + "ms")
+                .that(created.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)).isTrue();
+        return node[0];
     }
 
     private void assertBoundsOffset(
