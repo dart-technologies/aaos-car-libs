@@ -83,6 +83,8 @@ public class A2uiPassengerActivity extends Activity {
     private boolean mDemoZone;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private final Runnable mTick = this::tick;
+    /** The furthest Met work the film has reached in this play; -1 before the first tick. */
+    private int mGuideSegment = -1;
     private final CarUxRestrictionsUtil.OnUxRestrictionsChangedListener mListener =
             ignored -> mHandler.post(this::enforce);
     /** What PassengerDisplay talks to; kept off this public class's API. */
@@ -250,7 +252,9 @@ public class A2uiPassengerActivity extends Activity {
         video.setOnPreparedListener(player -> {
             if (mVideo != video) return;
             video.setVideoSize(player.getVideoWidth(), player.getVideoHeight());
-            player.setLooping(true);
+            // The Met film plays once and holds its last frame (work 6 of 6) until something
+            // else plays: looping would flip the driver's guide row back to 1/6 at its end.
+            player.setLooping(!PassengerMedia.ARTWORK.equals(media.mName));
             if (!media.mCabinAudio) player.setVolume(0f, 0f);
             video.start();
         });
@@ -307,8 +311,10 @@ public class A2uiPassengerActivity extends Activity {
             return;
         } else if (PassengerMedia.ARTWORK.equals(media.mName)) {
             // Per-work start times from FILM.json, else the 6 s cadence.
-            segment = MetArtworks.segmentAt(MetArtworks.filmStarts(this),
-                    video.getCurrentPosition());
+            // Monotonic for the play: the guide never steps back to an earlier work.
+            segment = Math.max(mGuideSegment, MetArtworks.segmentAt(MetArtworks.filmStarts(this),
+                    video.getCurrentPosition()));
+            mGuideSegment = segment;
         } else if (video.getDuration() > 0 && media.mSegments > 1) {
             segment = Math.min(media.mSegments - 1, (int) ((long) video.getCurrentPosition()
                     * media.mSegments / video.getDuration()));
@@ -319,6 +325,7 @@ public class A2uiPassengerActivity extends Activity {
 
     private void teardownVideo() {
         mHandler.removeCallbacks(mTick);
+        mGuideSegment = -1;
         mSlideshow.stop();
         VideoView video = mVideo;
         mVideo = null;

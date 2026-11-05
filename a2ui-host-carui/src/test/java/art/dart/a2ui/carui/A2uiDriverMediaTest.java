@@ -120,6 +120,14 @@ public class A2uiDriverMediaTest {
                 .isEqualTo(0);
         assertThat(PassengerDisplay.startPositionMs("nope", 7200, "bbb_passenger", 19300))
                 .isEqualTo(0);
+        // The Met film plays once and holds its end: a copy joining it once finished starts from
+        // the top rather than flashing the last frame; before that it joins where it is.
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.ARTWORK, 36000,
+                "met_artwork_film", 36000)).isEqualTo(0);
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.ARTWORK,
+                36000 - PassengerDisplay.FINISHED_MS, "met_artwork_film", 36000)).isEqualTo(0);
+        assertThat(PassengerDisplay.startPositionMs(PassengerMedia.ARTWORK, 30000,
+                "met_artwork_film", 36000)).isEqualTo(30000);
     }
 
     @Test

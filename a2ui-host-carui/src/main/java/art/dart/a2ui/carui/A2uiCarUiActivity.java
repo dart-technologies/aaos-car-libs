@@ -2829,8 +2829,46 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                             PassengerDisplay.positionMs(), media.mRawName, duration)
                     : null;
             mDemoMedia.playVideo(video, media == null ? R.raw.demo_placeholder_video
-                    : rawNamed(media.mRawName, R.raw.demo_placeholder_video), startAt);
+                    : stageRaw(media.mRawName), startAt);
+            if (startAt != null) logSync(video);
         }
+    }
+
+    /** How often a joined copy logs its distance from the passenger's (ms). */
+    private static final long SYNC_LOG_MS = 500;
+
+    /**
+     * While the driver's copy plays the clip the passenger plays, logs both players' positions,
+     * read at the same instant on the main thread: the device-side evidence for side-by-side sync
+     * (the recorder aligns the two screen recordings separately).
+     */
+    private void logSync(@NonNull VideoView video) {
+        mStripHandler.postDelayed(() -> {
+            if (mVideoView != video) return;
+            int passenger = PassengerDisplay.positionMs();
+            if (passenger < 0) return;
+            if (video.isPlaying()) {
+                int driver = video.getCurrentPosition();
+                Log.i(TAG, "media sync: driver=" + driver + " passenger=" + passenger
+                        + " delta=" + (driver - passenger) + " ms");
+            }
+            logSync(video);
+        }, SYNC_LOG_MS);
+    }
+
+    /** Suffix of a bundled cut at the stage's own aspect, e.g. {@code met_artwork_film_wide}. */
+    @VisibleForTesting
+    static final String WIDE_SUFFIX = "_wide";
+
+    /**
+     * What the stage plays for {@code rawName}: its wide cut when bundled (made at the stage's
+     * aspect, so it fits exactly: no crop, no bars, every painting's top in frame), else the clip,
+     * else the decoder fixture. Same timing as the clip, so joining the passenger still holds.
+     */
+    @VisibleForTesting
+    int stageRaw(@NonNull String rawName) {
+        int wide = rawNamed(rawName + WIDE_SUFFIX, 0);
+        return wide != 0 ? wide : rawNamed(rawName, R.raw.demo_placeholder_video);
     }
 
     /** How long a player's title stays up after opening or a tap, before it fades. */
