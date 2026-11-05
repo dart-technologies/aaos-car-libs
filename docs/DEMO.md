@@ -76,7 +76,9 @@ and "Passenger". The passenger stream starts at its first `passenger` action; un
 shows a frame captured from that display 3 s earlier. Optional `chapterCards`: 1920×1080 PNGs over
 the driver's picture at their `atMs` on the timeline, each held 2–3.5 s; the first opens the
 timeline, and a later one with `fadeIn`/`fadeOut` eases in and out (an intermission that hides a case
-switch and a clock jump). Optional `endCardHoldFromMs` freezes from there to the end. The canvas,
+switch and a clock jump). Every card's fade-out dips through dark, as the intro's tagline does: for
+its first half the card's content eases to the background while the card is still opaque, then the
+dark lifts off the live screen, so its text never ghosts over the next chapter's. Optional `endCardHoldFromMs` freezes from there to the end. The canvas,
 panel boxes, label and disclaimer positions are module constants at the top of `run-nyc-demo.py`.
 
 Post-production, after capture and from the same raw recording, so it always matches the UI:
