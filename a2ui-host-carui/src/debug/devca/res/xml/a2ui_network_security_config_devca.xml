@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+  Licensed under the Apache License, Version 2.0.
+
+  Joins the debug build only when tools/a2ui-gateway/gen-dev-ca.sh has written the gitignored
+  raw/a2ui_dev_ca.pem beside it. The dev CA is trusted in debug-overrides only.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="@raw/a2ui_dev_ca" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

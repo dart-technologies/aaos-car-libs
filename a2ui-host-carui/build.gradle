@@ -1,0 +1,151 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Host B of the A2UI showcase: car-ui-lib, through the OEM plugin. Same model as Host A, from
+// :a2ui-model. Two differences matter (README.md):
+//
+//   1. Display. Host A renders on the templates host's virtual display, which car service reports
+//      as the unknown driving state (0x1ff); this host gets the real display's reading.
+//   2. Who enforces the content limit. Host A's host enforces it; here the app does. car-ui-lib has
+//      two unrelated mechanisms (ItemCap truncates silently; ContentLimiting needs an explicit
+//      start()), and wrapping an adapter for one removes the other. See ContentLimitMechanismTest.
+
+apply plugin: 'com.android.application'
+
+// Debug builds trust the local dev CA (tools/a2ui-gateway/gen-dev-ca.sh), which is gitignored, so
+// its resource set joins only when the file exists. Release merges neither.
+def devCa = file('src/debug/devca/res/raw/a2ui_dev_ca.pem')
+
+android {
+    namespace = 'art.dart.a2ui.carui'
+    compileSdk = gradle.ext.aaosLatestSDK
+
+
+    defaultConfig {
+        applicationId "art.dart.a2ui.carui"
+        // 28, unlike Host A's 30. This host needs no templates host and no GAS — it runs on any
+        // AAOS build, which is the reach half of the trade it makes.
+        minSdk = 28
+        targetSdk = gradle.ext.aaosTargetSDK
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        debug {
+            manifestPlaceholders.put('a2uiNetworkSecurityConfig', devCa.isFile()
+                    ? '@xml/a2ui_network_security_config_devca'
+                    : '@xml/a2ui_network_security_config')
+        }
+    }
+
+    sourceSets {
+        debug {
+            if (devCa.isFile()) {
+                res.srcDir('src/debug/devca/res')
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
+    }
+
+    useLibrary 'android.car'
+}
+
+dependencies {
+    // The same model and the same prune policy Host A uses, byte for byte.
+    implementation project(':a2ui-model')
+
+    // car-ui-lib's views come from the OEM plugin, so an OEM restyles this host without a rebuild.
+    implementation project(':car-ui-lib')
+
+    // UxrContentLimiterImpl pushes getMaxCumulativeContentItems() into a ContentLimiting adapter.
+    implementation project(':car-uxr-client-lib')
+
+    api libs.androidx.annotation
+    implementation libs.androidx.recyclerview
+
+    testImplementation libs.junit
+    testImplementation libs.truth
+    testImplementation libs.mockito.core
+    // ContentLimitMechanismTest only: the mockable android.jar nulls out
+    // android.database.Observable. Every other test here is a plain JVM test.
+    testImplementation libs.robolectric
+}
+
+// Debug builds bundle the locally cached ElevenLabs earcons as assets/sfx/*.mp3 when present;
+// they are gitignored, DemoAudio is silent without them, and release never sees them.
+abstract class BundleDemoSfx extends DefaultTask {
+    @InputFiles
+    @PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract ConfigurableFileCollection getSfx()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir()
+
+    @Inject
+    abstract FileSystemOperations getFs()
+
+    @TaskAction
+    void bundle() {
+        fs.sync { spec ->
+            spec.from(sfx) { into 'sfx' }
+            spec.into(outputDir)
+        }
+    }
+}
+def bundleDemoSfx = tasks.register('bundleDemoSfx', BundleDemoSfx) {
+    sfx.from(fileTree(file('../a2ui-automotive/demo/audio/elevenlabs/sfx')) { include '*.mp3' })
+    outputDir = layout.buildDirectory.dir('generated/demoSfx')
+}
+androidComponents {
+    onVariants(selector().withBuildType('debug')) { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(bundleDemoSfx, { it.outputDir })
+    }
+}
+
+// A2uiAgentLaneTest reads both MERGED manifests: unit tests run against debug, so the release one,
+// which must lack INTERNET and the network config, can only be checked from outside.
+def mergedManifests = [debug: objects.fileProperty(), release: objects.fileProperty()]
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        mergedManifests[variant.name]?.set(variant.artifacts.get(
+                com.android.build.api.artifact.SingleArtifact.MERGED_MANIFEST.INSTANCE))
+    }
+}
+tasks.withType(Test).configureEach { test ->
+    if (test.name == 'testDebugUnitTest') {
+        mergedManifests.each { name, manifest ->
+            test.inputs.file(manifest).withPropertyName("${name}Manifest")
+                    .withPathSensitivity(PathSensitivity.NONE)
+        }
+        test.doFirst {
+            mergedManifests.each { name, manifest ->
+                test.systemProperty("a2ui.${name}Manifest", manifest.get().asFile.absolutePath)
+            }
+        }
+    }
+}

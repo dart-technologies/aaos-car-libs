@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2026 Dart Technologies. Licensed under the Apache License, Version 2.0. -->
+<resources>
+    <!-- App-owned presentation chrome only. OEM plugin views retain the vehicle's native theme. -->
+    <color name="a2ui_brand_header_surface">#FF101113</color>
+    <color name="a2ui_brand_badge_surface">#E6171717</color>
+    <color name="a2ui_brand_accent">#FFC8A96A</color>
+    <color name="a2ui_brand_on_surface">#FFFFF8EE</color>
+    <color name="a2ui_brand_video_stage">#FF000000</color>
+
+    <string name="a2ui_brand_toolbar_title">Fifth House · NYC Concierge</string>
+    <string name="a2ui_brand_pickup_heading">FIFTH HOUSE · PICKUP</string>
+    <string name="a2ui_brand_city_note_heading">FIFTH HOUSE · CITY NOTE</string>
+    <string name="a2ui_brand_thinking_title">Thinking…</string>
+    <!-- %1$s is the provider's display name. -->
+    <string name="a2ui_brand_thinking_body">%1$s is preparing your answer</string>
+    <string name="a2ui_brand_media_title">Fifth House city note</string>
+    <string name="a2ui_brand_media_artist">Fifth House · DEMO</string>
+    <string name="a2ui_brand_video_caption">DEMO generated decoder fixture · not Big Buck Bunny media</string>
+
+    <style name="A2uiBrandStatusBadge">
+        <item name="android:background">@drawable/a2ui_status_badge</item>
+        <item name="android:paddingHorizontal">@dimen/a2ui_status_badge_padding_horizontal</item>
+        <item name="android:paddingVertical">@dimen/a2ui_status_badge_padding_vertical</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/a2ui_brand_on_surface</item>
+        <item name="android:textSize">@dimen/a2ui_status_badge_text_size</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="A2uiBrandSectionHeading">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:textColor">@color/a2ui_brand_on_surface</item>
+        <item name="android:textSize">@dimen/a2ui_brand_heading_text_size</item>
+    </style>
+</resources>

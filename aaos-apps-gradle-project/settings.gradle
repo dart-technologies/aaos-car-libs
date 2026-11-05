@@ -106,9 +106,13 @@ include ':car-messenger-common:model'
 include ':a2ui-model'
 project(':a2ui-model').projectDir = new File('../a2ui-model')
 
+include ':a2ui-host-carapp'
+project(':a2ui-host-carapp').projectDir = new File('../a2ui-host-carapp')
 
 // Host B: the same model rendered by car-ui-lib through the OEM plugin. Neither host depends on
 // the other.
+include ':a2ui-host-carui'
+project(':a2ui-host-carui').projectDir = new File('../a2ui-host-carui')
 
 // Dart fork addition: the Flutter binding (car-uxr-flutter/android). Off by default so a Kotlin
 // OEM never resolves Flutter artifacts; enable with -PwithFlutter or CAR_UXR_WITH_FLUTTER=1.

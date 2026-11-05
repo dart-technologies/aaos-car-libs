@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+  Licensed under the Apache License, Version 2.0.
+
+  Metrics for the diagnostic strip, extracted from the layout.
+
+  They were hardcoded inline (12dp/4dp/14sp, twice over) and so did not scale with a head unit whose
+  density class or default text size differs. This is instrumentation chrome rather than rendered
+  A2UI content — the surface itself goes through CarUiRecyclerView and is fully themed — but a
+  reviewer checking whether this repo is theme-clean would find them and be right to.
+-->
+<resources>
+  <dimen name="a2ui_diagnostic_padding_horizontal">12dp</dimen>
+  <dimen name="a2ui_diagnostic_padding_vertical">4dp</dimen>
+  <dimen name="a2ui_diagnostic_text_size">14sp</dimen>
+  <dimen name="a2ui_status_badge_padding_horizontal">14dp</dimen>
+  <dimen name="a2ui_status_badge_padding_vertical">6dp</dimen>
+  <dimen name="a2ui_status_badge_text_size">16sp</dimen>
+  <dimen name="a2ui_status_badge_radius">18dp</dimen>
+  <dimen name="a2ui_diagnostic_detail_margin_top">6dp</dimen>
+  <dimen name="a2ui_brand_heading_text_size">20sp</dimen>
+  <dimen name="a2ui_brand_heading_margin_horizontal">18dp</dimen>
+</resources>

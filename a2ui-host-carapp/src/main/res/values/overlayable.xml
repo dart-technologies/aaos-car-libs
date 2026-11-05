@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2026 Dart Technologies
+  Licensed under the Apache License, Version 2.0.
+
+  The OEM-swappable surface of THIS package.
+
+  It exists because a runtime resource overlay targets a PACKAGE, and car-ui-lib is a static
+  library: its resources are merged into whichever APK links it, so there is no
+  "com.android.car.ui" package at runtime for an RRO to target. An overlay that re-skins the
+  templates host targets the templates host's package; it cannot reach these four colours, because
+  these four colours live here.
+
+  That is why this file exists rather than the alternative an earlier draft
+  recommended — pointing these at car-ui-lib's palette. That would not have made them swappable, and
+  car_ui_color_accent turns out not to be defined in car-ui-lib at all: it is declared public and
+  overlayable there, but its value comes from whatever overlay the platform supplies.
+-->
+<!--
+  In res/values/: Gradle here declares no res-overlayable/ directory, so a file there would ship
+  nothing silently. scripts/check-overlayable-packaged.py checks the APK.
+-->
+<resources>
+  <overlayable name="A2uiHostCarApp">
+    <policy type="public">
+      <!-- The entire styling surface an androidx.car.app app has: two accent pairs. -->
+      <item type="color" name="car_primary"/>
+      <item type="color" name="car_primary_dark"/>
+      <item type="color" name="car_secondary"/>
+      <item type="color" name="car_secondary_dark"/>
+      <item type="style" name="CarAppTheme"/>
+    </policy>
+  </overlayable>
+</resources>
