@@ -1361,7 +1361,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         mLimitedColumn.setVisibility(comparison ? View.VISIBLE : View.GONE);
         mCardList.setVisibility(comparison ? View.GONE : View.VISIBLE);
         // One microphone on screen: the header's on consumer screens, else the toolbar's.
-        mHeaderMic.setVisibility(comparison ? View.GONE : View.VISIBLE);
+        if (mHeaderMic != null) mHeaderMic.setVisibility(comparison ? View.GONE : View.VISIBLE);
         if (mSpeakItem != null) {
             mSpeakItem.setVisible(comparison);
         }
@@ -2461,7 +2461,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         VideoView video = mVideoView;
         mVideoView = null;
         mVideoParkedOnly = false;
-        if (video != null) {
+        if (video != null && mVideoStage != null) {
             if (mDemoMedia != null) mDemoMedia.stopVideo();
             mVideoStage.removeView(video);
         }

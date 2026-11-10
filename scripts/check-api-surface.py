@@ -18,6 +18,7 @@ Usage
 import argparse
 import io
 import os
+import pathlib
 import re
 import subprocess
 import sys
@@ -91,7 +92,7 @@ def applied_plugins(build_text, catalog):
 
 def discover_modules():
     """Every com.android.library project in settings.gradle, minus justified exclusions."""
-    text = open(SETTINGS, encoding="utf-8").read()
+    text = pathlib.Path(SETTINGS).read_text(encoding="utf-8")
     explicit = dict(re.findall(
         r"project\('\:([^']+)'\)\.projectDir\s*=\s*new File\('([^']+)'\)", text))
     included = re.findall(r"^\s*include\s+'\:([^']+)'", text, re.MULTILINE)
@@ -128,7 +129,7 @@ def discover_modules():
         # settings.gradle paths are relative to the gradle project dir.
         gradle_file = os.path.normpath(os.path.join(GP, rel, "build.gradle"))
         try:
-            build = open(gradle_file, encoding="utf-8").read()
+            build = pathlib.Path(gradle_file).read_text(encoding="utf-8")
         except OSError:
             skipped.append((short, "no build.gradle at " + rel))
             continue
@@ -177,7 +178,7 @@ def source_dirs(module):
         return []
     roots = []
     try:
-        build = open(os.path.join(base, "build.gradle"), encoding="utf-8").read()
+        build = pathlib.Path(base, "build.gradle").read_text(encoding="utf-8")
     except OSError:
         build = ""
     for group in re.findall(r"java\.srcDirs\s*=\s*\[([^\]]*)\]", build):
@@ -314,7 +315,7 @@ def declared_namespace(module):
         if not os.path.isfile(f):
             continue
         m = re.search(r"""^\s*namespace\s*=?\s*['"]([^'"]+)['"]""",
-                      open(f, encoding="utf-8", errors="replace").read(), re.M)
+                      pathlib.Path(f).read_text(encoding="utf-8", errors="replace"), re.M)
         if m:
             return m.group(1)
     return None

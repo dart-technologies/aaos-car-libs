@@ -25,7 +25,8 @@
 
     <application
         android:label="@string/app_name"
-        android:icon="@android:drawable/ic_menu_sort_by_size">
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:allowBackup="false">
 
         <!--
           Required: CarUiInstaller acts only on activities whose theme sets carUiActivity, and
