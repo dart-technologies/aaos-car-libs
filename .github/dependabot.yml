@@ -10,6 +10,14 @@ updates:
     open-pull-requests-limit: 5
     commit-message:
       prefix: 'ci'
+    groups:
+      # One PR for all action minors/patches; auto-merged on green CI. Majors stay separate.
+      minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: gradle
     # Every version is in gradle/libs.versions.toml under this directory, which Dependabot reads.
@@ -23,6 +31,14 @@ updates:
       androidx-test:
         patterns:
           - 'androidx.test*'
+      # One PR for all library minors/patches; auto-merged on green CI. Majors (AGP,
+      # Gradle, mockito-legacy 2.x) stay separate and manual.
+      minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
     ignore:
       # The plugin ABI version is a compatibility decision against what ships on head units
       # (FORK.md), not an automatic update.

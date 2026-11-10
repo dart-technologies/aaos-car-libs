@@ -1,0 +1,39 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+#
+# Dependabot minor/patch bumps merge themselves once required checks pass. Majors stay
+# manual: they need a human to read the release notes. pull_request_target runs in the
+# base-repo context, so the token never executes PR-branch code.
+
+name: Dependabot auto-merge
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  automerge:
+    name: Auto-merge minor/patch
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Enable auto-merge
+        # version-update:semver-major falls through: no auto-merge, a human merges.
+        if: >
+          steps.meta.outputs.update-type == 'version-update:semver-minor' ||
+          steps.meta.outputs.update-type == 'version-update:semver-patch'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
