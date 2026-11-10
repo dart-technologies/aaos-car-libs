@@ -1,0 +1,68 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+#
+# Maintenance: regenerates gradle/verification-metadata.xml. Dependency verification
+# fails closed: any artifact not listed in that file breaks every Gradle job. So after
+# any bump that adds or changes artifacts, run this workflow (Actions tab, main branch),
+# download the verification-metadata artifact, and commit it through a normal PR — CI
+# enforces the file from the moment it lands. Never commit the output blind: diff it
+# and confirm every added artifact traces to the intended bump.
+
+name: Regen verification metadata
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gen:
+    name: Resolve and record
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools
+
+      - name: Install platform 37
+        run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Resolve everything and write metadata
+        # One invocation so the single write covers every configuration CI resolves:
+        # assemble, the gate's unit-test tasks, fork lint, and both SBOM tasks.
+        working-directory: aaos-apps-gradle-project
+        run: |
+          TASKS=$(grep -v '^#' ../scripts/gate-modules.tsv \
+                  | awk -F'\t' 'NF {printf " %s:testDebugUnitTest", $1}')
+          read -r -a TASK_ARRAY <<< "$TASKS"
+          ./gradlew -PwithFlutter --write-verification-metadata sha256 --continue \
+            assembleDebug "${TASK_ARRAY[@]}" \
+            :a2ui-model:lintDebug :a2ui-host-carapp:lintDebug :a2ui-host-carui:lintDebug \
+            :car-apps-common-testutils:lintDebug :car-system-stubs:lintDebug \
+            :a2ui-host-carapp:cyclonedxBom :a2ui-host-carui:cyclonedxBom \
+            --stacktrace
+          ls -la gradle/verification-metadata.xml
+
+      - name: Upload metadata
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: verification-metadata
+          path: aaos-apps-gradle-project/gradle/verification-metadata.xml
+          if-no-files-found: error
+          retention-days: 7
