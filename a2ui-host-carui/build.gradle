@@ -24,6 +24,7 @@
 //      start()), and wrapping an adapter for one removes the other. See ContentLimitMechanismTest.
 
 apply plugin: 'com.android.application'
+apply plugin: 'org.cyclonedx.bom'
 
 // Debug builds trust the local dev CA (tools/a2ui-gateway/gen-dev-ca.sh), which is gitignored, so
 // its resource set joins only when the file exists. Release merges neither.

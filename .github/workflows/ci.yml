@@ -320,3 +320,48 @@ jobs:
           :car-apps-common-testutils:lintDebug
           :car-system-stubs:lintDebug
           --stacktrace
+
+  sbom:
+    name: SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: platform-tools  # default also asks for 'tools', which Google removed
+
+      - name: Install platform 37
+        run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+
+      - name: Validate Gradle wrapper jars
+        uses: gradle/actions/wrapper-validation@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          min-wrapper-count: 1
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Generate host SBOMs
+        # CycloneDX per shippable host (debug variant: same dependency graph the APK ships,
+        # minus the gitignored dev CA). AAR SBOMs come with the R2 publishing pipeline.
+        working-directory: aaos-apps-gradle-project
+        run: ./gradlew :a2ui-host-carapp:cyclonedxBom :a2ui-host-carui:cyclonedxBom --stacktrace
+
+      - name: Upload SBOMs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: host-sboms
+          path: aaos-apps-gradle-project/build/*/reports/bom.json
+          if-no-files-found: error
+          retention-days: 14
