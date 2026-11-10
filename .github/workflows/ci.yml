@@ -268,3 +268,48 @@ jobs:
 
       - name: Demo runner suite
         run: python3 scripts/test_run_nyc_demo.py
+
+  android-lint:
+    name: Android lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: platform-tools  # default also asks for 'tools', which Google removed
+
+      - name: Install platform 37
+        run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
+
+      - name: Validate Gradle wrapper jars
+        uses: gradle/actions/wrapper-validation@8379f6a1328ee0e06e2bb424dadb7b159856a326 # v4.4.0
+        with:
+          min-wrapper-count: 1
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@8379f6a1328ee0e06e2bb424dadb7b159856a326 # v4.4.0
+
+      - name: Lint fork modules
+        # Fork-authored modules only, mirroring the CodeQL quality tier: the fork owns
+        # quality for its code, and inherited AOSP carries its own lint debt. Fails on
+        # any error-severity finding; warnings are reported, not gated.
+        working-directory: aaos-apps-gradle-project
+        run: >
+          ./gradlew
+          :a2ui-model:lintDebug
+          :a2ui-host-carapp:lintDebug
+          :a2ui-host-carui:lintDebug
+          :car-apps-common-testutils:lintDebug
+          :car-system-stubs:lintDebug
+          --stacktrace

@@ -17,6 +17,7 @@ package art.dart.a2ui.carui;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.annotation.SuppressLint;
 import android.app.Presentation;
 import android.car.drivingstate.CarUxRestrictions;
 import android.content.BroadcastReceiver;
@@ -2484,6 +2485,10 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
 
     @Override
     @SuppressWarnings("deprecation") // the legacy path, still what an API 35 head unit calls
+    // GestureBackNavigation: same legacy path. Migrating to OnBackPressedDispatcher changes back
+    // behavior on every head unit and needs an instrumented run to verify; video/gallery already
+    // use OnBackInvokedDispatcher on 33+.
+    @SuppressLint("GestureBackNavigation")
     public void onBackPressed() {
         if (mEndCard != null && mEndCard.getVisibility() == View.VISIBLE) {
             hideEndCard();
