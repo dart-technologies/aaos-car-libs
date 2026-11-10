@@ -48,7 +48,7 @@ android {
 
 dependencies {
     // Literal coordinates: this plugin builds inside consumer apps, which have no catalog.
-    implementation 'androidx.annotation:annotation:1.10.0'
+    implementation 'androidx.annotation:annotation:1.11.0'
 
     // compileOnly: the host app supplies the Flutter embedding. The engine hash is read from
     // FLUTTER_ROOT's engine.version when available.
