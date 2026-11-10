@@ -40,8 +40,9 @@ jobs:
       - name: Install platform 37
         run: sdkmanager --install "platforms;android-37.0" "build-tools;36.0.0"
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      # No setup-gradle on purpose: its dependency cache would let the writer skip
+      # cached artifacts, producing metadata that fails on any other cache state.
+      # Generation must resolve everything from the network, every time.
 
       - name: Resolve everything and write metadata
         # One invocation so the single write covers every configuration CI resolves:
@@ -50,6 +51,8 @@ jobs:
         # pin can only be dropped by deleting the file and regenerating from scratch.
         working-directory: aaos-apps-gradle-project
         run: |
+          # From scratch: writes merge into an existing file, so stale pins would linger.
+          rm -f gradle/verification-metadata.xml
           TASKS=$(grep -v '^#' ../scripts/gate-modules.tsv \
                   | awk -F'\t' 'NF {printf " %s:testDebugUnitTest", $1}')
           read -r -a TASK_ARRAY <<< "$TASKS"
