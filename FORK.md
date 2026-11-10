@@ -23,7 +23,7 @@ git diff --stat --diff-filter=M e120cb74e -- '*.java'   # every modified inherit
 
 | Change | Why |
 |---|---|
-| Standalone Gradle: tracked wrapper properties, Gradle 9.7.1 / AGP 9.3.1, `mavenCentral()`, out-of-repo projects and absolute `/tmp` output removed, `package=` → `namespace` | Upstream built only inside an AOSP checkout |
+| Standalone Gradle: tracked wrapper properties, Gradle 9.7.1 / AGP 9.5.1, `mavenCentral()`, out-of-repo projects and absolute `/tmp` output removed, `package=` → `namespace` | Upstream built only inside an AOSP checkout |
 | `compileSdk 37`, `targetSdk 36` (`settings.gradle`) | Compile level only makes APIs nameable; target waits for an API 37 automotive image. Floor is 36 (AndroidX AAR metadata) |
 | `CarUxRestrictionsInfo` `@IntDef` owned in `com.android.car.ui.utils` | Removed from the public SDK at API 35 (`@removed accidentally exposed`) |
 | `:car-system-stubs`, `compileOnly` for `car-media-common` only | `CarMediaManager` and `Car.CAR_MEDIA_SERVICE` are `@SystemApi`. A real jar at `prebuilts/android.car-system-stubs.jar` takes precedence. Constants are inlined: copy values from `javap -constants`, never invent |
@@ -34,7 +34,7 @@ git diff --stat --diff-filter=M e120cb74e -- '*.java'   # every modified inherit
 | `car-rotary-lib` namespace `com.android.car.ui.rotary`, explicit `R` imports | AGP 9 forbids two modules sharing a namespace (Gradle-only divergence) |
 | `car-media-common` client on Media3 | `android.support.v4.media` is deprecated; intentional API break recorded in [`docs/api-surface/MEDIA3-FLIP-BREAK.md`](docs/api-surface/MEDIA3-FLIP-BREAK.md) |
 | Inherited defects fixed: IME `setChildSurfacePackage(null)` NPE, duplicate search callbacks (both sides of the plugin), `NotificationPayloadHandler` NPEs, plugin `unregisterAdapterDataObserver` calling `register`, `UriUtils` testing a constant | Each found by a red test; see [STATUS](docs/STATUS.md) for what remains |
-| AndroidX bumped one library per gate run; `legacy-support-v4` removed (238-byte aggregator; classpath diff and `javap` scan found no use); `lifecycle-extensions` removed; Guava 33.2.1-android; JUnit `compileOnly`; LeakCanary 2.14 debug-only | Stale, vulnerable or unused; each removal measured, not searched |
+| AndroidX bumped one library per gate run; `legacy-support-v4` removed (238-byte aggregator; classpath diff and `javap` scan found no use); `lifecycle-extensions` removed; Guava 33.8.0-android; JUnit `compileOnly`; LeakCanary 2.14 debug-only | Stale, vulnerable or unused; each removal measured, not searched |
 | Robolectric 4.16.1; `DirectManipulationHelperTest` moved to Robolectric; androidTest fixes | W^X rejects dexmaker's runtime dex on device |
 | Added: `a2ui-model/`, `a2ui-host-carapp/`, `a2ui-host-carui/`, `a2ui-automotive/`, `car-uxr-flutter/`, `scripts/`, `.github/`, `docs/` | The A2UI platform and its gate |
 
