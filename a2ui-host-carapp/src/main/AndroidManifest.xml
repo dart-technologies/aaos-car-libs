@@ -21,6 +21,11 @@
         android:name="android.software.car.templates_host"
         android:required="true" />
 
+    <!-- AAOS-only track: Play distributes this to cars with Google built-in, never to phones. -->
+    <uses-feature
+        android:name="android.hardware.type.automotive"
+        android:required="true" />
+
     <!-- Reading UX restrictions needs no permission; car-ui-lib's CarUxRestrictionsUtil binds to
          car service, which any app may do for the restriction service. -->
 
@@ -57,7 +62,7 @@
         </service>
 
         <!-- From androidx.car.app:app-automotive: the AAOS launcher entry, binding to the on-device
-             templates host. The same CarAppService serves Android Auto. -->
+             templates host. AAOS-only: there is no projected-mode service. -->
         <activity
             android:name="androidx.car.app.activity.CarAppActivity"
             android:exported="true"
