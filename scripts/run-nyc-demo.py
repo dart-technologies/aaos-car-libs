@@ -516,6 +516,8 @@ def render_command(plan: RenderPlan, output: pathlib.Path) -> list[str]:
     command = ["ffmpeg", "-y", "-v", "error", "-i", str(plan.driver_raw)]
     count = 1
     filters: list[str] = []
+    # Overwritten on every path that reaches the chapter/outro use below.
+    width, height = CANVAS
     if legacy(plan):
         # Clone the last frame to the manifest duration: screenrecord is variable-frame-rate and
         # may end its timeline at the last UI change.

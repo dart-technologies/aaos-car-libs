@@ -19,6 +19,7 @@ Exit codes: 0 clean, 1 a new finding, 2 could not be determined.
 """
 import argparse
 import os
+import pathlib
 import subprocess
 import sys
 
@@ -54,7 +55,7 @@ def metalava_classpath():
     if out.returncode != 0 or not path or not os.path.exists(path):
         detail = out.stderr.strip()[:300] or out.stdout.strip()[:300] or "no output"
         return None, "could not resolve metalava: " + detail
-    text = open(path).read().strip()
+    text = pathlib.Path(path).read_text().strip()
     return (text, None) if text else (None, "metalava classpath resolved empty")
 
 

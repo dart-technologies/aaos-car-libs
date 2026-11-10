@@ -80,8 +80,8 @@ public final class CarUiRenderer {
                 }
                 if (component.getVoicePhrase() != null
                         && !component.getVoicePhrase().trim().isEmpty()) {
-                    body.add(new CarUiText(
-                            A2uiActionBinder.voiceHint(component.getVoicePhrase())));
+                    body.add(new CarUiText.Builder(
+                            A2uiActionBinder.voiceHint(component.getVoicePhrase())).build());
                 }
             }
             if (!body.isEmpty()) {

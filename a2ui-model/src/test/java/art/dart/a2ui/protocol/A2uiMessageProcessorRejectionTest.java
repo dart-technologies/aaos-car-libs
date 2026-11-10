@@ -68,6 +68,7 @@ public class A2uiMessageProcessorRejectionTest {
     }
 
     private static Map<String, Object> props(Object... kv) {
+        if (kv.length % 2 != 0) throw new IllegalArgumentException("props needs even kv");
         Map<String, Object> m = new LinkedHashMap<>();
         for (int i = 0; i < kv.length; i += 2) {
             m.put(String.valueOf(kv[i]), kv[i + 1]);
