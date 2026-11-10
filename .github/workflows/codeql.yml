@@ -2,6 +2,10 @@
 # Licensed under the Apache License, Version 2.0.
 #
 # Advanced setup for all languages; GitHub's default setup must stay off or it rejects these uploads.
+#
+# Two tiers: security queries run on everything (inherited AOSP included); quality queries run
+# only on fork-authored paths, where this repo owns the style. A quality finding in inherited
+# code is upstream's to fix, and hundreds of them buried the fork's own dozen.
 
 name: CodeQL
 
@@ -23,8 +27,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  analyze:
-    name: CodeQL (${{ matrix.language }})
+  analyze-security:
+    name: CodeQL security (${{ matrix.language }})
     runs-on: ubuntu-latest
     # A job-level permissions block replaces the workflow default, so contents: read is re-listed.
     permissions:
@@ -35,6 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         # build-mode none: Java is extracted from source, so no JDK, Android SDK or Gradle build.
+        # No `queries:` key: the default suite is the security suite.
         language: [java-kotlin, actions, python]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -46,10 +51,39 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: none
-          queries: security-and-quality
-          config-file: ./.github/codeql/codeql-config.yml
+          config-file: ./.github/codeql/codeql-config-security.yml
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@7e3036b9cd87fc26dd06747b7aa4b96c27aaef3a # codeql-bundle-v2.20.3
         with:
-          category: /language:${{ matrix.language }}
+          category: /language:${{ matrix.language }}-security
+
+  analyze-quality:
+    name: CodeQL quality (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # The Actions language is security-tier only: its queries are security queries.
+        language: [java-kotlin, python]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@7e3036b9cd87fc26dd06747b7aa4b96c27aaef3a # codeql-bundle-v2.20.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-and-quality
+          config-file: ./.github/codeql/codeql-config-quality.yml
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@7e3036b9cd87fc26dd06747b7aa4b96c27aaef3a # codeql-bundle-v2.20.3
+        with:
+          category: /language:${{ matrix.language }}-quality
