@@ -198,6 +198,13 @@ jobs:
           tar -xzf actionlint.tar.gz actionlint
           ./actionlint -color
 
+      - name: zizmor
+        # Actions static analysis: template injection, overprivileged jobs, dangerous triggers.
+        # Tool version pinned; findings fail the job.
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          version: v1.32.0
+
       - name: Actions are SHA-pinned
         # Mutable action tags are a supply-chain risk; enforced, not reviewed.
         run: python3 scripts/check-workflow-pins.py
