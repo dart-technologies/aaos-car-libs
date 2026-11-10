@@ -20,6 +20,7 @@
   the visual panel instead; every overlay below is host chrome gated on the pruned tree.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -54,7 +55,7 @@
 
             <!-- The voice control on consumer screens; refresh() withholds it exactly as it
                  withholds the toolbar's Speak item. -->
-            <ImageButton
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/header_mic"
                 android:layout_width="@dimen/a2ui_header_mic_size"
                 android:layout_height="@dimen/a2ui_header_mic_size"
@@ -64,7 +65,7 @@
                 android:padding="@dimen/a2ui_header_mic_padding"
                 android:scaleType="fitCenter"
                 android:src="@drawable/a2ui_ic_mic"
-                android:tint="@color/a2ui_brand_on_surface"
+                app:tint="@color/a2ui_brand_on_surface"
                 android:visibility="gone" />
 
             <!-- The vehicle state as a compact chip: a dot and one word, tinted per state. -->
