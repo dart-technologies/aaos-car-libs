@@ -63,12 +63,12 @@ public final class CarUiRenderer {
             // vehicle's string budget, and appending REFUSED_NOTE would exceed it.
             List<CarUiText> body = new ArrayList<>();
             if (component.getSubtitle() != null) {
-                body.add(new CarUiText(component.getSubtitle()));
+                body.add(new CarUiText.Builder(component.getSubtitle()).build());
             }
             A2uiActionPolicy.Decision decision =
                     binder == null ? null : binder.decisionFor(component);
             if (decision == A2uiActionPolicy.Decision.REFUSE) {
-                body.add(new CarUiText(A2uiActionBinder.REFUSED_NOTE));
+                body.add(new CarUiText.Builder(A2uiActionBinder.REFUSED_NOTE).build());
                 item.setEnabled(false);
             } else if (decision != null) {
                 final A2uiComponent invoked = component;
