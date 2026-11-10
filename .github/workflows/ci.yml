@@ -232,3 +232,39 @@ jobs:
       - name: Gate metadata is consistent
         # CI cannot run the local instrumented gate, but it checks the files that gate depends on.
         run: python3 scripts/check-gate-metadata.py
+
+  python-tests:
+    name: Python tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: |
+          python3 -m pip install --quiet --require-hashes \
+            -r tools/a2ui-gateway/requirements.txt \
+            -r scripts/requirements-python-tests-py312-linux.txt
+
+      - name: Toolchain preconditions
+        # Two suites skip composition cases without ffmpeg/ffprobe/Pillow; a runner that
+        # silently lost them would go green and hollow. Fail fast instead.
+        run: |
+          command -v ffmpeg && command -v ffprobe
+          python3 -c "import PIL; print('Pillow', PIL.__version__)"
+
+      - name: Gateway behavior suite
+        # Offline replay; needs no provider keys.
+        run: python3 -m unittest discover -s tools/a2ui-gateway -p 'test_*.py'
+
+      - name: Demo overlay suite
+        run: python3 scripts/test_demo_overlays.py
+
+      - name: Demo runner suite
+        run: python3 scripts/test_run_nyc_demo.py

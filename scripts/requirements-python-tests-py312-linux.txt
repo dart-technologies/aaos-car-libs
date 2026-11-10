@@ -1,0 +1,6 @@
+# For GitHub's Python 3.12 x86_64 Linux runner: Pillow, which the ffmpeg-composition
+# tests import (test_run_nyc_demo.py gates cases on it). Exact and hash-checked; update
+# this file as one reviewed unit.
+pillow==13.0.0 \
+    --hash=sha256:42d63be3af4f9b951b199b0a9d23365d37ab14687e6d77b74940432c8515c4ca \
+    --hash=sha256:cdcd1ba258178f7356d74170c9a81ba4eab6a5d55748bc402a5a2a6fe6be3510
