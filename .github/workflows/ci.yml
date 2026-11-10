@@ -240,6 +240,11 @@ jobs:
         # CI cannot run the local instrumented gate, but it checks the files that gate depends on.
         run: python3 scripts/check-gate-metadata.py
 
+      - name: AAOS manifest contract
+        # Both hosts carry uses-feature automotive; Host B's minCarApiLevel is re-derived
+        # from the templates and gated calls its code uses (Sprint 1 C7).
+        run: python3 scripts/check-aaos-manifest.py
+
   python-tests:
     name: Python tests
     runs-on: ubuntu-latest
@@ -275,6 +280,9 @@ jobs:
 
       - name: Demo runner suite
         run: python3 scripts/test_run_nyc_demo.py
+
+      - name: Manifest audit suite
+        run: python3 scripts/test_aaos_manifest.py
 
   android-lint:
     name: Android lint

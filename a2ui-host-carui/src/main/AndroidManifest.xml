@@ -20,6 +20,11 @@
          resolves the OEM's views at runtime through CarUiInstaller, a ContentProvider its manifest
          contributes, and negotiates the plugin version silently in PluginFactoryAdapterV2. -->
 
+    <!-- AAOS-only track: a native car-ui activity; Play distributes it to cars, never phones. -->
+    <uses-feature
+        android:name="android.hardware.type.automotive"
+        android:required="true" />
+
     <!-- Voice capture: requested on first use, not at launch. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
