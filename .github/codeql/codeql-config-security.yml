@@ -1,0 +1,24 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+name: CodeQL security tier
+
+# Default (security) queries on everything this fork ships, inherited AOSP included.
+# Fork-authored paths are excluded here and scanned by the quality tier instead, so the
+# tiers are disjoint and no finding is reported twice.
+paths-ignore:
+  # Build output: findings in generated code are not actionable.
+  - aaos-apps-gradle-project/build
+  - '**/build'
+  # Vendored AOSP test fixtures and sample apps carried for reference.
+  - car-ui-lib/paintbooth/src/main/java/com/android/car/ui/paintbooth/overlays
+  - car-ui-lib/paintbooth/src/main/java/com/android/car/ui/paintbooth/currentactivity
+  # Fork-authored: covered by codeql-config-quality.yml.
+  - a2ui-model
+  - a2ui-host-carapp
+  - a2ui-host-carui
+  - car-apps-common-testutils
+  - car-system-stubs
+  - car-uxr-flutter
+  - scripts
+  - tools
+  - test-fixtures

@@ -1,0 +1,18 @@
+# Copyright (C) 2026 Dart Technologies
+# Licensed under the Apache License, Version 2.0.
+name: CodeQL quality tier
+
+# security-and-quality, but only where this repo owns the style. A quality finding in
+# inherited AOSP (car-ui-lib, car-media-common, …) is upstream's to fix; the security
+# tier still scans those paths, so nothing security-relevant is dropped. When the fork
+# adds a top-level code directory, add it here and to the security config's ignore list.
+paths:
+  - a2ui-model
+  - a2ui-host-carapp
+  - a2ui-host-carui
+  - car-apps-common-testutils
+  - car-system-stubs
+  - car-uxr-flutter
+  - scripts
+  - tools
+  - test-fixtures
