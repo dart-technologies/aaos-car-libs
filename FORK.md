@@ -23,7 +23,7 @@ git diff --stat --diff-filter=M e120cb74e -- '*.java'   # every modified inherit
 
 | Change | Why |
 |---|---|
-| Standalone Gradle: tracked wrapper properties, Gradle 9.7.1 / AGP 9.5.1, `mavenCentral()`, out-of-repo projects and absolute `/tmp` output removed, `package=` → `namespace` | Upstream built only inside an AOSP checkout |
+| Standalone Gradle: tracked wrapper properties, Gradle 9.9.0 / AGP 9.5.1, `mavenCentral()`, out-of-repo projects and absolute `/tmp` output removed, `package=` → `namespace` | Upstream built only inside an AOSP checkout |
 | `compileSdk 37`, `targetSdk 36` (`settings.gradle`) | Compile level only makes APIs nameable; target waits for an API 37 automotive image. Floor is 36 (AndroidX AAR metadata) |
 | `CarUxRestrictionsInfo` `@IntDef` owned in `com.android.car.ui.utils` | Removed from the public SDK at API 35 (`@removed accidentally exposed`) |
 | `:car-system-stubs`, `compileOnly` for `car-media-common` only | `CarMediaManager` and `Car.CAR_MEDIA_SERVICE` are `@SystemApi`. A real jar at `prebuilts/android.car-system-stubs.jar` takes precedence. Constants are inlined: copy values from `javap -constants`, never invent |
