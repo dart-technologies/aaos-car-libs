@@ -18,8 +18,12 @@ package art.dart.a2ui.carapp;
 import android.content.Intent;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import androidx.car.app.Screen;
 import androidx.car.app.Session;
+
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 /** One connection from the host. Hands back the showcase screen. */
 public final class A2uiSession extends Session {
@@ -27,6 +31,13 @@ public final class A2uiSession extends Session {
     @NonNull
     @Override
     public Screen onCreateScreen(@NonNull Intent intent) {
+        reportRoot("showcase");
         return new A2uiShowcaseScreen(getCarContext());
+    }
+
+    /** Reports the root screen; split out so tests can fire it without a bound session. */
+    @VisibleForTesting
+    static void reportRoot(@NonNull String root) {
+        A2uiTelemetry.event(TelemetryEvent.SESSION_START, "root", root, "host", "a");
     }
 }

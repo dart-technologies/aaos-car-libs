@@ -20,11 +20,24 @@ import androidx.car.app.CarAppService;
 import androidx.car.app.Session;
 import androidx.car.app.validation.HostValidator;
 
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.LogBackend;
+
 /**
  * The entry point the templates host binds to: {@code com.google.android.apps.automotive.templates.host},
  * present on stock GAS images, so nothing extra is installed.
  */
 public final class A2uiCarAppService extends CarAppService {
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // Debuggable builds log telemetry to logcat; release stays silent until Firebase lands.
+        if ((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)
+                != 0) {
+            A2uiTelemetry.install(new LogBackend());
+        }
+    }
 
     // metalava api-lint: OnNameExpected, suppressed: this overrides CarAppService's abstract
     // createHostValidator().

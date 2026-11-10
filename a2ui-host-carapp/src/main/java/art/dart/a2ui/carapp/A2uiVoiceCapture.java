@@ -21,6 +21,8 @@ import androidx.annotation.Nullable;
 import art.dart.a2ui.model.A2uiComponent;
 import art.dart.a2ui.protocol.A2uiMessageProcessor;
 import art.dart.a2ui.protocol.A2uiMessageProcessor.VoiceOutcome;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -101,10 +103,16 @@ public final class A2uiVoiceCapture {
         Objects.requireNonNull(listener, "listener");
 
         // The gate is asked before the microphone opens; afterwards would already have recorded.
+        // One decision event per listen(): the mid-listen re-check below reuses the outcome
+        // listener rather than emitting a second decision.
         if (!mGate.allowsListening()) {
-            listener.onUnavailable(mGate.reason(), null);
+            TranscriptSource.Unavailable reason = mGate.reason();
+            A2uiTelemetry.event(TelemetryEvent.VOICE_DECISION, "outcome", "refused", "reason",
+                    reason.name());
+            listener.onUnavailable(reason, null);
             return;
         }
+        A2uiTelemetry.event(TelemetryEvent.VOICE_DECISION, "outcome", "allowed", "reason", "none");
 
         // Created before the guard, because installing it is the guard.
         AtomicBoolean attempt = new AtomicBoolean(false);
