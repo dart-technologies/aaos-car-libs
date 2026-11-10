@@ -40,18 +40,19 @@ public final class PoiRepository {
     public static PoiRepository anchored() {
         List<PoiPlace> places = new ArrayList<>();
         places.add(new PoiPlace("joes_pizza", "Joe's Pizza", "7 Carmine St", "Food",
-                "Greenwich Village slice shop since 1975. Cash moves the line fastest."));
+                "Greenwich Village slice shop since 1975. Cash moves the line fastest.", 1800));
         places.add(new PoiPlace("the_met", "The Met Fifth Avenue", "1000 Fifth Ave", "Museum",
-                "Two million square feet; the rooftop closes an hour before the museum."));
+                "Two million square feet; the rooftop closes an hour before the museum.", 800));
         places.add(new PoiPlace("grand_central", "Grand Central Terminal", "89 E 42nd St",
-                "Transit", "Head upstairs for the concourse clock, downstairs for the Oyster Bar."));
+                "Transit", "Head upstairs for the concourse clock, downstairs for the Oyster Bar.",
+                500));
         places.add(new PoiPlace("oyster_bar", "Grand Central Oyster Bar",
                 "89 E 42nd St, Lower Level", "Food",
-                "Open since 1913. The vaulted ceiling carries a whisper corner to corner."));
+                "Open since 1913. The vaulted ceiling carries a whisper corner to corner.", 500));
         places.add(new PoiPlace("nypl", "NY Public Library", "476 Fifth Ave", "Library",
-                "The Rose Reading Room seats 624 and stays quiet enough to hear the lenses."));
+                "The Rose Reading Room seats 624 and stays quiet enough to hear the lenses.", 300));
         places.add(new PoiPlace("boathouse", "Loeb Boathouse", "E 72nd St, Central Park", "Food",
-                "Rowboats rent by the hour, April through November, weather permitting."));
+                "Rowboats rent by the hour, April through November, weather permitting.", 2500));
         return new PoiRepository(places);
     }
 

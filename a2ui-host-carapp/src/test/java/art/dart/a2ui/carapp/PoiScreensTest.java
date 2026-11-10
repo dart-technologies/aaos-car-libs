@@ -87,6 +87,8 @@ public class PoiScreensTest {
         PlaceListMapTemplate template = (PlaceListMapTemplate) top.onGetTemplate();
         assertThat(template.getTitle().toString()).contains("pizza");
         assertThat(rowTitles(template.getItemList())).containsExactly("Joe's Pizza");
+        // The template rejects rows without a distance span; the line proves it is attached.
+        assertThat(rowTexts(rows(template.getItemList()))).contains("1.1 mi");
     }
 
     /** A results row carries its own push to the map step. */

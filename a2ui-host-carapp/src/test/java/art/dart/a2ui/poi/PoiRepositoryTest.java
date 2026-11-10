@@ -63,6 +63,7 @@ public class PoiRepositoryTest {
     @Test
     public void getFindsByIdAndNothingElse() {
         assertThat(mRepository.get("nypl").getName()).isEqualTo("NY Public Library");
+        assertThat(mRepository.get("joes_pizza").getDistanceMeters()).isEqualTo(1800);
         assertThat(mRepository.get("no_such_place")).isNull();
     }
 

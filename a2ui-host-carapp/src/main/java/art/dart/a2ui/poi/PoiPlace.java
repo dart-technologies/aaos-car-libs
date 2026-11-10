@@ -25,14 +25,16 @@ public final class PoiPlace {
     private final String mAddress;
     private final String mCategory;
     private final String mDetails;
+    private final int mDistanceMeters;
 
     public PoiPlace(@NonNull String id, @NonNull String name, @NonNull String address,
-            @NonNull String category, @NonNull String details) {
+            @NonNull String category, @NonNull String details, int distanceMeters) {
         mId = id;
         mName = name;
         mAddress = address;
         mCategory = category;
         mDetails = details;
+        mDistanceMeters = distanceMeters;
     }
 
     @NonNull
@@ -58,5 +60,14 @@ public final class PoiPlace {
     @NonNull
     public String getDetails() {
         return mDetails;
+    }
+
+    /**
+     * Approximate anchor distance in meters, measured from Times Square. The demo has no location
+     * fix; the place-list template requires every row to carry a distance, so the anchors carry
+     * plausible ones. A real provider replaces these with live distances.
+     */
+    public int getDistanceMeters() {
+        return mDistanceMeters;
     }
 }

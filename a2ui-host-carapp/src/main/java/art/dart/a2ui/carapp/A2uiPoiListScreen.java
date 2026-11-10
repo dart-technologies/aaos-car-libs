@@ -15,11 +15,16 @@
  */
 package art.dart.a2ui.carapp;
 
+import android.text.SpannableString;
+import android.text.Spanned;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.car.app.CarContext;
 import androidx.car.app.Screen;
 import androidx.car.app.model.Action;
+import androidx.car.app.model.Distance;
+import androidx.car.app.model.DistanceSpan;
 import androidx.car.app.model.ItemList;
 import androidx.car.app.model.PlaceListMapTemplate;
 import androidx.car.app.model.Row;
@@ -29,6 +34,8 @@ import art.dart.a2ui.poi.PoiFlow;
 import art.dart.a2ui.poi.PoiPlace;
 import art.dart.a2ui.poi.PoiRepository;
 import art.dart.a2ui.poi.PoiScreen;
+
+import java.util.Locale;
 
 /**
  * Step 2 of the POI flow: the matches as a place list with a map pane. Tapping a place opens it
@@ -60,6 +67,7 @@ public final class A2uiPoiListScreen extends Screen implements PoiScreen {
             items.addItem(new Row.Builder()
                     .setTitle(place.getName())
                     .addText(place.getAddress() + " · " + place.getCategory())
+                    .addText(distanceLine(place))
                     .setOnClickListener(() -> openMap(place))
                     .build());
         }
@@ -75,5 +83,19 @@ public final class A2uiPoiListScreen extends Screen implements PoiScreen {
     @VisibleForTesting
     boolean openMap(@NonNull PoiPlace place) {
         return PoiFlow.push(this, new A2uiPoiMapScreen(getCarContext(), place));
+    }
+
+    /**
+     * The row's distance line. The place-list template rejects rows without a
+     * {@link DistanceSpan}; the host formats the spanned value for the locale.
+     */
+    private static SpannableString distanceLine(@NonNull PoiPlace place) {
+        String text = String.format(Locale.US, "%.1f mi", place.getDistanceMeters() / 1609.344);
+        SpannableString line = new SpannableString(text);
+        line.setSpan(
+                DistanceSpan.create(
+                        Distance.create(place.getDistanceMeters(), Distance.UNIT_METERS)),
+                0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return line;
     }
 }
