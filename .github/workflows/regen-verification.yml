@@ -46,6 +46,8 @@ jobs:
       - name: Resolve everything and write metadata
         # One invocation so the single write covers every configuration CI resolves:
         # assemble, the gate's unit-test tasks, fork lint, and both SBOM tasks.
+        # Writes merge into the existing file; entries are never removed, so a stale
+        # pin can only be dropped by deleting the file and regenerating from scratch.
         working-directory: aaos-apps-gradle-project
         run: |
           TASKS=$(grep -v '^#' ../scripts/gate-modules.tsv \
@@ -58,6 +60,31 @@ jobs:
             :a2ui-host-carapp:cyclonedxBom :a2ui-host-carui:cyclonedxBom \
             --stacktrace
           ls -la gradle/verification-metadata.xml
+
+      - name: Resolve metalava too
+        # check-api-lint.py resolves metalava through an init script, outside every
+        # task above. Without this, the API-lint step fails verification on main.
+        working-directory: aaos-apps-gradle-project
+        run: >
+          ./gradlew --write-verification-metadata sha256
+          -I ../scripts/metalava-resolver.gradle resolveMetalava -q
+
+      - name: Stamp the license header
+        # The file is regenerated from scratch, which would drop the header the
+        # licence check requires on fork-added files. Re-stamp it every run.
+        working-directory: aaos-apps-gradle-project
+        run: |
+          python3 - <<'EOF'
+          from pathlib import Path
+          p = Path('gradle/verification-metadata.xml')
+          text = p.read_text()
+          stamp = '<!-- Copyright (C) 2026 Dart Technologies. SPDX-License-Identifier: Apache-2.0 -->\n'
+          if 'SPDX-License-Identifier' not in text[:1400]:
+              lines = text.splitlines(keepends=True)
+              lines.insert(1, stamp)
+              p.write_text(''.join(lines))
+          print('header present:', 'SPDX-License-Identifier' in p.read_text()[:1400])
+          EOF
 
       - name: Upload metadata
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
