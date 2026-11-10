@@ -2,13 +2,15 @@
 # Licensed under the Apache License, Version 2.0.
 #
 # Dependabot minor/patch bumps merge themselves once required checks pass. Majors stay
-# manual: they need a human to read the release notes. pull_request_target runs in the
-# base-repo context, so the token never executes PR-branch code.
+# manual: they need a human to read the release notes. Triggers on pull_request, not
+# pull_request_target: dependabot branches live in this repo, so the token already has
+# write, and the job never checks out or executes PR-branch code anyway. Gated on PR
+# authorship, which no one can spoof.
 
 name: Dependabot auto-merge
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
@@ -17,7 +19,7 @@ permissions:
 jobs:
   automerge:
     name: Auto-merge minor/patch
-    if: github.actor == 'dependabot[bot]'
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
