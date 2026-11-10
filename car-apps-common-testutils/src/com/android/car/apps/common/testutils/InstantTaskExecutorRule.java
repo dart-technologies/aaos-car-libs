@@ -16,6 +16,7 @@
 
 package com.android.car.apps.common.testutils;
 
+import android.annotation.SuppressLint;
 import androidx.arch.core.executor.ArchTaskExecutor;
 import androidx.arch.core.executor.TaskExecutor;
 
@@ -28,6 +29,9 @@ import org.junit.runner.Description;
  * <p>
  * You can use this rule for your host side tests that use Architecture Components.
  */
+// RestrictedApi: this is the canonical InstantTaskExecutorRule pattern; the delegate swap is its
+// entire purpose, and the API is stable across arch-core 2.x.
+@SuppressLint("RestrictedApi")
 public class InstantTaskExecutorRule extends TestWatcher {
     @Override
     protected void starting(Description description) {
