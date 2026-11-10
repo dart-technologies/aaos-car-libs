@@ -38,7 +38,7 @@ libphonenumber = "9.0.43"
 mockito = "5.24.0"
 mockitoLegacy = "2.19.0"
 robolectric = "4.16.1"
-snakeyaml = "2.3"
+snakeyaml = "2.7"
 truth = "1.4.5"
 
 [libraries]
