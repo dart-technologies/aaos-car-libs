@@ -6,7 +6,7 @@
 
 [versions]
 agp = "9.5.1"
-androidx-annotation = "1.10.0"
+androidx-annotation = "1.11.0"
 androidx-appcompat = "1.8.0"
 androidx-arch-core = "2.2.0"
 androidx-asynclayoutinflater = "1.1.0"
