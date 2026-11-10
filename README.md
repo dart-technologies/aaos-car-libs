@@ -36,7 +36,7 @@ Gradle settings live in `aaos-apps-gradle-project/`. Upstream's sibling app proj
 |---|---|
 | JDK | 21 (CI uses Temurin 21) |
 | Android SDK | `platforms;android-37.0` (the `.0` is part of the id); 36 is the floor |
-| Gradle / AGP | 9.7.1 (committed wrapper) / 9.3.1 |
+| Gradle / AGP | 9.7.1 (committed wrapper) / 9.5.1 |
 | Emulator | `AAOS_35_1408p_GoogleAPIs` (Google APIs, not Play Store); see [DEMO](docs/DEMO.md#fresh-aaos-host) |
 | Tools | Python 3; `ffmpeg` for recordings; Flutter 3.44.9 only for `flutter test` |
 

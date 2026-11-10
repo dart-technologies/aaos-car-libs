@@ -35,7 +35,7 @@ Open at HEAD, one line each. Investigations and evidence live in git history and
   V2; the fallback names the plugin's class. The deployed image's V8/V9 are published nowhere.
 - `:car-apps-common-testutils` resolves lifecycle 2.2.0, the last pin (Dependabot now sees it).
 - Version splits: `lifecycle-livedata` 2.6.2 (`car-apps-common`) vs 2.8.0 (`car-media-common`), both
-  `api`; `mockito-core` 2.19.0 in car-ui-lib androidTest vs 5.14.2 elsewhere. No version catalog.
+  `api`; `mockito-core` 2.19.0 in car-ui-lib androidTest vs 5.24.0 elsewhere. No version catalog.
 - `androidx.media` 1.6.0 on Host A's runtime classpath via `androidx.car.app` 1.7.0 (recorded exception).
 - `CarUiContentListItem.mIsSecure` stays `false`: `setSecure()` is opt-in by design (`fc27816ff`); a
   `true` default was reverted after touches dropped intermittently for an unidentified reason.
