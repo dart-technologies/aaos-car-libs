@@ -19,6 +19,7 @@
 // rejects templates over its limits, so a loosely modelled surface cannot pass here.
 
 apply plugin: 'com.android.application'
+apply plugin: 'org.cyclonedx.bom'
 
 android {
     namespace = 'art.dart.a2ui.carapp'
