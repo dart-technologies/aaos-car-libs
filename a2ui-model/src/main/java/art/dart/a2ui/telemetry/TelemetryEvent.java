@@ -21,6 +21,9 @@ package art.dart.a2ui.telemetry;
  * transcript, a search string, or any other free text must not reach this enum; the scrubber
  * rejects values outside {@code [A-Za-z0-9_.\-]} loudly rather than shipping them quietly.
  */
+// metalava api-lint: Enum, suppressed: a closed six-member vocabulary that is the API —
+// callers switch on it, and an int def would trade exhaustiveness for nothing.
+@SuppressWarnings("Enum")
 public enum TelemetryEvent {
     /** A host session started. Keys: {@code root} (poi, showcase), {@code host} (a, b). */
     SESSION_START,

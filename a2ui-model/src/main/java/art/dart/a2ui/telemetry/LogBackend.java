@@ -17,6 +17,8 @@ package art.dart.a2ui.telemetry;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.util.Map;
 
 /** The debuggable-build sink: one logcat line per event. Production installs Firebase. */
@@ -25,7 +27,7 @@ public final class LogBackend implements TelemetryBackend {
     private static final String TAG = "A2uiTelemetry";
 
     @Override
-    public void log(TelemetryEvent event, Map<String, String> params) {
+    public void log(@NonNull TelemetryEvent event, @NonNull Map<String, String> params) {
         Log.d(TAG, event + " " + params);
     }
 }

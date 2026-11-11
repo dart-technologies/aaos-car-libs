@@ -16,6 +16,7 @@
 package art.dart.a2ui.telemetry;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.Collections;
@@ -39,6 +40,9 @@ import java.util.regex.Pattern;
 public final class A2uiTelemetry {
 
     /** Values longer than this are rejected, not truncated: truncation hides a miscoded caller. */
+    // metalava api-lint: MinMaxConstant, suppressed: the scrub contract's fixed bound, not a
+    // tuning value; raising it would widen what counts as metadata.
+    @SuppressWarnings("MinMaxConstant")
     public static final int MAX_VALUE_LENGTH = 64;
 
     private static final Pattern KEY_PATTERN = Pattern.compile("[a-z][a-z0-9_]*");
@@ -63,7 +67,7 @@ public final class A2uiTelemetry {
     }
 
     /** Installs the sink. A null backend uninstalls back to the no-op. */
-    public static void install(TelemetryBackend backend) {
+    public static void install(@Nullable TelemetryBackend backend) {
         sBackend = backend == null ? (event, params) -> {
         } : backend;
     }

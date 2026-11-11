@@ -15,6 +15,8 @@
  */
 package art.dart.a2ui.telemetry;
 
+import androidx.annotation.NonNull;
+
 import java.util.Map;
 
 /**
@@ -25,5 +27,5 @@ import java.util.Map;
 public interface TelemetryBackend {
 
     /** Records one scrubbed event. */
-    void log(TelemetryEvent event, Map<String, String> params);
+    void log(@NonNull TelemetryEvent event, @NonNull Map<String, String> params);
 }
