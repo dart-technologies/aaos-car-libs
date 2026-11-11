@@ -5,16 +5,16 @@
 #
 # module	count	recorded	commit   (a -dirty suffix means the tree had uncommitted changes,
 #                                    so the counts are NOT reproducible from that commit alone)
-a2ui-host-carapp	183	2026-11-11	4984d9e
-a2ui-host-carui	160	2026-11-11	4984d9e
-a2ui-model	297	2026-11-11	4984d9e
-car-apps-common	24	2026-11-11	4984d9e
-car-assist-lib	9	2026-11-11	4984d9e
-car-media-common	92	2026-11-11	4984d9e
-car-rotary-lib	6	2026-11-11	4984d9e
-car-telephony-common	3	2026-11-11	4984d9e
-car-ui-lib	54	2026-11-11	4984d9e
-car-uxr-client-lib	20	2026-11-11	4984d9e
-model	17	2026-11-11	4984d9e
-oem-apis	15	2026-11-11	4984d9e
-plugin	29	2026-11-11	4984d9e
+a2ui-host-carapp	196	2026-11-11	2a2e66a
+a2ui-host-carui	164	2026-11-11	2a2e66a
+a2ui-model	297	2026-11-11	2a2e66a
+car-apps-common	24	2026-11-11	2a2e66a
+car-assist-lib	9	2026-11-11	2a2e66a
+car-media-common	92	2026-11-11	2a2e66a
+car-rotary-lib	6	2026-11-11	2a2e66a
+car-telephony-common	3	2026-11-11	2a2e66a
+car-ui-lib	54	2026-11-11	2a2e66a
+car-uxr-client-lib	20	2026-11-11	2a2e66a
+model	17	2026-11-11	2a2e66a
+oem-apis	15	2026-11-11	2a2e66a
+plugin	29	2026-11-11	2a2e66a
