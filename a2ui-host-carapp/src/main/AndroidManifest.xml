@@ -35,6 +35,12 @@
          works. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
+    <!-- PlaceListMap/Map templates crash without this (SecurityException from the host call
+         dispatcher — found on the AAOS emulator, not in unit tests). The templates host grants
+         it to approved categories; on the emulator `adb shell pm grant art.dart.a2ui.carapp
+         androidx.car.app.MAP_TEMPLATES` does it. -->
+    <uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
+
     <application
         android:label="@string/app_name"
         android:icon="@android:drawable/ic_media_play"
