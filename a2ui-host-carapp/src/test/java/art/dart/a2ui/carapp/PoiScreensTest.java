@@ -33,6 +33,9 @@ import androidx.lifecycle.Lifecycle;
 import art.dart.a2ui.poi.PoiFlow;
 import art.dart.a2ui.poi.PoiPlace;
 import art.dart.a2ui.poi.PoiRepository;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryBackend;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +44,9 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The anchored POI flow on the JVM: each step renders its template, and the fourth screen is the
@@ -149,6 +154,67 @@ public class PoiScreensTest {
         assertThat(search.getScreenManager().getTop()).isSameInstanceAs(detail);
     }
 
+    /** The full flow reports its search count and each step it lands. */
+    @Test
+    public void poiFlowEmitsSearchAndStepEvents() {
+        FakeBackend backend = new FakeBackend();
+        A2uiTelemetry.install(backend);
+        try {
+            A2uiPoiSearchScreen search = startedSearch();
+            assertThat(search.openResults("pizza")).isTrue();
+            A2uiPoiListScreen list = (A2uiPoiListScreen) search.getScreenManager().getTop();
+            assertThat(list.openMap(mRepository.get("joes_pizza"))).isTrue();
+            A2uiPoiMapScreen map = (A2uiPoiMapScreen) search.getScreenManager().getTop();
+            assertThat(map.openDetail()).isTrue();
+
+            assertThat(backend.events).containsExactly(
+                    TelemetryEvent.POI_SEARCH_SUBMITTED,
+                    TelemetryEvent.POI_STEP,
+                    TelemetryEvent.POI_STEP,
+                    TelemetryEvent.POI_STEP).inOrder();
+            assertThat(backend.paramsFor(0)).containsExactly("result_count", "1");
+            assertThat(backend.paramsFor(1)).containsExactly("step", "list");
+            assertThat(backend.paramsFor(2)).containsExactly("step", "map");
+            assertThat(backend.paramsFor(3)).containsExactly("step", "detail");
+        } finally {
+            A2uiTelemetry.resetForTesting();
+        }
+    }
+
+    /** A refused fifth push reports the cap, not the step. */
+    @Test
+    public void capRefusalEmitsEvent() {
+        FakeBackend backend = new FakeBackend();
+        A2uiTelemetry.install(backend);
+        try {
+            A2uiPoiDetailScreen detail =
+                    new A2uiPoiDetailScreen(mCarContext, mRepository.get("nypl"));
+            new ScreenController(detail).moveToState(Lifecycle.State.STARTED);
+
+            assertThat(PoiFlow.push(detail,
+                    new A2uiPoiSearchScreen(mCarContext, mRepository))).isFalse();
+
+            assertThat(backend.events).containsExactly(TelemetryEvent.POI_CAP_REFUSED);
+            assertThat(backend.paramsFor(0)).containsExactly("depth", "4");
+        } finally {
+            A2uiTelemetry.resetForTesting();
+        }
+    }
+
+    @Test
+    public void poiRootIsReported() {
+        FakeBackend backend = new FakeBackend();
+        A2uiTelemetry.install(backend);
+        try {
+            A2uiSession.reportRoot("poi");
+
+            assertThat(backend.events).containsExactly(TelemetryEvent.SESSION_START);
+            assertThat(backend.paramsFor(0)).containsExactly("root", "poi", "host", "a");
+        } finally {
+            A2uiTelemetry.resetForTesting();
+        }
+    }
+
     @Test
     public void screensCarryTheirDepths() {
         assertThat(new A2uiPoiSearchScreen(mCarContext, mRepository).poiDepth()).isEqualTo(1);
@@ -209,5 +275,20 @@ public class PoiScreensTest {
             }
         }
         return texts;
+    }
+
+    private static final class FakeBackend implements TelemetryBackend {
+        final List<TelemetryEvent> events = new ArrayList<>();
+        final List<Map<String, String>> params = new ArrayList<>();
+
+        @Override
+        public void log(TelemetryEvent event, Map<String, String> params) {
+            events.add(event);
+            this.params.add(new HashMap<>(params));
+        }
+
+        Map<String, String> paramsFor(int index) {
+            return params.get(index);
+        }
     }
 }

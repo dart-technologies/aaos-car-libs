@@ -29,6 +29,8 @@ import art.dart.a2ui.poi.PoiFlow;
 import art.dart.a2ui.poi.PoiPlace;
 import art.dart.a2ui.poi.PoiRepository;
 import art.dart.a2ui.poi.PoiScreen;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 /**
  * Step 1 of the POI flow: a search box over the anchored corpus. Typing filters the suggestion
@@ -84,7 +86,13 @@ public final class A2uiPoiSearchScreen extends Screen implements PoiScreen {
     /** Pushes the results list for this query; the flow cap decides whether it lands. */
     @VisibleForTesting
     boolean openResults(@NonNull String query) {
-        return PoiFlow.push(this,
+        A2uiTelemetry.event(TelemetryEvent.POI_SEARCH_SUBMITTED, "result_count",
+                String.valueOf(mRepository.search(query).size()));
+        boolean pushed = PoiFlow.push(this,
                 new A2uiPoiListScreen(getCarContext(), mRepository, query));
+        if (pushed) {
+            A2uiTelemetry.event(TelemetryEvent.POI_STEP, "step", "list");
+        }
+        return pushed;
     }
 }
