@@ -9,6 +9,7 @@ import androidx.annotation.Nullable;
 
 import art.dart.a2ui.protocol.A2uiMessage;
 import art.dart.a2ui.protocol.A2uiProtocolException;
+import art.dart.a2ui.protocol.A2uiProtocolVersions;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -139,6 +140,14 @@ public final class BoundedA2uiJsonDecoder {
         }
         if (wire.containsKey("createSurface")) {
             Map<String, Object> body = object(wire.get("createSurface"), "createSurface");
+            if (body.containsKey("theme")) {
+                // v1.0 removed theme from createSurface; it was never valid on the v0.9
+                // decoder either, so this is a rejection on every version, not a version gate.
+                throw malformed("createSurface.theme was removed in v1.0");
+            }
+            if (A2uiProtocolVersions.isV1(version)) {
+                return createSurfaceV1(body);
+            }
             requireOnly(body, "surfaceId", "catalogId");
             return A2uiMessage.createSurface(version, canonicalId(body, "surfaceId"),
                     canonicalId(body, "catalogId"));
@@ -165,6 +174,75 @@ public final class BoundedA2uiJsonDecoder {
         Map<String, Object> body = object(wire.get("deleteSurface"), "deleteSurface");
         requireOnly(body, "surfaceId");
         return A2uiMessage.deleteSurface(version, canonicalId(body, "surfaceId"));
+    }
+
+    private static A2uiMessage createSurfaceV1(Map<String, Object> body) {
+        requireOnly(body, "surfaceId", "catalogId", "components", "dataModel", "metadata",
+                "sendDataModel");
+        String surfaceId = canonicalId(body, "surfaceId");
+        String catalogId = null;
+        if (body.containsKey("catalogId")) {
+            catalogId = canonicalId(body, "catalogId");
+        }
+        List<Map<String, Object>> components = null;
+        if (body.containsKey("components")) {
+            components = new ArrayList<>();
+            List<Object> source = array(body.get("components"), "components");
+            for (int i = 0; i < source.size(); i++) {
+                components.add(object(source.get(i), "components[" + i + "]"));
+            }
+        }
+        Map<String, Object> dataModel = null;
+        if (body.containsKey("dataModel")) {
+            dataModel = object(body.get("dataModel"), "dataModel");
+        }
+        Map<String, Object> metadata = null;
+        if (body.containsKey("metadata")) {
+            metadata = metadata(object(body.get("metadata"), "metadata"));
+        }
+        boolean sendDataModel = false;
+        if (body.containsKey("sendDataModel")) {
+            sendDataModel = bool(body.get("sendDataModel"), "sendDataModel");
+        }
+        return A2uiMessage.createSurfaceV1(surfaceId, catalogId, components, dataModel, metadata,
+                sendDataModel);
+    }
+
+    /**
+     * Validates surface {@code metadata}: it holds only {@code extensions}, whose keys are
+     * Unicode identifiers (UAX #31), per the v1.0 fixtures.
+     */
+    private static Map<String, Object> metadata(Map<String, Object> body) {
+        requireOnly(body, "extensions");
+        if (body.containsKey("extensions")) {
+            Map<String, Object> extensions = object(body.get("extensions"), "extensions");
+            for (String key : extensions.keySet()) {
+                if (!isUnicodeIdentifier(key)) {
+                    throw malformed("metadata.extensions key '" + key
+                            + "' is not a Unicode identifier");
+                }
+            }
+        }
+        return body;
+    }
+
+    private static boolean isUnicodeIdentifier(String value) {
+        if (value.isEmpty() || !Character.isUnicodeIdentifierStart(value.charAt(0))) {
+            return false;
+        }
+        for (int i = 1; i < value.length(); i++) {
+            if (!Character.isUnicodeIdentifierPart(value.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean bool(Object value, String label) {
+        if (!(value instanceof Boolean)) {
+            throw malformed(label + " must be a boolean");
+        }
+        return (Boolean) value;
     }
 
     private static int present(Map<String, Object> map, String key) {

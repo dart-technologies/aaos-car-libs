@@ -26,16 +26,21 @@ import java.util.Map;
 /**
  * One A2UI lifecycle message, in the shapes of upstream's conformance fixtures
  * (<a href="https://github.com/a2ui-project/a2ui">a2ui-project/a2ui</a>,
- * {@code conformance/core/message_processor.yaml} at v1-candidate {@code bb4600b}):
+ * {@code conformance/core/message_processor_v1_0.yaml} at {@code 294dacce}):
  *
  * <pre>{@code
- * { version: "v0.9", createSurface:    { surfaceId, catalogId, theme?, sendDataModel? } }
- * { version: "v0.9", updateComponents: { surfaceId, components: [ { id, component, ...props } ] } }
- * { version: "v0.9", updateDataModel:  { surfaceId, path: "/user/name", value } }
- * { version: "v0.9", deleteSurface:    { surfaceId } }
+ * { version: "v0.9", createSurface:    { surfaceId, catalogId } }
+ * { version: "1.0",  createSurface:    { surfaceId, catalogId?, components?, dataModel?,
+ *                                        metadata?, sendDataModel? } }
+ * { version,         updateComponents: { surfaceId, components: [ { id, component, ...props } ] } }
+ * { version,         updateDataModel:  { surfaceId, path: "/user/name", value } }
+ * { version,         deleteSurface:    { surfaceId } }
  * }</pre>
  *
- * <p>A protocol type, distinct from the renderer-facing {@code A2uiComponent}.
+ * <p>v1.0 component entries may carry the envelope mixins {@code @catalogId},
+ * {@code @accessibility}, {@code @metadata} and {@code @checks}; pre-1.0 entries reject
+ * {@code @}-prefixed keys. A protocol type, distinct from the renderer-facing
+ * {@code A2uiComponent}.
  */
 public final class A2uiMessage {
 
@@ -52,9 +57,14 @@ public final class A2uiMessage {
     private final List<Map<String, Object>> mComponents;
     private final String mPath;
     private final Object mValue;
+    private final Map<String, Object> mInitialDataModel;
+    private final Map<String, Object> mMetadata;
+    private final boolean mSendDataModel;
 
     private A2uiMessage(Kind kind, String version, String surfaceId, String catalogId,
-            List<Map<String, Object>> components, String path, Object value) {
+            List<Map<String, Object>> components, String path, Object value,
+            Map<String, Object> initialDataModel, Map<String, Object> metadata,
+            boolean sendDataModel) {
         mKind = kind;
         mVersion = version;
         mSurfaceId = surfaceId;
@@ -63,31 +73,53 @@ public final class A2uiMessage {
                 : Collections.unmodifiableList(components);
         mPath = path;
         mValue = value;
+        mInitialDataModel = initialDataModel == null ? Collections.emptyMap()
+                : Collections.unmodifiableMap(initialDataModel);
+        mMetadata = metadata == null ? Collections.emptyMap()
+                : Collections.unmodifiableMap(metadata);
+        mSendDataModel = sendDataModel;
     }
 
     @NonNull
     public static A2uiMessage createSurface(
             @NonNull String version, @NonNull String surfaceId, @NonNull String catalogId) {
-        return new A2uiMessage(Kind.CREATE_SURFACE, version, surfaceId, catalogId, null, null, null);
+        return new A2uiMessage(Kind.CREATE_SURFACE, version, surfaceId, catalogId, null, null,
+                null, null, null, false);
+    }
+
+    /**
+     * A v1.0 {@code createSurface} with the extended payload: a nullable default catalog plus
+     * inline initial components, data model, surface metadata and the {@code sendDataModel} flag.
+     */
+    @NonNull
+    public static A2uiMessage createSurfaceV1(@NonNull String surfaceId,
+            @Nullable String catalogId, @Nullable List<Map<String, Object>> initialComponents,
+            @Nullable Map<String, Object> initialDataModel,
+            @Nullable Map<String, Object> metadata, boolean sendDataModel) {
+        return new A2uiMessage(Kind.CREATE_SURFACE, A2uiProtocolVersions.V1, surfaceId, catalogId,
+                initialComponents, null, null, initialDataModel, metadata, sendDataModel);
     }
 
     @NonNull
     public static A2uiMessage updateComponents(@NonNull String version, @NonNull String surfaceId,
             @NonNull List<Map<String, Object>> components) {
         return new A2uiMessage(
-                Kind.UPDATE_COMPONENTS, version, surfaceId, null, components, null, null);
+                Kind.UPDATE_COMPONENTS, version, surfaceId, null, components, null, null, null,
+                null, false);
     }
 
     @NonNull
     public static A2uiMessage updateDataModel(@NonNull String version, @NonNull String surfaceId,
             @NonNull String path, @Nullable Object value) {
         return new A2uiMessage(
-                Kind.UPDATE_DATA_MODEL, version, surfaceId, null, null, path, value);
+                Kind.UPDATE_DATA_MODEL, version, surfaceId, null, null, path, value, null, null,
+                false);
     }
 
     @NonNull
     public static A2uiMessage deleteSurface(@NonNull String version, @NonNull String surfaceId) {
-        return new A2uiMessage(Kind.DELETE_SURFACE, version, surfaceId, null, null, null, null);
+        return new A2uiMessage(Kind.DELETE_SURFACE, version, surfaceId, null, null, null, null,
+                null, null, false);
     }
 
     @NonNull public Kind getKind() { return mKind; }
@@ -97,6 +129,15 @@ public final class A2uiMessage {
     @NonNull public List<Map<String, Object>> getComponents() { return mComponents; }
     @Nullable public String getPath() { return mPath; }
     @Nullable public Object getValue() { return mValue; }
+    /**
+     * The inline initial data model of a v1.0 {@code createSurface}; empty for every other
+     * message.
+     */
+    @NonNull public Map<String, Object> getInitialDataModel() { return mInitialDataModel; }
+    /** The surface {@code metadata} of a v1.0 {@code createSurface}; empty otherwise. */
+    @NonNull public Map<String, Object> getMetadata() { return mMetadata; }
+    /** The {@code sendDataModel} flag of a v1.0 {@code createSurface}; false otherwise. */
+    public boolean getSendDataModel() { return mSendDataModel; }
 
     /** A component entry, as a mutable map, for building traces in tests and fixtures. */
     @NonNull

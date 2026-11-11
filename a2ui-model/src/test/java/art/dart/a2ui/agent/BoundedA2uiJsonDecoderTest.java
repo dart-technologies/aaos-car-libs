@@ -147,6 +147,73 @@ public class BoundedA2uiJsonDecoderTest {
         }
     }
 
+    @Test
+    public void decodesV1CreateSurfaceWithExtendedPayload() {
+        String messages = "[{\"version\":\"1.0\",\"createSurface\":{"
+                + "\"surfaceId\":\"s\",\"catalogId\":\"automotive\","
+                + "\"components\":[{\"id\":\"root\",\"component\":\"Column\"}],"
+                + "\"dataModel\":{\"counter\":42},"
+                + "\"metadata\":{\"extensions\":{\"a2ui_experimental\":{\"streaming\":true}}},"
+                + "\"sendDataModel\":true}}]";
+        String json = envelope("claude", messages);
+
+        A2uiMessage message = decoder().decode(bytes(json)).getMessages().get(0);
+
+        assertThat(message.getKind()).isEqualTo(A2uiMessage.Kind.CREATE_SURFACE);
+        assertThat(message.getVersion()).isEqualTo("1.0");
+        assertThat(message.getCatalogId()).isEqualTo("automotive");
+        assertThat(message.getComponents()).hasSize(1);
+        assertThat(message.getInitialDataModel()).containsEntry("counter",
+                new BigDecimal("42"));
+        assertThat(message.getMetadata().keySet()).containsExactly("extensions");
+        assertThat(message.getSendDataModel()).isTrue();
+    }
+
+    @Test
+    public void decodesV1CreateSurfaceWithoutCatalogId() {
+        String messages = "[{\"version\":\"1.0\",\"createSurface\":{\"surfaceId\":\"s\"}}]";
+        String json = envelope("claude", messages);
+
+        A2uiMessage message = decoder().decode(bytes(json)).getMessages().get(0);
+
+        assertThat(message.getKind()).isEqualTo(A2uiMessage.Kind.CREATE_SURFACE);
+        assertThat(message.getCatalogId()).isNull();
+        assertThat(message.getComponents()).isEmpty();
+        assertThat(message.getInitialDataModel()).isEmpty();
+        assertThat(message.getMetadata()).isEmpty();
+        assertThat(message.getSendDataModel()).isFalse();
+    }
+
+    @Test
+    public void rejectsThemeOnEveryVersion() {
+        for (String version : new String[]{"v0.9", "1.0"}) {
+            String messages = "[{\"version\":\"" + version + "\",\"createSurface\":{"
+                    + "\"surfaceId\":\"s\",\"catalogId\":\"automotive\",\"theme\":{}}}]";
+            String json = envelope("claude", messages);
+            assertThrows(A2uiProtocolException.class, () -> decoder().decode(bytes(json)));
+        }
+    }
+
+    @Test
+    public void rejectsV1MetadataThatIsNotExtensionsOnly() {
+        String owner = "[{\"version\":\"1.0\",\"createSurface\":{\"surfaceId\":\"s\","
+                + "\"metadata\":{\"owner\":\"me\"}}}]";
+        assertThrows(A2uiProtocolException.class, () -> decoder().decode(
+                bytes(envelope("claude", owner))));
+        String badKey = "[{\"version\":\"1.0\",\"createSurface\":{\"surfaceId\":\"s\","
+                + "\"metadata\":{\"extensions\":{\"a2ui:experimental\":{}}}}}]";
+        assertThrows(A2uiProtocolException.class, () -> decoder().decode(
+                bytes(envelope("claude", badKey))));
+    }
+
+    @Test
+    public void rejectsV1KeysOnPreV1CreateSurface() {
+        String messages = "[{\"version\":\"v0.9\",\"createSurface\":{\"surfaceId\":\"s\","
+                + "\"catalogId\":\"automotive\",\"components\":[]}}]";
+        String json = envelope("claude", messages);
+        assertThrows(A2uiProtocolException.class, () -> decoder().decode(bytes(json)));
+    }
+
     private static BoundedA2uiJsonDecoder decoder() {
         return new BoundedA2uiJsonDecoder();
     }

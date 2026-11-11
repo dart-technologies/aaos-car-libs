@@ -37,7 +37,9 @@ import java.util.Set;
  * Applies A2UI lifecycle messages in order and holds the resulting surfaces.
  *
  * <p>Out-of-order updates, foreign catalogs and unknown component types are refused, never
- * skipped. Streaming, the v0.8 shapes, themes and styles are not implemented.
+ * skipped. Each surface speaks the version it was created with; v1.0 brings the {@code @}
+ * envelope mixins, null-deletes, and the extended {@code createSurface}. Streaming, the v0.8
+ * shapes, themes and styles are not implemented.
  */
 public final class A2uiMessageProcessor {
 
@@ -161,11 +163,13 @@ public final class A2uiMessageProcessor {
                 updateComponents(message);
                 return;
             case UPDATE_DATA_MODEL:
-                requireSurface(message.getSurfaceId())
-                        .writeDataModel(requirePath(message), message.getValue());
+                A2uiSurface dataSurface = requireSurface(message.getSurfaceId());
+                requireSurfaceVersion(dataSurface, message);
+                dataSurface.writeDataModel(requirePath(message), message.getValue());
                 return;
             case DELETE_SURFACE:
-                requireSurface(message.getSurfaceId());
+                requireSurfaceVersion(
+                        requireSurface(message.getSurfaceId()), message);
                 mSurfaces.remove(message.getSurfaceId());
                 return;
             default:
@@ -397,39 +401,125 @@ public final class A2uiMessageProcessor {
             throw new A2uiProtocolException(A2uiProtocolException.Category.INTEGRITY,
                     "surface " + message.getSurfaceId() + " already exists");
         }
+        boolean v1 = A2uiProtocolVersions.isV1(message.getVersion());
         String catalogId = message.getCatalogId();
-        if (!mAcceptedCatalogId.equals(catalogId)) {
+        if (catalogId == null) {
+            if (!v1) {
+                throw new A2uiProtocolException(A2uiProtocolException.Category.MALFORMED,
+                        "createSurface needs a catalogId before v1.0");
+            }
+        } else if (!mAcceptedCatalogId.equals(catalogId)) {
             throw new A2uiProtocolException(A2uiProtocolException.Category.CATALOG,
                     "catalog " + catalogId + " was not negotiated; this host accepts "
                             + mAcceptedCatalogId);
         }
-        mSurfaces.put(message.getSurfaceId(),
-                new A2uiSurface(message.getSurfaceId(), catalogId));
+        A2uiSurface surface = new A2uiSurface(message.getSurfaceId(), message.getVersion(),
+                catalogId, message.getMetadata(), message.getSendDataModel());
+        // Validate the inline payload before the surface exists, so a rejection leaves no trace.
+        for (Map<String, Object> props : message.getComponents()) {
+            checkComponent(props, surface);
+        }
+        mSurfaces.put(message.getSurfaceId(), surface);
+        for (Map<String, Object> props : message.getComponents()) {
+            surface.putComponent((String) props.get("id"), props);
+        }
+        for (Map.Entry<String, Object> entry : message.getInitialDataModel().entrySet()) {
+            surface.writeDataModel("/" + escapePointerSegment(entry.getKey()), entry.getValue());
+        }
     }
 
     /** Applies a component update atomically, so a rejected message leaves the surface unchanged. */
     private void updateComponents(A2uiMessage message) {
         A2uiSurface surface = requireSurface(message.getSurfaceId());
+        requireSurfaceVersion(surface, message);
 
         // Pass 1: validate. Nothing has been written yet, so any throw leaves the surface untouched.
         for (Map<String, Object> props : message.getComponents()) {
-            Object id = props.get("id");
-            Object component = props.get("component");
-            if (!(id instanceof String) || !(component instanceof String)) {
-                throw new A2uiProtocolException(A2uiProtocolException.Category.MALFORMED,
-                        "component entry needs string 'id' and 'component': " + props);
-            }
-            if (ComponentType.fromCatalogName((String) component) == null) {
-                // Refused at ingest too, so no later policy relaxation can surface it.
-                throw new A2uiProtocolException(A2uiProtocolException.Category.CATALOG,
-                        "component type " + component + " is not in catalog " + mAcceptedCatalogId);
-            }
+            checkComponent(props, surface);
         }
 
         // Pass 2: commit. Every entry has already been checked, so this loop cannot throw partway.
         for (Map<String, Object> props : message.getComponents()) {
             surface.putComponent((String) props.get("id"), props);
         }
+    }
+
+    /**
+     * Validates one component entry against its surface: string {@code id} and {@code component},
+     * a known component type, and the version's envelope rules — v1.0 reads the {@code @} mixins
+     * and resolves the effective catalog (explicit {@code @catalogId}, else the surface default,
+     * else an error), while pre-1.0 entries reject {@code @}-prefixed keys.
+     */
+    private void checkComponent(Map<String, Object> props, A2uiSurface surface) {
+        Object id = props.get("id");
+        Object component = props.get("component");
+        if (!(id instanceof String) || !(component instanceof String)) {
+            throw new A2uiProtocolException(A2uiProtocolException.Category.MALFORMED,
+                    "component entry needs string 'id' and 'component': " + props);
+        }
+        if (ComponentType.fromCatalogName((String) component) == null) {
+            // Refused at ingest too, so no later policy relaxation can surface it.
+            throw new A2uiProtocolException(A2uiProtocolException.Category.CATALOG,
+                    "component type " + component + " is not in catalog " + mAcceptedCatalogId);
+        }
+        boolean v1 = A2uiProtocolVersions.isV1(surface.getVersion());
+        if (!v1) {
+            for (String key : props.keySet()) {
+                if (key.startsWith("@")) {
+                    throw new A2uiProtocolException(A2uiProtocolException.Category.MALFORMED,
+                            "component entry rejects '@'-prefixed key '" + key + "' before v1.0");
+                }
+            }
+            return;
+        }
+        checkNoDoubledMixin(props, "@catalogId", "catalogId");
+        checkNoDoubledMixin(props, "@accessibility", "accessibility");
+        checkNoDoubledMixin(props, "@metadata", "metadata");
+        checkNoDoubledMixin(props, "@checks", "checks");
+        for (String key : props.keySet()) {
+            if (key.startsWith("@") && !key.equals("@catalogId") && !key.equals("@accessibility")
+                    && !key.equals("@metadata") && !key.equals("@checks")) {
+                throw new A2uiProtocolException(A2uiProtocolException.Category.MALFORMED,
+                        "unknown component envelope key '" + key + "'");
+            }
+        }
+        Object explicit = props.get("@catalogId");
+        if (explicit != null && !(explicit instanceof String)) {
+            throw new A2uiProtocolException(A2uiProtocolException.Category.MALFORMED,
+                    "@catalogId must be a string");
+        }
+        String effective = explicit != null ? (String) explicit : surface.getCatalogId();
+        if (effective == null) {
+            throw new A2uiProtocolException(A2uiProtocolException.Category.CATALOG,
+                    "component " + id + " names no catalog and surface "
+                            + surface.getSurfaceId() + " has no default");
+        }
+        if (!mAcceptedCatalogId.equals(effective)) {
+            throw new A2uiProtocolException(A2uiProtocolException.Category.CATALOG,
+                    "catalog " + effective + " was not negotiated; this host accepts "
+                            + mAcceptedCatalogId);
+        }
+    }
+
+    private static void checkNoDoubledMixin(
+            Map<String, Object> props, String atKey, String bareKey) {
+        if (props.containsKey(atKey) && props.containsKey(bareKey)) {
+            throw new A2uiProtocolException(A2uiProtocolException.Category.MALFORMED,
+                    "component entry carries both '" + atKey + "' and '" + bareKey + "'");
+        }
+    }
+
+    /** A surface speaks one version: a message in another version is routed nowhere. */
+    private static void requireSurfaceVersion(A2uiSurface surface, A2uiMessage message) {
+        if (!surface.getVersion().equals(message.getVersion())) {
+            throw new A2uiProtocolException(A2uiProtocolException.Category.MALFORMED,
+                    "surface " + surface.getSurfaceId() + " speaks " + surface.getVersion()
+                            + ", not " + message.getVersion());
+        }
+    }
+
+    private static String escapePointerSegment(String segment) {
+        return segment.replace("~", "~0").replace("/", "~1");
     }
 
     @NonNull

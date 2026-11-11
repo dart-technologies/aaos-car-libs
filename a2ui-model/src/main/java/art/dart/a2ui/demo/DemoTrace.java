@@ -20,6 +20,7 @@ import androidx.annotation.NonNull;
 import art.dart.a2ui.model.A2uiComponent;
 import art.dart.a2ui.protocol.A2uiMessage;
 import art.dart.a2ui.protocol.A2uiMessageProcessor;
+import art.dart.a2ui.protocol.A2uiProtocolVersions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,10 +44,14 @@ public final class DemoTrace {
     private DemoTrace() {
     }
 
-    /** A processor negotiated for the automotive catalog and this protocol version. */
+    /**
+     * A processor negotiated for the automotive catalog and both protocol versions. Messages are
+     * routed by their own {@code version}; each surface speaks the version it was created with.
+     */
     @NonNull
     public static A2uiMessageProcessor newProcessor() {
-        return new A2uiMessageProcessor(CATALOG_ID, new HashSet<>(Collections.singletonList(VERSION)));
+        return new A2uiMessageProcessor(CATALOG_ID,
+                new HashSet<>(Arrays.asList(VERSION, A2uiProtocolVersions.V1)));
     }
 
     /** The recorded trace, in order. */

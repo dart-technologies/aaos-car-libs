@@ -37,15 +37,21 @@ import java.util.Map;
 
 /**
  * The protocol layer. Cases that mirror upstream name their fixture from
- * {@code conformance/core/message_processor.yaml} at the pinned v1-candidate SHA.
+ * {@code conformance/core/message_processor_v1_0.yaml} at the pinned upstream SHA.
  */
 public class A2uiMessageProcessorTest {
 
     private static final String V = "v0.9";
+    private static final String V1 = "1.0";
 
     private static A2uiMessageProcessor processor() {
         return new A2uiMessageProcessor("automotive",
                 new HashSet<>(Collections.singletonList(V)));
+    }
+
+    private static A2uiMessageProcessor dualProcessor() {
+        return new A2uiMessageProcessor("automotive",
+                new HashSet<>(Arrays.asList(V, V1)));
     }
 
     private static List<Map<String, Object>> one(String id, String type) {
@@ -816,5 +822,198 @@ public class A2uiMessageProcessorTest {
 
         assertThat(p.dispatchByVoice("s1", "buy album", p.getSurface("s1").project("root")))
                 .isEqualTo(A2uiMessageProcessor.VoiceOutcome.NO_MATCH);
+    }
+
+    // v1.0 wire compat: extended createSurface, @ envelope mixins, null-deletes, version routing.
+
+    /** Upstream: test_v10_create_surface_inline_initialization. */
+    @Test
+    @SuppressWarnings("unchecked")
+    public void v1CreateSurface_appliesInlineComponentsAndDataModel() {
+        A2uiMessageProcessor p = dualProcessor();
+        Map<String, Object> root = A2uiMessage.component("root", "Column");
+        root.put("children", Collections.singletonList("text1"));
+        Map<String, Object> text = A2uiMessage.component("text1", "Text");
+        text.put("text", "Inline Text");
+
+        p.process(A2uiMessage.createSurfaceV1("s1", "automotive",
+                Arrays.asList(root, text),
+                Collections.singletonMap("counter", 42),
+                Collections.singletonMap("extensions", Collections.emptyMap()), true));
+
+        assertThat(p.getSurface("s1").getVersion()).isEqualTo(V1);
+        assertThat(p.getSurface("s1").getComponents().keySet())
+                .containsExactly("root", "text1").inOrder();
+        assertThat(p.getSurface("s1").readDataModel("/counter")).isEqualTo(42);
+        assertThat(p.getSurface("s1").getSendDataModel()).isTrue();
+    }
+
+    /** Upstream: test_v10_create_surface_optional_catalog_id. */
+    @Test
+    public void v1CreateSurface_catalogIdIsOptional() {
+        A2uiMessageProcessor p = dualProcessor();
+
+        p.process(A2uiMessage.createSurfaceV1("s1", null, null, null, null, false));
+
+        assertThat(p.getSurface("s1")).isNotNull();
+        assertThat(p.getSurface("s1").getCatalogId()).isNull();
+    }
+
+    @Test
+    public void v09CreateSurfaceWithoutCatalog_isMalformed() {
+        A2uiMessageProcessor p = dualProcessor();
+
+        A2uiProtocolException e = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.createSurface(V, "s1", null)));
+
+        assertThat(e.getCategory()).isEqualTo(A2uiProtocolException.Category.MALFORMED);
+        assertThat(p.getSurface("s1")).isNull();
+    }
+
+    /**
+     * Upstream: test_v10_component_catalog_override. The override resolves first; the surface
+     * default covers the rest.
+     */
+    @Test
+    public void v1ComponentCatalogOverride_resolvesExplicitFirst() {
+        A2uiMessageProcessor p = dualProcessor();
+        p.process(A2uiMessage.createSurfaceV1("s1", null, null, null, null, false));
+        Map<String, Object> named = A2uiMessage.component("c1", "Text");
+        named.put("@catalogId", "automotive");
+
+        p.process(A2uiMessage.updateComponents(V1, "s1", Collections.singletonList(named)));
+
+        assertThat(p.getSurface("s1").getComponents().keySet()).containsExactly("c1");
+    }
+
+    /** Upstream: test_v10_component_without_catalog_id_on_surface_without_default_errors. */
+    @Test
+    public void v1ComponentWithoutCatalogOnDefaultlessSurface_isCatalogError() {
+        A2uiMessageProcessor p = dualProcessor();
+        p.process(A2uiMessage.createSurfaceV1("s1", null, null, null, null, false));
+
+        A2uiProtocolException e = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.updateComponents(V1, "s1", one("c1", "Text"))));
+
+        assertThat(e.getCategory()).isEqualTo(A2uiProtocolException.Category.CATALOG);
+    }
+
+    @Test
+    public void v1ForeignCatalog_isCatalogError() {
+        A2uiMessageProcessor p = dualProcessor();
+        p.process(A2uiMessage.createSurfaceV1("s1", "automotive", null, null, null, false));
+        Map<String, Object> foreign = A2uiMessage.component("c1", "Text");
+        foreign.put("@catalogId", "charts-catalog");
+
+        A2uiProtocolException e = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.updateComponents(V1, "s1",
+                        Collections.singletonList(foreign))));
+
+        assertThat(e.getCategory()).isEqualTo(A2uiProtocolException.Category.CATALOG);
+    }
+
+    @Test
+    public void v1DoubledMixin_isMalformed() {
+        A2uiMessageProcessor p = dualProcessor();
+        p.process(A2uiMessage.createSurfaceV1("s1", "automotive", null, null, null, false));
+        Map<String, Object> doubled = A2uiMessage.component("c1", "Text");
+        doubled.put("@metadata", Collections.emptyMap());
+        doubled.put("metadata", Collections.emptyMap());
+
+        A2uiProtocolException e = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.updateComponents(V1, "s1",
+                        Collections.singletonList(doubled))));
+
+        assertThat(e.getCategory()).isEqualTo(A2uiProtocolException.Category.MALFORMED);
+    }
+
+    @Test
+    public void v1UnknownAtKey_isMalformed() {
+        A2uiMessageProcessor p = dualProcessor();
+        p.process(A2uiMessage.createSurfaceV1("s1", "automotive", null, null, null, false));
+        Map<String, Object> strange = A2uiMessage.component("c1", "Text");
+        strange.put("@whatever", "no");
+
+        A2uiProtocolException e = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.updateComponents(V1, "s1",
+                        Collections.singletonList(strange))));
+
+        assertThat(e.getCategory()).isEqualTo(A2uiProtocolException.Category.MALFORMED);
+    }
+
+    @Test
+    public void v1BareMixinAlone_isAnOrdinaryProperty() {
+        A2uiMessageProcessor p = dualProcessor();
+        p.process(A2uiMessage.createSurfaceV1("s1", "automotive", null, null, null, false));
+        Map<String, Object> bare = A2uiMessage.component("c1", "Text");
+        bare.put("metadata", Collections.singletonMap("page", 2));
+
+        p.process(A2uiMessage.updateComponents(V1, "s1", Collections.singletonList(bare)));
+
+        assertThat(p.getSurface("s1").getComponents().get("c1")).containsEntry(
+                "metadata", Collections.singletonMap("page", 2));
+    }
+
+    @Test
+    public void v09AtKey_isMalformed() {
+        A2uiMessageProcessor p = processor();
+        p.process(A2uiMessage.createSurface(V, "s1", "automotive"));
+        Map<String, Object> at = A2uiMessage.component("c1", "Text");
+        at.put("@catalogId", "automotive");
+
+        A2uiProtocolException e = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.updateComponents(V, "s1", Collections.singletonList(at))));
+
+        assertThat(e.getCategory()).isEqualTo(A2uiProtocolException.Category.MALFORMED);
+    }
+
+    /** Upstream: test_v10_update_data_model_deletion. */
+    @Test
+    @SuppressWarnings("unchecked")
+    public void v1Null_deletesTheKey() {
+        A2uiMessageProcessor p = dualProcessor();
+        Map<String, Object> user = new java.util.LinkedHashMap<>();
+        user.put("name", "Alice");
+        user.put("temporaryToken", "abc123xyz");
+        p.process(A2uiMessage.createSurfaceV1("s1", "automotive", null,
+                Collections.singletonMap("user", user), null, false));
+
+        p.process(A2uiMessage.updateDataModel(V1, "s1", "/user/temporaryToken", null));
+
+        Map<String, Object> after =
+                (Map<String, Object>) p.getSurface("s1").readDataModel("/user");
+        assertThat(after.keySet()).containsExactly("name");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void v09Null_isStored() {
+        A2uiMessageProcessor p = processor();
+        p.process(A2uiMessage.createSurface(V, "s1", "automotive"));
+
+        p.process(A2uiMessage.updateDataModel(V, "s1", "/user/temporaryToken", null));
+
+        Map<String, Object> user =
+                (Map<String, Object>) p.getSurface("s1").readDataModel("/user");
+        assertThat(user.keySet()).containsExactly("temporaryToken");
+        assertThat(user.get("temporaryToken")).isNull();
+    }
+
+    @Test
+    public void versionMismatch_isRoutedNowhere() {
+        A2uiMessageProcessor p = dualProcessor();
+        p.process(A2uiMessage.createSurface(V, "s09", "automotive"));
+        p.process(A2uiMessage.createSurfaceV1("s1", "automotive", null, null, null, false));
+
+        A2uiProtocolException update = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.updateComponents(V1, "s09", one("c1", "Text"))));
+        assertThat(update.getCategory()).isEqualTo(A2uiProtocolException.Category.MALFORMED);
+        A2uiProtocolException data = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.updateDataModel(V, "s1", "/x", 1)));
+        assertThat(data.getCategory()).isEqualTo(A2uiProtocolException.Category.MALFORMED);
+        A2uiProtocolException delete = assertThrows(A2uiProtocolException.class, () -> p.process(
+                A2uiMessage.deleteSurface(V, "s1")));
+        assertThat(delete.getCategory()).isEqualTo(A2uiProtocolException.Category.MALFORMED);
+        assertThat(p.getSurface("s1")).isNotNull();
     }
 }
