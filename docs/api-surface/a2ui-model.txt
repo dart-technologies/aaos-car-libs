@@ -366,3 +366,25 @@ public final class art.dart.a2ui.protocol.A2uiSurface {
     public java.lang.String requireDeclaredAction(java.lang.String);
     public java.util.Map<java.lang.String, java.lang.Object> getDataModel();
     public java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.lang.Object>> getComponents();
+public final class art.dart.a2ui.telemetry.A2uiTelemetry {
+    public static final int MAX_VALUE_LENGTH = 64;
+    public static void event(art.dart.a2ui.telemetry.TelemetryEvent);
+    public static void event(art.dart.a2ui.telemetry.TelemetryEvent, java.lang.String, java.lang.String);
+    public static void event(art.dart.a2ui.telemetry.TelemetryEvent, java.lang.String, java.lang.String, java.lang.String, java.lang.String);
+    public static void event(art.dart.a2ui.telemetry.TelemetryEvent, java.util.Map<java.lang.String, java.lang.String>);
+    public static void install(art.dart.a2ui.telemetry.TelemetryBackend);
+    public static void resetForTesting();
+public final class art.dart.a2ui.telemetry.LogBackend implements art.dart.a2ui.telemetry.TelemetryBackend {
+    public art.dart.a2ui.telemetry.LogBackend();
+    public void log(art.dart.a2ui.telemetry.TelemetryEvent, java.util.Map<java.lang.String, java.lang.String>);
+public interface art.dart.a2ui.telemetry.TelemetryBackend {
+    public abstract void log(art.dart.a2ui.telemetry.TelemetryEvent, java.util.Map<java.lang.String, java.lang.String>);
+public final class art.dart.a2ui.telemetry.TelemetryEvent extends java.lang.Enum<art.dart.a2ui.telemetry.TelemetryEvent> {
+    public static art.dart.a2ui.telemetry.TelemetryEvent valueOf(java.lang.String);
+    public static art.dart.a2ui.telemetry.TelemetryEvent[] values();
+    public static final art.dart.a2ui.telemetry.TelemetryEvent POI_CAP_REFUSED;
+    public static final art.dart.a2ui.telemetry.TelemetryEvent POI_SEARCH_SUBMITTED;
+    public static final art.dart.a2ui.telemetry.TelemetryEvent POI_STEP;
+    public static final art.dart.a2ui.telemetry.TelemetryEvent SESSION_START;
+    public static final art.dart.a2ui.telemetry.TelemetryEvent TEMPLATE_RENDERED;
+    public static final art.dart.a2ui.telemetry.TelemetryEvent VOICE_DECISION;

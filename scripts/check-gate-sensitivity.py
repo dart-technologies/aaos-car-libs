@@ -851,11 +851,17 @@ MUTATIONS = [
         'voice capture opens the microphone before asking whether it may',
         'a2ui-host-carapp/src/main/java/art/dart/a2ui/carapp/A2uiVoiceCapture.java',
         """        if (!mGate.allowsListening()) {
-            listener.onUnavailable(mGate.reason(), null);
+            TranscriptSource.Unavailable reason = mGate.reason();
+            A2uiTelemetry.event(TelemetryEvent.VOICE_DECISION, "outcome", "refused", "reason",
+                    reason.name());
+            listener.onUnavailable(reason, null);
             return;
         }""",
         """        if (false) {
-            listener.onUnavailable(mGate.reason(), null);
+            TranscriptSource.Unavailable reason = mGate.reason();
+            A2uiTelemetry.event(TelemetryEvent.VOICE_DECISION, "outcome", "refused", "reason",
+                    reason.name());
+            listener.onUnavailable(reason, null);
             return;
         }""",
         ':a2ui-host-carapp:testDebugUnitTest',

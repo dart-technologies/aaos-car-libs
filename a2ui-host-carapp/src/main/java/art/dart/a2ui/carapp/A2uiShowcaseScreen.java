@@ -57,6 +57,8 @@ import androidx.car.app.CarToast;
 import art.dart.a2ui.policy.A2uiValueLimits;
 import art.dart.a2ui.policy.A2uiRestrictionPolicy;
 import art.dart.a2ui.render.CarAppRenderer;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -441,9 +443,13 @@ public final class A2uiShowcaseScreen extends Screen {
             // policy nobody wrote down.
             Log.i(TAG, "host content limit " + limit + " dropped " + overflow + " item(s)");
         }
-        return CarAppRenderer.render(pruned, title(override, subjectFor(mSurfaceId, pruned)), limit,
+        Template rendered = CarAppRenderer.render(pruned,
+                title(override, subjectFor(mSurfaceId, pruned)), limit,
                 actionBinder(mSurfaceId),
                 voiceAction(mSurfaceId));
+        A2uiTelemetry.event(TelemetryEvent.TEMPLATE_RENDERED, "template",
+                rendered.getClass().getSimpleName(), "host", "a");
+        return rendered;
     }
 
     /**

@@ -18,11 +18,14 @@ package art.dart.a2ui.carapp;
 import android.content.Intent;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import androidx.car.app.Screen;
 import androidx.car.app.Session;
 
 import art.dart.a2ui.poi.PoiFlow;
 import art.dart.a2ui.poi.PoiRepository;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 /** One connection from the host. Hands back the showcase screen, or POI search on request. */
 public final class A2uiSession extends Session {
@@ -33,6 +36,13 @@ public final class A2uiSession extends Session {
         if (PoiFlow.isPoiLaunch(intent)) {
             return new A2uiPoiSearchScreen(getCarContext(), PoiRepository.anchored());
         }
+        reportRoot("showcase");
         return new A2uiShowcaseScreen(getCarContext());
+    }
+
+    /** Reports the root screen; split out so tests can fire it without a bound session. */
+    @VisibleForTesting
+    static void reportRoot(@NonNull String root) {
+        A2uiTelemetry.event(TelemetryEvent.SESSION_START, "root", root, "host", "a");
     }
 }

@@ -3,6 +3,8 @@ local.properties
 .env
 .env.*
 !.env.example
+# Firebase console downloads, per developer; see docs/TELEMETRY.md.
+google-services.json
 
 # Dart fork note: gradle-wrapper.properties is tracked; upstream ignored it because AOSP injects it.
 
