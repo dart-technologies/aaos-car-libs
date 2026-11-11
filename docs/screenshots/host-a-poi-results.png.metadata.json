@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-11T21:45:35+00:00",
+  "command": "Sprint 1 verification: POI results list on AAOS_35",
+  "commit": "1763bf6",
+  "display": "unspecified; screencap defaulted (multi-display warning)",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "9d097dbf594af5bc3d7162c3569c0a11b1609978332f64420090bd879453c4a1",
+  "state": "demo"
+}

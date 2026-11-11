@@ -40,6 +40,11 @@ EXPECTED = {
     "host-b-demo-limit-content.png",
     "host-b-live-baseline.png",
     "paintbooth-on-plugin-apis-1.5.0.png",
+    "host-a-poi-showcase.png",
+    "host-a-poi-search.png",
+    "host-a-poi-results.png",
+    "host-a-poi-detail.png",
+    "host-b-poi-baseline.png",
 }
 REQUIRED_METADATA = {
     "commit", "host", "package", "display", "state", "command", "sha256", "captured_at"

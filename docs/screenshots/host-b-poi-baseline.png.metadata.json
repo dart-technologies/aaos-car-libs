@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-11T22:04:53+00:00",
+  "command": "Sprint 1 verification: Host B launch, pre-broadcast, on AAOS_35",
+  "commit": "1763bf6",
+  "display": "unspecified; screencap defaulted (multi-display warning)",
+  "host": "host-b",
+  "package": "art.dart.a2ui.carui",
+  "sha256": "2995eb6aefce7a24807965ec17d1fadfe671a5557004f1ecdebe97f97a22344f",
+  "state": "demo"
+}
