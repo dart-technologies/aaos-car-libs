@@ -16,19 +16,21 @@
 package art.dart.a2ui.nav;
 
 import androidx.annotation.NonNull;
+import androidx.car.app.navigation.model.Maneuver;
 
 /**
- * One turn-by-turn step: a glanceable instruction, its maneuver icon type (one of
- * {@code Maneuver.TYPE_*}, kept as an int so this backend compiles without car-app model
- * imports), and the distance in meters the step covers.
+ * One turn-by-turn step: a glanceable instruction, its maneuver icon type (a
+ * {@code Maneuver.TYPE_*}, typed so lint proves it at the builder), and the distance in meters
+ * the step covers.
  */
 public final class NavStep {
 
     private final String mInstruction;
-    private final int mManeuverType;
+    @Maneuver.Type private final int mManeuverType;
     private final int mDistanceMeters;
 
-    public NavStep(@NonNull String instruction, int maneuverType, int distanceMeters) {
+    public NavStep(@NonNull String instruction, @Maneuver.Type int maneuverType,
+            int distanceMeters) {
         if (distanceMeters < 0) {
             throw new IllegalArgumentException("step distance must be non-negative");
         }
@@ -38,6 +40,6 @@ public final class NavStep {
     }
 
     @NonNull public String getInstruction() { return mInstruction; }
-    public int getManeuverType() { return mManeuverType; }
+    @Maneuver.Type public int getManeuverType() { return mManeuverType; }
     public int getDistanceMeters() { return mDistanceMeters; }
 }

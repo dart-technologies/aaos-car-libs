@@ -16,6 +16,7 @@
 package art.dart.a2ui.nav;
 
 import androidx.annotation.NonNull;
+import androidx.car.app.navigation.model.Maneuver;
 
 import art.dart.a2ui.poi.PoiPlace;
 
@@ -54,15 +55,12 @@ public final class NavRoute {
      */
     @NonNull
     public static NavRoute anchored() {
-        // Maneuver types are androidx.car.app.navigation.model.Maneuver constants, spelled out
-        // so this backend stays car-model-free (read with javap -constants from car-app 1.7.0):
-        // DEPART 1, TURN_NORMAL_LEFT 7, TURN_NORMAL_RIGHT 8, KEEP_RIGHT 4, DESTINATION 39.
         List<NavStep> steps = new ArrayList<>();
-        steps.add(new NavStep("Head south on Park Ave", 1, 400));
-        steps.add(new NavStep("Turn right onto E 34th St", 8, 650));
-        steps.add(new NavStep("Turn left onto 5th Ave", 7, 1800));
-        steps.add(new NavStep("Keep right onto W Broadway", 4, 900));
-        steps.add(new NavStep("Arrive at Joe's Pizza", 39, 50));
+        steps.add(new NavStep("Head south on Park Ave", Maneuver.TYPE_DEPART, 400));
+        steps.add(new NavStep("Turn right onto E 34th St", Maneuver.TYPE_TURN_NORMAL_RIGHT, 650));
+        steps.add(new NavStep("Turn left onto 5th Ave", Maneuver.TYPE_TURN_NORMAL_LEFT, 1800));
+        steps.add(new NavStep("Keep right onto W Broadway", Maneuver.TYPE_KEEP_RIGHT, 900));
+        steps.add(new NavStep("Arrive at Joe's Pizza", Maneuver.TYPE_DESTINATION, 50));
         PoiPlace destination = new PoiPlace("joes_pizza", "Joe's Pizza", "7 Carmine St", "Food",
                 "Greenwich Village slice shop since 1975. Cash moves the line fastest.", 1800);
         return new NavRoute(destination, steps, 3800, 780);

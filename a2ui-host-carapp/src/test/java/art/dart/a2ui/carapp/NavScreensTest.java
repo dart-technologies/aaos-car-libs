@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThrows;
 import androidx.annotation.NonNull;
 import androidx.car.app.Screen;
 import androidx.car.app.model.Row;
+import androidx.car.app.navigation.model.Maneuver;
 import androidx.car.app.navigation.model.NavigationTemplate;
 import androidx.car.app.navigation.model.RoutePreviewNavigationTemplate;
 import androidx.car.app.navigation.model.RoutingInfo;
@@ -99,8 +100,10 @@ public class NavScreensTest {
         assertThat(top).isInstanceOf(A2uiNavScreen.class);
         NavigationTemplate template = (NavigationTemplate) top.onGetTemplate();
         RoutingInfo routing = (RoutingInfo) template.getNavigationInfo();
-        assertThat(routing.getCurrentStep().getManeuver().getType()).isEqualTo(1);
-        assertThat(routing.getNextStep().getManeuver().getType()).isEqualTo(8);
+        assertThat(routing.getCurrentStep().getManeuver().getType())
+                .isEqualTo(Maneuver.TYPE_DEPART);
+        assertThat(routing.getNextStep().getManeuver().getType())
+                .isEqualTo(Maneuver.TYPE_TURN_NORMAL_RIGHT);
         assertThat(template.getDestinationTravelEstimate().getRemainingDistance()
                 .getDisplayDistance()).isEqualTo(3800.0);
     }
