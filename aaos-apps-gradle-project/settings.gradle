@@ -41,12 +41,19 @@ dependencyResolutionManagement {
 rootProject.name = 'AAOS Apps'
 
 // Dart fork note: upstream pinned 31. The floor is now 36, set by dependencies (recyclerview
-// 1.4.0 needs 35, core 1.18.0 needs 36), not by the toolchain. targetSdk stays 36 because the
-// newest AAOS image here is API 35, so API 37 behaviour could not be tested. See FORK.md, "Why
-// compileSdk 37 but targetSdk 36". CarUxRestrictionsInfo, which capped this at 34, is declared
-// locally as com.android.car.ui.utils.CarUxRestrictionsInfo.
+// 1.4.0 needs 35, core 1.18.0 needs 36), not by the toolchain. targetSdk stays 36: Robolectric
+// 4.16.1 (4.17 breaks every suite on CI's JDK, so the pin holds) cannot run an API 37 target —
+// its SDK picker fails every suite at initialization — and no API 37 automotive image exists to
+// prove the behaviour on anyway. Revisit with the Robolectric upgrade. CarUxRestrictionsInfo,
+// which capped this at 34, is declared locally as
+// com.android.car.ui.utils.CarUxRestrictionsInfo.
 gradle.ext.aaosLatestSDK = 37
 gradle.ext.aaosTargetSDK = 36
+
+// Dart fork note: one version for both hosts, so Play listings and the SBOM read the same
+// number. Bump both together; versionCode must never decrease.
+gradle.ext.dartVersionCode = 1
+gradle.ext.dartVersionName = "1.0"
 
 // Dart fork note: upstream's AOSP prebuilts path could never resolve. Vendor
 // android.car-system-stubs.jar (android.car's @SystemApi surface) at this path to build against

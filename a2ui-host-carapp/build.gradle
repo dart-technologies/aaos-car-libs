@@ -21,6 +21,9 @@
 apply plugin: 'com.android.application'
 apply plugin: 'org.cyclonedx.bom'
 
+// Release R8 + signing, shared with Host B.
+apply from: "$rootDir/release-signing.gradle"
+
 android {
     namespace = 'art.dart.a2ui.carapp'
     compileSdk = gradle.ext.aaosLatestSDK
@@ -32,8 +35,8 @@ android {
         // nothing can render it.
         minSdk = 30
         targetSdk = gradle.ext.aaosTargetSDK
-        versionCode 1
-        versionName "1.0"
+        versionCode = gradle.ext.dartVersionCode
+        versionName = gradle.ext.dartVersionName
     }
 
     compileOptions {

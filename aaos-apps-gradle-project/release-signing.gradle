@@ -1,0 +1,66 @@
+/*
+ * Copyright (C) 2026 Dart Technologies
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Shared release setup for both hosts, applied from each host's build.gradle. Release minifies
+// with R8; signing comes from the environment (CI secrets) or the developer's own
+// ~/.gradle/gradle.properties (never the committed gradle.properties, never the repo):
+//
+//   RELEASE_STORE_FILE / release.storeFile         keystore path
+//   RELEASE_STORE_PASSWORD / release.storePassword
+//   RELEASE_KEY_ALIAS / release.keyAlias
+//   RELEASE_KEY_PASSWORD / release.keyPassword
+//
+// Without keys the release build signs with debug keys and warns loudly: it proves R8 and the
+// shippable assembly, but the APK is NOT shippable. Provider APIs keep this configuration-cache
+// safe. The test keystore in certs/ signs platform sellers' test apps, never releases.
+
+def releaseStoreFile = providers.environmentVariable('RELEASE_STORE_FILE')
+        .orElse(providers.gradleProperty('release.storeFile'))
+def releaseStorePassword = providers.environmentVariable('RELEASE_STORE_PASSWORD')
+        .orElse(providers.gradleProperty('release.storePassword'))
+def releaseKeyAlias = providers.environmentVariable('RELEASE_KEY_ALIAS')
+        .orElse(providers.gradleProperty('release.keyAlias'))
+def releaseKeyPassword = providers.environmentVariable('RELEASE_KEY_PASSWORD')
+        .orElse(providers.gradleProperty('release.keyPassword'))
+
+android {
+    signingConfigs {
+        release {
+            if (releaseStoreFile.isPresent()) {
+                storeFile file(releaseStoreFile.get())
+                storePassword releaseStorePassword.getOrElse('')
+                keyAlias releaseKeyAlias.getOrElse('')
+                keyPassword releaseKeyPassword.getOrElse('')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-rules.pro'
+            if (releaseStoreFile.isPresent()) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+                logger.warn('No release keystore (RELEASE_STORE_FILE / release.storeFile); '
+                        + 'release signs with debug keys and is NOT shippable.')
+            }
+        }
+    }
+}
