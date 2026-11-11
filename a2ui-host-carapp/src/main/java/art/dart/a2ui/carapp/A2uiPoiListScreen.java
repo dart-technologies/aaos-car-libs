@@ -34,6 +34,8 @@ import art.dart.a2ui.poi.PoiFlow;
 import art.dart.a2ui.poi.PoiPlace;
 import art.dart.a2ui.poi.PoiRepository;
 import art.dart.a2ui.poi.PoiScreen;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 import java.util.Locale;
 
@@ -82,7 +84,11 @@ public final class A2uiPoiListScreen extends Screen implements PoiScreen {
     /** Pushes the map for this place; the flow cap decides whether it lands. */
     @VisibleForTesting
     boolean openMap(@NonNull PoiPlace place) {
-        return PoiFlow.push(this, new A2uiPoiMapScreen(getCarContext(), place));
+        boolean pushed = PoiFlow.push(this, new A2uiPoiMapScreen(getCarContext(), place));
+        if (pushed) {
+            A2uiTelemetry.event(TelemetryEvent.POI_STEP, "step", "map");
+        }
+        return pushed;
     }
 
     /**

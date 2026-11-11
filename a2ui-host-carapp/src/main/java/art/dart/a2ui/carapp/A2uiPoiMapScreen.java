@@ -29,6 +29,8 @@ import androidx.car.app.navigation.model.MapWithContentTemplate;
 import art.dart.a2ui.poi.PoiFlow;
 import art.dart.a2ui.poi.PoiPlace;
 import art.dart.a2ui.poi.PoiScreen;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 /**
  * Step 3 of the POI flow: the place on the map with a summary pane. No map controller yet — the
@@ -78,6 +80,10 @@ public final class A2uiPoiMapScreen extends Screen implements PoiScreen {
     /** Pushes the detail pane for this place; the flow cap decides whether it lands. */
     @VisibleForTesting
     boolean openDetail() {
-        return PoiFlow.push(this, new A2uiPoiDetailScreen(getCarContext(), mPlace));
+        boolean pushed = PoiFlow.push(this, new A2uiPoiDetailScreen(getCarContext(), mPlace));
+        if (pushed) {
+            A2uiTelemetry.event(TelemetryEvent.POI_STEP, "step", "detail");
+        }
+        return pushed;
     }
 }

@@ -21,6 +21,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.car.app.Screen;
 
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
+
 import java.util.Objects;
 
 /**
@@ -56,6 +59,7 @@ public final class PoiFlow {
         Objects.requireNonNull(next);
         int depth = from instanceof PoiScreen ? ((PoiScreen) from).poiDepth() : 0;
         if (depth >= MAX_SCREENS) {
+            A2uiTelemetry.event(TelemetryEvent.POI_CAP_REFUSED, "depth", String.valueOf(depth));
             return false;
         }
         from.getScreenManager().push(next);

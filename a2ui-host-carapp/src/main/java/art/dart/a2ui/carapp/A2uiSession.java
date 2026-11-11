@@ -34,6 +34,7 @@ public final class A2uiSession extends Session {
     @Override
     public Screen onCreateScreen(@NonNull Intent intent) {
         if (PoiFlow.isPoiLaunch(intent)) {
+            reportRoot("poi");
             return new A2uiPoiSearchScreen(getCarContext(), PoiRepository.anchored());
         }
         reportRoot("showcase");

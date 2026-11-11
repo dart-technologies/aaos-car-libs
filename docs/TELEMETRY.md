@@ -9,9 +9,9 @@ reach a backend through a miscoded call site.
 | Event | Keys | Emitted from |
 |---|---|---|
 | `SESSION_START` | `root` (showcase, poi), `host` (a, b) | `A2uiSession.onCreateScreen` (Host A; Host B follows) |
-| `POI_SEARCH_SUBMITTED` | `result_count` | POI search screen (lands with the POI hooks follow-up after C1) |
-| `POI_STEP` | `step` (list, map, detail) | POI screens (same follow-up) |
-| `POI_CAP_REFUSED` | `depth` | `PoiFlow` (same follow-up) |
+| `POI_SEARCH_SUBMITTED` | `result_count` | `A2uiPoiSearchScreen.openResults` |
+| `POI_STEP` | `step` (list, map, detail) | POI `openResults`/`openMap`/`openDetail`, on pushed screens only |
+| `POI_CAP_REFUSED` | `depth` | `PoiFlow.push` when the 4-screen cap refuses |
 | `VOICE_DECISION` | `outcome` (allowed, refused), `reason` (an `Unavailable` name, or none) | `A2uiVoiceCapture.listen`, once per call |
 | `TEMPLATE_RENDERED` | `template` (class simple name), `host` | `A2uiShowcaseScreen.onGetTemplate` |
 
