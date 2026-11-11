@@ -67,6 +67,12 @@ jobs:
         working-directory: aaos-apps-gradle-project
         run: ./gradlew assembleDebug --stacktrace
 
+      - name: Assemble release (R8 + signing fallback)
+        # Release minifies with R8; without keys it signs debug-only and warns. Proves the
+        # shippable assembly works, not that the APK is signed for Play.
+        working-directory: aaos-apps-gradle-project
+        run: ./gradlew :a2ui-host-carapp:assembleRelease :a2ui-host-carui:assembleRelease --stacktrace
+
       - name: JVM unit tests
         working-directory: aaos-apps-gradle-project
         # Tasks come from scripts/gate-modules.tsv, the one list the gate and the ledger also read.
