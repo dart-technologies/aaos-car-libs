@@ -42,21 +42,37 @@ public final class A2uiSurface {
     private static final int MAX_PROJECTED_COMPONENTS = 1_000;
 
     private final String mSurfaceId;
+    private final String mVersion;
     private final String mCatalogId;
+    private final Map<String, Object> mMetadata;
+    private final boolean mSendDataModel;
     /** id -> component properties, insertion-ordered because updateComponents order is the render order. */
     private final Map<String, Map<String, Object>> mComponents = new LinkedHashMap<>();
     private final Map<String, Object> mDataModel = new LinkedHashMap<>();
 
     A2uiSurface(@NonNull String surfaceId, @NonNull String catalogId) {
+        this(surfaceId, A2uiProtocolVersions.V09, catalogId, null, false);
+    }
+
+    A2uiSurface(@NonNull String surfaceId, @NonNull String version,
+            @Nullable String catalogId, @Nullable Map<String, Object> metadata,
+            boolean sendDataModel) {
         mSurfaceId = surfaceId;
+        mVersion = version;
         mCatalogId = catalogId;
+        mMetadata = metadata == null ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new LinkedHashMap<>(metadata));
+        mSendDataModel = sendDataModel;
     }
 
     /** Structural snapshot used to make a multi-message transaction reversible. */
     @SuppressWarnings("unchecked")
     A2uiSurface(@NonNull A2uiSurface source) {
         mSurfaceId = source.mSurfaceId;
+        mVersion = source.mVersion;
         mCatalogId = source.mCatalogId;
+        mMetadata = source.mMetadata;
+        mSendDataModel = source.mSendDataModel;
         for (Map.Entry<String, Map<String, Object>> entry : source.mComponents.entrySet()) {
             mComponents.put(entry.getKey(),
                     (Map<String, Object>) deepCopy(entry.getValue()));
@@ -65,7 +81,16 @@ public final class A2uiSurface {
     }
 
     @NonNull public String getSurfaceId() { return mSurfaceId; }
-    @NonNull public String getCatalogId() { return mCatalogId; }
+    @NonNull public String getVersion() { return mVersion; }
+    /**
+     * The surface default catalog from {@code createSurface}, or null when a v1.0 surface was
+     * created without one. Every component on such a surface must name its own catalog.
+     */
+    @Nullable public String getCatalogId() { return mCatalogId; }
+    /** The validated surface {@code metadata} from a v1.0 {@code createSurface}. */
+    @NonNull public Map<String, Object> getMetadata() { return mMetadata; }
+    /** Whether the agent asked for data-model echo via {@code sendDataModel}. */
+    public boolean getSendDataModel() { return mSendDataModel; }
 
     /**
      * An immutable deep snapshot of the components; a shallow view would let a caller rewrite an
@@ -150,7 +175,9 @@ public final class A2uiSurface {
 
     /**
      * Writes a JSON-pointer path such as {@code /user/name}, creating intermediate objects. A
-     * pointer through a non-object is MALFORMED, never a silent overwrite.
+     * pointer through a non-object is MALFORMED, never a silent overwrite. On v1.0 surfaces a
+     * null value deletes the key at the path; pre-1.0 surfaces keep the historical store-a-null
+     * behaviour.
      */
     @SuppressWarnings("unchecked")
     void writeDataModel(@NonNull String pointer, @Nullable Object value) {
@@ -180,7 +207,12 @@ public final class A2uiSurface {
                                 + part + "'");
             }
         }
-        node.put(parts.get(parts.size() - 1), deepCopy(value));
+        String leaf = parts.get(parts.size() - 1);
+        if (value == null && A2uiProtocolVersions.isV1(mVersion)) {
+            node.remove(leaf);
+            return;
+        }
+        node.put(leaf, deepCopy(value));
     }
 
     /** Reads a JSON-pointer path, or null if absent. */

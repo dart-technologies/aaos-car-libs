@@ -289,6 +289,7 @@ public interface art.dart.a2ui.protocol.A2uiDisplayBinder$Outcome {
     public abstract void onDecided(art.dart.a2ui.model.A2uiComponent, art.dart.a2ui.policy.A2uiActionPolicy$Decision);
 public final class art.dart.a2ui.protocol.A2uiMessage {
     public art.dart.a2ui.protocol.A2uiMessage$Kind getKind();
+    public boolean getSendDataModel();
     public java.lang.Object getValue();
     public java.lang.String getCatalogId();
     public java.lang.String getPath();
@@ -296,7 +297,10 @@ public final class art.dart.a2ui.protocol.A2uiMessage {
     public java.lang.String getVersion();
     public java.lang.String toString();
     public java.util.List<java.util.Map<java.lang.String, java.lang.Object>> getComponents();
+    public java.util.Map<java.lang.String, java.lang.Object> getInitialDataModel();
+    public java.util.Map<java.lang.String, java.lang.Object> getMetadata();
     public static art.dart.a2ui.protocol.A2uiMessage createSurface(java.lang.String, java.lang.String, java.lang.String);
+    public static art.dart.a2ui.protocol.A2uiMessage createSurfaceV1(java.lang.String, java.lang.String, java.util.List<java.util.Map<java.lang.String, java.lang.Object>>, java.util.Map<java.lang.String, java.lang.Object>, java.util.Map<java.lang.String, java.lang.Object>, boolean);
     public static art.dart.a2ui.protocol.A2uiMessage deleteSurface(java.lang.String, java.lang.String);
     public static art.dart.a2ui.protocol.A2uiMessage updateComponents(java.lang.String, java.lang.String, java.util.List<java.util.Map<java.lang.String, java.lang.Object>>);
     public static art.dart.a2ui.protocol.A2uiMessage updateDataModel(java.lang.String, java.lang.String, java.lang.String, java.lang.Object);
@@ -357,14 +361,21 @@ public final class art.dart.a2ui.protocol.A2uiProtocolException$Category extends
     public static final art.dart.a2ui.protocol.A2uiProtocolException$Category CATALOG;
     public static final art.dart.a2ui.protocol.A2uiProtocolException$Category INTEGRITY;
     public static final art.dart.a2ui.protocol.A2uiProtocolException$Category MALFORMED;
+public final class art.dart.a2ui.protocol.A2uiProtocolVersions {
+    public static boolean isV1(java.lang.String);
+    public static final java.lang.String V09 = "v0.9";
+    public static final java.lang.String V1 = "1.0";
 public final class art.dart.a2ui.protocol.A2uiSurface {
     public art.dart.a2ui.model.A2uiComponent project(java.lang.String);
     public art.dart.a2ui.policy.A2uiActionClass declaredActionClass(java.lang.String);
+    public boolean getSendDataModel();
     public java.lang.Object readDataModel(java.lang.String);
     public java.lang.String getCatalogId();
     public java.lang.String getSurfaceId();
+    public java.lang.String getVersion();
     public java.lang.String requireDeclaredAction(java.lang.String);
     public java.util.Map<java.lang.String, java.lang.Object> getDataModel();
+    public java.util.Map<java.lang.String, java.lang.Object> getMetadata();
     public java.util.Map<java.lang.String, java.util.Map<java.lang.String, java.lang.Object>> getComponents();
 public final class art.dart.a2ui.telemetry.A2uiTelemetry {
     public static final int MAX_VALUE_LENGTH = 64;

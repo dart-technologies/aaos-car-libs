@@ -12,7 +12,7 @@ agent → OEM gateway → agent client → A2uiMessageProcessor → policy → H
 
 | Package | Role |
 |---|---|
-| `protocol` | A2UI v0.9 `createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface`. Batches apply atomically; surfaces deep-copy on ingest and return immutable snapshots; depth ≤64, ≤1,000 nodes, no cycles, diamonds or duplicate children |
+| `protocol` | A2UI v0.9 + v1.0 `createSurface`, `updateComponents`, `updateDataModel`, `deleteSurface`, routed by message version. v1.0 adds the `@` envelope mixins, null-deletes, and the extended `createSurface` (optional catalog, inline components/data model). Batches apply atomically; surfaces deep-copy on ingest and return immutable snapshots; depth ≤64, ≤1,000 nodes, no cycles, diamonds or duplicate children |
 | `model` | `A2uiComponent`, `ComponentType`: the 18-type basic catalog — Text Button Card Tabs TextField CheckBox ChoicePicker Slider DateTimeInput Image Icon Divider Video AudioPlayer Row Column List Modal |
 | `policy` | Projection, value limits, action policy, visible tree, handoff |
 | `agent` | Provider-neutral gateway client |
