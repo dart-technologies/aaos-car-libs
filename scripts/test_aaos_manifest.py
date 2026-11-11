@@ -127,6 +127,21 @@ class ManifestTests(unittest.TestCase):
         self.assertTrue(any('unclassified template FooTemplate' in f
                             for f in check.failures))
 
+    def test_carapp_map_template_without_permission_fails(self):
+        # GOOD_CARAPP declares no permissions; PlaceListMap needs MAP_TEMPLATES.
+        check.check_carapp(GOOD_CARAPP, [('R.java', 'class S { PlaceListMapTemplate t; }')])
+        self.assertTrue(any('MAP_TEMPLATES' in f for f in check.failures))
+
+    def test_carapp_map_template_with_permission_passes(self):
+        manifest = GOOD_CARAPP.replace(
+            '<application>',
+            '<uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />\n'
+            '    <application>', 1)
+        # minCarApiLevel 7 fixture vs PlaceListMap base level 1: align the level first.
+        manifest = manifest.replace('android:value="7"', 'android:value="1"')
+        check.check_carapp(manifest, [('R.java', 'class S { PlaceListMapTemplate t; }')])
+        self.assertEqual(check.failures, [])
+
     def test_carapp_unknown_category_fails(self):
         bad = GOOD_CARAPP.replace('app.category.POI', 'app.category.SUBMARINE')
         check.check_carapp(bad, [('R.java', NEEDS_HEADER)])

@@ -39,6 +39,15 @@ CARAPP_ACTIVITY = 'androidx.car.app.activity.CarAppActivity'
 # CarAppService category; parked categories are plain activities, not templates.
 CARAPP_CATEGORIES = frozenset({'NAVIGATION', 'POI', 'IOT', 'WEATHER'})
 
+# Templates whose host dispatcher throws SecurityException without the permission, found on the
+# AAOS emulator (PlaceListMap) rather than in unit tests. Search/List/Message/Pane/Grid/Tab need
+# no permission; navigation templates need NAVIGATION_TEMPLATES by the same rule.
+MAP_TEMPLATES = frozenset({'PlaceListMapTemplate', 'MapTemplate', 'MapWithContentTemplate'})
+NAV_TEMPLATES = frozenset({'NavigationTemplate', 'PlaceListNavigationTemplate',
+                            'RoutePreviewNavigationTemplate'})
+MAP_PERMISSION = 'androidx.car.app.MAP_TEMPLATES'
+NAV_PERMISSION = 'androidx.car.app.NAVIGATION_TEMPLATES'
+
 # Class-level @RequiresCarApi from car-app 1.7.0 sources; unannotated == 1.
 # MapTemplate is deprecated for MapWithContentTemplate but still classifies at 5.
 TEMPLATE_LEVELS = {
@@ -145,6 +154,10 @@ def uses_feature(root: ET.Element, name: str) -> str | None:
     return None
 
 
+def uses_permission(root: ET.Element, name: str) -> bool:
+    return any(p.get(f'{ANDROID_NS}name') == name for p in root.findall('uses-permission'))
+
+
 def check_carapp(manifest_text: str, sources: list[tuple[str, str]]) -> None:
     try:
         root = ET.fromstring(manifest_text)
@@ -159,6 +172,18 @@ def check_carapp(manifest_text: str, sources: list[tuple[str, str]]) -> None:
         failures.append('Host A manifest lacks '
                         f'<uses-feature {TEMPLATES_HOST_FEATURE} required="true"> — nothing '
                         'can render it without the templates host')
+    used = set()
+    for _, text in sources:
+        used |= set(TEMPLATE_REF.findall(strip_java(text)))
+    used -= {'Template'}
+    if used & MAP_TEMPLATES and not uses_permission(root, MAP_PERMISSION):
+        failures.append(f'Host A renders {sorted(used & MAP_TEMPLATES)} but lacks '
+                        f'<uses-permission {MAP_PERMISSION}> — the host dispatcher throws '
+                        'SecurityException without it (seen on the AAOS emulator)')
+    if used & NAV_TEMPLATES and not uses_permission(root, NAV_PERMISSION):
+        failures.append(f'Host A renders {sorted(used & NAV_TEMPLATES)} but lacks '
+                        f'<uses-permission {NAV_PERMISSION}> — the host dispatcher throws '
+                        'SecurityException without it')
     app = root.find('application')
     if app is None:
         failures.append('Host A manifest has no <application>')
