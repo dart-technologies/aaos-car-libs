@@ -22,12 +22,18 @@ import androidx.annotation.VisibleForTesting;
 import androidx.car.app.Screen;
 import androidx.car.app.Session;
 
+import art.dart.a2ui.nav.NavFlow;
+import art.dart.a2ui.nav.NavRoute;
+import art.dart.a2ui.nav.NavTrip;
 import art.dart.a2ui.poi.PoiFlow;
 import art.dart.a2ui.poi.PoiRepository;
 import art.dart.a2ui.telemetry.A2uiTelemetry;
 import art.dart.a2ui.telemetry.TelemetryEvent;
 
-/** One connection from the host. Hands back the showcase screen, or POI search on request. */
+/**
+ * One connection from the host. Hands back the showcase screen, or POI search / route preview
+ * on request.
+ */
 public final class A2uiSession extends Session {
 
     @NonNull
@@ -36,6 +42,12 @@ public final class A2uiSession extends Session {
         if (PoiFlow.isPoiLaunch(intent)) {
             reportRoot("poi");
             return new A2uiPoiSearchScreen(getCarContext(), PoiRepository.anchored());
+        }
+        if (NavFlow.isNavLaunch(intent)) {
+            reportRoot("nav");
+            NavTrip trip = new NavTrip(NavRoute.anchored());
+            trip.preview();
+            return new A2uiNavPreviewScreen(getCarContext(), trip);
         }
         reportRoot("showcase");
         return new A2uiShowcaseScreen(getCarContext());
