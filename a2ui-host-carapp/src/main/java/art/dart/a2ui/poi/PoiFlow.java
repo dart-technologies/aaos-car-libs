@@ -31,7 +31,7 @@ import java.util.Objects;
 public final class PoiFlow {
 
     /** Set on the launch intent to root the session at POI search instead of the showcase. */
-    public static final String EXTRA_POI_LAUNCH = "art.dart.a2ui.carapp.extra.POI";
+    public static final String EXTRA_POI_LAUNCH = "art.dart.a2ui.poi.extra.POI_LAUNCH";
 
     /** Search, results, map, detail. */
     // metalava api-lint: MinMaxConstant, suppressed: the cap is the feature, not a tuning value.
