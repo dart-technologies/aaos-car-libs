@@ -98,6 +98,9 @@ import art.dart.a2ui.policy.A2uiHandoff;
 import art.dart.a2ui.policy.A2uiPruner;
 import art.dart.a2ui.policy.A2uiRestrictionPolicy;
 import art.dart.a2ui.policy.A2uiVisibleTree;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.LogBackend;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -290,6 +293,26 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
      * comes from {@code scope}, so the destination's tree cannot meet the source's authorization;
      * covered by {@code A2uiHostWiringTest}.
      */
+    /** Reports the host-B session; split out so tests can fire it without an activity. */
+    @VisibleForTesting
+    static void reportSessionStart() {
+        A2uiTelemetry.event(TelemetryEvent.SESSION_START, "root", "demo", "host", "b");
+    }
+
+    /**
+     * Reports what a render pass drew: the pruned root's catalog type, or {@code empty} when
+     * nothing survived. Surface ids are not reported — agent ids carry characters the scrubber
+     * rejects.
+     */
+    @VisibleForTesting
+    static void reportRendered(@Nullable A2uiComponent pruned) {
+        String template = "empty";
+        if (pruned != null && pruned.getType() != null) {
+            template = pruned.getType().catalogName();
+        }
+        A2uiTelemetry.event(TelemetryEvent.TEMPLATE_RENDERED, "template", template, "host", "b");
+    }
+
     @VisibleForTesting
     @NonNull
     static Rendered renderFor(@Nullable A2uiComponent projected,
@@ -300,6 +323,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if (pruned != null) {
             pruned = A2uiPruner.applyLimits(pruned, scope.mLimits);
         }
+        reportRendered(pruned);
         // Both returned, so callers that need the tree as well as the rows — logEnforcement pairs
         // them to tell a refused Button from an inert Text — cannot re-derive it and drift.
         return new Rendered(pruned, CarUiRenderer.render(pruned, new StaleGuard(
@@ -698,6 +722,12 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @SuppressWarnings("ProtectedMember")
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Debuggable builds log telemetry to logcat; release stays silent until Firebase lands.
+        // Same rule as Host A's service; the activity is this host's entry point.
+        if ((getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            A2uiTelemetry.install(new LogBackend());
+        }
+        reportSessionStart();
         setContentView(R.layout.a2ui_carui_activity);
 
         // Supplied by the OEM's plugin, so a vendor restyles it without rebuilding this app.
@@ -1273,6 +1303,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         int surfaceBudget = surfaceRowBudget(current, rows.size());
         mRenderedRoot = A2uiVisibleTree.visibleRoot(pruned, surfaceBudget);
         configureNativeChrome(mRenderedRoot);
+        reportRendered(pruned);
         List<CarUiListItem> rendered = CarUiRenderer.render(pruned,
                 new StaleGuard(mActionBinder, this::conditionsChanged));
         if (!mShowingAgent) {

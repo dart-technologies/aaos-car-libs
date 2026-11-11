@@ -39,6 +39,8 @@ import art.dart.a2ui.policy.A2uiActionPolicy;
 import art.dart.a2ui.protocol.A2uiMessage;
 import art.dart.a2ui.protocol.A2uiMessageProcessor;
 import art.dart.a2ui.protocol.A2uiSurface;
+import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.telemetry.TelemetryEvent;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -238,14 +240,18 @@ final class AgentLane implements AutoCloseable {
                 ? AgentActionOutcome.REFUSED : AgentActionOutcome.CONFIRMED);
     }
 
-    /** A spoken phrase reached an agent control. */
+    /** A spoken phrase reached an agent control. Never the phrase itself. */
     void onVoice(@NonNull String surfaceId,
             @NonNull A2uiMessageProcessor.VoiceDispatchResult result) {
         A2uiComponent matched = result.getMatchedComponent();
         if (matched == null) return;
         if (result.getOutcome() == A2uiMessageProcessor.VoiceOutcome.DISPATCHED) {
+            A2uiTelemetry.event(TelemetryEvent.VOICE_DECISION, "outcome", "allowed",
+                    "reason", "none");
             report(surfaceId, matched, AgentActionOutcome.ALLOWED);
         } else if (result.getOutcome() == A2uiMessageProcessor.VoiceOutcome.REFUSED_BY_POLICY) {
+            A2uiTelemetry.event(TelemetryEvent.VOICE_DECISION, "outcome", "refused",
+                    "reason", "none");
             report(surfaceId, matched, AgentActionOutcome.REFUSED);
         }
     }
