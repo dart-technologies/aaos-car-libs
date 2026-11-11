@@ -925,8 +925,8 @@ MUTATIONS = [
     (
         'protocol accepts an out-of-catalog component',
         'a2ui-model/src/main/java/art/dart/a2ui/protocol/A2uiMessageProcessor.java',
-        '''            if (ComponentType.fromCatalogName((String) component) == null) {''',
-        '            if (false) {',
+        '''        if (ComponentType.fromCatalogName((String) component) == null) {''',
+        '        if (false) {',
         ':a2ui-model:testDebugUnitTest',
         'a2ui-model',
     ),
