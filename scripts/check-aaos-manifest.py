@@ -3,10 +3,10 @@
 # Licensed under the Apache License, Version 2.0 — see scripts/check-build-coverage.py.
 """Audits the AAOS manifest contract for both A2UI hosts (Sprint 1 C7).
 
-Host B (a2ui-host-carapp, template app) must carry the Play-distribution feature,
+Host A (a2ui-host-carapp, template app) must carry the Play-distribution feature,
 the templates-host feature, a minCarApiLevel that is exactly the level its code
 needs, at least one car-app category, and a distraction-optimized launcher entry.
-Host A (a2ui-host-carui, native activities) must carry the Play-distribution
+Host B (a2ui-host-carui, native activities) must carry the Play-distribution
 feature and distraction optimization, and must NOT claim the template contract.
 
 The required car API level is re-derived from the code on every run: template
@@ -149,19 +149,19 @@ def check_carapp(manifest_text: str, sources: list[tuple[str, str]]) -> None:
     try:
         root = ET.fromstring(manifest_text)
     except ET.ParseError as e:
-        failures.append(f'Host B manifest does not parse: {e}')
+        failures.append(f'Host A manifest does not parse: {e}')
         return
     if uses_feature(root, AUTOMOTIVE_FEATURE) != 'true':
-        failures.append('Host B manifest lacks '
+        failures.append('Host A manifest lacks '
                         f'<uses-feature {AUTOMOTIVE_FEATURE} required="true"> — Play would '
                         'distribute a car-only template app to phones')
     if uses_feature(root, TEMPLATES_HOST_FEATURE) != 'true':
-        failures.append('Host B manifest lacks '
+        failures.append('Host A manifest lacks '
                         f'<uses-feature {TEMPLATES_HOST_FEATURE} required="true"> — nothing '
                         'can render it without the templates host')
     app = root.find('application')
     if app is None:
-        failures.append('Host B manifest has no <application>')
+        failures.append('Host A manifest has no <application>')
         return
 
     declared = None
@@ -172,13 +172,13 @@ def check_carapp(manifest_text: str, sources: list[tuple[str, str]]) -> None:
     unknown = sorted({c.split(' in ')[0][1:] + ' in ' + c.split(' in ')[1]
                       for c in contributors if c.startswith('?')})
     for u in unknown:
-        failures.append(f'Host B uses unclassified template {u} — add its car-app 1.7.0 '
+        failures.append(f'Host A uses unclassified template {u} — add its car-app 1.7.0 '
                         '@RequiresCarApi level to TEMPLATE_LEVELS in check-aaos-manifest.py')
     if declared is None:
-        failures.append(f'Host B manifest lacks {MIN_CAR_API_KEY} meta-data')
+        failures.append(f'Host A manifest lacks {MIN_CAR_API_KEY} meta-data')
     elif declared != str(need):
         top = ', '.join(c for c in contributors if not c.startswith('?')) or 'base templates'
-        failures.append(f'Host B declares {MIN_CAR_API_KEY}={declared} but the code needs '
+        failures.append(f'Host A declares {MIN_CAR_API_KEY}={declared} but the code needs '
                         f'{need} ({top}) — the level must be what the code needs, not the '
                         'newest')
 
@@ -186,38 +186,38 @@ def check_carapp(manifest_text: str, sources: list[tuple[str, str]]) -> None:
                 if any(a.get(f'{ANDROID_NS}name') == CARAPP_SERVICE_ACTION
                        for f in s.findall('intent-filter') for a in f.findall('action'))]
     if not services:
-        failures.append(f'Host B manifest has no service with the {CARAPP_SERVICE_ACTION} '
+        failures.append(f'Host A manifest has no service with the {CARAPP_SERVICE_ACTION} '
                         'action')
     else:
         categories = set()
         for svc in services:
             if svc.get(f'{ANDROID_NS}exported') != 'true':
-                failures.append('Host B CarAppService is not exported — the host cannot bind')
+                failures.append('Host A CarAppService is not exported — the host cannot bind')
             for f in svc.findall('intent-filter'):
                 for c in f.findall('category'):
                     name = c.get(f'{ANDROID_NS}name') or ''
                     if name.startswith('androidx.car.app.category.'):
                         categories.add(name.rsplit('.', 1)[1])
         if not categories:
-            failures.append('Host B CarAppService declares no car-app category')
+            failures.append('Host A CarAppService declares no car-app category')
         for cat in sorted(categories):
             if cat not in CARAPP_CATEGORIES:
-                failures.append(f'Host B declares unknown car-app category {cat} — expected one '
+                failures.append(f'Host A declares unknown car-app category {cat} — expected one '
                                 f'of {sorted(CARAPP_CATEGORIES)}')
 
     launcher = [a for a in app.findall('activity')
                 if a.get(f'{ANDROID_NS}name') == CARAPP_ACTIVITY]
     if not launcher:
-        failures.append(f'Host B manifest lacks the {CARAPP_ACTIVITY} AAOS launcher entry')
+        failures.append(f'Host A manifest lacks the {CARAPP_ACTIVITY} AAOS launcher entry')
     else:
         act = launcher[0]
         if act.get(f'{ANDROID_NS}exported') != 'true':
-            failures.append(f'Host B {CARAPP_ACTIVITY} is not exported')
+            failures.append(f'Host A {CARAPP_ACTIVITY} is not exported')
         distracted = any(m.get(f'{ANDROID_NS}name') == 'distractionOptimized'
                          and m.get(f'{ANDROID_NS}value') == 'true'
                          for m in act.findall('meta-data'))
         if not distracted:
-            failures.append(f'Host B {CARAPP_ACTIVITY} lacks distractionOptimized=true — the '
+            failures.append(f'Host A {CARAPP_ACTIVITY} lacks distractionOptimized=true — the '
                             'launcher would hide it while driving')
 
 
@@ -225,25 +225,25 @@ def check_carui(manifest_text: str) -> None:
     try:
         root = ET.fromstring(manifest_text)
     except ET.ParseError as e:
-        failures.append(f'Host A manifest does not parse: {e}')
+        failures.append(f'Host B manifest does not parse: {e}')
         return
     if uses_feature(root, AUTOMOTIVE_FEATURE) != 'true':
-        failures.append('Host A manifest lacks '
+        failures.append('Host B manifest lacks '
                         f'<uses-feature {AUTOMOTIVE_FEATURE} required="true"> — Play would '
                         'distribute a car-ui activity app to phones')
     app = root.find('application')
     if app is None:
-        failures.append('Host A manifest has no <application>')
+        failures.append('Host B manifest has no <application>')
         return
     for meta in app.findall('meta-data'):
         if meta.get(f'{ANDROID_NS}name') == MIN_CAR_API_KEY:
-            failures.append('Host A declares minCarApiLevel but has no CarAppService — a '
+            failures.append('Host B declares minCarApiLevel but has no CarAppService — a '
                             'native activity must not claim the template contract')
     carapp_services = [s for s in app.findall('service')
               if any(a.get(f'{ANDROID_NS}name') == CARAPP_SERVICE_ACTION
                      for f in s.findall('intent-filter') for a in f.findall('action'))]
     if carapp_services:
-        failures.append('Host A declares a CarAppService — it renders in-process and must stay '
+        failures.append('Host B declares a CarAppService — it renders in-process and must stay '
                         'a native AAOS app')
     for act in app.findall('activity'):
         if act.get(f'{ANDROID_NS}exported') == 'true':
@@ -251,7 +251,7 @@ def check_carui(manifest_text: str) -> None:
                              and m.get(f'{ANDROID_NS}value') == 'true'
                              for m in act.findall('meta-data'))
             if not distracted:
-                failures.append(f'Host A activity {act.get(f"{ANDROID_NS}name")} is exported '
+                failures.append(f'Host B activity {act.get(f"{ANDROID_NS}name")} is exported '
                                 'without distractionOptimized=true — the launcher would hide '
                                 'it while driving')
 
