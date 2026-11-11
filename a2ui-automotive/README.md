@@ -59,7 +59,8 @@ Both gaps are one spec proposal, sequenced after the catalog PR:
 ## Checking
 
 `scripts/check-a2ui-conformance.py` (CI) validates this file against both pinned schemas, legacy
-`main` `44a420b` and v1 candidate `bb4600b`. That is a shape check only: upstream's harness never runs
+`main` `44a420b` and v1 at upstream HEAD `294dacce`, and validates the vendored v1 basic catalog
+against the vendored v1 catalog definition. That is a shape check only: upstream's harness never runs
 `prune`. Behaviour is pinned by `A2uiCatalogContractTest`, which derives every case's allowed set from
 `A2uiRestrictionPolicy`. To run upstream's own validator (it globs only `core/`, `agent/`, `extensions/`):
 

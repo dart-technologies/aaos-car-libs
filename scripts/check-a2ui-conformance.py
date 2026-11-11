@@ -3,9 +3,10 @@
 # Licensed under the Apache License, Version 2.0 — see scripts/check-build-coverage.py.
 """Validates automotive conformance plus the provider-neutral OEM gateway contract.
 
-A pass means the file is shaped as upstream expects under both pinned schemas (legacy main and the
-v1 candidate); upstream's harness only validates schemas. Whether the pruning is correct is
-A2uiCatalogContractTest's job.
+A pass means the file is shaped as upstream expects under both pinned schemas (legacy main and
+v1 at upstream HEAD); upstream's harness only validates schemas. Whether the pruning is correct
+is A2uiCatalogContractTest's job. The vendored v1 basic catalog must also validate against the
+vendored v1 catalog-definition schema, pinning the 18 components the pruning assumes.
 
 Exit codes: 0 valid against both, 1 invalid against either, 2 could not be determined (jsonschema
 missing, schema or subject unreadable) — which is not a pass.
@@ -19,9 +20,11 @@ ROOT = Path(__file__).resolve().parent.parent
 SUBJECT = ROOT / 'a2ui-automotive' / 'conformance' / 'automotive.yaml'
 SCHEMA_DIR = ROOT / 'a2ui-automotive' / 'upstream-schemas'
 SCHEMAS = [
-    ('legacy main   44a420b', SCHEMA_DIR / 'conformance_schema-legacy-main-44a420b.json'),
-    ('v1 candidate  bb4600b', SCHEMA_DIR / 'conformance_schema-v1-candidate-bb4600b.json'),
+    ('legacy main 44a420b', SCHEMA_DIR / 'conformance_schema-legacy-main-44a420b.json'),
+    ('v1 HEAD    294dacce', SCHEMA_DIR / 'conformance_schema-v1-294dacce.json'),
 ]
+BASIC_CATALOG_V1 = SCHEMA_DIR / 'basic-catalog-v1-294dacce.json'
+CATALOG_DEFINITION_V1 = SCHEMA_DIR / 'catalog-definition-v1-294dacce.json'
 GATEWAY_SCHEMA = ROOT / 'a2ui-automotive' / 'agent-gateway-v1.schema.json'
 
 
@@ -64,6 +67,26 @@ def main() -> int:
             where = '/'.join(str(p) for p in e.absolute_path) or '<root>'
             print(f'  FAIL {label}: {e.message}', file=sys.stderr)
             print(f'       at: {where}', file=sys.stderr)
+
+    for path in (BASIC_CATALOG_V1, CATALOG_DEFINITION_V1):
+        if not path.is_file():
+            print(f'INDETERMINATE: vendored v1 catalog file missing: {path.name}',
+                  file=sys.stderr)
+            return 2
+    try:
+        catalog = json.loads(BASIC_CATALOG_V1.read_text())
+        catalog_definition = json.loads(CATALOG_DEFINITION_V1.read_text())
+        jsonschema.validate(instance=catalog, schema=catalog_definition)
+        components = sorted(catalog.get('components', {}))
+        print(f'  OK   v1 basic catalog: {len(components)} components validate '
+              f'({", ".join(components)})')
+    except json.JSONDecodeError as e:
+        print(f'INDETERMINATE: vendored v1 catalog file is not valid JSON: {e}',
+              file=sys.stderr)
+        return 2
+    except jsonschema.ValidationError as e:
+        failed = True
+        print(f'  FAIL v1 basic catalog: {e.message}', file=sys.stderr)
 
     if not GATEWAY_SCHEMA.is_file():
         print(f'INDETERMINATE: gateway schema missing: {GATEWAY_SCHEMA.name}', file=sys.stderr)
