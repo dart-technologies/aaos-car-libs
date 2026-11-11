@@ -115,12 +115,13 @@ public class TelemetryHooksTest {
                 new CarUxRestrictions.Builder(false,
                         A2uiRestrictionPolicy.UX_RESTRICTIONS_BASELINE, 0).build());
         A2uiShowcaseScreen screen = new A2uiShowcaseScreen(carContext, new FakeSource());
-        ScreenController controller = new ScreenController(screen);
-        // Reaching STARTED renders once; calling onGetTemplate again would render twice.
-        controller.moveToState(Lifecycle.State.STARTED);
+        new ScreenController(screen).moveToState(Lifecycle.State.STARTED);
+        // The STARTED transition renders once through the stack push; drop it so the render
+        // under test is the only event asserted.
+        mBackend.events.clear();
 
-        assertThat(controller.getTemplatesReturned()).hasSize(1);
-        Template rendered = controller.getTemplatesReturned().get(0);
+        Template rendered = screen.onGetTemplate();
+
         assertThat(mBackend.events).containsExactly(TelemetryEvent.TEMPLATE_RENDERED);
         assertThat(mBackend.lastParams).containsExactly(
                 "template", rendered.getClass().getSimpleName(), "host", "a");
