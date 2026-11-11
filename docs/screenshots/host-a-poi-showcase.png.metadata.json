@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-11T21:37:24+00:00",
+  "command": "Sprint 1 verification: showcase surface on AAOS_35",
+  "commit": "1763bf6",
+  "display": "unspecified; screencap defaulted (multi-display warning)",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "5c6aaf89728e49ecc6d45a2898e5130a8aed5a407c5daf5a6b8ef9e4c42e5475",
+  "state": "demo"
+}
