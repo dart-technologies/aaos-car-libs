@@ -101,6 +101,8 @@ Open at HEAD, one line each. Investigations and evidence live in git history and
 - `car-uxr-flutter`'s JVM (`CarUxrPluginTest`) and Dart (`flutter test`) suites are in no ledger and not in CI.
 - Surface baselines come from local debug AARs, not published release artifacts.
 - `record-demo.sh` infers "the screen changed" from file size when `ffmpeg` is absent.
+- Sprint 1's map pane has telemetry proof (`POI_STEP map`) but no committed capture; emulator
+  captures must pass `screencap -d` with an explicit display id from now on.
 - No mutation coverage for `oem-apis`, `car-rotary-lib`, `car-assist-lib`, `car-telephony-common`
   (reasons and removal conditions in `docs/mutation-exemptions.tsv`).
 

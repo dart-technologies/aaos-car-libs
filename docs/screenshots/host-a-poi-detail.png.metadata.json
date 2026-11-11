@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-11T22:04:08+00:00",
+  "command": "Sprint 1 verification: POI detail pane on AAOS_35",
+  "commit": "1763bf6",
+  "display": "unspecified; screencap defaulted (multi-display warning)",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "e1cf4ee82ce9111d1237e439d7886df00fb544600332c24be16d70b38c7f0079",
+  "state": "demo"
+}

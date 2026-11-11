@@ -108,7 +108,10 @@ flow cap) are already enforced in-tree by ItemCap/ContentLimiting; every new scr
 
 Sprint 1 — Foundation + POI ship-shape: C7 (descriptions/manifests), C1 (POI templates), P1
 (signing/version/R8), P3 SDK wiring. Exit: Host A installable as a signed POI app with full
-template coverage; release APKs from CI.
+template coverage; release APKs from CI. **Verified 2026-11-11** — full POI walk green on
+`AAOS_35`, telemetry chain recorded, one crash found and fixed (#47); report and evidence in
+[SPRINT-1-VERIFICATION](SPRINT-1-VERIFICATION.md). Follow-ups carried to Sprint 2: MapWithContent
+host-input proof (JVM covers push only), Host B broadcast-driven content pass.
 
 Sprint 2 — Driving categories: C2 (navigation), C4 (media service), C3 (IoT + weather), P5
 (staging backend). Exit: all all-tracks driving categories demoable on the AAOS emulator; media passes controller
