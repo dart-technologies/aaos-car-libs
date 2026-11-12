@@ -32,15 +32,14 @@ import androidx.car.app.navigation.model.RoutePreviewNavigationTemplate;
 import art.dart.a2ui.nav.NavFlow;
 import art.dart.a2ui.nav.NavRoute;
 import art.dart.a2ui.nav.NavScreen;
-import art.dart.a2ui.nav.NavStep;
 import art.dart.a2ui.nav.NavTrip;
 import art.dart.a2ui.telemetry.A2uiTelemetry;
 import art.dart.a2ui.telemetry.TelemetryEvent;
 
 /**
- * Step 1 of the navigation flow: the route preview with its steps and a navigate action. Five
- * anchored steps stay under the six-row template limit by construction, the way the six POI
- * anchors do.
+ * Step 1 of the navigation flow: the route preview with a navigate action. The list holds one
+ * row per ROUTE — tapping a row selects that route — so the single anchored route is a single
+ * row with its distance and time; the steps appear as maneuvers during guidance, never here.
  */
 public final class A2uiNavPreviewScreen extends Screen implements NavScreen {
 
@@ -63,19 +62,18 @@ public final class A2uiNavPreviewScreen extends Screen implements NavScreen {
         A2uiTelemetry.event(TelemetryEvent.TEMPLATE_RENDERED, "template",
                 "RoutePreviewNavigationTemplate", "host", "a");
         NavRoute route = mTrip.getRoute();
-        ItemList.Builder steps = new ItemList.Builder()
+        ItemList.Builder routes = new ItemList.Builder()
                 .setOnSelectedListener(this::selectRoute)
                 .setSelectedIndex(mSelectedRoute);
-        for (NavStep step : route.getSteps()) {
-            steps.addItem(new Row.Builder()
-                    .setTitle(step.getInstruction())
-                    .addText(spannedDistance(step.getDistanceMeters()))
-                    .build());
-        }
+        routes.addItem(new Row.Builder()
+                .setTitle(route.getDestination().getName())
+                .addText(spannedRouteSummary(
+                        route.getTotalDistanceMeters(), route.getTotalTimeSeconds()))
+                .build());
         return new RoutePreviewNavigationTemplate.Builder()
                 .setTitle(route.getDestination().getName())
                 .setHeaderAction(Action.BACK)
-                .setItemList(steps.build())
+                .setItemList(routes.build())
                 .setNavigateAction(new Action.Builder()
                         .setTitle("Go")
                         .setOnClickListener(this::startNavigation)
@@ -105,15 +103,16 @@ public final class A2uiNavPreviewScreen extends Screen implements NavScreen {
     }
 
     /**
-     * The step's distance line. The route-preview template rejects rows without a
-     * {@link DistanceSpan}, the way the place-list template does; the host formats the spanned
-     * value for the locale.
+     * The route's summary line. The route-preview template rejects rows without a
+     * {@link DistanceSpan}, the way the place-list template does; the span covers the distance
+     * and the host formats it for the locale.
      */
     @VisibleForTesting
-    static SpannableString spannedDistance(int meters) {
-        SpannableString line = new SpannableString(formatDistance(meters));
+    static SpannableString spannedRouteSummary(int meters, int seconds) {
+        String distance = formatDistance(meters);
+        SpannableString line = new SpannableString(distance + " · " + formatDuration(seconds));
         line.setSpan(DistanceSpan.create(Distance.create(meters, Distance.UNIT_METERS)),
-                0, line.length(), 0);
+                0, distance.length(), 0);
         return line;
     }
 
@@ -123,5 +122,10 @@ public final class A2uiNavPreviewScreen extends Screen implements NavScreen {
         }
         int tenths = meters / 100;
         return (tenths / 10) + "." + (tenths % 10) + " km";
+    }
+
+    private static String formatDuration(int seconds) {
+        int minutes = Math.max(1, (seconds + 30) / 60);
+        return minutes + " min";
     }
 }

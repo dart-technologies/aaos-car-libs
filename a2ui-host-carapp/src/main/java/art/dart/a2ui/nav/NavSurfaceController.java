@@ -25,6 +25,7 @@ import androidx.car.app.AppManager;
 import androidx.car.app.SurfaceCallback;
 import androidx.car.app.SurfaceContainer;
 import androidx.car.app.navigation.NavigationManager;
+import androidx.car.app.navigation.NavigationManagerCallback;
 
 /**
  * Owns the navigation map surface: registers the {@code SurfaceCallback} that receives it,
@@ -64,13 +65,23 @@ public final class NavSurfaceController implements SurfaceCallback {
         mListener = listener;
     }
 
-    /** Registers the surface callback and announces guidance. Idempotent. */
+    /**
+     * Registers the surface callback and announces guidance. Idempotent.
+     * {@code navigationStarted} throws without a manager callback, so one is always set first;
+     * a host-side stop ends the announcements, mirroring {@link #stop}.
+     */
     public void start() {
         if (mStarted) {
             return;
         }
         mStarted = true;
         mAppManager.setSurfaceCallback(this);
+        mNavigationManager.setNavigationManagerCallback(new NavigationManagerCallback() {
+            @Override
+            public void onStopNavigation() {
+                stop();
+            }
+        });
         mNavigationManager.navigationStarted();
     }
 
@@ -81,6 +92,7 @@ public final class NavSurfaceController implements SurfaceCallback {
         }
         mStarted = false;
         mSurfaceAvailable = false;
+        mNavigationManager.clearNavigationManagerCallback();
         mNavigationManager.navigationEnded();
     }
 
