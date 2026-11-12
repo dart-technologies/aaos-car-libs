@@ -34,6 +34,9 @@ TEMPLATES_HOST_FEATURE = 'android.software.car.templates_host'
 MIN_CAR_API_KEY = 'androidx.car.app.minCarApiLevel'
 CARAPP_SERVICE_ACTION = 'androidx.car.app.CarAppService'
 CARAPP_ACTIVITY = 'androidx.car.app.activity.CarAppActivity'
+MEDIA3_LIBRARY_ACTION = 'androidx.media3.session.MediaLibraryService'
+LEGACY_BROWSE_ACTION = 'android.media.browse.MediaBrowserService'
+MEDIA_LAUNCHABLE_KEY = 'androidx.car.app.launchable'
 
 # CarAppService categories valid on AAOS. Media is a MediaLibraryService, not a
 # CarAppService category; parked categories are plain activities, not templates.
@@ -251,6 +254,30 @@ def check_carapp(manifest_text: str, sources: list[tuple[str, str]]) -> None:
         if not distracted:
             failures.append(f'Host A {CARAPP_ACTIVITY} lacks distractionOptimized=true — the '
                             'launcher would hide it while driving')
+
+    media = [s for s in app.findall('service')
+             if any(a.get(f'{ANDROID_NS}name') == MEDIA3_LIBRARY_ACTION
+                    for f in s.findall('intent-filter') for a in f.findall('action'))]
+    if not media:
+        failures.append(f'Host A manifest has no service with the {MEDIA3_LIBRARY_ACTION} '
+                        'action')
+    else:
+        for svc in media:
+            if svc.get(f'{ANDROID_NS}exported') != 'true':
+                failures.append('Host A media library service is not exported — the car '
+                                'media center cannot bind from another process')
+            actions = {a.get(f'{ANDROID_NS}name')
+                       for f in svc.findall('intent-filter') for a in f.findall('action')}
+            if LEGACY_BROWSE_ACTION not in actions:
+                failures.append(f'Host A media library service lacks the {LEGACY_BROWSE_ACTION} '
+                                'action — the car source picker only lists services declaring it')
+            launchable = any(m.get(f'{ANDROID_NS}name') == MEDIA_LAUNCHABLE_KEY
+                             and m.get(f'{ANDROID_NS}value') == 'true'
+                             for m in svc.findall('meta-data'))
+            if not launchable:
+                failures.append(f'Host A media library service lacks {MEDIA_LAUNCHABLE_KEY}=true '
+                                'meta-data — the car source picker skips browse services from '
+                                'car-app packages without this opt-in')
 
 
 def check_carui(manifest_text: str) -> None:
