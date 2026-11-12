@@ -210,6 +210,9 @@ jobs:
         uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
         with:
           version: v1.32.0
+          # No SARIF upload: it needs security-events:write and 403s on main pushes
+          # (red since #26), while findings still fail this step either way.
+          advanced-security: false
 
       - name: Actions are SHA-pinned
         # Mutable action tags are a supply-chain risk; enforced, not reviewed.
