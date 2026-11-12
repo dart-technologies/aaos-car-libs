@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-12T03:31:14.812188+00:00",
+  "command": "C3: IoT device list on AAOS_35 (screencap -d display 0)",
+  "commit": "3568df5a651dd0aa6c4cbc3b915c83034f53cee6",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "a8d997d6f776116fc4375735df1acc7432accfa34071cfcd464a3b028f9daffc",
+  "state": "demo"
+}

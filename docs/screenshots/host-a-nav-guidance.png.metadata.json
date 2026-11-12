@@ -1,10 +1,10 @@
 {
-  "captured_at": "2026-11-12T00:05:40+00:00",
-  "command": "C2 acceptance: active guidance on AAOS_35 (screencap -d display 0)",
-  "commit": "fabe615",
+  "captured_at": "2026-11-12T03:31:15.081894+00:00",
+  "command": "C2 re-walk: guidance after a real Go tap on AAOS_35 (screencap -d display 0)",
+  "commit": "3568df5a651dd0aa6c4cbc3b915c83034f53cee6",
   "display": "4619827259835644672",
   "host": "host-a",
   "package": "art.dart.a2ui.carapp",
-  "sha256": "7d877c8f122ac4266a5d17432d494e7f19bf6d2fc9acdb51849f210dd4b78aa3",
+  "sha256": "b343de77af5712f857783ce557444fe0af3ee78d69ebf9c4952267c523927c2c",
   "state": "demo"
 }

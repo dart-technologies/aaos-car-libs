@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-12T03:31:14.922113+00:00",
+  "command": "C3: weather list on AAOS_35 (screencap -d display 0)",
+  "commit": "3568df5a651dd0aa6c4cbc3b915c83034f53cee6",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "02095c521753afe4f9766374bd2107780188858355b8713cf55b0f154059ca6d",
+  "state": "demo"
+}

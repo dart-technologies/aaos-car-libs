@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-12T03:31:15.028501+00:00",
+  "command": "C4: Anchored FM catalog browsed in car media center on AAOS_35 (screencap -d display 0)",
+  "commit": "3568df5a651dd0aa6c4cbc3b915c83034f53cee6",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "7edb141286176c9dc851d9ead1d90c2c14bdd0b4c7c7290da69d5375d65c8dec",
+  "state": "demo"
+}

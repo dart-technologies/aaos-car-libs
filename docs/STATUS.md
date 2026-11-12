@@ -103,9 +103,12 @@ Open at HEAD, one line each. Investigations and evidence live in git history and
 - `record-demo.sh` infers "the screen changed" from file size when `ffmpeg` is absent.
 - Sprint 1's map pane has telemetry proof (`POI_STEP map`) but no committed capture; emulator
   captures must pass `screencap -d` with an explicit display id from now on.
-- Host tap delivery is dead on the headless emulator (C2: ~25 taps + DPAD, nothing delivered);
-  template actions (Go/Stop/advance) are JVM-covered only. Same gap class as Sprint 1's
-  MapWithContent host-input proof.
+- Guidance Stop taps do not reach the app on the emulator (C3/C4 re-walk: Go and IoT
+  toggles deliver on a fresh boot, so the old blanket tap-death line is retired);
+  guidance teardown stays JVM-covered only.
+- The `booted` AAOS snapshot is unloadable (virtio-snd state) and no replacement was
+  saved (disk); the next emulator run pays a cold boot. Audible playback is unverified
+  (last boot was `-no-audio`).
 - No mutation coverage for `oem-apis`, `car-rotary-lib`, `car-assist-lib`, `car-telephony-common`
   (reasons and removal conditions in `docs/mutation-exemptions.tsv`).
 
