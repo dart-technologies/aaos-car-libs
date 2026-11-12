@@ -8,6 +8,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Yank window: with auto-merge on, wait out bad releases. Security updates
+    # bypass cooldown; version updates wait 7 days (zizmor dependabot-cooldown).
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: 'ci'
     groups:
@@ -25,6 +29,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Yank window: with auto-merge on, wait out bad releases. Security updates
+    # bypass cooldown; version updates wait 7 days (zizmor dependabot-cooldown).
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: 'deps'
     groups:
