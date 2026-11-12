@@ -75,6 +75,11 @@ dependencies {
     // 33.2.1-android matches car-telephony-common; re-verified against the real templates host.
     implementation libs.guava
 
+    // C4 media service: session + player. The browse tree behind the session is a MediaCatalog
+    // provider, so the future templated-media (EAP) track adopts it without touching the service.
+    implementation libs.androidx.media3.session
+    implementation libs.androidx.media3.exoplayer
+
     api libs.androidx.annotation
 
     testImplementation libs.junit
