@@ -22,12 +22,16 @@ import androidx.annotation.VisibleForTesting;
 import androidx.car.app.Screen;
 import androidx.car.app.Session;
 
+import art.dart.a2ui.iot.IotFlow;
+import art.dart.a2ui.iot.IotRepository;
 import art.dart.a2ui.nav.NavFlow;
 import art.dart.a2ui.nav.NavRoute;
 import art.dart.a2ui.nav.NavTrip;
 import art.dart.a2ui.poi.PoiFlow;
 import art.dart.a2ui.poi.PoiRepository;
 import art.dart.a2ui.telemetry.A2uiTelemetry;
+import art.dart.a2ui.weather.WeatherFlow;
+import art.dart.a2ui.weather.WeatherRepository;
 import art.dart.a2ui.telemetry.TelemetryEvent;
 
 /**
@@ -48,6 +52,14 @@ public final class A2uiSession extends Session {
             NavTrip trip = new NavTrip(NavRoute.anchored());
             trip.preview();
             return new A2uiNavPreviewScreen(getCarContext(), trip);
+        }
+        if (IotFlow.isIotLaunch(intent)) {
+            reportRoot("iot");
+            return new A2uiIotListScreen(getCarContext(), IotRepository.anchored());
+        }
+        if (WeatherFlow.isWeatherLaunch(intent)) {
+            reportRoot("weather");
+            return new A2uiWeatherListScreen(getCarContext(), WeatherRepository.anchored());
         }
         reportRoot("showcase");
         return new A2uiShowcaseScreen(getCarContext());
