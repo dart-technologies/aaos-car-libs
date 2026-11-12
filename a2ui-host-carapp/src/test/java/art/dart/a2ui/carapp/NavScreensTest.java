@@ -64,9 +64,12 @@ public class NavScreensTest {
         mCarContext = TestCarContext.createCarContext(RuntimeEnvironment.getApplication());
     }
 
-    /** Step 1 renders the route preview with every anchored step and a Go action. */
+    /**
+     * Step 1 renders the route preview with one row per ROUTE, not per step: the ItemList is the
+     * route list, and tapping a row selects that route. Steps-as-rows would crash on selection.
+     */
     @Test
-    public void previewScreenListsEveryStep() {
+    public void previewScreenListsOneRowPerRoute() {
         A2uiNavPreviewScreen preview = startedPreview(new NavTrip(NavRoute.anchored()));
 
         RoutePreviewNavigationTemplate template =
@@ -77,12 +80,7 @@ public class NavScreensTest {
         for (Object item : template.getItemList().getItems()) {
             titles.add(((Row) item).getTitle().toString());
         }
-        assertThat(titles).containsExactly(
-                "Head south on Park Ave",
-                "Turn right onto E 34th St",
-                "Turn left onto 5th Ave",
-                "Keep right onto W Broadway",
-                "Arrive at Joe's Pizza");
+        assertThat(titles).containsExactly("Joe's Pizza");
         assertThat(template.getNavigateAction().getTitle().toString()).isEqualTo("Go");
     }
 

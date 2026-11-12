@@ -47,6 +47,8 @@ NAV_TEMPLATES = frozenset({'NavigationTemplate', 'PlaceListNavigationTemplate',
                             'RoutePreviewNavigationTemplate'})
 MAP_PERMISSION = 'androidx.car.app.MAP_TEMPLATES'
 NAV_PERMISSION = 'androidx.car.app.NAVIGATION_TEMPLATES'
+SURFACE_PERMISSION = 'androidx.car.app.ACCESS_SURFACE'
+SURFACE_CALL = re.compile(r'\.setSurfaceCallback\s*\(')
 
 # Class-level @RequiresCarApi from car-app 1.7.0 sources; unannotated == 1.
 # MapTemplate is deprecated for MapWithContentTemplate but still classifies at 5.
@@ -184,6 +186,11 @@ def check_carapp(manifest_text: str, sources: list[tuple[str, str]]) -> None:
         failures.append(f'Host A renders {sorted(used & NAV_TEMPLATES)} but lacks '
                         f'<uses-permission {NAV_PERMISSION}> — the host dispatcher throws '
                         'SecurityException without it')
+    if any(SURFACE_CALL.search(strip_java(text)) for _, text in sources) \
+            and not uses_permission(root, SURFACE_PERMISSION):
+        failures.append('Host A calls setSurfaceCallback but lacks '
+                        f'<uses-permission {SURFACE_PERMISSION}> — the host dispatcher throws '
+                        'SecurityException without it (seen on the AAOS emulator)')
     app = root.find('application')
     if app is None:
         failures.append('Host A manifest has no <application>')

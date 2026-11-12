@@ -45,6 +45,11 @@
          (same host-call-dispatcher rule; declared before first use, not after a crash). -->
     <uses-permission android:name="androidx.car.app.NAVIGATION_TEMPLATES" />
 
+    <!-- setSurfaceCallback crashes without this (SecurityException from the host call
+         dispatcher — found on the AAOS emulator during the C2 acceptance walk, like the
+         PlaceListMap crash that motivated MAP_TEMPLATES). -->
+    <uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />
+
     <application
         android:label="@string/app_name"
         android:icon="@android:drawable/ic_media_play"

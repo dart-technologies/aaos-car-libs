@@ -142,6 +142,23 @@ class ManifestTests(unittest.TestCase):
         check.check_carapp(manifest, [('R.java', 'class S { PlaceListMapTemplate t; }')])
         self.assertEqual(check.failures, [])
 
+    def test_carapp_surface_callback_without_permission_fails(self):
+        # GOOD_CARAPP declares no permissions; setSurfaceCallback needs ACCESS_SURFACE.
+        check.check_carapp(GOOD_CARAPP,
+                           [('R.java', 'class S { void m() { app.setSurfaceCallback(cb); } }')])
+        self.assertTrue(any('ACCESS_SURFACE' in f for f in check.failures))
+
+    def test_carapp_surface_callback_with_permission_passes(self):
+        manifest = GOOD_CARAPP.replace(
+            '<application>',
+            '<uses-permission android:name="androidx.car.app.ACCESS_SURFACE" />\n'
+            '    <application>', 1)
+        # minCarApiLevel 7 fixture vs no classified templates: align the level first.
+        manifest = manifest.replace('android:value="7"', 'android:value="1"')
+        check.check_carapp(
+            manifest, [('R.java', 'class S { void m() { app.setSurfaceCallback(cb); } }')])
+        self.assertEqual(check.failures, [])
+
     def test_carapp_unknown_category_fails(self):
         bad = GOOD_CARAPP.replace('app.category.POI', 'app.category.SUBMARINE')
         check.check_carapp(bad, [('R.java', NEEDS_HEADER)])

@@ -17,6 +17,7 @@ package art.dart.a2ui.nav;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,9 @@ import android.view.Surface;
 import androidx.car.app.AppManager;
 import androidx.car.app.SurfaceContainer;
 import androidx.car.app.navigation.NavigationManager;
+import androidx.car.app.navigation.NavigationManagerCallback;
+
+import org.mockito.ArgumentCaptor;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -63,10 +67,30 @@ public class NavSurfaceControllerTest {
 
         assertThat(controller.isStarted()).isTrue();
         verify(appManager).setSurfaceCallback(controller);
+        // navigationStarted throws on device without a manager callback set first.
+        verify(navigationManager).setNavigationManagerCallback(
+                any(NavigationManagerCallback.class));
         verify(navigationManager).navigationStarted();
 
         controller.stop();
         controller.stop();
+
+        assertThat(controller.isStarted()).isFalse();
+        verify(navigationManager).clearNavigationManagerCallback();
+        verify(navigationManager).navigationEnded();
+    }
+
+    @Test
+    public void hostSideStopEndsAnnouncements() {
+        NavigationManager navigationManager = mock(NavigationManager.class);
+        NavSurfaceController controller = new NavSurfaceController(
+                mock(AppManager.class), navigationManager, new RecordingListener());
+        controller.start();
+        ArgumentCaptor<NavigationManagerCallback> captor =
+                ArgumentCaptor.forClass(NavigationManagerCallback.class);
+        verify(navigationManager).setNavigationManagerCallback(captor.capture());
+
+        captor.getValue().onStopNavigation();
 
         assertThat(controller.isStarted()).isFalse();
         verify(navigationManager).navigationEnded();
