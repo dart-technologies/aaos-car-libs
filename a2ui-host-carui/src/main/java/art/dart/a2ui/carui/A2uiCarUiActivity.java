@@ -761,7 +761,7 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
                     .setOnClickListener(ignored -> showDemoConsole())
                     .build();
             menuItems.add(mConsoleItem);
-            mAgent = AgentLane.create(getMainExecutor(), mAgentListener);
+            mAgent = AgentLane.create(this, getMainExecutor(), mAgentListener);
             // Engineering, like the console: shown only with the technical details.
             mProviderItem = com.android.car.ui.toolbar.MenuItem.builder(this)
                     .setTitle(providerLabel(mAgent.provider()))

@@ -28,6 +28,7 @@ import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.widget.TextView;
@@ -67,8 +68,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
@@ -446,6 +449,41 @@ public class A2uiAgentLaneTest {
     }
 
     @Test
+    public void gatewayOverridesAreDebugOnly() throws Exception {
+        String release = System.getProperty("a2ui.releaseManifest");
+        String debug = System.getProperty("a2ui.debugManifest");
+        assumeTrue("set for testDebugUnitTest by a2ui-host-carui/build.gradle",
+                release != null && debug != null);
+        Map<String, String> releaseMeta = applicationMetaData(release);
+        assertThat(releaseMeta).doesNotContainKey(AgentLane.META_ENDPOINT);
+        assertThat(releaseMeta).doesNotContainKey(AgentLane.META_TOKEN);
+        // Anti-vacuity: the debug variant merges both, and Robolectric runs that variant.
+        Map<String, String> debugMeta = applicationMetaData(debug);
+        assertThat(debugMeta.get(AgentLane.META_ENDPOINT)).isEqualTo(AgentLane.DEV_GATEWAY);
+        assertThat(debugMeta.get(AgentLane.META_TOKEN)).isEqualTo(AgentLane.DEV_TOKEN);
+    }
+
+    @Test
+    public void resolveEndpointAndTokenPreferTheManifest() {
+        assertThat(AgentLane.resolveEndpoint(null)).isEqualTo(AgentLane.DEV_GATEWAY);
+        assertThat(AgentLane.resolveToken(null)).isEqualTo(AgentLane.DEV_TOKEN);
+        assertThat(AgentLane.resolveEndpoint(new Bundle())).isEqualTo(AgentLane.DEV_GATEWAY);
+
+        Bundle staging = new Bundle();
+        staging.putString(AgentLane.META_ENDPOINT, "https://staging.example/v1");
+        staging.putString(AgentLane.META_TOKEN, "staging-token");
+        assertThat(AgentLane.resolveEndpoint(staging)).isEqualTo("https://staging.example/v1");
+        assertThat(AgentLane.resolveToken(staging)).isEqualTo("staging-token");
+    }
+
+    @Test
+    public void resolveEndpointFallsBackOnAnInvalidManifestValue() {
+        Bundle bad = new Bundle();
+        bad.putString(AgentLane.META_ENDPOINT, "http://insecure.example/v1");
+        assertThat(AgentLane.resolveEndpoint(bad)).isEqualTo(AgentLane.DEV_GATEWAY);
+    }
+
+    @Test
     public void badgeLabelsTurnIdsAndTheActionVocabulary() throws Exception {
         assertThat(AgentLane.badge(AgentProvider.MUSE, 812, "live", false))
                 .isEqualTo("muse · 812 ms");
@@ -555,6 +593,21 @@ public class A2uiAgentLaneTest {
             names.add(((Element) nodes.item(i)).getAttributeNS(ANDROID_NS, "name"));
         }
         return names;
+    }
+
+    /** Application-level meta-data values by name, from a merged manifest. */
+    private static Map<String, String> applicationMetaData(String manifest) throws Exception {
+        Map<String, String> values = new HashMap<>();
+        Element app = application(manifest);
+        NodeList nodes = app.getElementsByTagName("meta-data");
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Element meta = (Element) nodes.item(i);
+            if (meta.getParentNode() == app) {
+                values.put(meta.getAttributeNS(ANDROID_NS, "name"),
+                        meta.getAttributeNS(ANDROID_NS, "value"));
+            }
+        }
+        return values;
     }
 
     private static Document parse(String path) throws Exception {

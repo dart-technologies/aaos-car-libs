@@ -15,6 +15,9 @@
  */
 package art.dart.a2ui.carui;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -27,6 +30,7 @@ import art.dart.a2ui.agent.AgentGatewayAcknowledgement;
 import art.dart.a2ui.agent.AgentGatewayConfig;
 import art.dart.a2ui.agent.AgentGatewayEnvelope;
 import art.dart.a2ui.agent.AgentProvider;
+import art.dart.a2ui.agent.AccessTokenProvider;
 import art.dart.a2ui.agent.AgentSession;
 import art.dart.a2ui.agent.AgentTransport;
 import art.dart.a2ui.agent.AgentTransportException;
@@ -63,12 +67,19 @@ import java.util.concurrent.Executors;
  *
  * <p>Vendor keys stay in the dev gateway (tools/a2ui-gateway). This lane holds a fixed local token
  * the gateway checks, and reaches it as {@code https://127.0.0.1:8787} through
- * {@code adb reverse tcp:8787 tcp:8787}; debug builds alone trust its dev CA.
+ * {@code adb reverse tcp:8787 tcp:8787}; debug builds alone trust its dev CA. A staging build
+ * overrides both through the application {@code meta-data} (docs/STAGING-CONTRACT.md).
  */
 final class AgentLane implements AutoCloseable {
     static final String DEV_GATEWAY = "https://127.0.0.1:8787/v1";
     static final String DEV_TOKEN = "a2ui-dev-local";
     static final String SESSION_ID = "carui-debug";
+    /**
+     * Application {@code meta-data} keys overriding the dev gateway. The debug manifest declares
+     * the dev values; a staging build merges its own. Neither key appears in release.
+     */
+    static final String META_ENDPOINT = "art.dart.a2ui.GATEWAY_ENDPOINT";
+    static final String META_TOKEN = "art.dart.a2ui.GATEWAY_TOKEN";
     /** The gateway's action vocabulary (tools/a2ui-gateway contract.ACTIONS), classed by policy. */
     static final List<String> ACTIONS = Collections.unmodifiableList(Arrays.asList(
             "play", "pause", "stop", "next", "previous", "open", "select", "navigate", "search",
@@ -98,14 +109,53 @@ final class AgentLane implements AutoCloseable {
     @Nullable private String mLastAsk;
     @Nullable private String mLastTurnId;
 
-    /** The dev-gateway lane. */
-    static AgentLane create(@NonNull Executor main, @NonNull Listener listener) {
+    /**
+     * The gateway lane. The endpoint and token come from the application {@code meta-data}
+     * (the debug manifest declares the dev values; a staging build merges its own), falling
+     * back to the dev gateway when the manifest is silent.
+     */
+    static AgentLane create(@NonNull Context context, @NonNull Executor main,
+            @NonNull Listener listener) {
+        Bundle metaData = null;
+        try {
+            metaData = context.getPackageManager().getApplicationInfo(context.getPackageName(),
+                    PackageManager.GET_META_DATA).metaData;
+        } catch (PackageManager.NameNotFoundException impossible) {
+            Log.w(TAG, "own package missing from PackageManager; using the dev gateway");
+        }
+        final String token = resolveToken(metaData);
+        return create(main, listener, resolveEndpoint(metaData), () -> token);
+    }
+
+    /** The gateway lane against an explicit endpoint; staging and tests inject here. */
+    static AgentLane create(@NonNull Executor main, @NonNull Listener listener,
+            @NonNull String endpoint, @NonNull AccessTokenProvider tokens) {
         ExecutorService network = Executors.newSingleThreadExecutor();
         AgentTransport https = new HttpsAgentTransport(
-                new AgentGatewayConfig(DEV_GATEWAY, 3_000, 15_000,
+                new AgentGatewayConfig(endpoint, 3_000, 15_000,
                         AgentGatewayConfig.DEFAULT_MAX_RESPONSE_BYTES),
-                () -> DEV_TOKEN, network);
+                tokens, network);
         return new AgentLane(https, network, main, listener);
+    }
+
+    @VisibleForTesting
+    static String resolveEndpoint(@Nullable Bundle metaData) {
+        String endpoint = metaData == null ? null : metaData.getString(META_ENDPOINT);
+        if (endpoint == null) {
+            return DEV_GATEWAY;
+        }
+        try {
+            return new AgentGatewayConfig(endpoint).getEndpoint();
+        } catch (IllegalArgumentException bad) {
+            Log.w(TAG, "ignoring invalid " + META_ENDPOINT + "; using the dev gateway");
+            return DEV_GATEWAY;
+        }
+    }
+
+    @VisibleForTesting
+    static String resolveToken(@Nullable Bundle metaData) {
+        String token = metaData == null ? null : metaData.getString(META_TOKEN);
+        return token == null ? DEV_TOKEN : token;
     }
 
     @VisibleForTesting
@@ -160,12 +210,14 @@ final class AgentLane implements AutoCloseable {
             @NonNull A2uiMessageProcessor.RestrictionReading reading) {
         AgentProvider provider = mSession.getProvider();
         String turnId = turnId(provider, mSession.getExecutionProfile(), text);
-        mProcessor.reset();
         mLastAsk = text;
         mLastTurnId = turnId;
         long started = System.nanoTime();
         mListener.onPending(provider);
-        mSession.submitTurn(turnId, text, displayId, reading.getActiveRestrictions(),
+        // Atomic reset-submit: the old surfaces clear under the session lock together with the
+        // generation bump, so an overlapping ask can never reset between another turn's
+        // generation check and its apply.
+        mSession.submitTurnAfterReset(turnId, text, displayId, reading.getActiveRestrictions(),
                 reading.isTrustworthy(), mMain, new AgentSession.Callback() {
                     @Override
                     public void onApplied(@NonNull AgentGatewayEnvelope response) {
