@@ -36,6 +36,47 @@ public class AgentSessionTest {
     }
 
     @Test
+    public void resetSubmitClearsSynchronouslyAndStaleTurnStaysDropped() {
+        FakeTransport transport = new FakeTransport();
+        A2uiMessageProcessor processor = processor();
+        AgentSession session = session(AgentProvider.CLAUDE, transport, processor);
+        RecordingCallback first = new RecordingCallback();
+        RecordingCallback second = new RecordingCallback();
+
+        session.submitTurn("one", "first", 0, 0, true, DIRECT, first);
+        transport.respond(0, response("claude", "one", "old"));
+        assertThat(processor.getSurface("old")).isNotNull();
+
+        session.submitTurnAfterReset("two", "second", 0, 0, true, DIRECT, second);
+        // Synchronous: the old surfaces are gone before the new turn's response can arrive.
+        assertThat(processor.getSurface("old")).isNull();
+
+        transport.respond(1, response("claude", "two", "new"));
+        assertThat(second.applied).hasSize(1);
+        assertThat(processor.getSurface("new")).isNotNull();
+    }
+
+    @Test
+    public void overlappingResetSubmitDropsTheLateOlderResponse() {
+        FakeTransport transport = new FakeTransport();
+        A2uiMessageProcessor processor = processor();
+        AgentSession session = session(AgentProvider.CLAUDE, transport, processor);
+        RecordingCallback first = new RecordingCallback();
+        RecordingCallback second = new RecordingCallback();
+
+        session.submitTurn("one", "first", 0, 0, true, DIRECT, first);
+        session.submitTurnAfterReset("two", "second", 0, 0, true, DIRECT, second);
+        // The older response arrives after the reset: generation-gated, never applied.
+        transport.respond(0, response("claude", "one", "old"));
+        transport.respond(1, response("claude", "two", "new"));
+
+        assertThat(first.applied).isEmpty();
+        assertThat(second.applied).hasSize(1);
+        assertThat(processor.getSurface("old")).isNull();
+        assertThat(processor.getSurface("new")).isNotNull();
+    }
+
+    @Test
     public void providerSwapDiscardsPriorProviderAndAllShareOneContract() {
         for (AgentProvider provider : AgentProvider.values()) {
             FakeTransport transport = new FakeTransport();
