@@ -23,6 +23,7 @@ import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.session.LibraryResult;
 import androidx.media3.session.MediaLibraryService;
+import androidx.media3.session.SessionError;
 import androidx.media3.session.MediaSession;
 
 import com.google.common.collect.ImmutableList;
@@ -111,7 +112,7 @@ public class A2uiMediaLibraryService extends MediaLibraryService {
             MediaItem item = mCatalog.item(mediaId);
             if (item == null) {
                 return Futures.immediateFuture(
-                        LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE));
+                        LibraryResult.ofError(SessionError.ERROR_BAD_VALUE));
             }
             return Futures.immediateFuture(LibraryResult.ofItem(item, null));
         }
