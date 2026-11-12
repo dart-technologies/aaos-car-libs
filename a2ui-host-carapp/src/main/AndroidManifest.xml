@@ -79,6 +79,16 @@
             </intent-filter>
         </service>
 
+        <!-- C4 media source: the library session controllers browse. Exported: the car's media
+             center and the Auto host bind from other processes. -->
+        <service
+            android:name="art.dart.a2ui.media.A2uiMediaLibraryService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+            </intent-filter>
+        </service>
+
         <!-- From androidx.car.app:app-automotive: the AAOS launcher entry, binding to the on-device
              templates host. AAOS-only: there is no projected-mode service. -->
         <activity
