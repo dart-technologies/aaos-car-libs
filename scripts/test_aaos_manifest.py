@@ -33,6 +33,13 @@ GOOD_CARAPP = f"""<manifest {NS}>
                 <category android:name="androidx.car.app.category.POI" />
             </intent-filter>
         </service>
+        <service android:name="art.dart.Media" android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaLibraryService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+            <meta-data android:name="androidx.car.app.launchable" android:value="true" />
+        </service>
         <activity android:name="androidx.car.app.activity.CarAppActivity" android:exported="true">
             <meta-data android:name="distractionOptimized" android:value="true" />
         </activity>
@@ -164,6 +171,34 @@ class ManifestTests(unittest.TestCase):
         check.check_carapp(bad, [('R.java', NEEDS_HEADER)])
         self.assertTrue(any('unknown car-app category SUBMARINE' in f
                             for f in check.failures))
+
+    def test_carapp_media_service_without_legacy_browse_fails(self):
+        bad = GOOD_CARAPP.replace(
+            '<action android:name="android.media.browse.MediaBrowserService" />', '')
+        check.check_carapp(bad, [('R.java', NEEDS_HEADER)])
+        self.assertTrue(any('android.media.browse.MediaBrowserService' in f
+                            for f in check.failures))
+
+    def test_carapp_media_service_unexported_fails(self):
+        bad = GOOD_CARAPP.replace('android:name="art.dart.Media" android:exported="true"',
+                                  'android:name="art.dart.Media" android:exported="false"')
+        check.check_carapp(bad, [('R.java', NEEDS_HEADER)])
+        self.assertTrue(any('media library service is not exported' in f
+                            for f in check.failures))
+
+    def test_carapp_media_service_without_launchable_fails(self):
+        bad = GOOD_CARAPP.replace(
+            '<meta-data android:name="androidx.car.app.launchable" android:value="true" />',
+            '')
+        check.check_carapp(bad, [('R.java', NEEDS_HEADER)])
+        self.assertTrue(any('androidx.car.app.launchable' in f for f in check.failures))
+
+    def test_carapp_without_media_service_fails(self):
+        bad = GOOD_CARAPP.replace(
+            '<action android:name="androidx.media3.session.MediaLibraryService" />', '')
+        check.check_carapp(bad, [('R.java', NEEDS_HEADER)])
+        self.assertTrue(any('no service with the androidx.media3.session.MediaLibraryService'
+                            in f for f in check.failures))
 
     def test_good_carui_passes(self):
         check.check_carui(GOOD_CARUI)

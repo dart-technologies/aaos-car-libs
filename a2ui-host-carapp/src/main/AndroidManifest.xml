@@ -80,13 +80,21 @@
         </service>
 
         <!-- C4 media source: the library session controllers browse. Exported: the car's media
-             center and the Auto host bind from other processes. -->
+             center and the Auto host bind from other processes. Both browse actions: media3
+             controllers use the first, and the car's source picker only lists services
+             declaring the legacy `android.media.browse.MediaBrowserService` action. -->
         <service
             android:name="art.dart.a2ui.media.A2uiMediaLibraryService"
             android:exported="true">
             <intent-filter>
                 <action android:name="androidx.media3.session.MediaLibraryService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
+            <!-- Media-center opt-in (C4 emulator finding): without it the picker skips any
+                 browse service from a car-app package as a "non media template app". -->
+            <meta-data
+                android:name="androidx.car.app.launchable"
+                android:value="true" />
         </service>
 
         <!-- From androidx.car.app:app-automotive: the AAOS launcher entry, binding to the on-device
