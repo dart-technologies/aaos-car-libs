@@ -16,11 +16,20 @@
 
   Debug builds only. The live-agent lane reaches the local dev gateway (tools/a2ui-gateway) through
   `adb reverse tcp:8787 tcp:8787`. The release manifest has neither entry: A2uiAgentLaneTest reads
-  it. The network config is chosen in build.gradle by whether the gitignored dev CA exists.
+  it. The network config is chosen in build.gradle by whether the gitignored dev CA exists. The
+  gateway endpoint and token below are the lane's `meta-data` overrides (AgentLane.META_*): the
+  debug values here, a staging build's own when it merges them, absent in release.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <application android:networkSecurityConfig="${a2uiNetworkSecurityConfig}" />
+    <application android:networkSecurityConfig="${a2uiNetworkSecurityConfig}">
+        <meta-data
+            android:name="art.dart.a2ui.GATEWAY_ENDPOINT"
+            android:value="https://127.0.0.1:8787/v1" />
+        <meta-data
+            android:name="art.dart.a2ui.GATEWAY_TOKEN"
+            android:value="a2ui-dev-local" />
+    </application>
 </manifest>

@@ -88,7 +88,8 @@ and forwards `127.0.0.1:8787` here over ssh. `adb reverse` then reaches it; no k
 ## Host B lane (debuggable, non-user builds only)
 
 - `INTERNET`, the network-security config and the dev CA (`<debug-overrides>`) are in `src/debug/`;
-  `A2uiAgentLaneTest` reads both merged manifests.
+  `A2uiAgentLaneTest` reads both merged manifests. So are the gateway endpoint/token `meta-data`
+  overrides; a staging build merges its own (docs/STAGING-CONTRACT.md).
 - A separate processor and `TrustedActionRegistry`: a provider switch resets agent surfaces only,
   which render through the corpus path and fail closed on an undelivered reading.
 - The badge is `provider · NNN ms` live, else `provider · cached` or `provider · fallback`. Action
