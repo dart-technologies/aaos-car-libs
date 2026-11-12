@@ -42,8 +42,8 @@ temporary direct-launch extra; the rendered template path is identical.
 
 ## Gaps
 
-- Host tap delivery does not work headless here: ~25 taps across the preview (both default and
-  explicit `-d 0` targets), DPAD/rotary keys, and system-bar probes produced no app-visible
-  effect, and the templates host logs nothing on taps. Go/Stop/advance stay JVM-covered only —
-  the same known host-input gap Sprint 1 recorded for MapWithContent.
+- Update (2026-11-12 re-walk, see [SPRINT-2-C3C4-VERIFICATION](SPRINT-2-C3C4-VERIFICATION.md)):
+  the tap death was stale-snapshot state. On a fresh boot a real Go tap transitioned
+  preview → guidance, and IoT toggles flip. What stays dead is the guidance Stop action
+  specifically (tap + long-press + host silence) — guidance teardown is JVM-covered only.
 - No tile renderer yet: the map surface is owned and delivered, but undrawn.

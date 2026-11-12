@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-12T03:31:14.973964+00:00",
+  "command": "C4: source picker with A2UI Showcase on AAOS_35 (screencap -d display 0)",
+  "commit": "3568df5a651dd0aa6c4cbc3b915c83034f53cee6",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "7a176cb71d4fbf0b4a7640bc0f2d6f73bc8298ea0cb7719b25a496fb5315e9d7",
+  "state": "demo"
+}

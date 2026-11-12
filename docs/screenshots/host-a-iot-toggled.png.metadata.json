@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-12T03:31:14.866543+00:00",
+  "command": "C3: IoT list after two real toggle taps on AAOS_35 (screencap -d display 0)",
+  "commit": "3568df5a651dd0aa6c4cbc3b915c83034f53cee6",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "efb59f9347dd790304cb2172a5b176c9026ce09ee3f0f561496d36dc70b41c17",
+  "state": "demo"
+}

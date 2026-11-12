@@ -47,6 +47,11 @@ EXPECTED = {
     "host-b-poi-baseline.png",
     "host-a-nav-preview.png",
     "host-a-nav-guidance.png",
+    "host-a-iot-list.png",
+    "host-a-iot-toggled.png",
+    "host-a-weather-list.png",
+    "host-a-media-sources.png",
+    "host-a-media-browse.png",
 }
 REQUIRED_METADATA = {
     "commit", "host", "package", "display", "state", "command", "sha256", "captured_at"
