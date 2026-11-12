@@ -95,12 +95,37 @@ public final class AgentSession implements AutoCloseable {
     public void submitTurn(@NonNull String turnId, @NonNull String inputText, int displayId,
             int activeRestrictions, boolean trustworthy,
             @NonNull java.util.concurrent.Executor callbackExecutor, @NonNull Callback callback) {
+        submit(turnId, inputText, displayId, activeRestrictions, trustworthy, callbackExecutor,
+                callback, false);
+    }
+
+    /**
+     * Submits one turn for a stateless gateway, resetting the processor first. The reset, the
+     * generation bump, and the provider snapshot happen under one lock, so a second ask can
+     * never reset between another turn's generation check and its {@code processAll} — the
+     * overlap that used to apply half a turn. The reset is synchronous: when this returns, the
+     * old surfaces are gone and the new turn's ids are fresh.
+     */
+    public void submitTurnAfterReset(@NonNull String turnId, @NonNull String inputText,
+            int displayId, int activeRestrictions, boolean trustworthy,
+            @NonNull java.util.concurrent.Executor callbackExecutor, @NonNull Callback callback) {
+        submit(turnId, inputText, displayId, activeRestrictions, trustworthy, callbackExecutor,
+                callback, true);
+    }
+
+    private void submit(@NonNull String turnId, @NonNull String inputText, int displayId,
+            int activeRestrictions, boolean trustworthy,
+            @NonNull java.util.concurrent.Executor callbackExecutor, @NonNull Callback callback,
+            boolean resetFirst) {
         final long generation;
         final AgentProvider provider;
         final AgentExecutionProfile executionProfile;
         synchronized (mLock) {
             requireOpen();
             generation = ++mGeneration;
+            if (resetFirst) {
+                mProcessor.reset();
+            }
             provider = mProvider;
             executionProfile = mExecutionProfile;
         }

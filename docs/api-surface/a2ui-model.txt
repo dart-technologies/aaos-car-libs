@@ -64,6 +64,7 @@ public final class art.dart.a2ui.agent.AgentSession implements java.lang.AutoClo
     public void selectProvider(art.dart.a2ui.agent.AgentProvider);
     public void sendActionResult(java.lang.String, java.lang.String, java.lang.String, java.lang.String, art.dart.a2ui.agent.AgentActionOutcome, java.lang.String, java.util.concurrent.Executor, art.dart.a2ui.agent.AgentSession$ActionResultCallback);
     public void submitTurn(java.lang.String, java.lang.String, int, int, boolean, java.util.concurrent.Executor, art.dart.a2ui.agent.AgentSession$Callback);
+    public void submitTurnAfterReset(java.lang.String, java.lang.String, int, int, boolean, java.util.concurrent.Executor, art.dart.a2ui.agent.AgentSession$Callback);
 public interface art.dart.a2ui.agent.AgentSession$ActionResultCallback {
     public abstract void onAcknowledged(art.dart.a2ui.agent.AgentGatewayAcknowledgement);
     public abstract void onFailure(art.dart.a2ui.agent.AgentTransportException);
