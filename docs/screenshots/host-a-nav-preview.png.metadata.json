@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-11T23:56:14+00:00",
+  "command": "C2 acceptance: route preview on AAOS_35 (screencap -d display 0)",
+  "commit": "fabe615",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "de63194b85ca0b37770e935433ab17956e3058db064f51656face9a79e261791",
+  "state": "demo"
+}
