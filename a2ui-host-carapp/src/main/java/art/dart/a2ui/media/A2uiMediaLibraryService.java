@@ -57,9 +57,11 @@ public class A2uiMediaLibraryService extends MediaLibraryService {
 
     @Nullable
     @Override
-    // No @NonNull on controllerInfo: the super method's parameter is platform-nullness, and
-    // metalava's InvalidNullabilityOverride forbids strengthening it in the override.
-    public MediaLibrarySession onGetSession(MediaSession.ControllerInfo controllerInfo) {
+    // @Nullable, not @NonNull: the super method's parameter is platform-nullness, so
+    // InvalidNullabilityOverride forbids strengthening it — while MissingNullability still
+    // requires an annotation. The framework never passes null in practice.
+    public MediaLibrarySession onGetSession(
+            @Nullable MediaSession.ControllerInfo controllerInfo) {
         return mSession;
     }
 
