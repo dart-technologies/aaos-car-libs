@@ -36,6 +36,10 @@ CASE_MASK=(
   big_buck_bunny      0x10    # NO_VIDEO, audio remains
   met_visit           0xff    # motion: depth limit cuts map and sources; gallery and film go
   ev_charge_coffee    0xff    # motion: charger comparison stays; reorder refused; tour goes
+  artwork_grid        0x20    # LIMIT_CONTENT truncates the grid to the host's limit
+  sign_in             0x8     # NO_KEYBOARD removes the email entry; continue refuses
+  long_message        0x1ff   # the receipt survives FULLY_RESTRICTED unchanged
+  tabbed_library      0x20    # LIMIT_CONTENT drops Tabs; the screen empties, then recovers
 )
 # These two are interesting at BASELINE only because of a second display, which one recording cannot
 # show; FULLY_RESTRICTED shows what the surface becomes where the driver can see it.
@@ -52,6 +56,10 @@ CASE_WHAT=(
   big_buck_bunny      "parked video is removed by NO_VIDEO while audio controls remain"
   met_visit           "map, sources and artwork leave in motion; ETA, brief and audio guide stay"
   ev_charge_coffee    "charger comparison and navigation stay in motion; reorder and tour wait for park"
+  artwork_grid        "six artwork cards as a GridTemplate; LIMIT_CONTENT truncates it"
+  sign_in             "email entry plus continue as a SignInTemplate; NO_KEYBOARD removes entry"
+  long_message        "the charging receipt as a LongMessageTemplate; readable parked or moving"
+  tabbed_library      "Albums/Artists/Playlists as a TabTemplate; LIMIT_CONTENT empties it"
 )
 
 HOST_A_PKG=art.dart.a2ui.carapp

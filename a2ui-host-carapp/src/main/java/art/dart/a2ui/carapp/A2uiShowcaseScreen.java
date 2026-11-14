@@ -35,6 +35,7 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.car.app.constraints.ConstraintManager;
 import androidx.car.app.model.Action;
 import androidx.car.app.model.CarIcon;
+import androidx.car.app.model.TabTemplate;
 import androidx.car.app.model.Template;
 
 import androidx.core.graphics.drawable.IconCompat;
@@ -180,6 +181,21 @@ public final class A2uiShowcaseScreen extends Screen {
      */
     @NonNull
     private String mSurfaceId = DemoTrace.SURFACE_ID;
+
+    /**
+     * The tab a TabTemplate is showing, by child id; null shows the first. Reset on every case
+     * switch: a tab id from another surface would silently select the wrong page.
+     */
+    @Nullable
+    private String mActiveTabContentId;
+
+    /** Tab selections invalidate, so the next template shows the newly active tab's rows. */
+    private final TabTemplate.TabCallback mTabCallback = new TabTemplate.TabCallback() {
+        @Override
+        public void onTabSelected(String contentId) {
+            selectTab(contentId);
+        }
+    };
 
     /**
      * The debug receivers, held so they can be released: each references this Screen, and
@@ -396,10 +412,9 @@ public final class A2uiShowcaseScreen extends Screen {
         }
     }
 
-    /** The host's list limit. Read fresh; a host may change it. */
-    private int contentLimit() {
-        return getCarContext().getCarService(ConstraintManager.class)
-                .getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST);
+    /** The host's limit for one content type. Read fresh; a host may change it. */
+    private int contentLimit(int type) {
+        return getCarContext().getCarService(ConstraintManager.class).getContentLimit(type);
     }
 
     /** The allowed set for the current reading, demo override honoured. */
@@ -423,7 +438,11 @@ public final class A2uiShowcaseScreen extends Screen {
                 : limitsFor(mRestrictions.getRestrictionsSource(),
                         mRestrictions.getCurrentRestrictions());
 
-        int limit = contentLimit();
+        UseCaseCorpus.TemplateCapability routed =
+                pruned == null ? null : routedCapability(mSurfaceId);
+        int limit = contentLimit(routed == UseCaseCorpus.TemplateCapability.GRID
+                ? ConstraintManager.CONTENT_LIMIT_TYPE_GRID
+                : ConstraintManager.CONTENT_LIMIT_TYPE_LIST);
 
         // Permanent diagnostic: a real reading and a fallback render identically, so all four
         // inputs are logged on every template.
@@ -437,19 +456,109 @@ public final class A2uiShowcaseScreen extends Screen {
                 + " limits=" + limits
                 + " contentLimit=" + limit);
 
-        int overflow = CarAppRenderer.overflowCount(pruned, limit);
+        Template rendered = templateFor(mSurfaceId, pruned, routed,
+                title(override, subjectFor(mSurfaceId, pruned)), limit);
+        A2uiTelemetry.event(TelemetryEvent.TEMPLATE_RENDERED, "template",
+                rendered.getClass().getSimpleName(), "host", "a");
+        return rendered;
+    }
+
+    /**
+     * The non-list template a case asked for, or null for the list default. Priority order, so a
+     * case claiming two routed capabilities still renders one template.
+     */
+    @Nullable
+    private static UseCaseCorpus.TemplateCapability routedCapability(@NonNull String surfaceId) {
+        UseCaseCorpus.UseCase useCase = UseCaseCorpus.byId(surfaceId);
+        if (useCase == null) {
+            return null;
+        }
+        Set<UseCaseCorpus.TemplateCapability> caps = useCase.getTemplateCapabilities();
+        if (caps.contains(UseCaseCorpus.TemplateCapability.TAB)) {
+            return UseCaseCorpus.TemplateCapability.TAB;
+        }
+        if (caps.contains(UseCaseCorpus.TemplateCapability.GRID)) {
+            return UseCaseCorpus.TemplateCapability.GRID;
+        }
+        if (caps.contains(UseCaseCorpus.TemplateCapability.LONG_MESSAGE)) {
+            return UseCaseCorpus.TemplateCapability.LONG_MESSAGE;
+        }
+        if (caps.contains(UseCaseCorpus.TemplateCapability.SIGN_IN)) {
+            return UseCaseCorpus.TemplateCapability.SIGN_IN;
+        }
+        return null;
+    }
+
+    /** Renders the routed template, logging truncation the way the list path always has. */
+    @NonNull
+    private Template templateFor(@NonNull String surfaceId, @Nullable A2uiComponent pruned,
+            @Nullable UseCaseCorpus.TemplateCapability routed, @NonNull String title, int limit) {
+        A2uiActionBinder binder = actionBinder(surfaceId);
+        Action header = voiceAction(surfaceId);
+        if (routed == UseCaseCorpus.TemplateCapability.TAB) {
+            logOverflow(activeTabPage(pruned), limit);
+            return CarAppRenderer.renderTab(
+                    pruned, limit, binder, mActiveTabContentId, mTabCallback, tabIcon());
+        }
+        if (routed == UseCaseCorpus.TemplateCapability.GRID) {
+            logOverflow(pruned, limit);
+            return CarAppRenderer.renderGrid(
+                    pruned, title, limit, binder, header, gridItemImage());
+        }
+        if (routed == UseCaseCorpus.TemplateCapability.LONG_MESSAGE) {
+            return CarAppRenderer.renderLongMessage(pruned, title, binder);
+        }
+        if (routed == UseCaseCorpus.TemplateCapability.SIGN_IN) {
+            return CarAppRenderer.renderSignIn(pruned, title, binder,
+                    (field, text) -> submitSignIn(surfaceId, field, text));
+        }
+        logOverflow(pruned, limit);
+        return CarAppRenderer.render(pruned, title, limit, binder, header);
+    }
+
+    private void logOverflow(@Nullable A2uiComponent tree, int limit) {
+        int overflow = CarAppRenderer.overflowCount(tree, limit);
         if (overflow > 0) {
             // Recorded rather than silent. A limit that quietly removes content is a content
             // policy nobody wrote down.
             Log.i(TAG, "host content limit " + limit + " dropped " + overflow + " item(s)");
         }
-        Template rendered = CarAppRenderer.render(pruned,
-                title(override, subjectFor(mSurfaceId, pruned)), limit,
-                actionBinder(mSurfaceId),
-                voiceAction(mSurfaceId));
-        A2uiTelemetry.event(TelemetryEvent.TEMPLATE_RENDERED, "template",
-                rendered.getClass().getSimpleName(), "host", "a");
-        return rendered;
+    }
+
+    /** The active tab's page, for overflow logging; the renderer resolves the same page. */
+    @Nullable
+    private A2uiComponent activeTabPage(@Nullable A2uiComponent pruned) {
+        if (pruned == null || pruned.getChildren().isEmpty()) {
+            return pruned;
+        }
+        for (A2uiComponent page : pruned.getChildren()) {
+            if (page.getId().equals(mActiveTabContentId)) {
+                return page;
+            }
+        }
+        return pruned.getChildren().get(0);
+    }
+
+    private void selectTab(@Nullable String contentId) {
+        mActiveTabContentId = contentId;
+        invalidate();
+    }
+
+    @VisibleForTesting
+    void selectTabForTesting(@Nullable String contentId) {
+        selectTab(contentId);
+    }
+
+    /**
+     * Dispatches submitted sign-in text as the field action's payload. The surface is the one the
+     * template was rendered against, not the one selected now: a submit on a stale template must
+     * not dispatch into another surface.
+     */
+    private void submitSignIn(@NonNull String surfaceId, @NonNull A2uiComponent field,
+            @NonNull String text) {
+        A2uiActionPolicy.Decision decision = mProcessor.dispatchAction(
+                surfaceId, field.getId(), field.getAction(), text, field.getActionClass());
+        Log.i(TAG, "submitted sign-in text -> " + decision);
     }
 
     /**
@@ -487,6 +596,7 @@ public final class A2uiShowcaseScreen extends Screen {
         // Stop listening before switching, or a phrase resolves against a surface nobody sees.
         mVoice.cancel();
         mSurfaceId = surfaceId;
+        mActiveTabContentId = null;
         Log.i(TAG, "showing case " + surfaceId);
         invalidate();
         return true;
@@ -592,6 +702,27 @@ public final class A2uiShowcaseScreen extends Screen {
                 .build();
     }
 
+    /**
+     * The mark on every tab. One neutral icon, built per template like the voice action: the wire
+     * carries no tab art, so the host cannot distinguish tabs visually and does not try.
+     */
+    @NonNull
+    private CarIcon tabIcon() {
+        // An app resource: the templates host draws this in another process and tints it.
+        return new CarIcon.Builder(IconCompat.createWithResource(
+                getCarContext(), R.drawable.ic_tab)).build();
+    }
+
+    /**
+     * The image on every grid item. One placeholder, for the same reason: the template requires
+     * an image per item and the wire carries no bitmaps.
+     */
+    @NonNull
+    private CarIcon gridItemImage() {
+        return new CarIcon.Builder(IconCompat.createWithResource(
+                getCarContext(), R.drawable.ic_grid_image)).build();
+    }
+
     /** Stops an outstanding listen and puts the action back. */
     @VisibleForTesting
     void stopListening() {
@@ -668,7 +799,8 @@ public final class A2uiShowcaseScreen extends Screen {
         mVoice.listen(surfaceId,
                 () -> {
                     Integer now = mDemoOverride;
-                    return visibleRoot(surfaceId, now, allowedNow(now), contentLimit());
+                    return visibleRoot(surfaceId, now, allowedNow(now),
+                            contentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST));
                 },
                 new A2uiVoiceCapture.Listener() {
                     @Override

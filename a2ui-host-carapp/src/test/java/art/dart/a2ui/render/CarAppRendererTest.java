@@ -18,13 +18,25 @@ package art.dart.a2ui.render;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.mock;
 
 import androidx.annotation.Nullable;
 
 import androidx.car.app.model.Action;
+import androidx.car.app.model.CarIcon;
+import androidx.car.app.model.GridItem;
+import androidx.car.app.model.GridTemplate;
+import androidx.car.app.model.InputCallback;
 import androidx.car.app.model.ItemList;
 import androidx.car.app.model.ListTemplate;
+import androidx.car.app.model.LongMessageTemplate;
+import androidx.car.app.model.Tab;
+import androidx.car.app.model.TabContents;
+import androidx.car.app.model.TabTemplate;
 import androidx.car.app.model.Template;
+import androidx.car.app.model.signin.InputSignInMethod;
+import androidx.car.app.model.signin.ProviderSignInMethod;
+import androidx.car.app.model.signin.SignInTemplate;
 
 import art.dart.a2ui.model.A2uiComponent;
 import art.dart.a2ui.model.ComponentType;
@@ -582,5 +594,323 @@ public class CarAppRendererTest {
 
         assertThat(firstRow(t).getTexts().toString()).doesNotContain("say");
         assertThat(firstRow(t).getTexts().toString()).contains(CarAppRenderer.REFUSED_SUFFIX);
+    }
+
+    // Grid: one item per row, truncated to the grid limit, titles without bitmaps.
+
+    private static A2uiComponent card(String id, String title, String subtitle) {
+        return new A2uiComponent.Builder(ComponentType.CARD)
+                .setId(id).setTitle(title).setSubtitle(subtitle).setAction("open").build();
+    }
+
+    private static GridItem firstGridItem(Template t) {
+        return (GridItem) ((GridTemplate) t).getSingleList().getItems().get(0);
+    }
+
+    private static int gridItemCount(Template t) {
+        ItemList list = ((GridTemplate) t).getSingleList();
+        return list == null ? 0 : list.getItems().size();
+    }
+
+    @Test
+    public void gridRendersOneItemPerRowTruncatedToTheGridLimit() {
+        Template t = CarAppRenderer.renderGrid(columnOf(
+                card("a", "Wheat Field", "van Gogh"),
+                card("b", "Harvesters", "Bruegel"),
+                card("c", "Card Players", "Cézanne")), "Art", 2, null, null, mock(CarIcon.class));
+
+        assertThat(gridItemCount(t)).isEqualTo(2);
+        assertThat(firstGridItem(t).getTitle().toString()).isEqualTo("Wheat Field");
+        assertThat(firstGridItem(t).getText().toString()).isEqualTo("van Gogh");
+        assertThat(((GridTemplate) t).getTitle().toString()).isEqualTo("Art");
+    }
+
+    @Test
+    public void gridItemsCarryTheSuppliedPlaceholder() {
+        // The template requires an image per item and the wire carries no bitmaps, so the host's
+        // one placeholder marks every item and the titles distinguish.
+        CarIcon placeholder = mock(CarIcon.class);
+
+        Template t = CarAppRenderer.renderGrid(
+                columnOf(card("a", "Wheat Field", "van Gogh")), "Art", 6, null, null, placeholder);
+
+        assertThat(firstGridItem(t).getImage()).isSameInstanceAs(placeholder);
+    }
+
+    @Test
+    public void gridRefusesTheUnusableFloor() {
+        assertThrows(IllegalArgumentException.class, () -> CarAppRenderer.renderGrid(
+                columnOf(card("a", "Wheat Field", "van Gogh")), "Art", 0, null, null, mock(CarIcon.class)));
+    }
+
+    @Test
+    public void gridEmptyShowsTheHonestNote() {
+        Template t = CarAppRenderer.renderGrid(null, "Art", 6, null, null, mock(CarIcon.class));
+
+        assertThat(gridItemCount(t)).isEqualTo(0);
+        assertThat(((GridTemplate) t).getSingleList().getNoItemsMessage().toString())
+                .contains("while driving");
+    }
+
+    @Test
+    public void gridRefusedItemHasNoListenerAndSaysWhy() {
+        Template t = CarAppRenderer.renderGrid(columnOf(card("a", "Wheat Field", "van Gogh")),
+                "Art", 6, new FakeBinder(A2uiActionPolicy.Decision.REFUSE), null, mock(CarIcon.class));
+
+        assertThat(firstGridItem(t).getOnClickDelegate()).isNull();
+        assertThat(firstGridItem(t).getText().toString())
+                .contains(CarAppRenderer.REFUSED_SUFFIX);
+    }
+
+    @Test
+    public void gridAllowedItemIsClickableAndShowsItsSpokenForm() {
+        Template t = CarAppRenderer.renderGrid(columnOf(card("a", "Wheat Field", "van Gogh")),
+                "Art", 6, new FakeBinder(A2uiActionPolicy.Decision.ALLOW), null, mock(CarIcon.class));
+
+        assertThat(firstGridItem(t).getOnClickDelegate()).isNotNull();
+        assertThat(firstGridItem(t).getText().toString()).contains("say");
+    }
+
+    // Long message: the text row is the message, button rows become template actions.
+
+    private static A2uiComponent text(String title, String subtitle) {
+        return new A2uiComponent.Builder(ComponentType.TEXT)
+                .setTitle(title).setSubtitle(subtitle).build();
+    }
+
+    @Test
+    public void longMessageCarriesTitleAndBody() {
+        Template t = CarAppRenderer.renderLongMessage(
+                columnOf(text("Session complete", "18.4 kWh added")), "Receipt", null);
+
+        assertThat(((LongMessageTemplate) t).getTitle().toString()).isEqualTo("Receipt");
+        assertThat(((LongMessageTemplate) t).getMessage().toString())
+                .isEqualTo("18.4 kWh added");
+    }
+
+    @Test
+    public void longMessageButtonsBecomeActions() {
+        Template t = CarAppRenderer.renderLongMessage(
+                columnOf(text("Session complete", "18.4 kWh added"), button("done", "dismiss")),
+                "Receipt", new FakeBinder(A2uiActionPolicy.Decision.ALLOW));
+
+        assertThat(((LongMessageTemplate) t).getActions()).hasSize(1);
+        assertThat(((LongMessageTemplate) t).getActions().get(0).getTitle().toString())
+                .isEqualTo("done");
+        assertThat(((LongMessageTemplate) t).getActions().get(0).getOnClickDelegate())
+                .isNotNull();
+    }
+
+    @Test
+    public void longMessageRefusedButtonIsRemoved() {
+        // Removal is the prune's language; a message template has no line that could say why.
+        Template t = CarAppRenderer.renderLongMessage(
+                columnOf(text("Session complete", "18.4 kWh added"), button("done", "dismiss")),
+                "Receipt", new FakeBinder(A2uiActionPolicy.Decision.REFUSE));
+
+        assertThat(((LongMessageTemplate) t).getActions()).isEmpty();
+    }
+
+    @Test
+    public void longMessageWithoutTextSaysItIsEmpty() {
+        Template t = CarAppRenderer.renderLongMessage(null, "Receipt", null);
+
+        assertThat(((LongMessageTemplate) t).getMessage().toString()).contains("while driving");
+        assertThat(((LongMessageTemplate) t).getActions()).isEmpty();
+    }
+
+    // Sign-in: a field becomes text input, buttons become actions, and the flow degrades.
+
+    private static A2uiComponent field(String id, String title) {
+        return new A2uiComponent.Builder(ComponentType.TEXT_FIELD)
+                .setId(id).setTitle(title).setAction("edit").build();
+    }
+
+    @Test
+    public void signInFieldBecomesTextInput() {
+        A2uiComponent cont = new A2uiComponent.Builder(ComponentType.BUTTON)
+                .setId("continue").setTitle("Continue").setSubtitle("Sync membership")
+                .setAction("signin").build();
+
+        Template t = CarAppRenderer.renderSignIn(columnOf(field("email", "Email"), cont),
+                "Sign in", new FakeBinder(A2uiActionPolicy.Decision.ALLOW), null);
+
+        SignInTemplate signIn = (SignInTemplate) t;
+        assertThat(signIn.getSignInMethod()).isInstanceOf(InputSignInMethod.class);
+        assertThat(((InputSignInMethod) signIn.getSignInMethod()).getHint().toString())
+                .isEqualTo("Email");
+        assertThat(signIn.getInstructions().toString()).isEqualTo("Sync membership");
+        assertThat(signIn.getActions()).hasSize(1);
+        assertThat(signIn.getActions().get(0).getTitle().toString()).isEqualTo("Continue");
+    }
+
+    @Test
+    public void signInSubmittedTextReachesTheListenerWithItsField() {
+        List<String> got = new ArrayList<>();
+        A2uiComponent email = field("email", "Email");
+
+        InputCallback callback = CarAppRenderer.signInCallback(
+                A2uiActionPolicy.Decision.ALLOW, email,
+                (f, text) -> got.add(f.getId() + "=" + text));
+        callback.onInputSubmitted("you@example.com");
+
+        assertThat(got).containsExactly("email=you@example.com");
+    }
+
+    @Test
+    public void signInRefusedFieldShowsErrorAndSubmitsNothing() {
+        List<String> got = new ArrayList<>();
+        A2uiComponent email = field("email", "Email");
+
+        Template t = CarAppRenderer.renderSignIn(columnOf(email, button("continue", "signin")),
+                "Sign in", new FakeBinder(A2uiActionPolicy.Decision.REFUSE),
+                (f, text) -> got.add(text));
+        CarAppRenderer.signInCallback(A2uiActionPolicy.Decision.REFUSE, email,
+                (f, text) -> got.add(text)).onInputSubmitted("you@example.com");
+
+        assertThat(((InputSignInMethod) ((SignInTemplate) t).getSignInMethod())
+                .getErrorMessage().toString()).contains(CarAppRenderer.REFUSED_SUFFIX);
+        assertThat(((SignInTemplate) t).getActions()).isEmpty();
+        assertThat(got).isEmpty();
+    }
+
+    @Test
+    public void keyboardlessSignInDegradesToAProviderContinue() {
+        // NO_KEYBOARD pruned the field; the button alone still signs in.
+        Template t = CarAppRenderer.renderSignIn(columnOf(button("continue", "signin")),
+                "Sign in", new FakeBinder(A2uiActionPolicy.Decision.ALLOW), null);
+
+        SignInTemplate signIn = (SignInTemplate) t;
+        assertThat(signIn.getSignInMethod()).isInstanceOf(ProviderSignInMethod.class);
+        assertThat(((ProviderSignInMethod) signIn.getSignInMethod()).getAction()
+                .getOnClickDelegate()).isNotNull();
+        assertThat(signIn.getActions()).isEmpty();
+    }
+
+    @Test
+    public void keyboardlessSignInRefusedDisablesAndSaysWhy() {
+        Template t = CarAppRenderer.renderSignIn(columnOf(button("continue", "signin")),
+                "Sign in", new FakeBinder(A2uiActionPolicy.Decision.REFUSE), null);
+
+        SignInTemplate signIn = (SignInTemplate) t;
+        assertThat(((ProviderSignInMethod) signIn.getSignInMethod()).getAction().isEnabled())
+                .isFalse();
+        assertThat(signIn.getAdditionalText().toString())
+                .contains(CarAppRenderer.REFUSED_SUFFIX);
+    }
+
+    @Test
+    public void signInWithNothingToSignInWithThrows() {
+        assertThrows(IllegalArgumentException.class, () -> CarAppRenderer.renderSignIn(
+                columnOf(text("lonely", "no field, no button")), "Sign in", null, null));
+    }
+
+    // Tabs: one tab per child, showing the active child's rows as a list.
+
+    private static A2uiComponent tabPage(String id, String title, A2uiComponent... rows) {
+        A2uiComponent.Builder b = new A2uiComponent.Builder(ComponentType.COLUMN)
+                .setId(id).setTitle(title);
+        for (A2uiComponent row : rows) {
+            b.addChild(row);
+        }
+        return b.build();
+    }
+
+    private static A2uiComponent tabsRoot(A2uiComponent... pages) {
+        A2uiComponent.Builder b = new A2uiComponent.Builder(ComponentType.TABS)
+                .setId("root").setTitle("lib");
+        for (A2uiComponent page : pages) {
+            b.addChild(page);
+        }
+        return b.build();
+    }
+
+    private static TabTemplate.TabCallback noopTabs() {
+        return new TabTemplate.TabCallback() {
+        };
+    }
+
+    private static ListTemplate tabContent(Template t) {
+        TabContents contents = ((TabTemplate) t).getTabContents();
+        assertThat(contents).isNotNull();
+        return (ListTemplate) contents.getTemplate();
+    }
+
+    @Test
+    public void tabRendersOneTabPerChildShowingTheFirst() {
+        Template t = CarAppRenderer.renderTab(tabsRoot(
+                tabPage("tab_albums", "Albums", text("Recently added", "24 albums")),
+                tabPage("tab_artists", "Artists", text("Van Gogh", "14 tracks"))),
+                10, null, null, noopTabs(), mock(CarIcon.class));
+
+        TabTemplate tabs = (TabTemplate) t;
+        assertThat(tabs.getTabs()).hasSize(2);
+        assertThat(tabs.getTabs().get(0).getTitle().toString()).isEqualTo("Albums");
+        assertThat(tabs.getTabs().get(0).getIcon()).isNotNull();
+        assertThat(tabs.getTabs().get(1).getContentId()).isEqualTo("tab_artists");
+        assertThat(tabs.getActiveTabContentId()).isEqualTo("tab_albums");
+        assertThat(tabContent(t).getSingleList().getItems()).hasSize(1);
+        assertThat(((androidx.car.app.model.Row) tabContent(t).getSingleList().getItems()
+                .get(0)).getTitle().toString()).isEqualTo("Recently added");
+        assertThat(tabs.getTabCallbackDelegate()).isNotNull();
+    }
+
+    @Test
+    public void tabExplicitActiveIdShowsThatPage() {
+        Template t = CarAppRenderer.renderTab(tabsRoot(
+                tabPage("tab_albums", "Albums", text("Recently added", "24 albums")),
+                tabPage("tab_artists", "Artists", text("Van Gogh", "14 tracks"))),
+                10, null, "tab_artists", noopTabs(), mock(CarIcon.class));
+
+        assertThat(((TabTemplate) t).getActiveTabContentId()).isEqualTo("tab_artists");
+        assertThat(((androidx.car.app.model.Row) tabContent(t).getSingleList().getItems()
+                .get(0)).getTitle().toString()).isEqualTo("Van Gogh");
+    }
+
+    @Test
+    public void tabUnknownActiveIdFallsBackToFirst() {
+        Template t = CarAppRenderer.renderTab(tabsRoot(
+                tabPage("tab_albums", "Albums", text("Recently added", "24 albums")),
+                tabPage("tab_artists", "Artists", text("Van Gogh", "14 tracks"))),
+                10, null, "no-such-tab", noopTabs(), mock(CarIcon.class));
+
+        assertThat(((TabTemplate) t).getActiveTabContentId()).isEqualTo("tab_albums");
+    }
+
+    @Test
+    public void tabWithOnePageLeftRendersAsAList() {
+        // The template requires at least two tabs; a tab bar with one tab is a list.
+        Template t = CarAppRenderer.renderTab(tabsRoot(
+                tabPage("tab_albums", "Albums", text("Recently added", "24 albums"))),
+                10, null, null, noopTabs(), mock(CarIcon.class));
+
+        assertThat(t).isInstanceOf(ListTemplate.class);
+        assertThat(((ListTemplate) t).getHeader().getTitle().toString()).isEqualTo("Albums");
+        assertThat(((ListTemplate) t).getSingleList().getItems()).hasSize(1);
+    }
+
+    @Test
+    public void tabContentTruncatesToTheListLimit() {
+        Template t = CarAppRenderer.renderTab(tabsRoot(
+                tabPage("tab_albums", "Albums",
+                        text("a", "1"), text("b", "2"), text("c", "3")),
+                tabPage("tab_artists", "Artists", text("d", "4"))),
+                2, null, null, noopTabs(), mock(CarIcon.class));
+
+        assertThat(tabContent(t).getSingleList().getItems()).hasSize(2);
+    }
+
+    @Test
+    public void tabWithoutTabsRootThrows() {
+        assertThrows(IllegalArgumentException.class, () -> CarAppRenderer.renderTab(
+                columnOf(text("a", "1")), 10, null, null, noopTabs(), mock(CarIcon.class)));
+        assertThrows(IllegalArgumentException.class, () ->
+                CarAppRenderer.renderTab(null, 10, null, null, noopTabs(), mock(CarIcon.class)));
+    }
+
+    @Test
+    public void tabRefusesTheUnusableFloor() {
+        assertThrows(IllegalArgumentException.class, () -> CarAppRenderer.renderTab(
+                tabsRoot(tabPage("tab_albums", "Albums")), 0, null, null, noopTabs(), mock(CarIcon.class)));
     }
 }

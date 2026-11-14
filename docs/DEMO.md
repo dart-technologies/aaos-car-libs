@@ -16,7 +16,7 @@ Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 202
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
 `demo/agent-profiles-v1.json`.
 
-## Corpus (`UseCaseCorpus`: 10 cases, all 18 catalog types)
+## Corpus (`UseCaseCorpus`: 16 cases, all 18 catalog types)
 
 | Case | Types | Recorded at | Shows |
 |---|---|---|---|
@@ -30,6 +30,12 @@ enforced); venues, merchant and route are fictional and badged `DEMO`; agent lan
 | `handoff_to_driver` | Video List TextField Button | 0x1ff | Re-pruned and re-decided at the destination |
 | `poi_discovery_order` | TextField List Card Button Text | 0x1ff | Parked search/order becomes navigation-only |
 | `big_buck_bunny` | TextField List Card Video AudioPlayer Button Text | 0x10 | Video removed; audio and safe play remain |
+| `met_visit` | Card Image List Text Button Video AudioPlayer Modal | 0xff | Map, sources and artwork leave in motion; ETA, brief, audio stay |
+| `ev_charge_coffee` | Card Button Modal Image Video | 0xff | Charger comparison stays; reorder refused; tour waits for park |
+| `artwork_grid` | Card | 0x20 | Six artwork cards as a `GridTemplate`; grid limit truncates |
+| `sign_in` | TextField Button | 0x8 | Email plus continue as a `SignInTemplate`; `NO_KEYBOARD` removes entry |
+| `long_message` | Text Button | 0x1ff | The receipt as a `LongMessageTemplate`; readable parked or moving |
+| `tabbed_library` | Tabs Column Text | 0x20 | Albums/Artists/Playlists as a `TabTemplate`; `LIMIT_CONTENT` empties it |
 
 `UseCaseCorpusGatewayParityTest` replays each case for all four provider selectors (parser parity,
 not deployed adapters); `check-demo-workflows.py` keeps `record-demo.sh` in step with the corpus.

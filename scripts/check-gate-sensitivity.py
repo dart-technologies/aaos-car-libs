@@ -27,7 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 GP = ROOT / 'aaos-apps-gradle-project'
 
 # Floor = the registry's size, so deleting a mutation is a visible edit. Raise it with each addition.
-MINIMUM_MUTATIONS = 128
+MINIMUM_MUTATIONS = 133
 
 # (name, file, old, new, gradle module, results dir under build/)
 MUTATIONS = [
@@ -312,8 +312,68 @@ MUTATIONS = [
     (
         'a refused control is still clickable',
         'a2ui-host-carapp/src/main/java/art/dart/a2ui/render/CarAppRenderer.java',
-        '''            if (decision == A2uiActionPolicy.Decision.REFUSE) {''',
-        '''            if (false) {''',
+        '''        if (decision == A2uiActionPolicy.Decision.REFUSE) {
+            // Said out loud. A control that silently stops working reads as a broken app, and''',
+        '''        if (false) {
+            // Said out loud. A control that silently stops working reads as a broken app, and''',
+        ':a2ui-host-carapp:testDebugUnitTest',
+        'a2ui-host-carapp',
+    ),
+    (
+        'a refused grid item is still clickable',
+        'a2ui-host-carapp/src/main/java/art/dart/a2ui/render/CarAppRenderer.java',
+        '''        if (decision == A2uiActionPolicy.Decision.REFUSE) {
+            appendGridLine(text, REFUSED_SUFFIX);''',
+        '''        if (false) {
+            appendGridLine(text, REFUSED_SUFFIX);''',
+        ':a2ui-host-carapp:testDebugUnitTest',
+        'a2ui-host-carapp',
+    ),
+    (
+        'a refused message action is still offered',
+        'a2ui-host-carapp/src/main/java/art/dart/a2ui/render/CarAppRenderer.java',
+        '''            A2uiActionPolicy.Decision decision =
+                    binder == null ? null : binder.decisionFor(row);
+            if (decision == A2uiActionPolicy.Decision.REFUSE) {
+                continue;''',
+        '''            A2uiActionPolicy.Decision decision =
+                    binder == null ? null : binder.decisionFor(row);
+            if (false) {
+                continue;''',
+        ':a2ui-host-carapp:testDebugUnitTest',
+        'a2ui-host-carapp',
+    ),
+    (
+        'a refused sign-in action is still offered',
+        'a2ui-host-carapp/src/main/java/art/dart/a2ui/render/CarAppRenderer.java',
+        '''            A2uiActionPolicy.Decision decision =
+                    binder == null ? null : binder.decisionFor(button);
+            if (decision == A2uiActionPolicy.Decision.REFUSE) {
+                continue;''',
+        '''            A2uiActionPolicy.Decision decision =
+                    binder == null ? null : binder.decisionFor(button);
+            if (false) {
+                continue;''',
+        ':a2ui-host-carapp:testDebugUnitTest',
+        'a2ui-host-carapp',
+    ),
+    (
+        'refused sign-in entry shows no error',
+        'a2ui-host-carapp/src/main/java/art/dart/a2ui/render/CarAppRenderer.java',
+        '''        if (decision == A2uiActionPolicy.Decision.REFUSE) {
+            method.setErrorMessage(REFUSED_SUFFIX);''',
+        '''        if (false) {
+            method.setErrorMessage(REFUSED_SUFFIX);''',
+        ':a2ui-host-carapp:testDebugUnitTest',
+        'a2ui-host-carapp',
+    ),
+    (
+        'a refused provider continue stays enabled',
+        'a2ui-host-carapp/src/main/java/art/dart/a2ui/render/CarAppRenderer.java',
+        '''            if (decision == A2uiActionPolicy.Decision.REFUSE) {
+                action.setEnabled(false);''',
+        '''            if (false) {
+                action.setEnabled(false);''',
         ':a2ui-host-carapp:testDebugUnitTest',
         'a2ui-host-carapp',
     ),
@@ -1073,11 +1133,12 @@ MUTATIONS = [
         '''        mVoice.listen(surfaceId,
                 () -> {
                     Integer now = mDemoOverride;
-                    return visibleRoot(surfaceId, now, allowedNow(now), contentLimit());
+                    return visibleRoot(surfaceId, now, allowedNow(now),
+                            contentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST));
                 },''',
         '''        final Integer captured = mDemoOverride;
         mVoice.listen(surfaceId,
-                () -> visibleRoot(surfaceId, captured, allowedNow(captured), contentLimit()),''',
+                () -> visibleRoot(surfaceId, captured, allowedNow(captured), contentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST)),''',
         ':a2ui-host-carapp:testDebugUnitTest',
         'a2ui-host-carapp',
     ),
@@ -1129,8 +1190,10 @@ MUTATIONS = [
         'showcase screen ignores the corpus case that was selected',
         'a2ui-host-carapp/src/main/java/art/dart/a2ui/carapp/A2uiShowcaseScreen.java',
         '''        mSurfaceId = surfaceId;
+        mActiveTabContentId = null;
         Log.i(TAG, "showing case " + surfaceId);''',
-        '        Log.i(TAG, "showing case " + surfaceId);',
+        '''        mActiveTabContentId = null;
+        Log.i(TAG, "showing case " + surfaceId);''',
         ':a2ui-host-carapp:testDebugUnitTest',
         'a2ui-host-carapp',
     ),
@@ -1181,8 +1244,10 @@ MUTATIONS = [
     (
         'the surface is re-read while a phrase is still in flight',
         'a2ui-host-carapp/src/main/java/art/dart/a2ui/carapp/A2uiShowcaseScreen.java',
-        '                    return visibleRoot(surfaceId, now, allowedNow(now), contentLimit());',
-        '                    return visibleRoot(mSurfaceId, now, allowedNow(now), contentLimit());',
+        '''                    return visibleRoot(surfaceId, now, allowedNow(now),
+                            contentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST));''',
+        '''                    return visibleRoot(mSurfaceId, now, allowedNow(now),
+                            contentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST));''',
         ':a2ui-host-carapp:testDebugUnitTest',
         'a2ui-host-carapp',
     ),
