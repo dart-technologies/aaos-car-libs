@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "source": "OpenStreetMap via the Overpass API",
+  "license": "ODbL 1.0",
+  "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "attribution": "© OpenStreetMap contributors",
+  "endpoint": "https://overpass-api.de/api/interpreter",
+  "query": "[out:json][timeout:25];nwr[\"amenity\"=\"cafe\"](around:400,40.777871,-73.957203);out center tags;",
+  "fetchedAt": "2026-11-04T17:57:27Z",
+  "osmBase": "2026-11-04T17:56:21Z",
+  "responseSha256": "4c29f93059f95349b3ffb1c23cb8f476451e0304a0bca719955a2189212689f5",
+  "candidates": 19,
+  "research": "muse-spark-1.3 via the Meta Responses API with web_search; findings and evidence sentences are Muse's summaries of the cited pages, linked by URL, not copies of them",
+  "fixture": "COFFEE.json",
+  "caveat": "Locations and names are OpenStreetMap's; hours, menu and reputation come from the cited pages on the generation date and are not live. No order is placed."
+}

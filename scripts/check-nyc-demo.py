@@ -27,12 +27,28 @@ PROFILES = ROOT / "a2ui-automotive/demo/agent-profiles-v1.json"
 RUNNER = ROOT / "scripts/run-nyc-demo.py"
 # The three original stories and their corpus cases; more may be added beside them.
 CANONICAL = {"nyc_poi_order": "poi_discovery_order", "nyc_curated_video": "big_buck_bunny",
-             "nyc_concierge": "poi_discovery_order"}
+             "nyc_concierge": "poi_discovery_order", "nyc_met": "met_visit"}
+FILM = ROOT / "a2ui-automotive/demo/fixtures/met/FILM.json"
+FILM_PORTRAIT = ROOT / "a2ui-automotive/demo/fixtures/met/FILM_PORTRAIT.json"
+# The names other agents implement against; changing one here means changing it there.
+MET_SEQUENCE = ["met_visit", "ev_charge_coffee"]
+MET_UTTERANCES = {"take us to the met this afternoon", "reserve entry for two at three",
+                  "what should we see first", "take me to the first one",
+                  "order my usual coffee"}
+MET_ASK = "Take us to The Met this afternoon"
 ACTIONS = {"speak", "tapText", "carState", "keyEvent", "selectCase", "agent", "passenger",
-           "endCard", "wallClock"}
-PASSENGER_MEDIA = {"video", "stop"}
+           "endCard", "vehicleSignal", "wallClock"}
+PASSENGER_MEDIA = {"video", "artwork", "stop"}
+VEHICLE_ROUTES = {"vhal-set", "vhal-inject", "broadcast"}
 WEATHER_HOSTS = {"forecast.weather.gov", "api.weather.gov"}
 SECTIONS = {"preamble", "timeline", "outro"}
+PREAMBLE_STYLES = ["unsafe", "useless", "answer"]
+# Spoken lines never call the story a demo, nor claim a booking or order went anywhere; the
+# margin disclaimer carries the demo's nature for the whole video.
+NEVER_SAID = re.compile(r"\b(demo|sent|booked|paid|placed|ordered)\b", re.I)
+# One disclaimer, word for word, wherever a disclaimer or a card's top line appears: the margin
+# line for the whole video and the closing card's note.
+DISCLAIMER = "Simulated demo drive on Android Automotive OS emulator"
 TITLE_FADE_S = 0.4  # a chapter card's default fade out (run-nyc-demo.py)
 CHAPTER_SECONDS = (2.0, 3.5)
 
@@ -141,6 +157,84 @@ def check_context(scenario_id: str, relative: str) -> None:
         fail(f"{name} needs a refresh deadline after capture and a relabelling policy")
 
 
+def driving_at(scenario: dict, at_ms: int) -> bool:
+    """Whether the scripted car state at at_ms is drive (scenarios start parked)."""
+    state = "park"
+    for action in scenario["actions"]:
+        if action.get("type") == "carState" and int(action["atMs"]) <= at_ms:
+            state = action["state"]
+    return state == "drive"
+
+
+def check_met_story(scenario: dict) -> None:
+    """The nyc_met contract shared with the corpus, Host B and audio-guide work."""
+    if scenario.get("corpusSequence") != MET_SEQUENCE:
+        fail(f"nyc_met corpus sequence must be {MET_SEQUENCE}")
+    clips = scenario["clips"]
+    said = {clip["expectedTranscript"] for clip in clips if clip["role"] == "user_utterance"}
+    if said != MET_UTTERANCES:
+        fail(f"nyc_met guest lines drifted: {sorted(said ^ MET_UTTERANCES)}")
+    if any("tomorrow" in clip["text"].casefold() for clip in clips):
+        fail("nyc_met is set on Thursday itself; no line may say 'tomorrow'")
+    jargon = re.compile(r"\b(fixture|emulator|car[ _]service|adb|broadcast|vhal|a2ui)\b", re.I)
+    for clip in clips:
+        if jargon.search(clip["text"]):
+            fail(f"{clip['id']} speaks engineering jargon: {jargon.search(clip['text'])[0]!r}")
+    actions = scenario["actions"]
+    asks = [a for a in actions if a["type"] == "agent"]
+    if [(a.get("provider"), a.get("ask")) for a in asks] != [("muse", MET_ASK)]:
+        fail(f"nyc_met must make exactly one Muse request: {MET_ASK!r}")
+    artwork = [int(a["atMs"]) for a in actions
+               if a["type"] == "passenger" and a.get("media") == "artwork"]
+    if len(artwork) != 1 or not driving_at(scenario, artwork[0]):
+        fail("nyc_met starts the passenger artwork film once, while driving")
+    works = json.loads(FILM.read_text(encoding="utf-8"))["works"]
+    guide = sorted((c for c in clips if c.get("lane") == "audio_guide"), key=lambda c: c["id"])
+    if [c["id"] for c in guide] != [f"met_guide_{n:02d}" for n in range(1, len(works) + 1)]:
+        fail("nyc_met needs one audio-guide clip per film work, met_guide_01..")
+    for clip, work in zip(guide, works):
+        offset = int(clip["atMs"]) - artwork[0]
+        if clip.get("objectID") != work["objectID"] or not (
+                work["startMs"] <= offset <= work["startMs"] + 1500):
+            fail(f"{clip['id']} is not timed to {work['title']} in the film")
+        if not driving_at(scenario, int(clip["atMs"])):
+            fail(f"{clip['id']} plays outside the drive")
+    signals = [int(a["atMs"]) for a in actions if a["type"] == "vehicleSignal"]
+    if not signals or not all(driving_at(scenario, at) for at in signals):
+        fail("nyc_met lowers the battery while driving")
+    # The story ends on the driver watching Big Buck Bunny while parked (after the coffee), and
+    # a post-produced closing card replaces the in-car end card.
+    if any(a["type"] == "endCard" for a in actions):
+        fail("nyc_met ends on Big Buck Bunny and its closing card, not an in-car end card")
+    confirms = [int(a["atMs"]) for a in actions
+                if a["type"] == "tapText" and a.get("text") == "Confirm"]
+    bunny = [int(a["atMs"]) for a in actions
+             if a["type"] == "tapText" and a.get("text") == "Big Buck Bunny"]
+    if len(bunny) != 1 or driving_at(scenario, bunny[0]) or not confirms or bunny[0] < max(
+            confirms):
+        fail("nyc_met taps Big Buck Bunny once, parked, after the coffee is confirmed")
+    if any(driving_at(scenario, int(a["atMs"])) for a in actions if a["atMs"] > bunny[0]):
+        fail("nyc_met stays parked while the driver watches")
+    for clip in clips:
+        if NEVER_SAID.search(clip["text"]):
+            fail(f"{clip['id']} says {NEVER_SAID.search(clip['text'])[0]!r}; the disclaimer, "
+                 "not the narration, says it is a demo, and nothing claims a real transaction")
+    note = scenario.get("disclaimer") or {}
+    image = (ROOT / str(note.get("image", ""))).resolve()
+    if image.parent != CARDS.resolve() or not image.is_file() or \
+            image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+        fail(f"nyc_met disclaimer is not a PNG in {CARDS.relative_to(ROOT)}")
+    if note.get("text") != DISCLAIMER:
+        fail(f"nyc_met disclaimer must read exactly {DISCLAIMER!r}")
+    check_preamble(scenario)
+    check_intermission(scenario)
+    check_outro(scenario)
+    portrait = json.loads(FILM_PORTRAIT.read_text(encoding="utf-8"))
+    if [(w["objectID"], w["startMs"]) for w in portrait["works"]] != [
+            (w["objectID"], w["startMs"]) for w in works]:
+        fail("the portrait film's per-work startMs drifted from FILM.json; the guide would slip")
+
+
 def card_window_ms(card: dict) -> tuple[int, int, int, int]:
     """(start, fully covering from, covering until, end) of a chapter card, in timeline ms."""
     at = int(card.get("atMs", -1))
@@ -175,6 +269,116 @@ def check_chapter_cards(scenario: dict) -> None:
         previous_end = end
 
 
+def check_intermission(scenario: dict) -> None:
+    """Between the Met and chapter 2, one intermission card: it eases in after the film has
+    had the driver's screen at least 13 s, the case switch and the clock jump happen while it
+    fully covers the picture, no line starts over it, and the drive that opens the rail's next
+    chapter comes during or after it (spoken lengths are checked with --require-audio)."""
+    cards = scenario.get("chapterCards", [])
+    if len(cards) != 2:
+        fail("nyc_met has two chapter cards: the opening title and the intermission")
+    card = cards[1]
+    start, covered, uncovered, end = card_window_ms(card)
+    if not 3000 <= end - start <= 3500 or covered == start or uncovered == end:
+        fail("nyc_met intermission holds 3–3.5 s and eases in and out")
+    actions = scenario["actions"]
+    switch = [int(a["atMs"]) for a in actions if a["type"] in {"selectCase", "wallClock"}]
+    if len(switch) != 2 or not all(covered <= at <= uncovered for at in switch):
+        fail("nyc_met intermission covers chapter 2's selectCase and wallClock")
+    parks = [int(a["atMs"]) for a in actions
+             if a["type"] == "carState" and a.get("state") == "park"]
+    if not parks or start - parks[0] < 13000 or driving_at(scenario, start):
+        fail("nyc_met intermission follows at least 13 s of the Met film, parked")
+    drives = [int(a["atMs"]) for a in actions if a["type"] == "carState"
+              and a.get("state") == "drive" and int(a["atMs"]) > parks[0]]
+    if not drives or not start <= drives[0]:
+        fail("nyc_met's chapter-2 drive comes during or after the intermission")
+    if any(start <= int(c["atMs"]) < end for c in scenario["clips"]
+           if c.get("section", "timeline") == "timeline"):
+        fail("nyc_met intermission is silent: no line starts over it")
+
+
+def check_preamble(scenario: dict) -> None:
+    """Three cards from the recording's own frames: the parked full screen shown as unsafe, then
+    locked out, then the real pruned driving frame; each with its own narration inside it."""
+    cards = scenario.get("preamble", [])
+    if [card.get("style") for card in cards] != PREAMBLE_STYLES:
+        fail(f"nyc_met preamble cards must be {PREAMBLE_STYLES}")
+    if not 10 <= preamble_seconds(scenario) <= 15:
+        fail("nyc_met preamble runs 10–15 s")
+    clips = {clip["id"]: clip for clip in scenario["clips"]}
+    start = 0
+    for card in cards:
+        at = int(card.get("frameAtMs", -1))
+        if not 0 <= at < int(scenario["durationSeconds"]) * 1000:
+            fail(f"preamble {card['style']} needs a frame inside the timeline")
+        if "caption" in card:
+            fail(f"preamble {card['style']} bakes in no caption: the burned-in captions carry "
+                 "its narration")
+        if driving_at(scenario, at) != (card["style"] == "answer"):
+            fail(f"preamble {card['style']} frame must be "
+                 + ("a driving" if card["style"] == "answer" else "the parked full") + " screen")
+        seconds = round(float(card.get("seconds", 0)) * 1000)
+        if not 2500 <= seconds <= 7000:
+            fail(f"preamble {card['style']} card holds 2.5–7 s")
+        clip = clips.get(card.get("clipId"))
+        if not clip or clip.get("section") != "preamble" or clip["role"] != "narration" or \
+                not start <= int(clip["atMs"]) < start + seconds:
+            fail(f"preamble {card['style']} narration must be a preamble clip inside its card")
+        start += seconds
+    if [c["id"] for c in scenario["clips"] if c.get("section") == "preamble"] != [
+            card["clipId"] for card in cards]:
+        fail("every preamble clip belongs to one preamble card, in order")
+
+
+def check_outro(scenario: dict) -> None:
+    """The closing card: one narration line, a beat, a spoken close, then a silent hold, a calm note on what the drive
+    was, the journey's beats taken from the recording at the right car state, and the
+    architecture as title-only boxes. No tagline or footer, and Muse is named once."""
+    outro = scenario.get("outro") or {}
+    if not 5 <= outro_seconds(scenario) <= 12:
+        fail("nyc_met closing card holds 5–12 s")
+    clips = [c for c in scenario["clips"] if c.get("section") == "outro"]
+    if ([c["id"] for c in clips] != [outro.get("clipId"), outro.get("closingClipId")]
+            or any(c["role"] != "narration" for c in clips)):
+        fail("nyc_met closing card has its narration clip then its closing clip")
+    if clips[-1]["text"] != "Thanks for checking out Muse2CarUI.":
+        fail("nyc_met closes on the spoken thanks")
+    timeline = int(scenario["durationSeconds"]) * 1000
+    beats = outro.get("beats", [])
+    lanes = {"driver": [], "passenger": []}
+    for beat in beats:
+        at = int(beat.get("atMs", -1))
+        if beat.get("display") not in lanes or not beat.get("label") or not 0 <= at < timeline:
+            fail(f"closing-card beat needs a display, a label and a time in the timeline: {beat}")
+        lanes[beat["display"]].append(beat)
+    if len(lanes["driver"]) != 7 or not 1 <= len(lanes["passenger"]) <= 3:
+        fail("closing card shows seven driver beats and the passenger lane")
+    if any(not driving_at(scenario, int(b["atMs"])) for b in lanes["passenger"]):
+        fail("closing card's passenger thumbnails sit under the driving segments")
+    bunny = [int(a["atMs"]) for a in scenario["actions"]
+             if a["type"] == "tapText" and a.get("text") == "Big Buck Bunny"]
+    last = lanes["driver"][-1]
+    if last["label"] != "Big Buck Bunny" or driving_at(scenario, int(last["atMs"])) or \
+            not bunny or int(last["atMs"]) < bunny[0] + 3000:
+        fail("closing card's last driver beat is Big Buck Bunny playing, parked")
+    boxes = outro.get("architecture", [])
+    if len([b for b in boxes if b.get("badge")]) != 1 or not 4 <= len(boxes) <= 5:
+        fail("closing card's architecture is 4–5 boxes with one Muse badge")
+    if any(len(box) != 1 or not set(box) <= {"badge", "title"} for box in boxes):
+        fail("closing card's architecture boxes are titles only: one badge or title each")
+    note = outro.get("note", "")
+    if note != DISCLAIMER:
+        fail(f"closing card's note is the one disclaimer, {DISCLAIMER!r}")
+    if "footer" in outro:
+        fail("closing card has no tagline or footer: its narration carries the line")
+    words = [note, *outro.get("places", []), *(b["label"] for b in beats),
+             *(text for box in boxes for text in box.values())]
+    if sum("Muse" in text for text in words) != 1 or "Muse" not in next(
+            (b["badge"] for b in boxes if b.get("badge")), ""):
+        fail("closing card names Muse once, on its architecture badge")
+
+
 def corpus_ids() -> set[str]:
     return set(re.findall(r'new Builder\(\s*"([a-z_]+)"', CORPUS.read_text(encoding="utf-8")))
 
@@ -186,6 +390,16 @@ def audio_duration(path: pathlib.Path) -> float:
     if result.returncode:
         fail(f"could not measure audio duration for {path.name}")
     return float(result.stdout.strip())
+
+
+# Transcript fixtures may come from either STT provider (prepare-elevenlabs-demo-audio.py --stt).
+MUSE_STT_MODEL = "muse-voice-transcribe-1.0"
+
+
+def known_stt(transcript: dict, manifest: dict) -> bool:
+    models = {"elevenlabs": manifest.get("stt", {}).get("modelId"), "muse": MUSE_STT_MODEL}
+    model = models.get(transcript.get("provider"))
+    return model is not None and transcript.get("modelId") == model
 
 
 def main() -> int:
@@ -304,6 +518,11 @@ def main() -> int:
             if action.get("type") == "passenger" and (
                     layout != "dual" or action.get("media") not in PASSENGER_MEDIA):
                 fail(f"passenger action needs a dual-display recording and known media: {action}")
+            if action.get("type") == "vehicleSignal" and (
+                    action.get("signal") != "battery"
+                    or not 0 <= float(action.get("percent", -1)) <= 100
+                    or not action.get("via") or not set(action["via"]) <= VEHICLE_ROUTES):
+                fail(f"vehicle signal needs battery percent 0–100 and known routes: {action}")
             if action.get("type") == "wallClock" and not re.fullmatch(
                     r"\d{4}-\d\d-\d\dT\d\d:\d\d", str(action.get("local", ""))):
                 fail(f"wall clock needs local YYYY-MM-DDTHH:MM: {action}")
@@ -341,6 +560,7 @@ def main() -> int:
             if not -24 <= float(cue.get("gainDb", 0)) <= -6:
                 fail(f"{scenario['id']} sound effect is not safely below dialogue")
 
+    check_met_story(by_id["nyc_met"])
     estimated_sfx = sum(math.ceil(float(effect["durationSeconds"])
                                   * int(sfx["estimatedCreditsPerSecond"]))
                         for effect in effects.values())
@@ -384,6 +604,8 @@ def main() -> int:
                     fail(f"STT fixture drift for {clip['id']}")
                 if transcript.get("dispatchText") != clip["expectedTranscript"]:
                     fail(f"STT replay is not exactly the displayed phrase for {clip['id']}")
+                if not known_stt(transcript, data):
+                    fail(f"STT fixture for {clip['id']} names an unknown provider or model")
             # On the video's timeline: each clip at its section's offset, inside its section.
             placed = []
             for clip in scenario["clips"]:

@@ -180,6 +180,13 @@ case $st in
   *) fail "NYC demo scenarios: $out" ;;
 esac
 
+# Muse's committed brief, coffee ranking and audio guide: every claim carries a citation.
+out=$(python3 $REPO/scripts/check-muse-claims.py 2>&1); st=$?
+case $st in
+  0) print "  $out" ;;
+  *) fail "Muse claims: $out" ;;
+esac
+
 # Offline: validates the prompt, gateway schema and generation grammar; prints a redacted request.
 out=$(cd $REPO && python3 scripts/claude-corpus-tester.py \
   --prompt-file a2ui-automotive/prompts/oem-poi-media-corpus.md \

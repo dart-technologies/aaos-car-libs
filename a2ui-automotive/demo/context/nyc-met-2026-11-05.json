@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "mode": "curated_snapshot",
+  "capturedAt": "2026-11-04T11:11:47-05:00",
+  "timezone": "America/New_York",
+  "origin": {
+    "label": "Hudson Yards, Manhattan",
+    "latitudeApprox": 40.7536,
+    "longitudeApprox": -74.0009,
+    "precision": "neighborhood",
+    "isDeviceLocation": false,
+    "reason": "A recognizable west-side starting point. The drive to The Met crosses Midtown and the Upper West Side, long enough to show parked, driving and arrival."
+  },
+  "destination": {
+    "label": "The Met Fifth Avenue",
+    "latitudeApprox": 40.7794,
+    "longitudeApprox": -73.9634,
+    "source": "https://www.openstreetmap.org/relation/3698894",
+    "attribution": "© OpenStreetMap contributors (ODbL)"
+  },
+  "visit": {
+    "date": "2026-11-05",
+    "day": "Thursday",
+    "reason": "The story is set on Thursday afternoon; The Met Fifth Avenue is closed on Wednesdays. The forecast was captured on Wednesday for Thursday."
+  },
+  "route": {
+    "fixture": "a2ui-automotive/demo/fixtures/route/hudson-yards-to-met.json",
+    "image": "a2ui-host-carui/src/main/res/drawable-nodpi/route_met.png",
+    "distanceMiles": 4.3,
+    "attribution": "Route data © OpenStreetMap contributors (ODbL), routed by OSRM"
+  },
+  "weather": {
+    "forecastOffice": "NWS New York, NY (OKX), gridpoint 33,45",
+    "forecastIssuedAt": "2026-11-04T07:43:48-05:00",
+    "forecastFor": "2026-11-05",
+    "forecastPeriod": "Thursday",
+    "source": "https://api.weather.gov/gridpoints/OKX/33,45/forecast",
+    "fixture": "a2ui-automotive/demo/fixtures/nws/forecast-2026-11-04.json",
+    "shortForecast": "Chance Rain Showers",
+    "temperatureF": 74,
+    "precipitationChancePercent": 30,
+    "dayForecast": "Mostly cloudy, a chance of showers after 7 AM (30%); high near 74°F, around 71°F in the afternoon; south wind 6 to 12 mph",
+    "eveningForecast": "Showers likely (60%); low around 63°F",
+    "reason": "A mild, mostly cloudy Thursday with a chance of showers: the museum is a good indoor plan, and a compact umbrella is worth packing for the walk in."
+  },
+  "commerce": {
+    "merchantStatus": "real_listing_no_order",
+    "merchant": {
+      "name": "Starbucks, 1488 3rd Ave",
+      "address": "1488 3rd Avenue",
+      "source": "https://www.openstreetmap.org/node/2620513899",
+      "attribution": "© OpenStreetMap contributors (ODbL)",
+      "fixture": "a2ui-automotive/demo/fixtures/coffee/COFFEE.json"
+    },
+    "bookingStatus": "demo_fixture",
+    "orderStatus": "demo_not_sent",
+    "paymentStatus": "not_connected",
+    "reason": "Timed entry appears as a DEMO ticket and the coffee as a DEMO order. The café is a real OpenStreetMap listing a 3-minute walk from the first charger, ranked by Muse from cited sources; no order or reservation reaches it or The Met, and nothing is paid."
+  },
+  "freshness": {
+    "displayLabel": "CURATED SNAPSHOT · THU NOV 5",
+    "liveRefreshRequiredAfter": "2026-11-05T18:00:00-05:00",
+    "policy": "Show the forecast day and source; never relabel this fixture as live weather, live location, availability or a confirmed reservation."
+  }
+}
