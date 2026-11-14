@@ -40,7 +40,7 @@ import java.util.Set;
  */
 public final class UseCaseCorpus {
 
-    /** Protocol version and catalog every case in the corpus negotiates. */
+    /** Protocol version and catalog every case in the corpus negotiates: v1.0 wire rules. */
     public static final String VERSION = DemoTrace.VERSION;
     public static final String CATALOG_ID = DemoTrace.CATALOG_ID;
 

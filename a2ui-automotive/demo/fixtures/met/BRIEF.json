@@ -36,7 +36,7 @@
           "catalogId": "automotive",
           "surfaceId": "met_visit"
         },
-        "version": "v0.9"
+        "version": "1.0"
       },
       {
         "updateComponents": {
@@ -112,7 +112,7 @@
           ],
           "surfaceId": "met_visit"
         },
-        "version": "v0.9"
+        "version": "1.0"
       }
     ]
   }
