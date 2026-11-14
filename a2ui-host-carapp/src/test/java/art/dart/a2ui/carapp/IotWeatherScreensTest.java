@@ -128,8 +128,8 @@ public class IotWeatherScreensTest {
 
         assertThat(IotFlow.push(list, next)).isTrue();
         assertThat(WeatherFlow.push(weather, next)).isTrue();
-        assertThat(IotFlow.push(new DeepIotScreen(), next)).isFalse();
-        assertThat(WeatherFlow.push(new DeepWeatherScreen(), next)).isFalse();
+        assertThat(IotFlow.push(new DeepIotScreen(mCarContext), next)).isFalse();
+        assertThat(WeatherFlow.push(new DeepWeatherScreen(mCarContext), next)).isFalse();
     }
 
     private A2uiIotListScreen startedList(IotRepository repository) {
@@ -152,9 +152,9 @@ public class IotWeatherScreensTest {
         return weather;
     }
 
-    private final class DeepIotScreen extends Screen implements IotScreen {
-        DeepIotScreen() {
-            super(IotWeatherScreensTest.this.mCarContext);
+    private static final class DeepIotScreen extends Screen implements IotScreen {
+        DeepIotScreen(TestCarContext carContext) {
+            super(carContext);
         }
 
         @Override
@@ -169,9 +169,9 @@ public class IotWeatherScreensTest {
         }
     }
 
-    private final class DeepWeatherScreen extends Screen implements WeatherScreen {
-        DeepWeatherScreen() {
-            super(IotWeatherScreensTest.this.mCarContext);
+    private static final class DeepWeatherScreen extends Screen implements WeatherScreen {
+        DeepWeatherScreen(TestCarContext carContext) {
+            super(carContext);
         }
 
         @Override
