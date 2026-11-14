@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-14T23:43:43.257477+00:00",
+  "command": "SET active=0x0; CASE charger_stops on AAOS_35",
+  "commit": "33fe2260aa6469c7fd2da3ca3d3f861fda949f76",
+  "display": "4619827259835644672",
+  "host": "host-b",
+  "package": "art.dart.a2ui.carui",
+  "sha256": "9886773b0e624c267389c48b01fa74fc1b34f00a9fd4ab38343a9be1ffce64cc",
+  "state": "demo"
+}

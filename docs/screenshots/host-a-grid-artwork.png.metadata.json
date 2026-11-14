@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-14T23:42:48.148290+00:00",
+  "command": "SET active=0x0; CASE artwork_grid on AAOS_35",
+  "commit": "33fe2260aa6469c7fd2da3ca3d3f861fda949f76",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "320190c24baccb5f2f5546a4b252e69ac685b409dd3ddc3b6d0636f70d6906ee",
+  "state": "demo"
+}
