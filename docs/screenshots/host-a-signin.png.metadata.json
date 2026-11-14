@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-14T23:42:52.581216+00:00",
+  "command": "SET active=0x0; CASE sign_in on AAOS_35",
+  "commit": "33fe2260aa6469c7fd2da3ca3d3f861fda949f76",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "669019fc9a188ae4ab6ec30d66606eec43299469d602634995224709b7e7a586",
+  "state": "demo"
+}

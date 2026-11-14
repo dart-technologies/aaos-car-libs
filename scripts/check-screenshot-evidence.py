@@ -52,6 +52,18 @@ EXPECTED = {
     "host-a-weather-list.png",
     "host-a-media-sources.png",
     "host-a-media-browse.png",
+    "host-a-grid-artwork.png",
+    "host-a-signin.png",
+    "host-a-long-message.png",
+    "host-a-tab-library.png",
+    "host-a-map-route.png",
+    "host-a-place-list-nav.png",
+    "host-b-grid-artwork.png",
+    "host-b-signin.png",
+    "host-b-long-message.png",
+    "host-b-tab-library.png",
+    "host-b-map-route.png",
+    "host-b-place-list-nav.png",
 }
 REQUIRED_METADATA = {
     "commit", "host", "package", "display", "state", "command", "sha256", "captured_at"

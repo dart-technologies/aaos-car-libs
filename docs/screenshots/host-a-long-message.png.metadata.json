@@ -1,0 +1,10 @@
+{
+  "captured_at": "2026-11-14T23:42:56.978945+00:00",
+  "command": "SET active=0x0; CASE long_message on AAOS_35",
+  "commit": "33fe2260aa6469c7fd2da3ca3d3f861fda949f76",
+  "display": "4619827259835644672",
+  "host": "host-a",
+  "package": "art.dart.a2ui.carapp",
+  "sha256": "2f757e291bef9046ee21b14869000b980c78ec740dd6ce3c283384eafa7d0e2e",
+  "state": "demo"
+}
