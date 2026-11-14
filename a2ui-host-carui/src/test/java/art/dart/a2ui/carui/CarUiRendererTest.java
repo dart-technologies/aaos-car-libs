@@ -29,6 +29,7 @@ import com.android.car.ui.utils.CarUxRestrictionsUtil.RestrictionsSource;
 
 import art.dart.a2ui.demo.DemoSurface;
 import art.dart.a2ui.demo.DemoTrace;
+import art.dart.a2ui.demo.UseCaseCorpus;
 import art.dart.a2ui.model.A2uiComponent;
 import art.dart.a2ui.model.ComponentType;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import art.dart.a2ui.policy.A2uiActionBinder;
 import art.dart.a2ui.policy.A2uiPruner;
 import art.dart.a2ui.policy.A2uiRestrictionPolicy;
 import art.dart.a2ui.policy.A2uiValueLimits;
+import art.dart.a2ui.protocol.A2uiMessageProcessor;
 
 import org.junit.Test;
 
@@ -498,5 +500,56 @@ public class CarUiRendererTest {
         }
         // ...and the refusal is still said, on its own line rather than not at all.
         assertThat(bodyText(first(items))).contains(A2uiActionBinder.REFUSED_NOTE);
+    }
+
+    // The template cases, projected for real: Host B flattens every corpus shape to list items.
+
+    private static A2uiComponent project(String caseId) {
+        UseCaseCorpus.UseCase useCase = UseCaseCorpus.byId(caseId);
+        assertThat(useCase).isNotNull();
+        A2uiMessageProcessor processor = DemoTrace.newProcessor();
+        processor.processAll(useCase.getMessages());
+        return processor.getSurface(caseId).project(DemoTrace.ROOT_ID);
+    }
+
+    private static String titleOf(CarUiListItem item) {
+        return ((CarUiContentListItem) item).getTitle().getPreferredText().toString();
+    }
+
+    @Test
+    public void artworkGridRendersSixTitledRows() {
+        List<CarUiListItem> items = CarUiRenderer.render(project("artwork_grid"));
+
+        assertThat(items).hasSize(6);
+        assertThat(titleOf(items.get(0))).isEqualTo("Wheat Field with Cypresses");
+        assertThat(titleOf(items.get(5))).isEqualTo("The Card Players");
+    }
+
+    @Test
+    public void signInRendersFieldAndContinue() {
+        List<CarUiListItem> items = CarUiRenderer.render(project("sign_in"));
+
+        assertThat(items).hasSize(2);
+        assertThat(titleOf(items.get(0))).isEqualTo("Email");
+        assertThat(titleOf(items.get(1))).isEqualTo("Continue");
+    }
+
+    @Test
+    public void longMessageRendersReceiptAndDone() {
+        List<CarUiListItem> items = CarUiRenderer.render(project("long_message"));
+
+        assertThat(items).hasSize(2);
+        assertThat(titleOf(items.get(0))).isEqualTo("Session complete · 22 min");
+        assertThat(titleOf(items.get(1))).isEqualTo("Done");
+    }
+
+    @Test
+    public void tabbedLibraryRendersItsTabsRoot() {
+        // Tabs is not a container, so Host B draws one row for the Tabs itself; the pages stay
+        // one chevron away, like every other nested surface on this host.
+        List<CarUiListItem> items = CarUiRenderer.render(project("tabbed_library"));
+
+        assertThat(items).hasSize(1);
+        assertThat(titleOf(items.get(0))).isEqualTo("Your library");
     }
 }

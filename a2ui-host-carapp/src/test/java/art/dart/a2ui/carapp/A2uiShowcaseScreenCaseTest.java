@@ -23,7 +23,14 @@ import static org.mockito.Mockito.when;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.car.app.model.GridTemplate;
 import androidx.car.app.model.ListTemplate;
+import androidx.car.app.model.LongMessageTemplate;
+import androidx.car.app.model.Tab;
+import androidx.car.app.model.TabTemplate;
+import androidx.car.app.model.Template;
+import androidx.car.app.model.signin.InputSignInMethod;
+import androidx.car.app.model.signin.SignInTemplate;
 import androidx.car.app.constraints.ConstraintManager;
 import androidx.car.app.testing.ScreenController;
 import androidx.car.app.testing.TestCarContext;
@@ -95,15 +102,113 @@ public class A2uiShowcaseScreenCaseTest {
         int checked = 0;
         for (UseCaseCorpus.UseCase useCase : UseCaseCorpus.all()) {
             assertThat(mScreen.selectCase(useCase.getId())).isTrue();
-            // B7: the trace's own words head the screen; the id is a log detail.
-            assertThat(headerTitle()).startsWith(rootTitle(useCase));
-            assertThat(headerTitle()).doesNotContain(useCase.getId());
-            assertThat(headerTitle()).doesNotContain("components");
+            Template template = mScreen.onGetTemplate();
+            if (template instanceof TabTemplate) {
+                // Tabs head with tab titles, not a header; the trace's words are the tab names.
+                java.util.List<Tab> tabs = ((TabTemplate) template).getTabs();
+                assertThat(tabs).isNotEmpty();
+                for (Tab tab : tabs) {
+                    assertThat(tab.getTitle().toString()).doesNotContain(useCase.getId());
+                }
+            } else {
+                // B7: the trace's own words head the screen; the id is a log detail.
+                assertThat(templateTitle(template)).startsWith(rootTitle(useCase));
+                assertThat(templateTitle(template)).doesNotContain(useCase.getId());
+                assertThat(templateTitle(template)).doesNotContain("components");
+            }
             checked++;
         }
         // Every case was checked, and the corpus is not empty (main ships 10; demos add more).
         assertThat(checked).isEqualTo(UseCaseCorpus.all().size());
         assertThat(checked).isAtLeast(10);
+    }
+
+    /** Each routed case renders its template; unrouted cases stay lists. */
+    @Test
+    public void eachRoutedCaseRendersItsTemplate() {
+        assertThat(templateFor("artwork_grid")).isInstanceOf(GridTemplate.class);
+        assertThat(templateFor("sign_in")).isInstanceOf(SignInTemplate.class);
+        assertThat(templateFor("long_message")).isInstanceOf(LongMessageTemplate.class);
+        assertThat(templateFor("tabbed_library")).isInstanceOf(TabTemplate.class);
+        assertThat(templateFor("now_playing")).isInstanceOf(ListTemplate.class);
+        assertThat(templateFor("browse_library")).isInstanceOf(ListTemplate.class);
+        assertThat(templateFor("met_visit")).isInstanceOf(ListTemplate.class);
+    }
+
+    @Test
+    public void routedGridShowsTheArtworkTitles() {
+        mScreen.selectCase("artwork_grid");
+
+        GridTemplate grid = (GridTemplate) mScreen.onGetTemplate();
+
+        assertThat(grid.getSingleList().getItems()).hasSize(6);
+        assertThat(((androidx.car.app.model.GridItem) grid.getSingleList().getItems().get(0))
+                .getTitle().toString()).isEqualTo("Wheat Field with Cypresses");
+    }
+
+    @Test
+    public void routedSignInShowsEmailInputWithContinue() {
+        mScreen.selectCase("sign_in");
+
+        SignInTemplate signIn = (SignInTemplate) mScreen.onGetTemplate();
+
+        assertThat(signIn.getSignInMethod()).isInstanceOf(InputSignInMethod.class);
+        assertThat(((InputSignInMethod) signIn.getSignInMethod()).getHint().toString())
+                .isEqualTo("Email");
+        assertThat(signIn.getActions()).hasSize(1);
+    }
+
+    @Test
+    public void routedLongMessageShowsTheReceipt() {
+        mScreen.selectCase("long_message");
+
+        LongMessageTemplate message = (LongMessageTemplate) mScreen.onGetTemplate();
+
+        assertThat(message.getMessage().toString()).contains("18.4 kWh");
+        assertThat(message.getActions()).hasSize(1);
+    }
+
+    @Test
+    public void routedTabsShowAlbumsArtistsPlaylists() {
+        mScreen.selectCase("tabbed_library");
+
+        TabTemplate tabs = (TabTemplate) mScreen.onGetTemplate();
+
+        assertThat(tabs.getTabs()).hasSize(3);
+        assertThat(tabs.getTabs().get(0).getTitle().toString()).isEqualTo("Albums");
+        assertThat(tabs.getTabs().get(1).getTitle().toString()).isEqualTo("Artists");
+        assertThat(tabs.getTabs().get(2).getTitle().toString()).isEqualTo("Playlists");
+        assertThat(tabs.getActiveTabContentId()).isEqualTo("tab_albums");
+    }
+
+    @Test
+    public void selectingATabShowsThatTabsRows() {
+        mScreen.selectCase("tabbed_library");
+        mScreen.selectTabForTesting("tab_artists");
+
+        TabTemplate tabs = (TabTemplate) mScreen.onGetTemplate();
+        ListTemplate content = (ListTemplate) tabs.getTabContents().getTemplate();
+
+        assertThat(tabs.getActiveTabContentId()).isEqualTo("tab_artists");
+        assertThat(content.getSingleList().getItems()).hasSize(2);
+        assertThat(((androidx.car.app.model.Row) content.getSingleList().getItems().get(0))
+                .getTitle().toString()).isEqualTo("Van Gogh");
+    }
+
+    @Test
+    public void switchingCasesResetsTheActiveTab() {
+        mScreen.selectCase("tabbed_library");
+        mScreen.selectTabForTesting("tab_artists");
+        mScreen.selectCase("now_playing");
+        mScreen.selectCase("tabbed_library");
+
+        assertThat(((TabTemplate) mScreen.onGetTemplate()).getActiveTabContentId())
+                .isEqualTo("tab_albums");
+    }
+
+    private Template templateFor(String caseId) {
+        assertThat(mScreen.selectCase(caseId)).isTrue();
+        return mScreen.onGetTemplate();
     }
 
     private static String rootTitle(UseCaseCorpus.UseCase useCase) {
@@ -454,6 +559,24 @@ public class A2uiShowcaseScreenCaseTest {
     private static String headerTitle(A2uiShowcaseScreen screen) {
         ListTemplate template = (ListTemplate) screen.onGetTemplate();
         return template.getHeader().getTitle().toString();
+    }
+
+    /** The heading words of any routed template; tabs have none and are asserted separately. */
+    private static String templateTitle(Template template) {
+        if (template instanceof ListTemplate) {
+            return ((ListTemplate) template).getHeader().getTitle().toString();
+        }
+        if (template instanceof GridTemplate) {
+            return ((GridTemplate) template).getTitle().toString();
+        }
+        if (template instanceof LongMessageTemplate) {
+            return ((LongMessageTemplate) template).getTitle().toString();
+        }
+        if (template instanceof SignInTemplate) {
+            return ((SignInTemplate) template).getTitle().toString();
+        }
+        throw new AssertionError(
+                "no title on " + template.getClass().getSimpleName());
     }
 
     private void overrideContentLimit(int limit) {

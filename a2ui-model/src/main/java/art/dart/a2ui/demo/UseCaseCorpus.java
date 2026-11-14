@@ -49,6 +49,9 @@ public final class UseCaseCorpus {
     public enum TemplateCapability {
         LIST,
         GRID,
+        LONG_MESSAGE,
+        SIGN_IN,
+        TAB,
         SEARCH,
         MEDIA_PLAYBACK,
         SETTINGS,
@@ -124,7 +127,11 @@ public final class UseCaseCorpus {
             poiDiscoveryOrder(),
             bigBuckBunny(),
             metVisit(),
-            evChargeCoffee()));
+            evChargeCoffee(),
+            artworkGrid(),
+            signIn(),
+            longMessage(),
+            tabbedLibrary()));
 
     @NonNull
     public static List<UseCase> all() {
@@ -178,7 +185,8 @@ public final class UseCaseCorpus {
         b.action("row1", "Card", "Recently added", "24 albums", "open");
         b.action("row2", "Card", "Made for you", "6 mixes", "open");
         b.component("card", "Card", "Continue listening", "Resume where you left off");
-        b.templates(TemplateCapability.GRID);
+        // GRID moved to artwork_grid with the template routing: this case is list-shaped, and the
+        // showcase renders GRID cases as a GridTemplate.
         return b.build();
     }
 
@@ -486,6 +494,97 @@ public final class UseCaseCorpus {
         b.data("/order/pickup", "Oat milk latte");
         b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
                 TemplateCapability.MODAL, TemplateCapability.VIDEO);
+        return b.build();
+    }
+
+    /**
+     * Artwork as a grid. Six cards, one per Met highlight, so the showcase renders a
+     * GridTemplate instead of a list. No images ride the wire — the host draws titles — so the
+     * grid items carry no bitmaps. Artwork: The Met Open Access, CC0.
+     */
+    private static UseCase artworkGrid() {
+        Builder b = new Builder("artwork_grid",
+                "Browse the artwork highlights as a grid",
+                "BASELINE composes the grid; LIMIT_CONTENT truncates it to the host's grid limit");
+        b.container("root", "Column", "met_436535", "met_437881", "met_437394", "met_435809",
+                "met_436105", "met_435868");
+        b.put("root", "title", "Artwork highlights");
+        b.action("met_436535", "Card", "Wheat Field with Cypresses",
+                "Vincent van Gogh · 1889", "open");
+        b.put("met_436535", "voicePhrase", "show the first one");
+        b.action("met_437881", "Card", "Young Woman with a Water Pitcher",
+                "Johannes Vermeer · ca. 1662", "open");
+        b.action("met_437394", "Card", "Aristotle with a Bust of Homer",
+                "Rembrandt (Rembrandt van Rijn) · 1653", "open");
+        b.action("met_435809", "Card", "The Harvesters",
+                "Pieter Bruegel the Elder · 1565", "open");
+        b.action("met_436105", "Card", "The Death of Socrates",
+                "Jacques Louis David · 1787", "open");
+        b.action("met_435868", "Card", "The Card Players", "Paul Cézanne · 1890–92", "open");
+        b.templates(TemplateCapability.GRID);
+        return b.build();
+    }
+
+    /**
+     * Parked sign-in. An email field plus a continue action, so the showcase renders a
+     * SignInTemplate with text input. The continue action is deliberately unlisted, hence
+     * consequential: it confirms parked and refuses in motion.
+     */
+    private static UseCase signIn() {
+        Builder b = new Builder("sign_in",
+                "Sign in to sync membership and tickets",
+                "BASELINE and parked — NO_KEYBOARD removes the entry this flow exists for");
+        b.container("root", "Column", "email", "continue");
+        b.put("root", "title", "Sign in");
+        b.action("email", "TextField", "Email", "you@example.com", "edit");
+        b.put("email", "voicePhrase", "use my email");
+        b.action("continue", "Button", "Continue", "Sync membership and tickets", "signin");
+        b.put("continue", "voicePhrase", "continue");
+        b.templates(TemplateCapability.SIGN_IN);
+        return b.build();
+    }
+
+    /**
+     * One long text with a dismiss action. The message row carries the reading; the button row
+     * becomes the template action.
+     */
+    private static UseCase longMessage() {
+        Builder b = new Builder("long_message",
+                "Read the charging receipt",
+                "BASELINE — parked reading; the host scrolls what does not fit");
+        b.container("root", "Column", "message", "done");
+        b.put("root", "title", "Charging receipt");
+        b.text("message", "Session complete · 22 min",
+                "18.4 kWh added · $9.20 · Oat milk latte picked up at the counter · "
+                        + "The Met tour resumes in the gallery when you are back.");
+        b.action("done", "Button", "Done", null, "dismiss");
+        b.templates(TemplateCapability.LONG_MESSAGE);
+        return b.build();
+    }
+
+    /**
+     * Three tabs of library rows. Each tab page is a Column whose title names the tab and whose
+     * children are that tab's list. LIMIT_CONTENT removes Tabs itself, so under it the case
+     * renders nothing — the prune, not a fallback, is the honest outcome.
+     */
+    private static UseCase tabbedLibrary() {
+        Builder b = new Builder("tabbed_library",
+                "Browse the library by tab",
+                "BASELINE composes the tabs; LIMIT_CONTENT drops Tabs and the screen empties");
+        b.container("root", "Tabs", "tab_albums", "tab_artists", "tab_playlists");
+        b.put("root", "title", "Your library");
+        b.container("tab_albums", "Column", "a1", "a2");
+        b.put("tab_albums", "title", "Albums");
+        b.text("a1", "Recently added", "24 albums");
+        b.text("a2", "Made for you", "6 mixes");
+        b.container("tab_artists", "Column", "r1", "r2");
+        b.put("tab_artists", "title", "Artists");
+        b.text("r1", "Van Gogh", "14 tracks");
+        b.text("r2", "Vermeer", "9 tracks");
+        b.container("tab_playlists", "Column", "p1");
+        b.put("tab_playlists", "title", "Playlists");
+        b.text("p1", "Charging stop", "22 min of audio guides");
+        b.templates(TemplateCapability.TAB);
         return b.build();
     }
 

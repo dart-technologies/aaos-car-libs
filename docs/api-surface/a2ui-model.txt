@@ -144,6 +144,7 @@ public final class art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability extends j
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability GRID;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability HANDOFF;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability LIST;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability LONG_MESSAGE;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MAP_WITH_CONTENT;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MEDIA_PLAYBACK;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MODAL;
@@ -152,6 +153,8 @@ public final class art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability extends j
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability ROUTE_PREVIEW;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability SEARCH;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability SETTINGS;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability SIGN_IN;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability TAB;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability VIDEO;
 public final class art.dart.a2ui.demo.UseCaseCorpus$UseCase {
     public java.lang.String getId();
