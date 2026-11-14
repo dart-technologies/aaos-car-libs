@@ -770,6 +770,7 @@ public class CarAppRendererTest {
 
         assertThat(((InputSignInMethod) ((SignInTemplate) t).getSignInMethod())
                 .getErrorMessage().toString()).contains(CarAppRenderer.REFUSED_SUFFIX);
+        assertThat(((SignInTemplate) t).getActions()).isEmpty();
         assertThat(got).isEmpty();
     }
 
