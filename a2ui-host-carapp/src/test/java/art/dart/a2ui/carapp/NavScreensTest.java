@@ -138,7 +138,7 @@ public class NavScreensTest {
         Screen next = new A2uiNavPreviewScreen(mCarContext, new NavTrip(NavRoute.anchored()));
 
         assertThat(NavFlow.push(preview, next)).isTrue();
-        assertThat(NavFlow.push(new DeepScreen(), next)).isFalse();
+        assertThat(NavFlow.push(new DeepScreen(mCarContext), next)).isFalse();
     }
 
     /** Preview and guidance report their templates; the session reports the nav root. */
@@ -170,9 +170,9 @@ public class NavScreensTest {
     }
 
     /** A navigation screen already at the cap, so the refusal path is reachable. */
-    private final class DeepScreen extends Screen implements NavScreen {
-        DeepScreen() {
-            super(NavScreensTest.this.mCarContext);
+    private static final class DeepScreen extends Screen implements NavScreen {
+        DeepScreen(TestCarContext carContext) {
+            super(carContext);
         }
 
         @Override
