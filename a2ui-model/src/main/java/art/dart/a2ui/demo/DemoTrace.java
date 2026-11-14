@@ -38,20 +38,21 @@ public final class DemoTrace {
 
     public static final String SURFACE_ID = "showcase";
     public static final String CATALOG_ID = "automotive";
-    public static final String VERSION = "v0.9";
+    public static final String VERSION = A2uiProtocolVersions.V1;
     public static final String ROOT_ID = "root";
 
     private DemoTrace() {
     }
 
     /**
-     * A processor negotiated for the automotive catalog and both protocol versions. Messages are
+     * A processor negotiated for the automotive catalog and both protocol versions. The trace
+     * itself speaks v1.0; v0.9 stays accepted so old recordings still replay. Messages are
      * routed by their own {@code version}; each surface speaks the version it was created with.
      */
     @NonNull
     public static A2uiMessageProcessor newProcessor() {
-        return new A2uiMessageProcessor(CATALOG_ID,
-                new HashSet<>(Arrays.asList(VERSION, A2uiProtocolVersions.V1)));
+        return new A2uiMessageProcessor(CATALOG_ID, new HashSet<>(
+                Arrays.asList(A2uiProtocolVersions.V09, A2uiProtocolVersions.V1)));
     }
 
     /** The recorded trace, in order. */
