@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "title": "Highlights from The Met's open collection",
+  "orientation": "portrait",
+  "timingFrom": "FILM.json",
+  "license": "CC0 1.0 (inputs); the film adds only motion, layout and captions",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "attribution": "The Met · Open Access (CC0)",
+  "note": "Portrait (2:3) cut of the same film for the passenger display: each painting fills the frame, with no bars. Built from The Met Open Access images only; no Met video is used. Silent: the audio guide (met_guide_01..06) is separate narration timed to startMs, which are FILM.json's.",
+  "renderer": "scripts/render-met-artwork-film.py",
+  "rendererSha256": "74bf7f79014b873369d27def11b82def03e453df814ca983020241b9cff5b777",
+  "encoder": "ffmpeg version 8.1 Copyright (c) 2000-2026 the FFmpeg developers",
+  "captions": "pre-rendered with Pillow (this ffmpeg has no drawtext)",
+  "font": "Avenir Next Medium",
+  "parameters": {
+    "width": 720,
+    "height": 1080,
+    "fps": 30,
+    "pixelFormat": "yuv420p",
+    "totalSeconds": 36.0,
+    "shotSeconds": 6.6667,
+    "crossfadeSeconds": 0.8,
+    "fadeInSeconds": 0.6,
+    "fadeOutSeconds": 0.8,
+    "fit": "cover (full-bleed); eased pan on the wide works, slow zoom and drift on the near-square ones",
+    "panZoom": 1.03,
+    "insetDefault": 0.025,
+    "inset": {
+      "436535": 0.045
+    },
+    "moves": {
+      "436535": {
+        "move": "pan right",
+        "u": 0.66,
+        "travel": 210
+      },
+      "437881": {
+        "move": "zoom in",
+        "z": [
+          1.0,
+          1.1
+        ],
+        "start": [
+          0.45,
+          0.5
+        ],
+        "end": [
+          0.47,
+          0.38
+        ]
+      },
+      "437394": {
+        "move": "zoom out",
+        "z": [
+          1.12,
+          1.0
+        ],
+        "start": [
+          0.41,
+          0.4
+        ],
+        "end": [
+          0.42,
+          0.5
+        ]
+      },
+      "435809": {
+        "move": "pan left",
+        "u": 0.5,
+        "travel": 250
+      },
+      "436105": {
+        "move": "pan right",
+        "u": 0.5,
+        "travel": 250
+      },
+      "435868": {
+        "move": "pan left",
+        "u": 0.54,
+        "travel": 230
+      }
+    },
+    "peakPixelsPerSecondAt720": 58.9,
+    "maxPixelsPerSecondAt720": 70,
+    "codec": "libx264 high@4.0 crf 23 maxrate 1300k, no audio"
+  },
+  "works": [
+    {
+      "index": 1,
+      "objectID": 436535,
+      "title": "Wheat Field with Cypresses",
+      "move": "pan right",
+      "startMs": 0,
+      "fullyVisibleMs": 600,
+      "endMs": 6667
+    },
+    {
+      "index": 2,
+      "objectID": 437881,
+      "title": "Young Woman with a Water Pitcher",
+      "move": "zoom in",
+      "startMs": 5867,
+      "fullyVisibleMs": 6667,
+      "endMs": 12533
+    },
+    {
+      "index": 3,
+      "objectID": 437394,
+      "title": "Aristotle with a Bust of Homer",
+      "move": "zoom out",
+      "startMs": 11733,
+      "fullyVisibleMs": 12533,
+      "endMs": 18400
+    },
+    {
+      "index": 4,
+      "objectID": 435809,
+      "title": "The Harvesters",
+      "move": "pan left",
+      "startMs": 17600,
+      "fullyVisibleMs": 18400,
+      "endMs": 24267
+    },
+    {
+      "index": 5,
+      "objectID": 436105,
+      "title": "The Death of Socrates",
+      "move": "pan right",
+      "startMs": 23467,
+      "fullyVisibleMs": 24267,
+      "endMs": 30133
+    },
+    {
+      "index": 6,
+      "objectID": 435868,
+      "title": "The Card Players",
+      "move": "pan left",
+      "startMs": 29333,
+      "fullyVisibleMs": 30133,
+      "endMs": 36000
+    }
+  ],
+  "inputs": [
+    {
+      "objectID": 436535,
+      "file": "436535.jpg",
+      "sha256": "af0e3486621c210b54932d055294051b5601aa3362af4b84ab97e2831f8163bc",
+      "title": "Wheat Field with Cypresses",
+      "artistDisplayName": "Vincent van Gogh",
+      "objectDate": "1889",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/436535"
+    },
+    {
+      "objectID": 437881,
+      "file": "437881.jpg",
+      "sha256": "13120aa067755f1f50d2b900417807ef9da3f8b2b63a1bbea428fe3f2d8d00a9",
+      "title": "Young Woman with a Water Pitcher",
+      "artistDisplayName": "Johannes Vermeer",
+      "objectDate": "ca. 1662",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/437881"
+    },
+    {
+      "objectID": 437394,
+      "file": "437394.jpg",
+      "sha256": "06e64703d92fed63c6238d15ed32d582792397b238458bf1893530eb8d91e3f4",
+      "title": "Aristotle with a Bust of Homer",
+      "artistDisplayName": "Rembrandt (Rembrandt van Rijn)",
+      "objectDate": "1653",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/437394"
+    },
+    {
+      "objectID": 435809,
+      "file": "435809.jpg",
+      "sha256": "98dc6d6e23c008b23056108d04d9143b8c7f73fe6fa2a940fd09663290135e25",
+      "title": "The Harvesters",
+      "artistDisplayName": "Pieter Bruegel the Elder",
+      "objectDate": "1565",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/435809"
+    },
+    {
+      "objectID": 436105,
+      "file": "436105.jpg",
+      "sha256": "7d8d840424e3747c14b203b67192fff726c897bb05cf9d3f7fa227e1ee4510de",
+      "title": "The Death of Socrates",
+      "artistDisplayName": "Jacques Louis David",
+      "objectDate": "1787",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/436105"
+    },
+    {
+      "objectID": 435868,
+      "file": "435868.jpg",
+      "sha256": "23257f41fb04bd058dd01cb51b2883847fbc877d5409c66b2aa0cfc985de2f71",
+      "title": "The Card Players",
+      "artistDisplayName": "Paul Cézanne",
+      "objectDate": "1890–92",
+      "objectURL": "https://www.metmuseum.org/art/collection/search/435868"
+    }
+  ],
+  "output": {
+    "path": "a2ui-host-carui/src/main/res/raw/met_artwork_film_portrait.mp4",
+    "sha256": "c762a2165032210612ed7e7f1bf9f151966cfd5c1e48e7e467c239245c37b95d",
+    "bytes": 4587064,
+    "durationSeconds": 36.0,
+    "width": 720,
+    "height": 1080,
+    "codec": "h264",
+    "profile": "High"
+  }
+}

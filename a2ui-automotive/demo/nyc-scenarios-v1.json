@@ -298,6 +298,282 @@
         {"atMs": 51500, "effectId": "fifth_house_focus", "gainDb": -14},
         {"atMs": 69200, "effectId": "fifth_house_arrival", "gainDb": -13}
       ]
+    },
+    {
+      "id": "nyc_met",
+      "title": "Thursday at The Met, then a charge, a coffee and a film",
+      "corpusCase": "met_visit",
+      "corpusSequence": ["met_visit", "ev_charge_coffee"],
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-met-2026-11-05.json",
+      "agentProfiles": "a2ui-automotive/demo/agent-profiles-v1.json",
+      "durationSeconds": 129,
+      "recording": {"layout": "dual"},
+      "chapterCards": [
+        {"image": "a2ui-automotive/demo/cards/nyc_met-title.png", "atMs": 0, "seconds": 2.5},
+        {"image": "a2ui-automotive/demo/cards/nyc_met-intermission.png", "atMs": 82500, "seconds": 3.5,
+         "fadeIn": 0.7, "fadeOut": 0.7}
+      ],
+      "disclaimer": {
+        "image": "a2ui-automotive/demo/cards/nyc_met-disclaimer.png",
+        "text": "Simulated demo drive on Android Automotive OS emulator"
+      },
+      "preamble": [
+        {"style": "unsafe", "frameAtMs": 12000, "seconds": 4.8, "chip": "Driving · 40 mph", "clipId": "pre_narration_01"},
+        {"style": "useless", "frameAtMs": 12000, "seconds": 3.3, "chip": "Driving · 40 mph", "lockText": "Not available while driving", "clipId": "pre_narration_02"},
+        {"style": "answer", "frameAtMs": 26000, "seconds": 5.4, "chip": "Driving", "clipId": "pre_narration_03"}
+      ],
+      "outro": {
+        "seconds": 10.9,
+        "clipId": "outro_narration_01",
+        "closingClipId": "outro_narration_02",
+        "places": ["Hudson Yards", "The Met", "charging"],
+        "beats": [
+          {"atMs": 12000, "display": "driver", "label": "Cited Met brief"},
+          {"atMs": 22000, "display": "driver", "label": "Met entry confirmed"},
+          {"atMs": 40000, "display": "driver", "label": "Met audio guide"},
+          {"atMs": 71000, "display": "driver", "label": "Met video overview"},
+          {"atMs": 95000, "display": "driver", "label": "3 chargers nearby"},
+          {"atMs": 116000, "display": "driver", "label": "Café pick + coffee"},
+          {"atMs": 125000, "display": "driver", "label": "Big Buck Bunny"},
+          {"atMs": 45000, "display": "passenger", "label": "Passenger · Met video overview"},
+          {"atMs": 94000, "display": "passenger", "label": "Passenger · Big Buck Bunny"}
+        ],
+        "note": "Simulated demo drive on Android Automotive OS emulator",
+        "badgeIcon": "a2ui-automotive/demo/cards/brand/muse-icon-white.png",
+        "architecture": [
+          {"badge": "Muse · Meta"},
+          {"title": "Dev gateway"},
+          {"title": "A2UI host"},
+          {"title": "Vehicle policy"},
+          {"title": "Driver & passenger displays"}
+        ]
+      },
+      "premise": "Why it matters first: three cards built from this recording's own frames show a model-designed screen that cannot see the road, the lockout most cars use instead, and the pruned driving screen. Then Thursday afternoon at Hudson Yards. Parked, Muse gives a cited brief, and timed entry waits for a parked confirmation. In drive the driver's screen simplifies while the passenger's screen plays the artwork film and Muse's audio guide plays for everyone; parked at The Met, the film moves to the driver's screen. After the visit a low battery brings up three nearby chargers; parked and charging, Muse's cited café pick backs the usual coffee, and the driver opens Big Buck Bunny, which the car allows only while parked. A closing card maps the journey and the architecture.",
+      "parameterRationale": [
+        "Thursday, Nov 5: The Met Fifth Avenue is closed on Wednesdays, so the story uses Thursday's NWS forecast, captured the day before and labelled with its day.",
+        "Hudson Yards to The Met is a real 4.3-mile OSRM route over OpenStreetMap data, drawn locally without map tiles.",
+        "Two physical displays show the per-display rule: the passenger keeps moving pictures while the driver's screen simplifies.",
+        "The film uses only The Met's CC0 Open Access images; Muse wrote the audio guide from cited pages about each work (fixtures/met/AUDIO_GUIDE.json), one line timed to each work in the film.",
+        "Chapter 2 lowers the battery through the vehicle HAL, so the proactive charger card answers a vehicle signal, not a script.",
+        "The chargers are real OpenStreetMap entries near The Met; availability, price and speed beyond tagged output are unknown and never shown as live.",
+        "The café is a real OpenStreetMap listing a 3-minute walk from the first charger, ranked by Muse from cited web sources against open hours, oat milk, reputation and pickup, with walk time and totals computed by script (fixtures/coffee/COFFEE.json).",
+        "The preamble and the closing card are composed after capture from frames of the same raw recording, so they always match the UI; the narration never says demo, and one disclaimer line in the canvas margin covers the whole video.",
+        "Big Buck Bunny (CC BY 3.0, Blender Foundation) closes the story because watching video is the clearest parked-only privilege.",
+        "A silent intermission card ('Later that afternoon', 5:15 PM) is composed over the driver's picture after the Met film; the switch to chapter 2 and the clock jump happen underneath it, so time visibly passes."
+      ],
+      "doNotClaim": [
+        "a real reservation, ticket, coffee order, payment or charging session",
+        "that anything was sent to the café, or that its hours or menu are live",
+        "live weather, live location, or live charger availability, price or speed",
+        "that the brief, the audio guide or the café pick was generated during the recording",
+        "any endorsement by The Metropolitan Museum of Art, OpenStreetMap, a charging network or the café",
+        "that a DEMO restriction preset represents vehicle motion",
+        "that the preamble's unsafe and locked-out screens are real products; they are illustrations built from this recording's parked frame"
+      ],
+      "clips": [
+        {
+          "id": "pre_narration_01",
+          "role": "narration",
+          "section": "preamble",
+          "atMs": 300,
+          "text": "AI can design any screen now. But a model can't see the road."
+        },
+        {
+          "id": "pre_narration_02",
+          "role": "narration",
+          "section": "preamble",
+          "atMs": 4950,
+          "text": "So most cars just lock you out while you drive."
+        },
+        {
+          "id": "pre_narration_03",
+          "role": "narration",
+          "section": "preamble",
+          "atMs": 8250,
+          "text": "Here, Meta's Muse designs the screen, and the car decides what the driver may see."
+        },
+        {
+          "id": "met_utterance_visit",
+          "role": "user_utterance",
+          "atMs": 3000,
+          "text": "Take us to The Met this afternoon.",
+          "expectedTranscript": "take us to the met this afternoon"
+        },
+        {
+          "id": "met_narration_02",
+          "role": "narration",
+          "atMs": 8000,
+          "text": "Muse answers with a short brief and cited sources, shown only while parked."
+        },
+        {
+          "id": "met_utterance_reserve",
+          "role": "user_utterance",
+          "atMs": 14000,
+          "text": "Reserve entry for two at three.",
+          "expectedTranscript": "reserve entry for two at three"
+        },
+        {
+          "id": "met_narration_03",
+          "role": "narration",
+          "atMs": 16600,
+          "text": "Bookings wait until you're parked and you confirm."
+        },
+        {
+          "id": "met_narration_05",
+          "role": "narration",
+          "atMs": 23500,
+          "text": "Now we're moving, and the driver's screen simplifies itself."
+        },
+        {
+          "id": "met_utterance_first",
+          "role": "user_utterance",
+          "atMs": 28000,
+          "text": "What should we see first?",
+          "expectedTranscript": "what should we see first"
+        },
+        {
+          "id": "met_guide_01",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 436535,
+          "atMs": 31000,
+          "text": "In Van Gogh's wheat field, wind rushes through swaying cypresses."
+        },
+        {
+          "id": "met_guide_02",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 437881,
+          "atMs": 36867,
+          "text": "Beside Vermeer's open window, a woman begins her day washing."
+        },
+        {
+          "id": "met_guide_03",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 437394,
+          "atMs": 42733,
+          "text": "Aristotle touches Homer's bust in Rembrandt van Rijn's meditation."
+        },
+        {
+          "id": "met_guide_04",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 435809,
+          "atMs": 48600,
+          "text": "Amid Pieter Bruegel the Elder's harvest, workers scythe wheat and rest."
+        },
+        {
+          "id": "met_guide_05",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 436105,
+          "atMs": 54467,
+          "text": "Socrates reaches for the hemlock cup in Jacques-Louis David's story."
+        },
+        {
+          "id": "met_guide_06",
+          "role": "narration",
+          "lane": "audio_guide",
+          "objectID": 435868,
+          "atMs": 60333,
+          "text": "Around Paul Cézanne's small table, three farmhands play cards."
+        },
+        {
+          "id": "met_narration_06",
+          "role": "narration",
+          "atMs": 68000,
+          "text": "Parked at The Met, the film moves to the driver's screen. Muse curated that guide from cited sources before we left."
+        },
+        {
+          "id": "ev_narration_01",
+          "role": "narration",
+          "atMs": 87000,
+          "text": "Back on the road, the car keeps watch so you don't have to."
+        },
+        {
+          "id": "ev_narration_02",
+          "role": "narration",
+          "atMs": 91600,
+          "text": "It noticed the battery running low and found chargers on your way."
+        },
+        {
+          "id": "ev_utterance_first",
+          "role": "user_utterance",
+          "atMs": 96000,
+          "text": "Take me to the first one.",
+          "expectedTranscript": "take me to the first one"
+        },
+        {
+          "id": "ev_narration_03",
+          "role": "narration",
+          "atMs": 101500,
+          "text": "Parked at the charger. Muse already checked 15 cafés within a short walk, each claim backed by a source."
+        },
+        {
+          "id": "ev_utterance_coffee",
+          "role": "user_utterance",
+          "atMs": 109300,
+          "text": "Order my usual coffee.",
+          "expectedTranscript": "order my usual coffee"
+        },
+        {
+          "id": "ev_narration_04",
+          "role": "narration",
+          "atMs": 114000,
+          "text": "Your usual is set for pickup, a three-minute walk away."
+        },
+        {
+          "id": "ev_narration_05",
+          "role": "narration",
+          "atMs": 119200,
+          "text": "And while it charges, the driver can watch too. Parked, the car allows it."
+        },
+        {
+          "id": "outro_narration_01",
+          "role": "narration",
+          "section": "outro",
+          "atMs": 500,
+          "text": "Muse does the research and designs the screens. The car decides what each display may show."
+        },
+        {
+          "id": "outro_narration_02",
+          "role": "narration",
+          "section": "outro",
+          "atMs": 7000,
+          "text": "Thanks for checking out Muse2CarUI.",
+          "spoken": "Thanks for checking out Muse to Car U I."
+        }
+      ],
+      "actions": [
+        {"atMs": 5500, "type": "agent", "provider": "muse", "ask": "Take us to The Met this afternoon", "clipId": "met_utterance_visit"},
+        {"atMs": 15000, "type": "speak", "clipId": "met_utterance_reserve"},
+        {"atMs": 19800, "type": "tapText", "text": "Confirm"},
+        {"atMs": 22500, "type": "carState", "state": "drive"},
+        {"atMs": 28800, "type": "speak", "clipId": "met_utterance_first"},
+        {"atMs": 30500, "type": "passenger", "media": "artwork"},
+        {"atMs": 67000, "type": "carState", "state": "park"},
+        {"atMs": 67500, "type": "passenger", "media": "stop"},
+        {"atMs": 83300, "type": "selectCase", "caseId": "ev_charge_coffee"},
+        {"atMs": 83600, "type": "wallClock", "local": "2026-11-05T17:15"},
+        {"atMs": 84500, "type": "carState", "state": "drive"},
+        {"atMs": 86500, "type": "passenger", "media": "video"},
+        {"atMs": 90600, "type": "vehicleSignal", "signal": "battery", "percent": 18, "via": ["vhal-set", "vhal-inject", "broadcast"], "capacityWhFallback": 150000},
+        {"atMs": 97000, "type": "speak", "clipId": "ev_utterance_first"},
+        {"atMs": 100500, "type": "carState", "state": "park"},
+        {"atMs": 110300, "type": "speak", "clipId": "ev_utterance_coffee"},
+        {"atMs": 112800, "type": "tapText", "text": "Confirm"},
+        {"atMs": 118200, "type": "tapText", "text": "Big Buck Bunny"}
+      ],
+      "soundEffects": [
+        {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
+        {"atMs": 20300, "effectId": "fifth_house_confirmed", "gainDb": -12},
+        {"atMs": 23000, "effectId": "fifth_house_focus", "gainDb": -14},
+        {"atMs": 67300, "effectId": "fifth_house_arrival", "gainDb": -13},
+        {"atMs": 86500, "effectId": "fifth_house_focus", "gainDb": -14},
+        {"atMs": 100800, "effectId": "fifth_house_arrival", "gainDb": -13},
+        {"atMs": 113300, "effectId": "fifth_house_confirmed", "gainDb": -12}
+      ]
     }
   ]
 }
