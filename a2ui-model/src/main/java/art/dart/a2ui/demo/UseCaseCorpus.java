@@ -52,6 +52,8 @@ public final class UseCaseCorpus {
         LONG_MESSAGE,
         SIGN_IN,
         TAB,
+        MAP,
+        PLACE_LIST_NAVIGATION,
         SEARCH,
         MEDIA_PLAYBACK,
         SETTINGS,
@@ -131,7 +133,9 @@ public final class UseCaseCorpus {
             artworkGrid(),
             signIn(),
             longMessage(),
-            tabbedLibrary()));
+            tabbedLibrary(),
+            routeMap(),
+            chargerStops()));
 
     @NonNull
     public static List<UseCase> all() {
@@ -585,6 +589,43 @@ public final class UseCaseCorpus {
         b.put("tab_playlists", "title", "Playlists");
         b.text("p1", "Charging stop", "22 min of audio guides");
         b.templates(TemplateCapability.TAB);
+        return b.build();
+    }
+
+    /**
+     * A route on a map. The map is an image, so motion takes it; the ETA and the steps are text,
+     * so they stay. Route preview: Hudson Yards to The Met, © OpenStreetMap contributors.
+     */
+    private static UseCase routeMap() {
+        Builder b = new Builder("route_map",
+                "Preview the route to The Met on a map",
+                "BASELINE shows map and steps; FULLY_RESTRICTED keeps the ETA and steps, map waits");
+        b.container("root", "Column", "map", "eta", "step1", "step2");
+        b.put("root", "title", "Route to The Met");
+        b.component("map", "Image", "Hudson Yards → The Met",
+                "Route preview · © OpenStreetMap contributors");
+        b.text("eta", "Arrive 2:41 PM · 19 min", "Hudson Yards → The Met · 81st St entrance");
+        b.text("step1", "Head east through Hudson Yards", "0.4 mi");
+        b.text("step2", "Turn left onto 11th Ave", "1.1 mi");
+        b.templates(TemplateCapability.MAP);
+        return b.build();
+    }
+
+    /**
+     * Fast chargers to navigate to. Buttons, not cards: navigation rows must survive
+     * FULLY_RESTRICTED, and cards do not. Choosing one is navigation, allowed in motion.
+     */
+    private static UseCase chargerStops() {
+        Builder b = new Builder("charger_stops",
+                "Show fast chargers to navigate to",
+                "BASELINE lists the stops; motion keeps them — navigation is glanceable");
+        b.container("root", "Column", "c1", "c2", "c3");
+        b.put("root", "title", "Fast chargers");
+        b.action("c1", "Button", "Charger nearby", "public charging", "navigate");
+        b.put("c1", "voicePhrase", "take me to the first one");
+        b.action("c2", "Button", "Charger uptown", "public charging", "navigate");
+        b.action("c3", "Button", "Charger east", "public charging", "navigate");
+        b.templates(TemplateCapability.PLACE_LIST_NAVIGATION);
         return b.build();
     }
 

@@ -16,7 +16,7 @@ Context is a dated snapshot (`demo/context/nyc-2026-09-07.json`, refresh due 202
 enforced); venues, merchant and route are fictional and badged `DEMO`; agent lanes are in
 `demo/agent-profiles-v1.json`.
 
-## Corpus (`UseCaseCorpus`: 16 cases, all 18 catalog types)
+## Corpus (`UseCaseCorpus`: 18 cases, all 18 catalog types)
 
 | Case | Types | Recorded at | Shows |
 |---|---|---|---|
@@ -36,6 +36,8 @@ enforced); venues, merchant and route are fictional and badged `DEMO`; agent lan
 | `sign_in` | TextField Button | 0x8 | Email plus continue as a `SignInTemplate`; `NO_KEYBOARD` removes entry |
 | `long_message` | Text Button | 0x1ff | The receipt as a `LongMessageTemplate`; readable parked or moving |
 | `tabbed_library` | Tabs Column Text | 0x20 | Albums/Artists/Playlists as a `TabTemplate`; `LIMIT_CONTENT` empties it |
+| `route_map` | Image Text | 0x1ff | Route preview as a `MapTemplate`; motion takes the map, steps stay |
+| `charger_stops` | Button | 0x1ff | Fast chargers as a `PlaceListNavigationTemplate`; navigable in motion |
 
 `UseCaseCorpusGatewayParityTest` replays each case for all four provider selectors (parser parity,
 not deployed adapters); `check-demo-workflows.py` keeps `record-demo.sh` in step with the corpus.

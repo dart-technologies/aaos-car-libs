@@ -48,7 +48,7 @@ public class A2uiMediaLibraryService extends MediaLibraryService {
     @Override
     public void onCreate() {
         super.onCreate();
-        mCatalog = new AnchoredMediaCatalog(getPackageName());
+        mCatalog = new CorpusMediaCatalog(getPackageName());
         mPlayer = new ExoPlayer.Builder(this).build();
         mSession = new MediaLibrarySession.Builder(this, mPlayer, new CatalogCallback())
                 .setId("a2ui-media")
