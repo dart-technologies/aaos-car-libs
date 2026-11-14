@@ -18,8 +18,14 @@ package art.dart.a2ui.render;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
+import android.text.SpannableString;
+import android.text.Spanned;
+
 import androidx.car.app.model.Action;
 import androidx.car.app.model.CarIcon;
+import androidx.car.app.model.CarText;
+import androidx.car.app.model.Distance;
+import androidx.car.app.model.DistanceSpan;
 import androidx.car.app.model.GridItem;
 import androidx.car.app.model.GridTemplate;
 import androidx.car.app.model.Header;
@@ -37,6 +43,8 @@ import androidx.car.app.model.Toggle;
 import androidx.car.app.model.signin.InputSignInMethod;
 import androidx.car.app.model.signin.ProviderSignInMethod;
 import androidx.car.app.model.signin.SignInTemplate;
+import androidx.car.app.navigation.model.MapTemplate;
+import androidx.car.app.navigation.model.PlaceListNavigationTemplate;
 
 import art.dart.a2ui.model.A2uiComponent;
 import art.dart.a2ui.model.ComponentType;
@@ -46,6 +54,7 @@ import art.dart.a2ui.policy.A2uiVisibleTree;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Renders a pruned A2UI surface as an {@code androidx.car.app} template. {@code prune} decides
@@ -75,6 +84,14 @@ public final class CarAppRenderer {
     /** Receives sign-in text submitted into a {@link #renderSignIn} template, with its field. */
     public interface InputListener {
         void onInputSubmitted(@NonNull A2uiComponent field, @NonNull String text);
+    }
+
+    /**
+     * Resolves a place row's distance in meters. The wire carries titles, not numbers, so the
+     * host owns distances; negative means unknown.
+     */
+    public interface DistanceResolver {
+        double distanceMeters(@NonNull A2uiComponent row);
     }
 
     /**
@@ -328,6 +345,62 @@ public final class CarAppRenderer {
         return template.build();
     }
 
+    /**
+     * Builds a map template: the host's map behind the pruned surface's rows. The app draws no
+     * map pixels of its own; the map row is content like any other.
+     *
+     * @param contentLimit the host's list limit, applied to the overlay rows
+     */
+    @NonNull
+    public static Template renderMap(
+            @Nullable A2uiComponent root, @NonNull String title, int contentLimit,
+            @Nullable A2uiActionBinder binder, @Nullable Action headerAction) {
+        requireUsableLimit(contentLimit);
+        Header.Builder header = new Header.Builder().setTitle(title);
+        if (headerAction != null) {
+            header.addEndHeaderAction(headerAction);
+        }
+        return new MapTemplate.Builder()
+                .setHeader(header.build())
+                .setItemList(buildListItems(
+                        A2uiVisibleTree.renderableRows(root), contentLimit, binder))
+                .build();
+    }
+
+    /**
+     * Builds a place-list navigation template: one row per stop, each navigating through the
+     * binder. Every row carries a distance span — the template rejects rows without one — over a
+     * host-formatted distance line, US customary, followed by the row's own subtitle.
+     *
+     * @param contentLimit the host's limit for {@code CONTENT_LIMIT_TYPE_PLACE_LIST}
+     * @param resolver the distance behind every row; unknown distances fail loudly, because a
+     *        row without one fails at the template anyway
+     */
+    @NonNull
+    public static Template renderPlaceListNavigation(
+            @Nullable A2uiComponent root, @NonNull String title, int contentLimit,
+            @Nullable A2uiActionBinder binder, @Nullable Action headerAction,
+            @NonNull DistanceResolver resolver) {
+        requireUsableLimit(contentLimit);
+        List<A2uiComponent> rows = A2uiVisibleTree.renderableRows(root);
+        ItemList.Builder items = new ItemList.Builder();
+        int shown = Math.min(rows.size(), contentLimit);
+        for (int i = 0; i < shown; i++) {
+            items.addItem(placeRow(rows.get(i), binder, resolver));
+        }
+        if (shown == 0) {
+            items.setNoItemsMessage(A2uiActionBinder.EMPTY_WHILE_DRIVING_NOTE);
+        }
+        Header.Builder header = new Header.Builder().setTitle(title);
+        if (headerAction != null) {
+            header.addEndHeaderAction(headerAction);
+        }
+        return new PlaceListNavigationTemplate.Builder()
+                .setHeader(header.build())
+                .setItemList(items.build())
+                .build();
+    }
+
     private static void requireUsableLimit(int contentLimit) {
         if (contentLimit < MIN_USABLE_CONTENT_LIMIT) {
             // Loudly: substituting a default would invent the host's constraint.
@@ -358,11 +431,53 @@ public final class CarAppRenderer {
     @NonNull
     private static Row listRow(
             @NonNull A2uiComponent component, @Nullable A2uiActionBinder binder) {
+        return rowWithSubtitle(component, binder,
+                component.getSubtitle() != null
+                        ? new CarText.Builder(component.getSubtitle()).build() : null);
+    }
+
+    @NonNull
+    private static Row placeRow(
+            @NonNull A2uiComponent component, @Nullable A2uiActionBinder binder,
+            @NonNull DistanceResolver resolver) {
+        return rowWithSubtitle(component, binder, distanceLine(component, resolver));
+    }
+
+    /**
+     * The distance line: a host-formatted miles figure with a distance span over it, then the
+     * row's own subtitle. US customary, matching the NYC demo; a real host follows the car
+     * locale, and the corpus carries no miles of its own to contradict.
+     */
+    @NonNull
+    private static CarText distanceLine(@NonNull A2uiComponent component,
+            @NonNull DistanceResolver resolver) {
+        double meters = resolver.distanceMeters(component);
+        if (!(meters >= 0)) {
+            // Loudly: the template rejects a row without a distance span anyway.
+            throw new IllegalArgumentException(
+                    "no distance for place row " + component.getId()
+                            + "; the template requires one per row");
+        }
+        double miles = meters / 1609.344;
+        String distanceText = String.format(Locale.US, "%.1f mi", miles);
+        String line = component.getSubtitle() == null ? distanceText
+                : distanceText + " · " + component.getSubtitle();
+        SpannableString spannable = new SpannableString(line);
+        spannable.setSpan(
+                DistanceSpan.create(Distance.create(miles, Distance.UNIT_MILES_P1)),
+                0, distanceText.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        return new CarText.Builder(spannable).build();
+    }
+
+    @NonNull
+    private static Row rowWithSubtitle(
+            @NonNull A2uiComponent component, @Nullable A2uiActionBinder binder,
+            @Nullable CarText subtitle) {
         Row.Builder row = new Row.Builder()
                 .setTitle(component.getTitle() == null
                         ? component.getType().catalogName() : component.getTitle());
-        if (component.getSubtitle() != null) {
-            row.addText(component.getSubtitle());
+        if (subtitle != null) {
+            row.addText(subtitle);
         }
         A2uiActionPolicy.Decision decision =
                 binder == null ? null : binder.decisionFor(component);

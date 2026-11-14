@@ -40,6 +40,8 @@ CASE_MASK=(
   sign_in             0x8     # NO_KEYBOARD removes the email entry; continue refuses
   long_message        0x1ff   # the receipt survives FULLY_RESTRICTED unchanged
   tabbed_library      0x20    # LIMIT_CONTENT drops Tabs; the screen empties, then recovers
+  route_map           0x1ff   # motion takes the map image; ETA and steps stay
+  charger_stops       0x1ff   # navigation rows survive FULLY_RESTRICTED
 )
 # These two are interesting at BASELINE only because of a second display, which one recording cannot
 # show; FULLY_RESTRICTED shows what the surface becomes where the driver can see it.
@@ -60,6 +62,8 @@ CASE_WHAT=(
   sign_in             "email entry plus continue as a SignInTemplate; NO_KEYBOARD removes entry"
   long_message        "the charging receipt as a LongMessageTemplate; readable parked or moving"
   tabbed_library      "Albums/Artists/Playlists as a TabTemplate; LIMIT_CONTENT empties it"
+  route_map           "the route preview as a MapTemplate; motion takes the map, steps stay"
+  charger_stops       "fast chargers as a PlaceListNavigationTemplate; navigable in motion"
 )
 
 HOST_A_PKG=art.dart.a2ui.carapp

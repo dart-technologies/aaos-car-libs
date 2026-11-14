@@ -20,6 +20,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
 
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+
 import androidx.annotation.Nullable;
 
 import androidx.car.app.model.Action;
@@ -37,6 +40,8 @@ import androidx.car.app.model.Template;
 import androidx.car.app.model.signin.InputSignInMethod;
 import androidx.car.app.model.signin.ProviderSignInMethod;
 import androidx.car.app.model.signin.SignInTemplate;
+import androidx.car.app.navigation.model.MapTemplate;
+import androidx.car.app.navigation.model.PlaceListNavigationTemplate;
 
 import art.dart.a2ui.model.A2uiComponent;
 import art.dart.a2ui.model.ComponentType;
@@ -58,7 +63,11 @@ import org.junit.Test;
 /**
  * The quantity constraint {@code prune} cannot express ("Scope note 1"): the templates host rejects
  * an over-limit template, and these tests pin the renderer's half of that.
+ *
+ * <p>Robolectric, for the place rows: distance spans ride a {@code SpannableString}, whose span
+ * bookkeeping is a framework stub under plain JUnit.
  */
+@RunWith(RobolectricTestRunner.class)
 public class CarAppRendererTest {
 
     private static A2uiComponent listOf(int itemCount) {
@@ -912,5 +921,97 @@ public class CarAppRendererTest {
     public void tabRefusesTheUnusableFloor() {
         assertThrows(IllegalArgumentException.class, () -> CarAppRenderer.renderTab(
                 tabsRoot(tabPage("tab_albums", "Albums")), 0, null, null, noopTabs(), mock(CarIcon.class)));
+    }
+
+    // Map: the host's map behind the pruned surface's rows, truncated to the list limit.
+
+    private static ItemList mapItems(Template t) {
+        return ((MapTemplate) t).getItemList();
+    }
+
+    @Test
+    public void mapShowsRowsOverTheHostMap() {
+        Template t = CarAppRenderer.renderMap(columnOf(
+                text("Arrive 2:41 PM · 19 min", "Hudson Yards → The Met"),
+                text("Head east", "0.4 mi"),
+                text("Turn left", "1.1 mi")), "Route to The Met", 2, null, null);
+
+        assertThat(((MapTemplate) t).getHeader().getTitle().toString())
+                .isEqualTo("Route to The Met");
+        assertThat(mapItems(t).getItems()).hasSize(2);
+        assertThat(((androidx.car.app.model.Row) mapItems(t).getItems().get(0)).getTitle()
+                .toString()).isEqualTo("Arrive 2:41 PM · 19 min");
+    }
+
+    @Test
+    public void mapRefusesTheUnusableFloor() {
+        assertThrows(IllegalArgumentException.class, () -> CarAppRenderer.renderMap(
+                columnOf(text("a", "1")), "Route", 0, null, null));
+    }
+
+    @Test
+    public void mapEmptyShowsTheHonestNote() {
+        Template t = CarAppRenderer.renderMap(null, "Route", 6, null, null);
+
+        assertThat(mapItems(t).getItems()).isEmpty();
+        assertThat(mapItems(t).getNoItemsMessage().toString()).contains("while driving");
+    }
+
+    // Place-list navigation: one row per stop, each navigating through the binder.
+
+    private static ItemList placeItems(Template t) {
+        return ((PlaceListNavigationTemplate) t).getItemList();
+    }
+
+    @Test
+    public void placeListNavigationShowsOneRowPerStop() {
+        Template t = CarAppRenderer.renderPlaceListNavigation(columnOf(
+                button("c1", "navigate"), button("c2", "navigate"), button("c3", "navigate")),
+                "Fast chargers", 6, new FakeBinder(A2uiActionPolicy.Decision.ALLOW), null,
+                row -> 966.0);
+
+        PlaceListNavigationTemplate places = (PlaceListNavigationTemplate) t;
+        assertThat(places.getHeader().getTitle().toString()).isEqualTo("Fast chargers");
+        assertThat(placeItems(t).getItems()).hasSize(3);
+        assertThat(((androidx.car.app.model.Row) placeItems(t).getItems().get(0))
+                .getOnClickDelegate()).isNotNull();
+    }
+
+    @Test
+    public void placeRowsLeadWithTheHostFormattedDistance() {
+        // Meters in, miles out; the template requires a distance span per row, so the line the
+        // span sits on is asserted, not the span object.
+        Template t = CarAppRenderer.renderPlaceListNavigation(
+                columnOf(button("c1", "navigate")), "Fast chargers", 6, null, null,
+                row -> 1770.0);
+
+        assertThat(((androidx.car.app.model.Row) placeItems(t).getItems().get(0)).getTexts()
+                .toString()).contains("1.1 mi");
+    }
+
+    @Test
+    public void placeListNavigationRefusesTheUnusableFloor() {
+        assertThrows(IllegalArgumentException.class, () ->
+                CarAppRenderer.renderPlaceListNavigation(
+                        columnOf(button("c1", "navigate")), "Fast chargers", 0, null, null,
+                        row -> 966.0));
+    }
+
+    @Test
+    public void placeListNavigationEmptyShowsTheHonestNote() {
+        Template t = CarAppRenderer.renderPlaceListNavigation(
+                null, "Fast chargers", 6, null, null, row -> 966.0);
+
+        assertThat(placeItems(t).getItems()).isEmpty();
+        assertThat(placeItems(t).getNoItemsMessage().toString()).contains("while driving");
+    }
+
+    @Test
+    public void placeRowWithoutADistanceFailsLoudly() {
+        // The template rejects a row without a distance span anyway; unknown is refused here.
+        assertThrows(IllegalArgumentException.class, () ->
+                CarAppRenderer.renderPlaceListNavigation(
+                        columnOf(button("c1", "navigate")), "Fast chargers", 6, null, null,
+                        row -> -1.0));
     }
 }

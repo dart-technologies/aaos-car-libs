@@ -145,11 +145,13 @@ public final class art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability extends j
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability HANDOFF;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability LIST;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability LONG_MESSAGE;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MAP;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MAP_WITH_CONTENT;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MEDIA_PLAYBACK;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability MODAL;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability NAVIGATION;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability PLACE_LIST_MAP;
+    public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability PLACE_LIST_NAVIGATION;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability ROUTE_PREVIEW;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability SEARCH;
     public static final art.dart.a2ui.demo.UseCaseCorpus$TemplateCapability SETTINGS;

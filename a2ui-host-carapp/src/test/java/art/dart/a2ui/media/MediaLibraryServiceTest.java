@@ -23,7 +23,7 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 
 /**
- * The service lifecycle: creation publishes a session over the anchor catalog, destruction
+ * The service lifecycle: creation publishes a session over the corpus catalog, destruction
  * releases it. Browse/play/pause behavior runs on the emulator (controller tests), where a
  * player and an audio path exist.
  */
@@ -39,6 +39,6 @@ public class MediaLibraryServiceTest {
 
         assertThat(service.onGetSession(null)).isNotNull();
         assertThat(service.catalogForTest().libraryRoot().mediaId)
-                .isEqualTo(AnchoredMediaCatalog.ROOT_ID);
+                .isEqualTo(CorpusMediaCatalog.ROOT_ID);
     }
 }

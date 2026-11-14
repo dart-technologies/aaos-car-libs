@@ -442,7 +442,9 @@ public final class A2uiShowcaseScreen extends Screen {
                 pruned == null ? null : routedCapability(mSurfaceId);
         int limit = contentLimit(routed == UseCaseCorpus.TemplateCapability.GRID
                 ? ConstraintManager.CONTENT_LIMIT_TYPE_GRID
-                : ConstraintManager.CONTENT_LIMIT_TYPE_LIST);
+                : routed == UseCaseCorpus.TemplateCapability.PLACE_LIST_NAVIGATION
+                        ? ConstraintManager.CONTENT_LIMIT_TYPE_PLACE_LIST
+                        : ConstraintManager.CONTENT_LIMIT_TYPE_LIST);
 
         // Permanent diagnostic: a real reading and a fallback render identically, so all four
         // inputs are logged on every template.
@@ -486,6 +488,12 @@ public final class A2uiShowcaseScreen extends Screen {
         if (caps.contains(UseCaseCorpus.TemplateCapability.SIGN_IN)) {
             return UseCaseCorpus.TemplateCapability.SIGN_IN;
         }
+        if (caps.contains(UseCaseCorpus.TemplateCapability.MAP)) {
+            return UseCaseCorpus.TemplateCapability.MAP;
+        }
+        if (caps.contains(UseCaseCorpus.TemplateCapability.PLACE_LIST_NAVIGATION)) {
+            return UseCaseCorpus.TemplateCapability.PLACE_LIST_NAVIGATION;
+        }
         return null;
     }
 
@@ -511,6 +519,15 @@ public final class A2uiShowcaseScreen extends Screen {
         if (routed == UseCaseCorpus.TemplateCapability.SIGN_IN) {
             return CarAppRenderer.renderSignIn(pruned, title, binder,
                     (field, text) -> submitSignIn(surfaceId, field, text));
+        }
+        if (routed == UseCaseCorpus.TemplateCapability.MAP) {
+            logOverflow(pruned, limit);
+            return CarAppRenderer.renderMap(pruned, title, limit, binder, header);
+        }
+        if (routed == UseCaseCorpus.TemplateCapability.PLACE_LIST_NAVIGATION) {
+            logOverflow(pruned, limit);
+            return CarAppRenderer.renderPlaceListNavigation(pruned, title, limit, binder, header,
+                    A2uiShowcaseScreen::demoPlaceMeters);
         }
         logOverflow(pruned, limit);
         return CarAppRenderer.render(pruned, title, limit, binder, header);
@@ -721,6 +738,25 @@ public final class A2uiShowcaseScreen extends Screen {
     private CarIcon gridItemImage() {
         return new CarIcon.Builder(IconCompat.createWithResource(
                 getCarContext(), R.drawable.ic_grid_image)).build();
+    }
+
+    /**
+     * Demo anchor distances for the fictional charger stops, in meters. The stops are fictional —
+     * real OpenStreetMap places would be real data wearing a demo costume — so these are
+     * demo-plausible, not surveyed: 0.6, 1.1 and 1.9 miles out.
+     */
+    private static double demoPlaceMeters(@NonNull A2uiComponent row) {
+        switch (row.getId()) {
+            case "c1":
+                return 966.0;
+            case "c2":
+                return 1770.0;
+            case "c3":
+                return 3058.0;
+            default:
+                throw new IllegalArgumentException(
+                        "no demo distance for place " + row.getId());
+        }
     }
 
     /** Stops an outstanding listen and puts the action back. */

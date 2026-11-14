@@ -544,6 +544,24 @@ public class CarUiRendererTest {
     }
 
     @Test
+    public void routeMapRendersMapEtaAndSteps() {
+        List<CarUiListItem> items = CarUiRenderer.render(project("route_map"));
+
+        assertThat(items).hasSize(4);
+        assertThat(titleOf(items.get(0))).isEqualTo("Hudson Yards → The Met");
+        assertThat(titleOf(items.get(1))).isEqualTo("Arrive 2:41 PM · 19 min");
+    }
+
+    @Test
+    public void chargerStopsRenderThreeNavigableRows() {
+        List<CarUiListItem> items = CarUiRenderer.render(project("charger_stops"));
+
+        assertThat(items).hasSize(3);
+        assertThat(titleOf(items.get(0))).isEqualTo("Charger nearby");
+        assertThat(titleOf(items.get(2))).isEqualTo("Charger east");
+    }
+
+    @Test
     public void tabbedLibraryRendersItsTabsRoot() {
         // Tabs is not a container, so Host B draws one row for the Tabs itself; the pages stay
         // one chevron away, like every other nested surface on this host.

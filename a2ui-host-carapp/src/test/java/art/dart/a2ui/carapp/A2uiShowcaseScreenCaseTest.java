@@ -31,6 +31,8 @@ import androidx.car.app.model.TabTemplate;
 import androidx.car.app.model.Template;
 import androidx.car.app.model.signin.InputSignInMethod;
 import androidx.car.app.model.signin.SignInTemplate;
+import androidx.car.app.navigation.model.MapTemplate;
+import androidx.car.app.navigation.model.PlaceListNavigationTemplate;
 import androidx.car.app.constraints.ConstraintManager;
 import androidx.car.app.testing.ScreenController;
 import androidx.car.app.testing.TestCarContext;
@@ -130,6 +132,8 @@ public class A2uiShowcaseScreenCaseTest {
         assertThat(templateFor("sign_in")).isInstanceOf(SignInTemplate.class);
         assertThat(templateFor("long_message")).isInstanceOf(LongMessageTemplate.class);
         assertThat(templateFor("tabbed_library")).isInstanceOf(TabTemplate.class);
+        assertThat(templateFor("route_map")).isInstanceOf(MapTemplate.class);
+        assertThat(templateFor("charger_stops")).isInstanceOf(PlaceListNavigationTemplate.class);
         assertThat(templateFor("now_playing")).isInstanceOf(ListTemplate.class);
         assertThat(templateFor("browse_library")).isInstanceOf(ListTemplate.class);
         assertThat(templateFor("met_visit")).isInstanceOf(ListTemplate.class);
@@ -193,6 +197,32 @@ public class A2uiShowcaseScreenCaseTest {
         assertThat(content.getSingleList().getItems()).hasSize(2);
         assertThat(((androidx.car.app.model.Row) content.getSingleList().getItems().get(0))
                 .getTitle().toString()).isEqualTo("Van Gogh");
+    }
+
+    @Test
+    public void routedMapShowsStepsOverTheMap() {
+        mScreen.selectCase("route_map");
+
+        MapTemplate map = (MapTemplate) mScreen.onGetTemplate();
+
+        assertThat(map.getItemList().getItems()).hasSize(4);
+        assertThat(((androidx.car.app.model.Row) map.getItemList().getItems().get(0))
+                .getTitle().toString()).isEqualTo("Hudson Yards → The Met");
+    }
+
+    @Test
+    public void routedChargerStopsShowThreeNavigableStops() {
+        mScreen.selectCase("charger_stops");
+
+        PlaceListNavigationTemplate places = (PlaceListNavigationTemplate) mScreen.onGetTemplate();
+
+        assertThat(places.getItemList().getItems()).hasSize(3);
+        assertThat(((androidx.car.app.model.Row) places.getItemList().getItems().get(0))
+                .getTitle().toString()).isEqualTo("Charger nearby");
+        assertThat(((androidx.car.app.model.Row) places.getItemList().getItems().get(0))
+                .getOnClickDelegate()).isNotNull();
+        assertThat(((androidx.car.app.model.Row) places.getItemList().getItems().get(0))
+                .getTexts().toString()).contains("0.6 mi");
     }
 
     @Test
@@ -574,6 +604,12 @@ public class A2uiShowcaseScreenCaseTest {
         }
         if (template instanceof SignInTemplate) {
             return ((SignInTemplate) template).getTitle().toString();
+        }
+        if (template instanceof MapTemplate) {
+            return ((MapTemplate) template).getHeader().getTitle().toString();
+        }
+        if (template instanceof PlaceListNavigationTemplate) {
+            return ((PlaceListNavigationTemplate) template).getHeader().getTitle().toString();
         }
         throw new AssertionError(
                 "no title on " + template.getClass().getSimpleName());
