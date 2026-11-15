@@ -1506,7 +1506,7 @@ MUTATIONS = [
         'the agent lane exists on a non-debuggable build',
         'a2ui-host-carui/src/main/java/art/dart/a2ui/carui/A2uiCarUiActivity.java',
         '''        List<com.android.car.ui.toolbar.MenuItem> menuItems = new ArrayList<>();''',
-        '''        mAgent = AgentLane.create(getMainExecutor(), mAgentListener);
+        '''        mAgent = AgentLane.create(this, getMainExecutor(), mAgentListener);
         List<com.android.car.ui.toolbar.MenuItem> menuItems = new ArrayList<>();''',
         ':a2ui-host-carui:testDebugUnitTest',
         'a2ui-host-carui',
