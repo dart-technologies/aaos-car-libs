@@ -524,9 +524,16 @@
           "text": "Your usual is set for pickup, a three-minute walk away."
         },
         {
+          "id": "ev_utterance_bunny",
+          "role": "user_utterance",
+          "atMs": 117900,
+          "text": "Play Big Buck Bunny.",
+          "expectedTranscript": "play big buck bunny"
+        },
+        {
           "id": "ev_narration_05",
           "role": "narration",
-          "atMs": 119200,
+          "atMs": 121000,
           "text": "And while it charges, the driver can watch too. Parked, the car allows it."
         },
         {
@@ -564,7 +571,7 @@
         {"atMs": 100500, "type": "carState", "state": "park"},
         {"atMs": 110300, "type": "speak", "clipId": "ev_utterance_coffee"},
         {"atMs": 112800, "type": "tapText", "text": "Confirm"},
-        {"atMs": 118200, "type": "tapText", "text": "Big Buck Bunny"}
+        {"atMs": 118900, "type": "speak", "clipId": "ev_utterance_bunny"}
       ],
       "soundEffects": [
         {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},

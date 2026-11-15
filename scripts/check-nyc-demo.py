@@ -34,7 +34,7 @@ FILM_PORTRAIT = ROOT / "a2ui-automotive/demo/fixtures/met/FILM_PORTRAIT.json"
 MET_SEQUENCE = ["met_visit", "ev_charge_coffee"]
 MET_UTTERANCES = {"take us to the met this afternoon", "reserve entry for two at three",
                   "what should we see first", "take me to the first one",
-                  "order my usual coffee"}
+                  "order my usual coffee", "play big buck bunny"}
 MET_ASK = "Take us to The Met this afternoon"
 ACTIONS = {"speak", "tapText", "carState", "keyEvent", "selectCase", "agent", "passenger",
            "endCard", "vehicleSignal", "wallClock"}
@@ -251,11 +251,13 @@ def check_met_story(scenario: dict) -> None:
         fail("nyc_met ends on Big Buck Bunny and its closing card, not an in-car end card")
     confirms = [int(a["atMs"]) for a in actions
                 if a["type"] == "tapText" and a.get("text") == "Confirm"]
+    # Voice, not tap: the visitor card cap leaves the video row past tapping, reachable
+    # by voice alone.
     bunny = [int(a["atMs"]) for a in actions
-             if a["type"] == "tapText" and a.get("text") == "Big Buck Bunny"]
+             if a["type"] == "speak" and a.get("clipId") == "ev_utterance_bunny"]
     if len(bunny) != 1 or driving_at(scenario, bunny[0]) or not confirms or bunny[0] < max(
             confirms):
-        fail("nyc_met taps Big Buck Bunny once, parked, after the coffee is confirmed")
+        fail("nyc_met voice-plays Big Buck Bunny once, parked, after the coffee is confirmed")
     if any(driving_at(scenario, int(a["atMs"])) for a in actions if a["atMs"] > bunny[0]):
         fail("nyc_met stays parked while the driver watches")
     for clip in clips:
@@ -406,7 +408,7 @@ def check_outro(scenario: dict) -> None:
     if any(not driving_at(scenario, int(b["atMs"])) for b in lanes["passenger"]):
         fail("closing card's passenger thumbnails sit under the driving segments")
     bunny = [int(a["atMs"]) for a in scenario["actions"]
-             if a["type"] == "tapText" and a.get("text") == "Big Buck Bunny"]
+             if a["type"] == "speak" and a.get("clipId") == "ev_utterance_bunny"]
     last = lanes["driver"][-1]
     if last["label"] != "Big Buck Bunny" or driving_at(scenario, int(last["atMs"])) or \
             not bunny or int(last["atMs"]) < bunny[0] + 3000:

@@ -484,6 +484,8 @@ public final class UseCaseCorpus {
         // Something to watch while charging: a Video, so motion prunes it, and opening it is
         // navigation, not a purchase. Big Buck Bunny © Blender Foundation, CC BY 3.0.
         b.action("bbb", "Video", "Big Buck Bunny", "Watch while you charge", "open");
+        // Past the visitor card cap: voice is the only way to reach it.
+        b.put("bbb", "voicePhrase", "play big buck bunny");
         // Placeholders; a bundled chargers.json (OSM) replaces them through updateDataModel.
         b.data("/chargers/0/name", "Charger nearby");
         b.data("/chargers/0/detail", "0.6 mi · public charging");

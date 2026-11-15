@@ -170,6 +170,9 @@ def main() -> int:
                         help="Verify configured voice metadata without generating audio")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-stt", action="store_true")
+    parser.add_argument("--clip", action="append", default=[],
+                        help="generate only this clip id (repeatable); the rest of the "
+                             "cache is left untouched")
     args = parser.parse_args()
 
     manifest = read_json(args.manifest)
@@ -181,6 +184,14 @@ def main() -> int:
     personas = configured_personas(tts, args)
     clips = all_clips(manifest)
     effects = all_effects(manifest)
+    if args.clip:
+        wanted = set(args.clip)
+        clips = [(scenario_id, clip) for scenario_id, clip in clips
+                 if clip["id"] in wanted]
+        if len(clips) != len(wanted):
+            raise SystemExit(f"unknown clip id in --clip: "
+                             f"{sorted(wanted - {c['id'] for _, c in clips})}")
+        effects = []  # a clip top-up never re-renders the shared effects
     planned_characters = sum(len(spoken(clip)) for _, clip in clips)
     estimated_sfx_credits = sum(math.ceil(float(effect["durationSeconds"])
                                           * int(manifest["sfx"][
