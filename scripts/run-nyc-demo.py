@@ -1456,6 +1456,7 @@ def main() -> int:
             if scenario.get("agentProfiles") else None,
         "transcripts": evidence["transcripts"],
         "timeline": evidence["steps"],
+        "signals": evidence["signals"],
         "audioTrack": "none — engineering preflight" if args.no_mux else
             "ElevenLabs timed dialogue and sound-effects mix",
         "soundEffects": [{

@@ -128,6 +128,12 @@ final class DemoNativeContract {
                 && "open".equals(component.getAction())) {
             return Spec.simple(Kind.VIDEO, "DEMO local video");
         }
+        // The charge story's closing video, past the card cap: voice is its only path in.
+        if ("ev_charge_coffee".equals(surfaceId) && "bbb".equals(id)
+                && component.getType() == ComponentType.VIDEO
+                && "open".equals(component.getAction())) {
+            return Spec.simple(Kind.VIDEO, "DEMO local video");
+        }
         if ("big_buck_bunny".equals(surfaceId) && "watch".equals(id)
                 && component.getType() == ComponentType.BUTTON
                 && "open".equals(component.getAction())) {
