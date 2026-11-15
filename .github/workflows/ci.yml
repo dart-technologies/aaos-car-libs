@@ -245,6 +245,8 @@ jobs:
         run: |
           python3 scripts/check-nyc-demo.py
           python3 scripts/test_check_nyc_demo.py
+          python3 scripts/prime-demo-cache.py --check
+          python3 scripts/test_prime_demo_cache.py
 
       - name: Muse's committed claims are cited
         # Brief, coffee ranking and audio guide, offline. The test mutates copies to prove it bites.
