@@ -547,6 +547,7 @@
       ],
       "actions": [
         {"atMs": 5500, "type": "agent", "provider": "muse", "ask": "Take us to The Met this afternoon", "clipId": "met_utterance_visit"},
+        {"atMs": 12000, "type": "selectCase", "caseId": "met_visit"},
         {"atMs": 15000, "type": "speak", "clipId": "met_utterance_reserve"},
         {"atMs": 19800, "type": "tapText", "text": "Confirm"},
         {"atMs": 22500, "type": "carState", "state": "drive"},

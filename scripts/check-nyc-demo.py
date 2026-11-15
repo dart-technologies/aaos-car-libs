@@ -325,7 +325,13 @@ def check_intermission(scenario: dict) -> None:
     if not 3000 <= end - start <= 3500 or covered == start or uncovered == end:
         fail("nyc_met intermission holds 3–3.5 s and eases in and out")
     actions = scenario["actions"]
-    switch = [int(a["atMs"]) for a in actions if a["type"] in {"selectCase", "wallClock"}]
+    # The chapter-2 switch: the clock jump plus a case move away from the opening case.
+    # A re-select of the opening case (dismissing the agent answer back to the corpus)
+    # is a beat inside a chapter, not a chapter switch.
+    opening = scenario.get("corpusCase")
+    switch = [int(a["atMs"]) for a in actions
+              if a["type"] == "wallClock"
+              or (a["type"] == "selectCase" and a.get("caseId") != opening)]
     if len(switch) != 2 or not all(covered <= at <= uncovered for at in switch):
         fail("nyc_met intermission covers chapter 2's selectCase and wallClock")
     parks = [int(a["atMs"]) for a in actions
