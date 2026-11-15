@@ -85,6 +85,22 @@ Keys on another machine: `scripts/demo-gateway-tunnel.sh ca` once (the worker's 
 certificate is copied, into Host B's debug trust; rebuild), then `up` runs the gateway in tmux there
 and forwards `127.0.0.1:8787` here over ssh. `adb reverse` then reaches it; no key leaves the worker.
 
+## Demo takes replay a committed answer
+
+A recording's agent turns must answer identically on every take, with no vendor call. Prime once,
+with keys, then record offline against the committed cache:
+
+```bash
+python3 tools/a2ui-gateway/serve.py --cache-dir build/a2ui-gateway-cache   # live, keys on
+python3 scripts/prime-demo-cache.py --prime                                # one live turn per ask
+python3 tools/a2ui-gateway/serve.py --offline --cache-dir a2ui-automotive/demo/cache
+```
+
+`--prime` refuses anything but a `live` answer and commits it under `a2ui-automotive/demo/cache/`
+in the cache's own layout, so `--offline` replays it by exact key. Re-prime after any change to the
+prompt, the schema, the model, or an ask (the key covers all four). CI runs
+`prime-demo-cache.py --check`: every scenario ask replays a committed entry that still validates.
+
 ## Host B lane (debuggable, non-user builds only)
 
 - `INTERNET`, the network-security config and the dev CA (`<debug-overrides>`) are in `src/debug/`;
