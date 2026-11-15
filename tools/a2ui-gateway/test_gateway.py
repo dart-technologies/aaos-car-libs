@@ -38,7 +38,7 @@ GOOD = {"assistantText": "DEMO coffee stop found.", "surfaces": [{"surfaceId": "
 def turn(provider="claude", profile="quality_cached", text="find coffee", turn_id="t1"):
     return {"schema": "a2ui.gateway.v1", "type": "turn", "provider": provider,
             "executionProfile": profile, "sessionId": "s1", "turnId": turn_id,
-            "inputText": text, "capabilities": {"versions": ["v0.9"], "catalogs": ["automotive"]},
+            "inputText": text, "capabilities": {"versions": ["1.0"], "catalogs": ["automotive"]},
             "display": {"id": 0, "activeRestrictions": 0, "trustworthy": True}}
 
 

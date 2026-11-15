@@ -37,7 +37,7 @@
           "additionalProperties": false,
           "required": ["versions", "catalogs"],
           "properties": {
-            "versions": { "const": ["v0.9"] },
+            "versions": { "const": ["1.0"] },
             "catalogs": { "const": ["automotive"] }
           }
         },
@@ -133,7 +133,7 @@
       "additionalProperties": false,
       "required": ["version"],
       "properties": {
-        "version": { "const": "v0.9" },
+        "version": { "const": "1.0" },
         "createSurface": { "$ref": "#/$defs/createSurface" },
         "updateComponents": { "$ref": "#/$defs/updateComponents" },
         "updateDataModel": { "$ref": "#/$defs/updateDataModel" },

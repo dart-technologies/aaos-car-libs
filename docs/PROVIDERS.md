@@ -55,7 +55,7 @@ search (the comparison drops modes).
 ## What the gateway enforces
 
 - One system prompt and one portable generation schema for every vendor. The gateway, not the model,
-  writes the lifecycle: `createSurface` then `updateComponents`, v0.9, `automotive`, the request's id.
+  writes the lifecycle: `createSurface` then `updateComponents`, 1.0, `automotive`, the request's id.
 - Nothing is returned or cached before it passes the gateway schema and `BoundedA2uiJsonDecoder`'s
   limits. Anything else is a `gatewayError`: non-2xx, token detail only.
 - Cache: `build/a2ui-gateway-cache/<provider>/<profile>/<sha256(model, prompt)>.json`; an output

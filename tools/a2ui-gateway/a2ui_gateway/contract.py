@@ -32,7 +32,7 @@ from typing import Any
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 GATEWAY_SCHEMA_PATH = ROOT / "a2ui-automotive" / "agent-gateway-v1.schema.json"
 SCHEMA_ID = "a2ui.gateway.v1"
-VERSION = "v0.9"
+VERSION = "1.0"
 CATALOG_ID = "automotive"
 PROVIDERS = ("claude", "chatgpt", "gemini", "grok", "muse")
 PROFILES = ("quality_cached", "realtime_low_latency")
