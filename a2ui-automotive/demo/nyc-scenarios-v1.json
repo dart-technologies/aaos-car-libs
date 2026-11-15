@@ -138,7 +138,7 @@
         {"atMs": 33000, "type": "tapText", "text": "Preview pickup route"},
         {"atMs": 35500, "type": "tapText", "text": "Confirm"},
         {"atMs": 37500, "type": "speak", "clipId": "poi_utterance_order"},
-        {"atMs": 40000, "type": "tapText", "text": "Confirm"},
+        {"atMs": 40200, "type": "tapText", "text": "Confirm"},
         {"atMs": 56500, "type": "carState", "state": "drive"}
       ],
       "soundEffects": [
@@ -284,7 +284,7 @@
       ],
       "actions": [
         {"atMs": 16300, "type": "speak", "clipId": "concierge_utterance_order"},
-        {"atMs": 18800, "type": "tapText", "text": "Confirm"},
+        {"atMs": 19000, "type": "tapText", "text": "Confirm"},
         {"atMs": 35000, "type": "selectCase", "caseId": "big_buck_bunny"},
         {"atMs": 38000, "type": "tapText", "text": "Play audio / pause"},
         {"atMs": 51000, "type": "carState", "state": "drive"},
@@ -323,7 +323,7 @@
         {"style": "answer", "frameAtMs": 26000, "seconds": 5.4, "chip": "Driving", "clipId": "pre_narration_03"}
       ],
       "outro": {
-        "seconds": 10.9,
+        "seconds": 11.0,
         "clipId": "outro_narration_01",
         "closingClipId": "outro_narration_02",
         "places": ["Hudson Yards", "The Met", "charging"],
