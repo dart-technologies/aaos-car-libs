@@ -345,6 +345,9 @@ def vehicle_signal(device, action: dict) -> dict:
     battery signal in practice travels as an injected VHAL event. The event's
     subscribers see the value; the stored level is unchanged. Routes are tried in the
     action's own order; broadcast names no intent any host reads, so it never takes.
+    A route takes only when the command exits zero without a refusal diagnostic:
+    car_service prints refusals such as a VHAL-owned property, and an exit zero
+    alone does not prove the value landed.
     """
     try:
         percent = float(action.get("percent", -1))
@@ -365,10 +368,16 @@ def vehicle_signal(device, action: dict) -> dict:
                                 VEHICLE_BATTERY_PROPERTY, "0", str(wh))
         else:
             continue  # no host reads a signal broadcast; the VHAL routes carry it
-        if done.returncode == 0:
+        if done.returncode == 0 and not _route_refused(done):
             return {"atMs": int(action["atMs"]), "signal": "battery",
                     "percent": action["percent"], "wh": wh, "via": route}
     raise DemoFailure(f"vehicle signal took none of its routes: {action}")
+
+
+def _route_refused(done) -> bool:
+    """Whether car_service's output refuses the route it was asked to drive."""
+    diagnostic = f"{done.stdout or ''}\n{done.stderr or ''}".lower()
+    return "cannot set a property" in diagnostic or "exception occurred" in diagnostic
 
 
 def run_timeline(scenario: dict, device, clock, *, driver_display: str,
