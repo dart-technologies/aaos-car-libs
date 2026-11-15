@@ -51,6 +51,16 @@ NEVER_SAID = re.compile(r"\b(demo|sent|booked|paid|placed|ordered)\b", re.I)
 DISCLAIMER = "Simulated demo drive on Android Automotive OS emulator"
 TITLE_FADE_S = 0.4  # a chapter card's default fade out (run-nyc-demo.py)
 CHAPTER_SECONDS = (2.0, 3.5)
+# A voice turn's think beat: the first UI answer starts at least this long after the
+# guest's speech ends, so the screen never moves under the still-playing utterance.
+THINK_GAP_MS = 1200
+# Actions that visibly answer the guest. An agent ask starts its turn (its UI arrives
+# later over the gateway); car state, the story clock, and vehicle signals are the
+# world moving, not the answer.
+UI_ANSWER_TYPES = {"tapText", "selectCase", "passenger", "endCard", "keyEvent"}
+# Speech rate assumed only when an utterance has neither an authored durationMs nor a
+# generated MP3; keep in step with ESTIMATE_CPS in scripts/demo_overlays.py.
+THINK_ESTIMATE_CPS = 15.0
 
 
 def preamble_seconds(scenario: dict) -> float:
@@ -164,6 +174,39 @@ def driving_at(scenario: dict, at_ms: int) -> bool:
         if action.get("type") == "carState" and int(action["atMs"]) <= at_ms:
             state = action["state"]
     return state == "drive"
+
+
+def stt_seconds(clip: dict) -> float:
+    """How long the guest's utterance plays: its authored durationMs, its generated
+    MP3 when the audio cache exists, else the chars-per-second estimate."""
+    if clip.get("durationMs") is not None:
+        return float(clip["durationMs"]) / 1000
+    path = AUDIO / f"{clip['id']}.mp3"
+    if path.is_file():
+        return audio_duration(path)
+    return len(str(clip.get("spoken") or clip.get("text", ""))) / THINK_ESTIMATE_CPS
+
+
+def check_think_gap(scenario: dict) -> None:
+    """The first UI answer to a voice turn starts at least THINK_GAP_MS after the
+    guest's speech ends: a UI that moves under the still-playing utterance reads as
+    the car answering mid-sentence, which no real system does. Utterances always sit
+    on the timeline section, so the clip's atMs is already on the device timeline."""
+    clips = {clip["id"]: clip for clip in scenario.get("clips", [])}
+    actions = sorted(scenario.get("actions", []), key=lambda a: int(a["atMs"]))
+    for index, action in enumerate(actions):
+        if action.get("type") != "speak":
+            continue
+        clip = clips.get(action.get("clipId", ""))
+        if clip is None:
+            continue  # the utterance-reference check reports the dangling clipId
+        end_ms = float(clip["atMs"]) + stt_seconds(clip) * 1000
+        following = next((later for later in actions[index + 1:]
+                          if later.get("type") in UI_ANSWER_TYPES), None)
+        if following is not None and int(following["atMs"]) - end_ms < THINK_GAP_MS:
+            fail(f"{scenario['id']}: {following['type']} at {following['atMs']} answers "
+                 f"{clip['id']} only {int(following['atMs']) - end_ms:.0f} ms after the "
+                 f"speech ends; leave at least {THINK_GAP_MS} ms")
 
 
 def check_met_story(scenario: dict) -> None:
@@ -539,6 +582,7 @@ def main() -> int:
             if action.get("type") == "selectCase" and action.get("caseId") not in scenario.get(
                     "corpusSequence", []):
                 fail(f"case transition is outside the declared sequence: {action}")
+        check_think_gap(scenario)
         types = [action.get("type") for action in scenario.get("actions", [])]
         if layout == "dual" and "passenger" not in types:
             fail(f"{scenario['id']} records two displays but never addresses the passenger")

@@ -351,6 +351,10 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
     started = clock.now()
     early: list[str] = []
     try:
+        # Instant UI: the host reads animator_duration_scale live and skips its content
+        # crossfade at zero, so every answer below lands as a hard cut. Persists on the
+        # recording device by design, like scripts/ensure-test-env.sh leaves it.
+        device.shell("settings", "put", "global", "animator_duration_scale", "0")
         # The first deliberate content mutation anchors PTS zero near the manifest's zero.
         device.broadcast(ACTION_CASE, "--es", EXTRA_CASE, scenario["corpusCase"])
         clock.sleep(2)
