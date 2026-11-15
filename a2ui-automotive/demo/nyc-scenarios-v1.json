@@ -348,6 +348,13 @@
           {"title": "Driver & passenger displays"}
         ]
       },
+      "storyBeats": [
+        {"title": "A cited brief"},
+        {"title": "Reserve entry", "anchor": {"type": "speak", "clipId": "met_utterance_reserve"}},
+        {"title": "Tour the highlights", "anchor": {"type": "speak", "clipId": "met_utterance_first"}},
+        {"title": "Charge and coffee", "anchor": {"type": "selectCase", "caseId": "ev_charge_coffee"}},
+        {"title": "Watch while charging", "anchor": {"type": "speak", "clipId": "ev_utterance_bunny"}}
+      ],
       "premise": "Why it matters first: three cards built from this recording's own frames show a model-designed screen that cannot see the road, the lockout most cars use instead, and the pruned driving screen. Then Thursday afternoon at Hudson Yards. Parked, Muse gives a cited brief, and timed entry waits for a parked confirmation. In drive the driver's screen simplifies while the passenger's screen plays the artwork film and Muse's audio guide plays for everyone; parked at The Met, the film moves to the driver's screen. After the visit a low battery brings up three nearby chargers; parked and charging, Muse's cited café pick backs the usual coffee, and the driver opens Big Buck Bunny, which the car allows only while parked. A closing card maps the journey and the architecture.",
       "parameterRationale": [
         "Thursday, Nov 5: The Met Fifth Avenue is closed on Wednesdays, so the story uses Thursday's NWS forecast, captured the day before and labelled with its day.",
