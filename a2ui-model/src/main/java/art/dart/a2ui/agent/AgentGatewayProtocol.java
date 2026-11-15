@@ -7,6 +7,8 @@ package art.dart.a2ui.agent;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import art.dart.a2ui.protocol.A2uiProtocolVersions;
+
 import java.nio.charset.StandardCharsets;
 
 /** Deterministic client-to-gateway envelopes; provider-specific payloads stay server-side. */
@@ -42,7 +44,8 @@ public final class AgentGatewayProtocol {
                 + ",\"sessionId\":" + quote(sessionId)
                 + ",\"turnId\":" + quote(turnId)
                 + ",\"inputText\":" + quote(inputText)
-                + ",\"capabilities\":{\"versions\":[\"v0.9\"],\"catalogs\":[\"automotive\"]}"
+                + ",\"capabilities\":{\"versions\":[\"" + A2uiProtocolVersions.V1
+                + "\"],\"catalogs\":[\"automotive\"]}"
                 + ",\"display\":{\"id\":" + displayId
                 + ",\"activeRestrictions\":" + activeRestrictions
                 + ",\"trustworthy\":" + trustworthy + "}}";

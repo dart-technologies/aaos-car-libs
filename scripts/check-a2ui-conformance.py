@@ -104,7 +104,7 @@ def main() -> int:
             'schema': 'a2ui.gateway.v1', 'type': 'turn', 'provider': 'claude',
             'executionProfile': 'quality_cached',
             'sessionId': 'session', 'turnId': 'turn', 'inputText': 'Show albums',
-            'capabilities': {'versions': ['v0.9'], 'catalogs': ['automotive']},
+            'capabilities': {'versions': ['1.0'], 'catalogs': ['automotive']},
             'display': {'id': 0, 'activeRestrictions': 0, 'trustworthy': True},
         },
         {
@@ -115,7 +115,7 @@ def main() -> int:
         {
             'schema': 'a2ui.gateway.v1', 'provider': 'gemini', 'sessionId': 'session',
             'turnId': 'turn', 'source': 'fallback', 'messages': [{
-                'version': 'v0.9',
+                'version': '1.0',
                 'createSurface': {'surfaceId': 'surface', 'catalogId': 'automotive'},
             }],
         },
@@ -127,7 +127,7 @@ def main() -> int:
             'schema': 'a2ui.gateway.v1', 'type': 'turn', 'provider': 'muse',
             'executionProfile': 'realtime_low_latency',
             'sessionId': 'session', 'turnId': 'turn', 'inputText': 'Find coffee',
-            'capabilities': {'versions': ['v0.9'], 'catalogs': ['automotive']},
+            'capabilities': {'versions': ['1.0'], 'catalogs': ['automotive']},
             'display': {'id': 0, 'activeRestrictions': 511, 'trustworthy': False},
         },
         {
