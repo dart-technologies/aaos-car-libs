@@ -242,7 +242,9 @@ jobs:
       - name: NYC timed demo scenarios are bounded and mapped to the corpus
         # Provider keys and paid audio do not belong in CI. This validates the data contract,
         # 60–180 s timing, exact action vocabulary, and 10k-credit ceiling without making a request.
-        run: python3 scripts/check-nyc-demo.py
+        run: |
+          python3 scripts/check-nyc-demo.py
+          python3 scripts/test_check_nyc_demo.py
 
       - name: Muse's committed claims are cited
         # Brief, coffee ranking and audio guide, offline. The test mutates copies to prove it bites.
