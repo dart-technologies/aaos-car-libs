@@ -71,9 +71,10 @@ class FakeDevice:
     """Records every call with the fake clock's time since the driver recorder started."""
 
     def __init__(self, clock: FakeClock, *, screencap_ok: bool = True, dead: set = frozenset(),
-                 fail_shell: tuple = ()):
+                 fail_shell: tuple = (), fail_text: dict = {}):
         self.clock, self.screencap_ok, self.dead = clock, screencap_ok, dead
         self.fail_shell = fail_shell
+        self.fail_text = fail_text
         self.calls: list[tuple] = []
         self.origin: float | None = None
 
@@ -115,8 +116,10 @@ class FakeDevice:
 
     def shell(self, *args):
         self._log("shell", args)
-        failed = any(bit in " ".join(args) for bit in self.fail_shell)
-        return subprocess.CompletedProcess(args, 1 if failed else 0, "", "")
+        command = " ".join(args)
+        failed = any(bit in command for bit in self.fail_shell)
+        stderr = "\n".join(text for bit, text in self.fail_text.items() if bit in command)
+        return subprocess.CompletedProcess(args, 1 if failed else 0, "", stderr)
 
 
 def timeline(scenario: dict, device: FakeDevice, tmp: pathlib.Path, passenger=PASSENGER):
@@ -246,6 +249,18 @@ class TimelineTest(unittest.TestCase):
         self.assertEqual(shells[3][2][:3], ("cmd", "car_service", "set-property-value"))
         self.assertEqual(shells[4][2][:3], ("cmd", "car_service", "inject-vhal-event"))
         self.assertIn("27000", shells[4][2])
+
+    def test_vehicle_signal_ignores_a_zero_exit_with_a_refusal(self):
+        scenario = {"id": "t_signal", "corpusCase": "met_visit", "durationSeconds": 100,
+                    "clips": [],
+                    "actions": [{"atMs": 90600, "type": "vehicleSignal", "signal": "battery",
+                                 "percent": 18,
+                                 "via": ["vhal-set", "vhal-inject", "broadcast"],
+                                 "capacityWhFallback": 150000}]}
+        device = FakeDevice(FakeClock(), fail_text={
+            "set-property-value": "Cannot set a property: failed to set value (code 4)"})
+        evidence = timeline(scenario, device, self.tmp, passenger=None)
+        self.assertEqual(evidence["signals"][0]["via"], "vhal-inject")
 
     def test_vehicle_signal_with_no_injectable_route_fails(self):
         scenario = {"id": "t_signal", "corpusCase": "met_visit", "durationSeconds": 100,
