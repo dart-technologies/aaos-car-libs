@@ -70,8 +70,10 @@ class FakeProc:
 class FakeDevice:
     """Records every call with the fake clock's time since the driver recorder started."""
 
-    def __init__(self, clock: FakeClock, *, screencap_ok: bool = True, dead: set = frozenset()):
+    def __init__(self, clock: FakeClock, *, screencap_ok: bool = True, dead: set = frozenset(),
+                 fail_shell: tuple = ()):
         self.clock, self.screencap_ok, self.dead = clock, screencap_ok, dead
+        self.fail_shell = fail_shell
         self.calls: list[tuple] = []
         self.origin: float | None = None
 
@@ -113,7 +115,8 @@ class FakeDevice:
 
     def shell(self, *args):
         self._log("shell", args)
-        return subprocess.CompletedProcess(args, 0, "", "")
+        failed = any(bit in " ".join(args) for bit in self.fail_shell)
+        return subprocess.CompletedProcess(args, 1 if failed else 0, "", "")
 
 
 def timeline(scenario: dict, device: FakeDevice, tmp: pathlib.Path, passenger=PASSENGER):
@@ -176,9 +179,12 @@ class TimelineTest(unittest.TestCase):
         evidence = timeline(DUAL, device, self.tmp)
         calls = device.calls
         self.assertEqual(calls[0], (0.0, "record", DRIVER, demo.DEVICE_VIDEO, 75))
-        self.assertEqual(calls[1], (0.0, "shell", ("settings", "put", "global",
-                                                   "animator_duration_scale", "0")))
-        self.assertEqual(calls[2], (0.0, "broadcast", demo.ACTION_CASE,
+        self.assertEqual([call[2][3] for call in calls[1:4]],
+                         ["window_animation_scale", "transition_animation_scale",
+                          "animator_duration_scale"])
+        self.assertTrue(all(call[2][:3] == ("settings", "put", "global")
+                            and call[2][4] == "0" for call in calls[1:4]))
+        self.assertEqual(calls[4], (0.0, "broadcast", demo.ACTION_CASE,
                                     ("--es", demo.EXTRA_CASE, "big_buck_bunny")))
         self.assertIn((17.0, "screencap", PASSENGER), calls)
         record = calls.index((20.0, "record", PASSENGER, demo.DEVICE_PASSENGER_VIDEO, 55))
@@ -222,6 +228,33 @@ class TimelineTest(unittest.TestCase):
         evidence = timeline(DUAL, device, self.tmp)
         self.assertIsNone(evidence["passengerStill"])
         self.assertEqual(evidence["passengerStartSeconds"], 20.0)
+
+    def test_vehicle_signal_falls_back_to_vhal_inject(self):
+        scenario = {"id": "t_signal", "corpusCase": "met_visit", "durationSeconds": 100,
+                    "clips": [],
+                    "actions": [{"atMs": 90600, "type": "vehicleSignal", "signal": "battery",
+                                 "percent": 18,
+                                 "via": ["vhal-set", "vhal-inject", "broadcast"],
+                                 "capacityWhFallback": 150000}]}
+        device = FakeDevice(FakeClock(), fail_shell=("set-property-value",))
+        evidence = timeline(scenario, device, self.tmp, passenger=None)
+        self.assertEqual(evidence["signals"],
+                         [{"atMs": 90600, "signal": "battery", "percent": 18,
+                           "wh": 27000, "via": "vhal-inject"}])
+        shells = [call for call in device.calls if call[1] == "shell"]
+        # After the three animation-scale preflight calls.
+        self.assertEqual(shells[3][2][:3], ("cmd", "car_service", "set-property-value"))
+        self.assertEqual(shells[4][2][:3], ("cmd", "car_service", "inject-vhal-event"))
+        self.assertIn("27000", shells[4][2])
+
+    def test_vehicle_signal_with_no_injectable_route_fails(self):
+        scenario = {"id": "t_signal", "corpusCase": "met_visit", "durationSeconds": 100,
+                    "clips": [],
+                    "actions": [{"atMs": 90600, "type": "vehicleSignal", "signal": "battery",
+                                 "percent": 18, "via": ["broadcast"],
+                                 "capacityWhFallback": 150000}]}
+        with self.assertRaisesRegex(demo.DemoFailure, "took none of its routes"):
+            timeline(scenario, FakeDevice(FakeClock()), self.tmp, passenger=None)
 
 
 def ffmpeg(*args: str) -> None:

@@ -34,7 +34,7 @@ FILM_PORTRAIT = ROOT / "a2ui-automotive/demo/fixtures/met/FILM_PORTRAIT.json"
 MET_SEQUENCE = ["met_visit", "ev_charge_coffee"]
 MET_UTTERANCES = {"take us to the met this afternoon", "reserve entry for two at three",
                   "what should we see first", "take me to the first one",
-                  "order my usual coffee"}
+                  "order my usual coffee", "play big buck bunny"}
 MET_ASK = "Take us to The Met this afternoon"
 ACTIONS = {"speak", "tapText", "carState", "keyEvent", "selectCase", "agent", "passenger",
            "endCard", "vehicleSignal", "wallClock"}
@@ -51,9 +51,13 @@ NEVER_SAID = re.compile(r"\b(demo|sent|booked|paid|placed|ordered)\b", re.I)
 DISCLAIMER = "Simulated demo drive on Android Automotive OS emulator"
 TITLE_FADE_S = 0.4  # a chapter card's default fade out (run-nyc-demo.py)
 CHAPTER_SECONDS = (2.0, 3.5)
-# A voice turn's think beat: the first UI answer starts at least this long after the
-# guest's speech ends, so the screen never moves under the still-playing utterance.
+# A voice turn's think beat: the device reacts at least this long after the guest's
+# speech ends, so the screen never answers mid-utterance. The reaction itself (dialog,
+# dispatch) then lands instantly; see run_timeline's animator preflight.
 THINK_GAP_MS = 1200
+# A reaction's dwell: the next UI change waits at least this long after the reaction
+# starts, so each answer is readable before the screen moves again.
+DWELL_MS = 1200
 # Actions that visibly answer the guest. An agent ask starts its turn (its UI arrives
 # later over the gateway); car state, the story clock, and vehicle signals are the
 # world moving, not the answer.
@@ -188,25 +192,38 @@ def stt_seconds(clip: dict) -> float:
 
 
 def check_think_gap(scenario: dict) -> None:
-    """The first UI answer to a voice turn starts at least THINK_GAP_MS after the
-    guest's speech ends: a UI that moves under the still-playing utterance reads as
-    the car answering mid-sentence, which no real system does. Utterances always sit
-    on the timeline section, so the clip's atMs is already on the device timeline."""
+    """The device reacts to a voice turn at least THINK_GAP_MS after the guest's speech
+    ends: a screen that answers mid-utterance reads as the car interrupting, which no
+    real system does. Utterances always sit on the timeline section, so the clip's atMs
+    is already on the device timeline."""
     clips = {clip["id"]: clip for clip in scenario.get("clips", [])}
-    actions = sorted(scenario.get("actions", []), key=lambda a: int(a["atMs"]))
-    for index, action in enumerate(actions):
+    for action in scenario.get("actions", []):
         if action.get("type") != "speak":
             continue
         clip = clips.get(action.get("clipId", ""))
         if clip is None:
             continue  # the utterance-reference check reports the dangling clipId
         end_ms = float(clip["atMs"]) + stt_seconds(clip) * 1000
+        if int(action["atMs"]) - end_ms < THINK_GAP_MS:
+            fail(f"{scenario['id']}: speak at {action['atMs']} reacts to {clip['id']} "
+                 f"only {int(action['atMs']) - end_ms:.0f} ms after the speech ends; "
+                 f"leave at least {THINK_GAP_MS} ms")
+
+
+def check_dwell(scenario: dict) -> None:
+    """The next UI change after a voice turn waits at least DWELL_MS past the reaction,
+    so each answer is readable before the screen moves again."""
+    actions = sorted(scenario.get("actions", []), key=lambda a: int(a["atMs"]))
+    for index, action in enumerate(actions):
+        if action.get("type") != "speak":
+            continue
         following = next((later for later in actions[index + 1:]
                           if later.get("type") in UI_ANSWER_TYPES), None)
-        if following is not None and int(following["atMs"]) - end_ms < THINK_GAP_MS:
-            fail(f"{scenario['id']}: {following['type']} at {following['atMs']} answers "
-                 f"{clip['id']} only {int(following['atMs']) - end_ms:.0f} ms after the "
-                 f"speech ends; leave at least {THINK_GAP_MS} ms")
+        if following is not None and int(following["atMs"]) - int(action["atMs"]) < DWELL_MS:
+            fail(f"{scenario['id']}: {following['type']} at {following['atMs']} follows "
+                 f"the reaction at {action['atMs']} by only "
+                 f"{int(following['atMs']) - int(action['atMs'])} ms; "
+                 f"leave at least {DWELL_MS} ms")
 
 
 def check_met_story(scenario: dict) -> None:
@@ -251,11 +268,13 @@ def check_met_story(scenario: dict) -> None:
         fail("nyc_met ends on Big Buck Bunny and its closing card, not an in-car end card")
     confirms = [int(a["atMs"]) for a in actions
                 if a["type"] == "tapText" and a.get("text") == "Confirm"]
+    # Voice, not tap: the visitor card cap leaves the video row past tapping, reachable
+    # by voice alone.
     bunny = [int(a["atMs"]) for a in actions
-             if a["type"] == "tapText" and a.get("text") == "Big Buck Bunny"]
+             if a["type"] == "speak" and a.get("clipId") == "ev_utterance_bunny"]
     if len(bunny) != 1 or driving_at(scenario, bunny[0]) or not confirms or bunny[0] < max(
             confirms):
-        fail("nyc_met taps Big Buck Bunny once, parked, after the coffee is confirmed")
+        fail("nyc_met voice-plays Big Buck Bunny once, parked, after the coffee is confirmed")
     if any(driving_at(scenario, int(a["atMs"])) for a in actions if a["atMs"] > bunny[0]):
         fail("nyc_met stays parked while the driver watches")
     for clip in clips:
@@ -325,7 +344,13 @@ def check_intermission(scenario: dict) -> None:
     if not 3000 <= end - start <= 3500 or covered == start or uncovered == end:
         fail("nyc_met intermission holds 3–3.5 s and eases in and out")
     actions = scenario["actions"]
-    switch = [int(a["atMs"]) for a in actions if a["type"] in {"selectCase", "wallClock"}]
+    # The chapter-2 switch: the clock jump plus a case move away from the opening case.
+    # A re-select of the opening case (dismissing the agent answer back to the corpus)
+    # is a beat inside a chapter, not a chapter switch.
+    opening = scenario.get("corpusCase")
+    switch = [int(a["atMs"]) for a in actions
+              if a["type"] == "wallClock"
+              or (a["type"] == "selectCase" and a.get("caseId") != opening)]
     if len(switch) != 2 or not all(covered <= at <= uncovered for at in switch):
         fail("nyc_met intermission covers chapter 2's selectCase and wallClock")
     parks = [int(a["atMs"]) for a in actions
@@ -400,7 +425,7 @@ def check_outro(scenario: dict) -> None:
     if any(not driving_at(scenario, int(b["atMs"])) for b in lanes["passenger"]):
         fail("closing card's passenger thumbnails sit under the driving segments")
     bunny = [int(a["atMs"]) for a in scenario["actions"]
-             if a["type"] == "tapText" and a.get("text") == "Big Buck Bunny"]
+             if a["type"] == "speak" and a.get("clipId") == "ev_utterance_bunny"]
     last = lanes["driver"][-1]
     if last["label"] != "Big Buck Bunny" or driving_at(scenario, int(last["atMs"])) or \
             not bunny or int(last["atMs"]) < bunny[0] + 3000:
@@ -561,11 +586,18 @@ def main() -> int:
             if action.get("type") == "passenger" and (
                     layout != "dual" or action.get("media") not in PASSENGER_MEDIA):
                 fail(f"passenger action needs a dual-display recording and known media: {action}")
-            if action.get("type") == "vehicleSignal" and (
-                    action.get("signal") != "battery"
-                    or not 0 <= float(action.get("percent", -1)) <= 100
-                    or not action.get("via") or not set(action["via"]) <= VEHICLE_ROUTES):
-                fail(f"vehicle signal needs battery percent 0–100 and known routes: {action}")
+            if action.get("type") == "vehicleSignal":
+                try:
+                    percent = float(action.get("percent", -1))
+                    capacity = float(action.get("capacityWhFallback", -1))
+                except (TypeError, ValueError):
+                    fail(f"vehicle signal needs numeric percent and capacityWhFallback: "
+                         f"{action}")
+                if (action.get("signal") != "battery" or not 0 <= percent <= 100
+                        or capacity <= 0 or not action.get("via")
+                        or not set(action["via"]) <= VEHICLE_ROUTES):
+                    fail(f"vehicle signal needs battery percent 0–100, a positive "
+                         f"capacityWhFallback, and known routes: {action}")
             if action.get("type") == "wallClock" and not re.fullmatch(
                     r"\d{4}-\d\d-\d\dT\d\d:\d\d", str(action.get("local", ""))):
                 fail(f"wall clock needs local YYYY-MM-DDTHH:MM: {action}")
@@ -583,6 +615,7 @@ def main() -> int:
                     "corpusSequence", []):
                 fail(f"case transition is outside the declared sequence: {action}")
         check_think_gap(scenario)
+        check_dwell(scenario)
         types = [action.get("type") for action in scenario.get("actions", [])]
         if layout == "dual" and "passenger" not in types:
             fail(f"{scenario['id']} records two displays but never addresses the passenger")

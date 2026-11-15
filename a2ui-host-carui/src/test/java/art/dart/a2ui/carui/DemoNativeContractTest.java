@@ -27,6 +27,8 @@ public class DemoNativeContractTest {
                 "open").mKind).isEqualTo(DemoNativeContract.Kind.BROWSE);
         assertThat(resolve("big_buck_bunny", "watch", ComponentType.BUTTON,
                 "open").mKind).isEqualTo(DemoNativeContract.Kind.VIDEO);
+        assertThat(resolve("ev_charge_coffee", "bbb", ComponentType.VIDEO,
+                "open").mKind).isEqualTo(DemoNativeContract.Kind.VIDEO);
     }
 
     @Test
