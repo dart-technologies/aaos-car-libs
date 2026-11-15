@@ -134,11 +134,11 @@
         }
       ],
       "actions": [
-        {"atMs": 16300, "type": "speak", "clipId": "poi_utterance_search"},
+        {"atMs": 20000, "type": "speak", "clipId": "poi_utterance_search"},
         {"atMs": 33000, "type": "tapText", "text": "Preview pickup route"},
         {"atMs": 35500, "type": "tapText", "text": "Confirm"},
-        {"atMs": 37500, "type": "speak", "clipId": "poi_utterance_order"},
-        {"atMs": 40200, "type": "tapText", "text": "Confirm"},
+        {"atMs": 40300, "type": "speak", "clipId": "poi_utterance_order"},
+        {"atMs": 41600, "type": "tapText", "text": "Confirm"},
         {"atMs": 56500, "type": "carState", "state": "drive"}
       ],
       "soundEffects": [
@@ -204,8 +204,8 @@
         }
       ],
       "actions": [
-        {"atMs": 14500, "type": "speak", "clipId": "media_utterance_search"},
-        {"atMs": 33000, "type": "speak", "clipId": "media_utterance_open"},
+        {"atMs": 18500, "type": "speak", "clipId": "media_utterance_search"},
+        {"atMs": 36500, "type": "speak", "clipId": "media_utterance_open"},
         {"atMs": 51000, "type": "tapText", "text": "Cancel"},
         {"atMs": 53000, "type": "tapText", "text": "Play audio / pause"},
         {"atMs": 56500, "type": "carState", "state": "drive"}
@@ -283,13 +283,13 @@
         }
       ],
       "actions": [
-        {"atMs": 16300, "type": "speak", "clipId": "concierge_utterance_order"},
-        {"atMs": 19000, "type": "tapText", "text": "Confirm"},
+        {"atMs": 19100, "type": "speak", "clipId": "concierge_utterance_order"},
+        {"atMs": 20400, "type": "tapText", "text": "Confirm"},
         {"atMs": 35000, "type": "selectCase", "caseId": "big_buck_bunny"},
         {"atMs": 38000, "type": "tapText", "text": "Play audio / pause"},
         {"atMs": 51000, "type": "carState", "state": "drive"},
         {"atMs": 69000, "type": "carState", "state": "park"},
-        {"atMs": 69500, "type": "speak", "clipId": "concierge_utterance_open"},
+        {"atMs": 73000, "type": "speak", "clipId": "concierge_utterance_open"},
         {"atMs": 88500, "type": "keyEvent", "key": "BACK"}
       ],
       "soundEffects": [
@@ -443,7 +443,7 @@
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 436535,
-          "atMs": 31000,
+          "atMs": 32400,
           "text": "In Van Gogh's wheat field, wind rushes through swaying cypresses."
         },
         {
@@ -451,7 +451,7 @@
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 437881,
-          "atMs": 36867,
+          "atMs": 38267,
           "text": "Beside Vermeer's open window, a woman begins her day washing."
         },
         {
@@ -459,7 +459,7 @@
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 437394,
-          "atMs": 42733,
+          "atMs": 44133,
           "text": "Aristotle touches Homer's bust in Rembrandt van Rijn's meditation."
         },
         {
@@ -467,7 +467,7 @@
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 435809,
-          "atMs": 48600,
+          "atMs": 50000,
           "text": "Amid Pieter Bruegel the Elder's harvest, workers scythe wheat and rest."
         },
         {
@@ -475,7 +475,7 @@
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 436105,
-          "atMs": 54467,
+          "atMs": 55867,
           "text": "Socrates reaches for the hemlock cup in Jacques-Louis David's story."
         },
         {
@@ -483,7 +483,7 @@
           "role": "narration",
           "lane": "audio_guide",
           "objectID": 435868,
-          "atMs": 60333,
+          "atMs": 61733,
           "text": "Around Paul Cézanne's small table, three farmhands play cards."
         },
         {
@@ -562,11 +562,11 @@
       "actions": [
         {"atMs": 5500, "type": "agent", "provider": "muse", "ask": "Take us to The Met this afternoon", "clipId": "met_utterance_visit"},
         {"atMs": 12000, "type": "selectCase", "caseId": "met_visit"},
-        {"atMs": 15000, "type": "speak", "clipId": "met_utterance_reserve"},
+        {"atMs": 17400, "type": "speak", "clipId": "met_utterance_reserve"},
         {"atMs": 19800, "type": "tapText", "text": "Confirm"},
         {"atMs": 22500, "type": "carState", "state": "drive"},
-        {"atMs": 28800, "type": "speak", "clipId": "met_utterance_first"},
-        {"atMs": 30900, "type": "passenger", "media": "artwork"},
+        {"atMs": 31000, "type": "speak", "clipId": "met_utterance_first"},
+        {"atMs": 32300, "type": "passenger", "media": "artwork"},
         {"atMs": 67000, "type": "carState", "state": "park"},
         {"atMs": 67500, "type": "passenger", "media": "stop"},
         {"atMs": 83300, "type": "selectCase", "caseId": "ev_charge_coffee"},
@@ -574,11 +574,11 @@
         {"atMs": 84500, "type": "carState", "state": "drive"},
         {"atMs": 86500, "type": "passenger", "media": "video"},
         {"atMs": 90600, "type": "vehicleSignal", "signal": "battery", "percent": 18, "via": ["vhal-set", "vhal-inject", "broadcast"], "capacityWhFallback": 150000},
-        {"atMs": 97000, "type": "speak", "clipId": "ev_utterance_first"},
+        {"atMs": 99000, "type": "speak", "clipId": "ev_utterance_first"},
         {"atMs": 100500, "type": "carState", "state": "park"},
-        {"atMs": 110300, "type": "speak", "clipId": "ev_utterance_coffee"},
-        {"atMs": 112800, "type": "tapText", "text": "Confirm"},
-        {"atMs": 118900, "type": "speak", "clipId": "ev_utterance_bunny"}
+        {"atMs": 112200, "type": "speak", "clipId": "ev_utterance_coffee"},
+        {"atMs": 113500, "type": "tapText", "text": "Confirm"},
+        {"atMs": 120800, "type": "speak", "clipId": "ev_utterance_bunny"}
       ],
       "soundEffects": [
         {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
