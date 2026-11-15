@@ -161,6 +161,7 @@ public class AgentSessionTest {
             assertThat(request).contains("\"provider\":\"" + provider.wireName() + "\"");
             assertThat(request).contains("\"schema\":\"a2ui.gateway.v1\"");
             assertThat(request).contains("\"executionProfile\":\"realtime_low_latency\"");
+            assertThat(request).contains("\"versions\":[\"1.0\"]");
         }
         String action = new String(AgentGatewayProtocol.encodeActionResult(
                 AgentProvider.GROK, "session", "turn", "surface", "button", "media.play",
