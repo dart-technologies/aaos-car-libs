@@ -242,9 +242,10 @@ class TimelineTest(unittest.TestCase):
                          [{"atMs": 90600, "signal": "battery", "percent": 18,
                            "wh": 27000, "via": "vhal-inject"}])
         shells = [call for call in device.calls if call[1] == "shell"]
-        self.assertEqual(shells[1][2][:3], ("cmd", "car_service", "set-property-value"))
-        self.assertEqual(shells[2][2][:3], ("cmd", "car_service", "inject-vhal-event"))
-        self.assertIn("27000", shells[2][2])
+        # After the three animation-scale preflight calls.
+        self.assertEqual(shells[3][2][:3], ("cmd", "car_service", "set-property-value"))
+        self.assertEqual(shells[4][2][:3], ("cmd", "car_service", "inject-vhal-event"))
+        self.assertIn("27000", shells[4][2])
 
     def test_vehicle_signal_with_no_injectable_route_fails(self):
         scenario = {"id": "t_signal", "corpusCase": "met_visit", "durationSeconds": 100,
