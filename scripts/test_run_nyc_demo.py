@@ -179,9 +179,12 @@ class TimelineTest(unittest.TestCase):
         evidence = timeline(DUAL, device, self.tmp)
         calls = device.calls
         self.assertEqual(calls[0], (0.0, "record", DRIVER, demo.DEVICE_VIDEO, 75))
-        self.assertEqual(calls[1], (0.0, "shell", ("settings", "put", "global",
-                                                   "animator_duration_scale", "0")))
-        self.assertEqual(calls[2], (0.0, "broadcast", demo.ACTION_CASE,
+        self.assertEqual([call[2][3] for call in calls[1:4]],
+                         ["window_animation_scale", "transition_animation_scale",
+                          "animator_duration_scale"])
+        self.assertTrue(all(call[2][:3] == ("settings", "put", "global")
+                            and call[2][4] == "0" for call in calls[1:4]))
+        self.assertEqual(calls[4], (0.0, "broadcast", demo.ACTION_CASE,
                                     ("--es", demo.EXTRA_CASE, "big_buck_bunny")))
         self.assertIn((17.0, "screencap", PASSENGER), calls)
         record = calls.index((20.0, "record", PASSENGER, demo.DEVICE_PASSENGER_VIDEO, 55))
