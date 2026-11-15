@@ -567,11 +567,18 @@ def main() -> int:
             if action.get("type") == "passenger" and (
                     layout != "dual" or action.get("media") not in PASSENGER_MEDIA):
                 fail(f"passenger action needs a dual-display recording and known media: {action}")
-            if action.get("type") == "vehicleSignal" and (
-                    action.get("signal") != "battery"
-                    or not 0 <= float(action.get("percent", -1)) <= 100
-                    or not action.get("via") or not set(action["via"]) <= VEHICLE_ROUTES):
-                fail(f"vehicle signal needs battery percent 0–100 and known routes: {action}")
+            if action.get("type") == "vehicleSignal":
+                try:
+                    percent = float(action.get("percent", -1))
+                    capacity = float(action.get("capacityWhFallback", -1))
+                except (TypeError, ValueError):
+                    fail(f"vehicle signal needs numeric percent and capacityWhFallback: "
+                         f"{action}")
+                if (action.get("signal") != "battery" or not 0 <= percent <= 100
+                        or capacity <= 0 or not action.get("via")
+                        or not set(action["via"]) <= VEHICLE_ROUTES):
+                    fail(f"vehicle signal needs battery percent 0–100, a positive "
+                         f"capacityWhFallback, and known routes: {action}")
             if action.get("type") == "wallClock" and not re.fullmatch(
                     r"\d{4}-\d\d-\d\dT\d\d:\d\d", str(action.get("local", ""))):
                 fail(f"wall clock needs local YYYY-MM-DDTHH:MM: {action}")

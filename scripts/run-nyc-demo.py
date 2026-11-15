@@ -80,6 +80,9 @@ CHAPTER_SECONDS = (2.0, 3.5)  # every chapter card holds this long, fades includ
 PREAMBLE_FADE_S = 0.25  # each preamble card dips to the background; the story fades in after
 OUTRO_FADE_S = 0.5
 STILL_LEAD_MS = 3000  # capture the idle passenger frame this long before its stream starts
+# The VHAL battery level in watt-hours; the story's percent is taken against the action's
+# own capacityWhFallback, which matches this emulator's full level.
+VEHICLE_BATTERY_PROPERTY = "EV_BATTERY_LEVEL"
 CARD_RENDERER = ROOT / "scripts/render-demo-cards.py"
 OVERLAY_RENDERER = ROOT / "scripts/demo_overlays.py"
 COCKPIT_LAYOUT = CARDS / "cockpit-layout.json"
@@ -335,6 +338,39 @@ def screenrecord_limit(seconds: float) -> int:
     return max(1, min(SCREENRECORD_MAX_S, math.ceil(seconds) + 5))
 
 
+def vehicle_signal(device, action: dict) -> dict:
+    """Drive the story's world-state signal through the first route that takes it.
+
+    The emulator's VHAL owns the battery level: set-property-value is refused, so a
+    battery signal in practice travels as an injected VHAL event. The event's
+    subscribers see the value; the stored level is unchanged. Routes are tried in the
+    action's own order; broadcast names no intent any host reads, so it never takes.
+    """
+    try:
+        percent = float(action.get("percent", -1))
+        capacity = float(action.get("capacityWhFallback", -1))
+    except (TypeError, ValueError):
+        raise DemoFailure(f"vehicle signal needs numeric percent and capacityWhFallback: "
+                          f"{action}") from None
+    if action.get("signal") != "battery" or not 0 <= percent <= 100 or capacity <= 0:
+        raise DemoFailure(f"vehicle signal needs battery percent 0-100 and a positive "
+                          f"capacityWhFallback: {action}")
+    wh = int(round(percent / 100 * capacity))
+    for route in action.get("via", []):
+        if route == "vhal-set":
+            done = device.shell("cmd", "car_service", "set-property-value",
+                                VEHICLE_BATTERY_PROPERTY, "0", str(wh))
+        elif route == "vhal-inject":
+            done = device.shell("cmd", "car_service", "inject-vhal-event",
+                                VEHICLE_BATTERY_PROPERTY, "0", str(wh))
+        else:
+            continue  # no host reads a signal broadcast; the VHAL routes carry it
+        if done.returncode == 0:
+            return {"atMs": int(action["atMs"]), "signal": "battery",
+                    "percent": action["percent"], "wh": wh, "via": route}
+    raise DemoFailure(f"vehicle signal took none of its routes: {action}")
+
+
 def run_timeline(scenario: dict, device, clock, *, driver_display: str,
                  passenger_display: str | None, audio_dir: pathlib.Path, allow_scripted: bool,
                  still_path: pathlib.Path) -> dict:
@@ -343,8 +379,8 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
     steps = schedule(scenario, dual)
     clips = {clip["id"]: clip for clip in scenario["clips"]}
     duration = int(scenario["durationSeconds"])
-    evidence: dict = {"transcripts": [], "steps": [], "passengerStartSeconds": None,
-                      "passengerStill": None}
+    evidence: dict = {"transcripts": [], "steps": [], "signals": [],
+                      "passengerStartSeconds": None, "passengerStill": None}
     recorders = [("driver", device.start_recording(driver_display, DEVICE_VIDEO,
                                                    screenrecord_limit(duration)), 0.0,
                   screenrecord_limit(duration))]
@@ -403,6 +439,8 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
                 # The status bar's time follows the story (needs root adbd and auto_time off).
                 when = dt.datetime.strptime(action["local"], "%Y-%m-%dT%H:%M")
                 device.shell("date", when.strftime("%m%d%H%M%Y.00"))
+            elif step.kind == "vehicleSignal":
+                evidence["signals"].append(vehicle_signal(device, action))
             else:
                 raise DemoFailure(f"unknown action type {step.kind}")
             evidence["steps"].append({"atMs": step.at_ms, "type": step.kind,
