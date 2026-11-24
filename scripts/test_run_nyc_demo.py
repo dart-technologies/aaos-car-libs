@@ -896,6 +896,88 @@ class WallClockTest(unittest.TestCase):
         self.assertIn(("date", "090717152026.00"),
                       [c[2] for c in device.calls if c[1] == "shell"])
 
+    def test_a_refused_date_fails_loudly_instead_of_showing_host_time(self):
+        tmp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp)
+        clock = {"atMs": 40000, "type": "wallClock", "local": "2026-09-07T17:15"}
+        device = FakeDevice(FakeClock(), fail_shell=("date",),
+                            fail_text={"date": "date: can't set date: Operation not permitted"})
+        with self.assertRaisesRegex(demo.DemoFailure, "could not set the story time"):
+            timeline(dict(DUAL, actions=DUAL["actions"] + [clock]), device, tmp)
+
+
+class StoryClockTest(unittest.TestCase):
+    """ensure_story_clock roots adbd and freezes auto_time, but only for stories
+    that set the clock. The module's adb entry points are swapped, never the device."""
+
+    def run_ensure(self, actions, script):
+        calls = []
+        outputs = [subprocess.CompletedProcess(args, rc, out, err)
+                   for args, rc, out, err in script]
+        real_adb, real_shell = demo.adb, demo.adb_shell
+
+        def fake_adb(*args, **kwargs):
+            calls.append(("adb",) + args)
+            return outputs.pop(0)
+
+        def fake_shell(*args, **kwargs):
+            calls.append(("shell",) + args)
+            return outputs.pop(0)
+
+        demo.adb, demo.adb_shell = fake_adb, fake_shell
+        self.addCleanup(setattr, demo, "adb", real_adb)
+        self.addCleanup(setattr, demo, "adb_shell", real_shell)
+        demo.ensure_story_clock({"actions": actions})
+        return calls
+
+    def test_a_story_without_wallclock_leaves_the_device_untouched(self):
+        self.assertEqual(self.run_ensure(DUAL["actions"], []), [])
+
+    def test_an_already_rooted_device_skips_the_reconnect_wait(self):
+        calls = self.run_ensure(
+            DUAL["actions"] + [{"type": "wallClock"}],
+            [(("root",), 0, "adbd is already running as root", ""),
+             (("id", "-u"), 0, "0", ""),
+             (("settings", "put", "global", "auto_time", "0"), 0, "", ""),
+             (("settings", "get", "global", "auto_time"), 0, "0", "")])
+        self.assertEqual([c[1:] for c in calls],
+                         [("root",), ("id", "-u"),
+                          ("settings", "put", "global", "auto_time", "0"),
+                          ("settings", "get", "global", "auto_time")])
+
+    def test_a_restarted_adbd_waits_for_the_device_to_return(self):
+        calls = self.run_ensure(
+            DUAL["actions"] + [{"type": "wallClock"}],
+            [(("root",), 0, "restarting adbd as root", ""),
+             (("wait-for-device",), 0, "", ""),
+             (("id", "-u"), 0, "0", ""),
+             (("settings", "put", "global", "auto_time", "0"), 0, "", ""),
+             (("settings", "get", "global", "auto_time"), 0, "0", "")])
+        self.assertIn(("adb", "wait-for-device"), calls)
+
+    def test_a_production_build_refuses_loudly(self):
+        with self.assertRaisesRegex(demo.DemoFailure, "refused `adb root`"):
+            self.run_ensure(
+                DUAL["actions"] + [{"type": "wallClock"}],
+                [(("root",), 1, "", "adbd cannot run as root in production builds")])
+
+    def test_a_root_that_does_not_take_fails(self):
+        with self.assertRaisesRegex(demo.DemoFailure, "did not take"):
+            self.run_ensure(
+                DUAL["actions"] + [{"type": "wallClock"}],
+                [(("root",), 0, "restarting adbd as root", ""),
+                 (("wait-for-device",), 0, "", ""),
+                 (("id", "-u"), 0, "2000", "")])
+
+    def test_an_auto_time_that_does_not_stick_fails(self):
+        with self.assertRaisesRegex(demo.DemoFailure, "auto_time off"):
+            self.run_ensure(
+                DUAL["actions"] + [{"type": "wallClock"}],
+                [(("root",), 0, "adbd is already running as root", ""),
+                 (("id", "-u"), 0, "0", ""),
+                 (("settings", "put", "global", "auto_time", "0"), 0, "", ""),
+                 (("settings", "get", "global", "auto_time"), 0, "1", "")])
+
 
 class TranscriptTest(unittest.TestCase):
     def test_a_punctuated_line_matches_what_the_writer_normalized(self):

@@ -236,6 +236,30 @@ def verify_preconditions(required_avd: str) -> str:
     return avd_name
 
 
+def ensure_story_clock(scenario: dict) -> None:
+    """Root adbd and freeze automatic time when the story sets the clock.
+
+    A wallClock step's `date` needs root, and with auto_time on the network
+    would overwrite the story time within seconds — the recording would show
+    host time instead. Runs before any recorder starts: `adb root` restarts
+    adbd, which would drop a running screenrecord's host connection. A
+    scenario without wallClock leaves the device untouched.
+    """
+    if not any(action.get("type") == "wallClock" for action in scenario["actions"]):
+        return
+    rooted = adb("root", check=False)
+    combined = f"{rooted.stdout}\n{rooted.stderr}"
+    if "cannot run as root" in combined:
+        raise DemoFailure("wallClock needs root adbd; this build refused `adb root`")
+    if "already running as root" not in combined:
+        adb("wait-for-device", timeout=180)
+    if adb_shell("id", "-u").stdout.strip() != "0":
+        raise DemoFailure("wallClock needs root adbd; `adb root` did not take")
+    adb_shell("settings", "put", "global", "auto_time", "0")
+    if adb_shell("settings", "get", "global", "auto_time").stdout.strip() != "0":
+        raise DemoFailure("wallClock needs auto_time off; the put did not stick")
+
+
 class Adb:
     """The device side of run_timeline(); tests substitute a recording fake."""
 
@@ -448,9 +472,13 @@ def run_timeline(scenario: dict, device, clock, *, driver_display: str,
             elif step.kind == "endCard":
                 device.broadcast(ACTION_END_CARD)
             elif step.kind == "wallClock":
-                # The status bar's time follows the story (needs root adbd and auto_time off).
+                # Root adbd and auto_time off were ensured before recording started; a
+                # nonzero date fails the run instead of silently showing host time.
                 when = dt.datetime.strptime(action["local"], "%Y-%m-%dT%H:%M")
-                device.shell("date", when.strftime("%m%d%H%M%Y.00"))
+                done = device.shell("date", when.strftime("%m%d%H%M%Y.00"))
+                if done.returncode != 0:
+                    detail = (done.stderr or done.stdout or "no diagnostic").strip()
+                    raise DemoFailure(f"wallClock could not set the story time: {detail}")
             elif step.kind == "vehicleSignal":
                 evidence["signals"].append(vehicle_signal(device, action))
             else:
@@ -1374,6 +1402,8 @@ def main() -> int:
     chapters = chapter_cards(scenario)
     hold_ms = scenario.get("endCardHoldFromMs")
     avd_name = verify_preconditions(args.require_avd)
+    # Before any recorder: `adb root` restarts adbd, which would drop a recording.
+    ensure_story_clock(scenario)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     raw_video = args.output.with_name(args.output.stem + ".raw.mp4")
     passenger_raw = args.output.with_name(args.output.stem + ".passenger.raw.mp4")
