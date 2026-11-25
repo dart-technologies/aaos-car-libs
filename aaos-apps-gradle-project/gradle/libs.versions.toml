@@ -5,7 +5,7 @@
 # too, because it builds car-ui-lib and the Flutter binding from their own build.gradle files.
 
 [versions]
-agp = "9.5.1"
+agp = "9.5.2"
 androidx-annotation = "1.11.0"
 androidx-appcompat = "1.8.0"
 androidx-arch-core = "2.2.0"
@@ -27,10 +27,10 @@ androidx-test-ext-junit = "1.2.1"
 androidx-test-rules = "1.6.1"
 androidx-test-runner = "1.6.2"
 carui-plugin-apis = "1.5.0"
-cyclonedx = "3.5.1"
+cyclonedx = "3.6.1"
 # 2.28.6 + Mockito 5 aborts ART in LocationImpl.stackWalk (car-ui-lib androidTest).
 dexmaker = "2.28.1"
-glide = "5.0.9"
+glide = "5.0.10"
 guava = "33.8.0-android"
 hamcrest = "3.0"
 junit = "4.13.2"
