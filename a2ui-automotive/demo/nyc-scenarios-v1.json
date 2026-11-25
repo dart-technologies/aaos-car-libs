@@ -136,7 +136,7 @@
       "actions": [
         {"atMs": 20000, "type": "speak", "clipId": "poi_utterance_search"},
         {"atMs": 33000, "type": "tapText", "text": "Preview pickup route"},
-        {"atMs": 35500, "type": "tapText", "text": "Confirm"},
+        {"atMs": 35500, "type": "tapText", "text": "OK"},
         {"atMs": 40300, "type": "speak", "clipId": "poi_utterance_order"},
         {"atMs": 41600, "type": "tapText", "text": "Confirm"},
         {"atMs": 56500, "type": "carState", "state": "drive"}
