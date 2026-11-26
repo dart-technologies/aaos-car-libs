@@ -67,7 +67,15 @@ final class HostJourney {
             "/arrival/title", "/arrival/detail",
             R.drawable.a2ui_ic_pickup, R.drawable.demo_media_poster, 0);
 
-    private static final List<HostJourney> ALL = Collections.singletonList(FIFTH_HOUSE);
+    /** Queens Center pickup: same pointers, read from the queens case's own data model. */
+    private static final HostJourney QUEENS_RUN = new HostJourney("queens_run",
+            "queens_pickup",
+            new LinkedHashSet<>(Collections.singletonList("queens_pickup")),
+            "/order/status", Arrays.asList("/order/eta", "/order/pickup"),
+            "/arrival/title", "/arrival/detail",
+            R.drawable.a2ui_ic_pickup, 0, 0);
+
+    private static final List<HostJourney> ALL = Arrays.asList(FIFTH_HOUSE, QUEENS_RUN);
 
     /** The journey an exact corpus surface belongs to, or null. */
     @Nullable

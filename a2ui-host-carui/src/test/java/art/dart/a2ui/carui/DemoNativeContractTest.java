@@ -23,6 +23,10 @@ public class DemoNativeContractTest {
                 "edit").mKind).isEqualTo(DemoNativeContract.Kind.TIME);
         assertThat(resolve("poi_discovery_order", "route", ComponentType.CARD,
                 "navigate").mKind).isEqualTo(DemoNativeContract.Kind.ROUTE);
+        assertThat(resolve("queens_pickup", "route", ComponentType.CARD,
+                "navigate").mKind).isEqualTo(DemoNativeContract.Kind.ROUTE);
+        assertThat(resolve("queens_pickup", "first", ComponentType.CARD,
+                "navigate").mKind).isEqualTo(DemoNativeContract.Kind.ROUTE);
         assertThat(resolve("browse_library", "list", ComponentType.LIST,
                 "open").mKind).isEqualTo(DemoNativeContract.Kind.BROWSE);
         assertThat(resolve("big_buck_bunny", "watch", ComponentType.BUTTON,
@@ -44,6 +48,8 @@ public class DemoNativeContractTest {
     @Test
     public void pickupOrderAndWeatherResolveOnlyOnTheirRecordedSurface() {
         assertThat(resolve("poi_discovery_order", "order", ComponentType.BUTTON,
+                "purchase").mKind).isEqualTo(DemoNativeContract.Kind.ORDER);
+        assertThat(resolve("queens_pickup", "order", ComponentType.BUTTON,
                 "purchase").mKind).isEqualTo(DemoNativeContract.Kind.ORDER);
         assertThat(resolve("agent_surface", "order", ComponentType.BUTTON, "purchase")).isNull();
         assertThat(resolve("poi_discovery_order", "order", ComponentType.BUTTON, "play"))

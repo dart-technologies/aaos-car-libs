@@ -1920,6 +1920,9 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         if ("poi_discovery_order".equals(surfaceId)) {
             return getString(R.string.a2ui_brand_pickup_heading);
         }
+        if ("queens_pickup".equals(surfaceId)) {
+            return getString(R.string.a2ui_queens_pickup_heading);
+        }
         if ("big_buck_bunny".equals(surfaceId)) {
             return getString(R.string.a2ui_brand_city_note_heading);
         }
@@ -1930,13 +1933,17 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     @NonNull
     static String toolbarTitleFor(@NonNull String surfaceId, @NonNull CharSequence defaultTitle) {
         return "poi_discovery_order".equals(surfaceId) || "big_buck_bunny".equals(surfaceId)
-                ? "Fifth House · NYC Concierge" : defaultTitle.toString();
+                ? "Fifth House · NYC Concierge"
+                : "queens_pickup".equals(surfaceId) ? "Queens Center · pickup run"
+                : defaultTitle.toString();
     }
 
     @NonNull
     private String themedToolbarTitle(@NonNull String surfaceId, @NonNull CharSequence defaultTitle) {
         return "poi_discovery_order".equals(surfaceId) || "big_buck_bunny".equals(surfaceId)
-                ? getString(R.string.a2ui_brand_toolbar_title) : defaultTitle.toString();
+                ? getString(R.string.a2ui_brand_toolbar_title)
+                : "queens_pickup".equals(surfaceId)
+                ? getString(R.string.a2ui_queens_toolbar_title) : defaultTitle.toString();
     }
 
     /** Human-facing provenance summary; exact engineering values stay in the expandable strip. */
@@ -2067,11 +2074,13 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
         A2uiComponent field = findRendered(rendered, "field");
         boolean searchCase = "search_and_filter".equals(surfaceId)
                 || "poi_discovery_order".equals(surfaceId)
+                || "queens_pickup".equals(surfaceId)
                 || "big_buck_bunny".equals(surfaceId);
         boolean search = searchCase && field != null
                 && field.getType() == ComponentType.TEXT_FIELD;
         return new NativeChromePlan(browseTabs, search,
                 search ? ("poi_discovery_order".equals(surfaceId)
+                        || "queens_pickup".equals(surfaceId)
                         ? "Find a place along the route" : "Search media") : null);
     }
 
@@ -2296,8 +2305,11 @@ public class A2uiCarUiActivity extends Activity implements InsetsChangedListener
     private void showBrowse(String componentId, DemoNativeContract.Spec spec) {
         String[] rows;
         if ("places".equals(componentId)) {
-            rows = new String[]{"Fifth House Coffee Atelier · FICTIONAL DEMO · 0.4 mi",
-                    "Atlantic Avenue Coffee · DEMO · 0.7 mi"};
+            rows = "queens_pickup".equals(mSurfaceId)
+                    ? new String[]{"Queens Center · Elmhurst · mall pickup",
+                            "Queens Place · Elmhurst"}
+                    : new String[]{"Fifth House Coffee Atelier · FICTIONAL DEMO · 0.4 mi",
+                            "Atlantic Avenue Coffee · DEMO · 0.7 mi"};
         } else if ("results".equals(componentId)) {
             rows = new String[]{"Big Buck Bunny · DEMO local decoder fixture"};
         } else if ("list".equals(componentId) && "passenger_video".equals(mSurfaceId)) {

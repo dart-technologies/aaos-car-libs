@@ -119,6 +119,28 @@ public class UseCaseCorpusTest {
     }
 
     @Test
+    public void queensPickupMirrorsPoiStructureAgainstRealPlaces() {
+        UseCaseCorpus.UseCase queens = UseCaseCorpus.byId("queens_pickup");
+        assertThat(queens).isNotNull();
+        assertThat(queens.getTemplateCapabilities()).containsAtLeast(
+                UseCaseCorpus.TemplateCapability.SEARCH,
+                UseCaseCorpus.TemplateCapability.PLACE_LIST_MAP,
+                UseCaseCorpus.TemplateCapability.MAP_WITH_CONTENT,
+                UseCaseCorpus.TemplateCapability.ROUTE_PREVIEW,
+                UseCaseCorpus.TemplateCapability.NAVIGATION);
+
+        A2uiMessageProcessor p = processor();
+        p.processAll(queens.getMessages());
+        A2uiComponent root = p.getSurface(queens.getId()).project("root");
+        assertThat(findById(root, "order").getAction()).isEqualTo("purchase");
+        assertThat(findById(root, "order").getVoicePhrase()).isEqualTo("order ahead");
+        assertThat(findById(root, "route").getAction()).isEqualTo("navigate");
+        assertThat(findById(root, "field").getType()).isEqualTo(ComponentType.TEXT_FIELD);
+        assertThat(findById(root, "field").getVoicePhrase()).isEqualTo("find queens center");
+        assertThat(findById(root, "first").getTitle()).isEqualTo("Queens Center");
+    }
+
+    @Test
     public void bunnyScenarioSeparatesParkedVideoFromMotionSafeAudio() {
         UseCaseCorpus.UseCase bunny = UseCaseCorpus.byId("big_buck_bunny");
         A2uiMessageProcessor p = processor();
@@ -258,5 +280,10 @@ public class UseCaseCorpusTest {
                 .isEqualTo("Coffee on the way");
         assertThat(p.getSurface("poi_discovery_order").readDataModel("/order/pickup"))
                 .isEqualTo("Fifth House Coffee Atelier · SoHo");
+        p.processAll(UseCaseCorpus.byId("queens_pickup").getMessages());
+        assertThat(p.getSurface("queens_pickup").project("root").getTitle())
+                .isEqualTo("Pickup at Queens Center");
+        assertThat(p.getSurface("queens_pickup").readDataModel("/order/pickup"))
+                .isEqualTo("Queens Center · Elmhurst");
     }
 }

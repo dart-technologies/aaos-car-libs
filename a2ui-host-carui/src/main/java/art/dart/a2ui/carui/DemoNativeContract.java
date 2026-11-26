@@ -94,22 +94,27 @@ final class DemoNativeContract {
                 ComponentType.LIST, "open")
                 || matches(surfaceId, id, component, "poi_discovery_order", "places",
                 ComponentType.LIST, "open")
+                || matches(surfaceId, id, component, "queens_pickup", "places",
+                ComponentType.LIST, "open")
                 || matches(surfaceId, id, component, "big_buck_bunny", "results",
                 ComponentType.LIST, "open")) {
             return Spec.simple(Kind.BROWSE,
                     component.getTitle() == null ? "Browse" : component.getTitle());
         }
-        if ("poi_discovery_order".equals(surfaceId)
+        if (("poi_discovery_order".equals(surfaceId) || "queens_pickup".equals(surfaceId))
                 && ("first".equals(id) || "second".equals(id) || "route".equals(id))
                 && component.getType() == ComponentType.CARD
                 && "navigate".equals(component.getAction())) {
             return Spec.simple(Kind.ROUTE, component.getTitle());
         }
         if (matches(surfaceId, id, component, "poi_discovery_order", "order",
+                ComponentType.BUTTON, "purchase")
+                || matches(surfaceId, id, component, "queens_pickup", "order",
                 ComponentType.BUTTON, "purchase")) {
             return Spec.simple(Kind.ORDER, "DEMO pickup order");
         }
-        if ("poi_discovery_order".equals(surfaceId) && "status".equals(id)
+        if (("poi_discovery_order".equals(surfaceId) || "queens_pickup".equals(surfaceId))
+                && "status".equals(id)
                 && component.getType() == ComponentType.TEXT && component.getAction() == null) {
             return Spec.simple(Kind.WEATHER, "Curated weather");
         }
@@ -249,6 +254,9 @@ final class DemoNativeContract {
         if ("poi_discovery_order".equals(surfaceId) && "order".equals(component.getId())) {
             return "Order a cold brew and a bagel for pickup?";
         }
+        if ("queens_pickup".equals(surfaceId) && "order".equals(component.getId())) {
+            return "Order ahead for Queens Center pickup?";
+        }
         if ("modal_confirmation".equals(surfaceId) && "buy".equals(component.getId())) {
             return "Buy this album for £9.99?";
         }
@@ -269,7 +277,7 @@ final class DemoNativeContract {
     static String changeLabel(@NonNull String surfaceId, @NonNull A2uiComponent component) {
         String id = component.getId();
         if (id == null) return null;
-        if ("poi_discovery_order".equals(surfaceId)) {
+        if ("poi_discovery_order".equals(surfaceId) || "queens_pickup".equals(surfaceId)) {
             if ("field".equals(id)) return "Search";
             if ("places".equals(id)) return "Places";
         }
