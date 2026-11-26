@@ -148,6 +148,78 @@
       ]
     },
     {
+      "id": "nyc_queens",
+      "title": "Queens Center pickup from Hudson Yards",
+      "corpusCase": "queens_pickup",
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-2026-09-07.json",
+      "durationSeconds": 78,
+      "premise": "A parked driver chooses a real mall pickup along a recognizable NYC corridor. Once the vehicle enters drive, discovery and purchase disappear or refuse while the route remains.",
+      "parameterRationale": [
+        "Hudson Yards is a recognizable neighborhood-level origin and avoids pretending the emulator has device location.",
+        "Queens Center names a real Elmhurst mall destination without naming any merchant brand or product.",
+        "Second place, charging, and coffee answers come from a cached Meta Spark ranking (demo/cache/muse/quality_cached/0a275c7e), not live data; merchant brands in the ranking are never rendered.",
+        "The dated NWS snapshot makes weather useful and auditable rather than silently stale."
+      ],
+      "doNotClaim": [
+        "real merchant inventory, price, payment, map data, or navigation guidance",
+        "live charger availability, hours, or merchant claims",
+        "that a DEMO restriction preset represents vehicle motion"
+      ],
+      "clips": [
+        {
+          "id": "qns_narration_01",
+          "role": "narration",
+          "atMs": 1000,
+          "text": "We are parked at Hudson Yards, heading to Queens Center in Elmhurst. Place discovery, a route preview, and order-ahead pickup in one host-native flow. The places are real; the route and order are demo fixtures."
+        },
+        {
+          "id": "qns_utterance_search",
+          "role": "user_utterance",
+          "atMs": 17200,
+          "text": "Find Queens Center.",
+          "expectedTranscript": "find queens center"
+        },
+        {
+          "id": "qns_narration_02",
+          "role": "narration",
+          "atMs": 19500,
+          "text": "The result combines a place list with a synthetic route preview. The visual is intentionally not a live map. Host-owned action identifiers, never the labels, decide what may navigate or spend money."
+        },
+        {
+          "id": "qns_utterance_order",
+          "role": "user_utterance",
+          "atMs": 38000,
+          "text": "Order ahead.",
+          "expectedTranscript": "order ahead"
+        },
+        {
+          "id": "qns_narration_03",
+          "role": "narration",
+          "atMs": 43000,
+          "text": "The consequential order requires a parked confirmation and is re-decided when the confirmation is answered. Now the emulator changes through the real car service from park to drive."
+        },
+        {
+          "id": "qns_narration_04",
+          "role": "narration",
+          "atMs": 61000,
+          "text": "The same surface is projected again using current restrictions. Search and ordering are no longer available, but glanceable pickup and route context remain. This proves enforcement, not live commerce or turn-by-turn navigation."
+        }
+      ],
+      "actions": [
+        {"atMs": 20200, "type": "speak", "clipId": "qns_utterance_search"},
+        {"atMs": 33000, "type": "tapText", "text": "Preview pickup route"},
+        {"atMs": 35500, "type": "tapText", "text": "OK"},
+        {"atMs": 40300, "type": "speak", "clipId": "qns_utterance_order"},
+        {"atMs": 41600, "type": "tapText", "text": "Confirm"},
+        {"atMs": 56500, "type": "carState", "state": "drive"}
+      ],
+      "soundEffects": [
+        {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
+        {"atMs": 40500, "effectId": "fifth_house_confirmed", "gainDb": -12},
+        {"atMs": 57000, "effectId": "fifth_house_focus", "gainDb": -14}
+      ]
+    },
+    {
       "id": "nyc_curated_video",
       "title": "Curated short while waiting in Long Island City",
       "corpusCase": "big_buck_bunny",

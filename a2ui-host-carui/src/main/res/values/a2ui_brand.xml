@@ -28,6 +28,8 @@
     <string name="a2ui_brand_toolbar_title">Fifth House · NYC Concierge</string>
     <string name="a2ui_brand_pickup_heading">FIFTH HOUSE · PICKUP</string>
     <string name="a2ui_brand_city_note_heading">FIFTH HOUSE · CITY NOTE</string>
+    <string name="a2ui_queens_toolbar_title">Queens Center · pickup run</string>
+    <string name="a2ui_queens_pickup_heading">QUEENS CENTER · PICKUP</string>
     <string name="a2ui_brand_thinking_title">Thinking…</string>
     <!-- %1$s is the provider's display name. -->
     <string name="a2ui_brand_thinking_body">%1$s is preparing your answer</string>

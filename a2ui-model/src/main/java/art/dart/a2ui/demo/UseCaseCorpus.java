@@ -127,6 +127,7 @@ public final class UseCaseCorpus {
             passengerVideo(),
             handoffToDriver(),
             poiDiscoveryOrder(),
+            queensPickup(),
             bigBuckBunny(),
             metVisit(),
             evChargeCoffee(),
@@ -332,6 +333,48 @@ public final class UseCaseCorpus {
         b.data("/order/pickup", "Fifth House Coffee Atelier · SoHo");
         b.data("/arrival/title", "Welcome to Fifth House · SoHo");
         b.data("/arrival/detail", "Your DEMO order is ready · city note unlocked");
+        b.templates(TemplateCapability.SEARCH, TemplateCapability.PLACE_LIST_MAP,
+                TemplateCapability.MAP_WITH_CONTENT, TemplateCapability.ROUTE_PREVIEW,
+                TemplateCapability.NAVIGATION);
+        return b.build();
+    }
+
+    /**
+     * Queens Center pickup: the poiDiscoveryOrder flow against real places. Same component
+     * ids, types, actions, and templates, so policy and the host treat both identically;
+     * only the strings differ. No merchant brand is named anywhere: the mall is the
+     * destination, and the route and order stay marked DEMO.
+     */
+    private static UseCase queensPickup() {
+        Builder b = new Builder("queens_pickup",
+                "From Hudson Yards to Queens Center: find the mall pickup, preview the route, "
+                        + "order while parked, then drive",
+                "BASELINE permits search/order; NO_KEYBOARD removes search and motion refuses "
+                        + "purchase while navigation remains glanceable");
+        b.container("root", "Column", "field", "places", "route", "order", "status");
+        b.put("root", "title", "Pickup at Queens Center");
+        b.action("field", "TextField", "Find Queens Center",
+                "Hudson Yards to Queens Center", "search");
+        b.put("field", "voicePhrase", "find queens center");
+        b.container("places", "List", "first", "second");
+        b.put("places", "action", "open");
+        b.action("first", "Card", "Queens Center",
+                "Elmhurst · mall pickup", "navigate");
+        b.action("second", "Card", "Queens Place",
+                "Elmhurst", "navigate");
+        b.action("route", "Card", "Preview pickup route",
+                "DEMO route · Queens Center run", "navigate");
+        b.action("order", "Button", "Order ahead for pickup",
+                "DEMO order · confirm only while parked", "purchase");
+        b.put("order", "voicePhrase", "order ahead");
+        b.text("status", "Curated snapshot · Sep 7 · warm, showers possible Thursday",
+                "Umbrella reminder · the route stays glanceable in motion");
+        // What the host's pickup and arrival cards show once the order is confirmed.
+        b.data("/order/status", "DEMO order confirmed · preparing");
+        b.data("/order/eta", "Ready at the Queens Center pickup");
+        b.data("/order/pickup", "Queens Center · Elmhurst");
+        b.data("/arrival/title", "Welcome to Queens Center");
+        b.data("/arrival/detail", "Your DEMO order is ready · Queens Center pickup");
         b.templates(TemplateCapability.SEARCH, TemplateCapability.PLACE_LIST_MAP,
                 TemplateCapability.MAP_WITH_CONTENT, TemplateCapability.ROUTE_PREVIEW,
                 TemplateCapability.NAVIGATION);
