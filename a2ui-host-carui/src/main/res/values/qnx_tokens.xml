@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2026 Dart Technologies. Licensed under the Apache License, Version 2.0.
+     QNX brand tokens (QNX Brand Guidelines v2.0, May 2026; see the a2ui-qnx
+     repo's docs/DESIGN-PRINCIPLES.md for the distillation). The demo skin in
+     a2ui_brand.xml points at these; OEM skins override the brand slots, never
+     these values. State fills are alpha tints of their dot hue so the hue
+     stays in-palette on dark surfaces. -->
+<resources>
+    <color name="qnx_coral">#FFFF443A</color>
+    <color name="qnx_mahogany">#FF451713</color>
+    <color name="qnx_blush_red">#FFC45349</color>
+    <color name="qnx_burnt_umber">#FF85352E</color>
+    <color name="qnx_gray_1">#FFC0C0BB</color>
+    <color name="qnx_gray_2">#FF8F8F8B</color>
+    <color name="qnx_gray_3">#FF5E5D5A</color>
+    <color name="qnx_sand">#FFF4EBE1</color>
+    <color name="qnx_green_gain">#FF06CA5F</color>
+    <color name="qnx_red_loss">#FFE4203C</color>
+    <color name="qnx_orange">#FFFFBE5B</color>
+    <color name="qnx_dark">#FF181C1E</color>
+</resources>

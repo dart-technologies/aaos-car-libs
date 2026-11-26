@@ -4,20 +4,20 @@
     <!-- App-owned presentation chrome only. OEM plugin views retain the vehicle's native theme. -->
     <color name="a2ui_brand_header_surface">#FF101113</color>
     <color name="a2ui_brand_badge_surface">#E6171717</color>
-    <color name="a2ui_brand_accent">#FFC8A96A</color>
+    <color name="a2ui_brand_accent">@color/qnx_coral</color>
     <color name="a2ui_brand_on_surface">#FFFFF8EE</color>
     <color name="a2ui_brand_on_surface_muted">#B3FFF8EE</color>
     <color name="a2ui_brand_video_stage">#FF000000</color>
     <!-- Vehicle-state chip fills, one per state so the state reads before the word does: the
          brand green and blue at lower saturation, and a brighter dot of the same hue. -->
-    <color name="a2ui_brand_state_parked">#FF2E5C4B</color>
-    <color name="a2ui_brand_state_driving">#FF3D567C</color>
-    <color name="a2ui_brand_state_safe">#FF804B3A</color>
-    <color name="a2ui_brand_state_demo">#FF4B4C55</color>
-    <color name="a2ui_brand_state_parked_dot">#FF8FE0B5</color>
-    <color name="a2ui_brand_state_driving_dot">#FF9EC1F7</color>
-    <color name="a2ui_brand_state_safe_dot">#FFF2B38A</color>
-    <color name="a2ui_brand_state_demo_dot">#FFC9CAD3</color>
+    <color name="a2ui_brand_state_parked">#2E06CA5F</color>
+    <color name="a2ui_brand_state_driving">#2EFFBE5B</color>
+    <color name="a2ui_brand_state_safe">#2EC45349</color>
+    <color name="a2ui_brand_state_demo">#2EC0C0BB</color>
+    <color name="a2ui_brand_state_parked_dot">@color/qnx_green_gain</color>
+    <color name="a2ui_brand_state_driving_dot">@color/qnx_orange</color>
+    <color name="a2ui_brand_state_safe_dot">@color/qnx_blush_red</color>
+    <color name="a2ui_brand_state_demo_dot">@color/qnx_gray_1</color>
     <color name="a2ui_brand_strip_surface">#F21B1C20</color>
     <color name="a2ui_brand_panel_surface">#FF17181B</color>
     <color name="a2ui_brand_scrim">#B3000000</color>
@@ -96,13 +96,13 @@
     </style>
 
     <style name="A2uiBrandTitle">
-        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:fontFamily">@font/onest_semibold</item>
         <item name="android:textColor">@color/a2ui_brand_on_surface</item>
         <item name="android:textSize">@dimen/a2ui_type_title</item>
     </style>
 
     <style name="A2uiBrandBody">
-        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:fontFamily">@font/onest_regular</item>
         <item name="android:textColor">@color/a2ui_brand_on_surface</item>
         <item name="android:textSize">@dimen/a2ui_type_body</item>
     </style>
