@@ -97,6 +97,8 @@ final class DemoNativeContract {
                 || matches(surfaceId, id, component, "queens_pickup", "places",
                 ComponentType.LIST, "open")
                 || matches(surfaceId, id, component, "big_buck_bunny", "results",
+                ComponentType.LIST, "open")
+                || matches(surfaceId, id, component, "queens_watch", "results",
                 ComponentType.LIST, "open")) {
             return Spec.simple(Kind.BROWSE,
                     component.getTitle() == null ? "Browse" : component.getTitle());
@@ -128,23 +130,27 @@ final class DemoNativeContract {
         if (isRecordedAudio(surfaceId, id, component)) {
             return Spec.simple(Kind.AUDIO, "DEMO local audio");
         }
-        if ("big_buck_bunny".equals(surfaceId) && "movie".equals(id)
+        if (("big_buck_bunny".equals(surfaceId) || "queens_watch".equals(surfaceId))
+                && "movie".equals(id)
                 && component.getType() == ComponentType.CARD
                 && "open".equals(component.getAction())) {
             return Spec.simple(Kind.VIDEO, "DEMO local video");
         }
         // The charge story's closing video, past the card cap: voice is its only path in.
-        if ("ev_charge_coffee".equals(surfaceId) && "bbb".equals(id)
+        if (("ev_charge_coffee".equals(surfaceId) || "queens_charge".equals(surfaceId))
+                && "bbb".equals(id)
                 && component.getType() == ComponentType.VIDEO
                 && "open".equals(component.getAction())) {
             return Spec.simple(Kind.VIDEO, "DEMO local video");
         }
-        if ("big_buck_bunny".equals(surfaceId) && "watch".equals(id)
+        if (("big_buck_bunny".equals(surfaceId) || "queens_watch".equals(surfaceId))
+                && "watch".equals(id)
                 && component.getType() == ComponentType.BUTTON
                 && "open".equals(component.getAction())) {
             return Spec.simple(Kind.VIDEO, "DEMO local video");
         }
-        if ("big_buck_bunny".equals(surfaceId) && "play".equals(id)
+        if (("big_buck_bunny".equals(surfaceId) || "queens_watch".equals(surfaceId))
+                && "play".equals(id)
                 && component.getType() == ComponentType.BUTTON
                 && "play".equals(component.getAction())) {
             return Spec.simple(Kind.AUDIO, "DEMO local audio");
@@ -281,7 +287,7 @@ final class DemoNativeContract {
             if ("field".equals(id)) return "Search";
             if ("places".equals(id)) return "Places";
         }
-        if ("big_buck_bunny".equals(surfaceId)) {
+        if ("big_buck_bunny".equals(surfaceId) || "queens_watch".equals(surfaceId)) {
             if ("field".equals(id)) return "Search";
             if ("results".equals(id)) return "Results";
         }
@@ -294,14 +300,16 @@ final class DemoNativeContract {
                 && component.getAction() == null
                 && ("video_trailer".equals(surfaceId)
                         || "passenger_video".equals(surfaceId)
-                        || "big_buck_bunny".equals(surfaceId));
+                        || "big_buck_bunny".equals(surfaceId)
+                        || "queens_watch".equals(surfaceId));
     }
 
     private static boolean isRecordedAudio(String surfaceId, String id,
             A2uiComponent component) {
         return "audio".equals(id) && component.getType() == ComponentType.AUDIO_PLAYER
                 && component.getAction() == null
-                && ("video_trailer".equals(surfaceId) || "big_buck_bunny".equals(surfaceId));
+                && ("video_trailer".equals(surfaceId) || "big_buck_bunny".equals(surfaceId)
+                        || "queens_watch".equals(surfaceId));
     }
 
     private static boolean matches(String surfaceId, String id, A2uiComponent component,

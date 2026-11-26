@@ -35,8 +35,10 @@ CASE_MASK=(
   poi_discovery_order 0x1ff   # search/order disappear or refuse; navigation remains
   queens_pickup       0x1ff   # same flow against Queens Center; navigation remains
   big_buck_bunny      0x10    # NO_VIDEO, audio remains
+  queens_watch        0x10    # NO_VIDEO, audio remains (Queens-neutral strings)
   met_visit           0xff    # motion: depth limit cuts map and sources; gallery and film go
   ev_charge_coffee    0xff    # motion: charger comparison stays; reorder refused; tour goes
+  queens_charge       0xff    # motion: Queens charger comparison stays; reorder refused; short goes
   artwork_grid        0x20    # LIMIT_CONTENT truncates the grid to the host's limit
   sign_in             0x8     # NO_KEYBOARD removes the email entry; continue refuses
   long_message        0x1ff   # the receipt survives FULLY_RESTRICTED unchanged
@@ -58,8 +60,10 @@ CASE_WHAT=(
   poi_discovery_order "parked search/order become moving-safe navigation-only content"
   queens_pickup       "parked Queens Center search/order become moving-safe navigation-only content"
   big_buck_bunny      "parked video is removed by NO_VIDEO while audio controls remain"
+  queens_watch        "parked video is removed by NO_VIDEO while audio controls remain"
   met_visit           "map, sources and artwork leave in motion; ETA, brief and audio guide stay"
   ev_charge_coffee    "charger comparison and navigation stay in motion; reorder and tour wait for park"
+  queens_charge       "Queens charger comparison and navigation stay in motion; reorder and short wait for park"
   artwork_grid        "six artwork cards as a GridTemplate; LIMIT_CONTENT truncates it"
   sign_in             "email entry plus continue as a SignInTemplate; NO_KEYBOARD removes entry"
   long_message        "the charging receipt as a LongMessageTemplate; readable parked or moving"
