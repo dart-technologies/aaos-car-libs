@@ -28,7 +28,7 @@ RUNNER = ROOT / "scripts/run-nyc-demo.py"
 # The three original stories and their corpus cases; more may be added beside them.
 CANONICAL = {"nyc_poi_order": "poi_discovery_order", "nyc_curated_video": "big_buck_bunny",
              "nyc_concierge": "poi_discovery_order", "nyc_met": "met_visit",
-             "nyc_queens": "queens_pickup"}
+             "nyc_queens": "queens_pickup", "nyc_queens_day": "queens_pickup"}
 FILM = ROOT / "a2ui-automotive/demo/fixtures/met/FILM.json"
 FILM_PORTRAIT = ROOT / "a2ui-automotive/demo/fixtures/met/FILM_PORTRAIT.json"
 # The names other agents implement against; changing one here means changing it there.

@@ -27,6 +27,14 @@ public class DemoNativeContractTest {
                 "navigate").mKind).isEqualTo(DemoNativeContract.Kind.ROUTE);
         assertThat(resolve("queens_pickup", "first", ComponentType.CARD,
                 "navigate").mKind).isEqualTo(DemoNativeContract.Kind.ROUTE);
+        assertThat(resolve("queens_watch", "movie", ComponentType.CARD,
+                "open").mKind).isEqualTo(DemoNativeContract.Kind.VIDEO);
+        assertThat(resolve("queens_watch", "watch", ComponentType.BUTTON,
+                "open").mKind).isEqualTo(DemoNativeContract.Kind.VIDEO);
+        assertThat(resolve("queens_watch", "play", ComponentType.BUTTON,
+                "play").mKind).isEqualTo(DemoNativeContract.Kind.AUDIO);
+        assertThat(resolve("queens_charge", "bbb", ComponentType.VIDEO,
+                "open").mKind).isEqualTo(DemoNativeContract.Kind.VIDEO);
         assertThat(resolve("browse_library", "list", ComponentType.LIST,
                 "open").mKind).isEqualTo(DemoNativeContract.Kind.BROWSE);
         assertThat(resolve("big_buck_bunny", "watch", ComponentType.BUTTON,

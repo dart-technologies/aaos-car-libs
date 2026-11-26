@@ -220,6 +220,137 @@
       ]
     },
     {
+      "id": "nyc_queens_day",
+      "title": "Queens day: order, watch, drive, charge",
+      "corpusCase": "queens_pickup",
+      "corpusSequence": ["queens_pickup", "queens_watch", "queens_charge"],
+      "contextSnapshot": "a2ui-automotive/demo/context/nyc-2026-09-07.json",
+      "durationSeconds": 150,
+      "premise": "One Queens run in three chapters: order ahead while parked, watch then listen through the drive, arrive to real chargers and coffee. Chapter cards mark the sequencing; the guard transition from parked to drive is the centerpiece.",
+      "parameterRationale": [
+        "Hudson Yards is a recognizable neighborhood-level origin and avoids pretending the emulator has device location.",
+        "Queens Center names a real Elmhurst mall destination; the Samsung store visit is a spoken journey beat only, never on-screen branding.",
+        "Charger and coffee names come from cached Meta Spark rankings (demo/cache/muse/quality_cached/0a275c7e and db68fd54), not live data.",
+        "Chapter intermissions hide the case switches, so each surface reads as one calm screen under the four-card cap.",
+        "The dated NWS snapshot makes weather useful and auditable rather than silently stale."
+      ],
+      "doNotClaim": [
+        "real merchant inventory, price, payment, map data, or navigation guidance",
+        "live charger availability, hours, pricing, or queue",
+        "that a DEMO restriction preset represents vehicle motion"
+      ],
+      "chapterCards": [
+        {"image": "a2ui-automotive/demo/cards/qns_day-title.png", "atMs": 0, "seconds": 2.5},
+        {"image": "a2ui-automotive/demo/cards/qns_day-ch2.png", "atMs": 55000, "seconds": 3,
+         "fadeIn": 0.7, "fadeOut": 0.7},
+        {"image": "a2ui-automotive/demo/cards/qns_day-ch3.png", "atMs": 106000, "seconds": 3,
+         "fadeIn": 0.7, "fadeOut": 0.7}
+      ],
+      "clips": [
+        {
+          "id": "qnd_narration_01",
+          "role": "narration",
+          "atMs": 1000,
+          "text": "We are parked at Hudson Yards, heading to Queens Center. First: place discovery, a route preview, and order-ahead pickup in one host-native flow."
+        },
+        {
+          "id": "qnd_utterance_search",
+          "role": "user_utterance",
+          "atMs": 17200,
+          "text": "Find Queens Center.",
+          "expectedTranscript": "find queens center"
+        },
+        {
+          "id": "qnd_utterance_order",
+          "role": "user_utterance",
+          "atMs": 38000,
+          "text": "Order ahead.",
+          "expectedTranscript": "order ahead"
+        },
+        {
+          "id": "qnd_narration_02",
+          "role": "narration",
+          "atMs": 43500,
+          "text": "Order confirmed. While we wait to roll, the same concierge turns to video: parked-only pictures, then audio that survives the drive."
+        },
+        {
+          "id": "qnd_utterance_open",
+          "role": "user_utterance",
+          "atMs": 59500,
+          "text": "Open Big Buck Bunny.",
+          "expectedTranscript": "open big buck bunny"
+        },
+        {
+          "id": "qnd_utterance_audio",
+          "role": "user_utterance",
+          "atMs": 72000,
+          "text": "Play audio.",
+          "expectedTranscript": "play audio"
+        },
+        {
+          "id": "qnd_narration_03",
+          "role": "narration",
+          "atMs": 76000,
+          "text": "Audio plays on while the picture closes. Now the emulator drives through the real car service: search and purchase refuse, video stays gone, audio continues."
+        },
+        {
+          "id": "qnd_narration_04",
+          "role": "narration",
+          "atMs": 90000,
+          "text": "Rolling. The surface is glances only: the order status and the route stay. Everything else waits for park."
+        },
+        {
+          "id": "qnd_narration_05",
+          "role": "narration",
+          "atMs": 110500,
+          "text": "Parked at Queens Center after the Samsung store visit. Three real chargers: a Supercharger and Electrify America here, the municipal garage in Kew Gardens. Coffee orders ahead."
+        },
+        {
+          "id": "qnd_utterance_charge",
+          "role": "user_utterance",
+          "atMs": 126000,
+          "text": "Take me to the first one.",
+          "expectedTranscript": "take me to the first one"
+        },
+        {
+          "id": "qnd_utterance_coffee",
+          "role": "user_utterance",
+          "atMs": 131000,
+          "text": "Order my usual coffee.",
+          "expectedTranscript": "order my usual coffee"
+        },
+        {
+          "id": "qnd_narration_06",
+          "role": "narration",
+          "atMs": 136000,
+          "text": "The charger guides, the coffee waits, the film is parked-only again. One journey, three chapters, every pixel decided."
+        }
+      ],
+      "actions": [
+        {"atMs": 20200, "type": "speak", "clipId": "qnd_utterance_search"},
+        {"atMs": 33000, "type": "tapText", "text": "Preview pickup route"},
+        {"atMs": 35500, "type": "tapText", "text": "OK"},
+        {"atMs": 40300, "type": "speak", "clipId": "qnd_utterance_order"},
+        {"atMs": 41600, "type": "tapText", "text": "Confirm"},
+        {"atMs": 55500, "type": "selectCase", "caseId": "queens_watch"},
+        {"atMs": 62500, "type": "speak", "clipId": "qnd_utterance_open"},
+        {"atMs": 70000, "type": "tapText", "text": "Close"},
+        {"atMs": 74500, "type": "speak", "clipId": "qnd_utterance_audio"},
+        {"atMs": 88000, "type": "carState", "state": "drive"},
+        {"atMs": 104000, "type": "carState", "state": "park"},
+        {"atMs": 106500, "type": "selectCase", "caseId": "queens_charge"},
+        {"atMs": 129000, "type": "speak", "clipId": "qnd_utterance_charge"},
+        {"atMs": 134000, "type": "speak", "clipId": "qnd_utterance_coffee"},
+        {"atMs": 135500, "type": "tapText", "text": "Confirm"}
+      ],
+      "soundEffects": [
+        {"atMs": 250, "effectId": "fifth_house_welcome", "gainDb": -13},
+        {"atMs": 40500, "effectId": "fifth_house_confirmed", "gainDb": -12},
+        {"atMs": 88500, "effectId": "fifth_house_focus", "gainDb": -14},
+        {"atMs": 104200, "effectId": "fifth_house_arrival", "gainDb": -13}
+      ]
+    },
+    {
       "id": "nyc_curated_video",
       "title": "Curated short while waiting in Long Island City",
       "corpusCase": "big_buck_bunny",

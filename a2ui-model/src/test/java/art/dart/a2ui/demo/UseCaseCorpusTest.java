@@ -158,6 +158,46 @@ public class UseCaseCorpusTest {
     }
 
     @Test
+    public void queensWatchMirrorsBunnyWithoutFifthHouseStrings() {
+        UseCaseCorpus.UseCase queens = UseCaseCorpus.byId("queens_watch");
+        assertThat(queens).isNotNull();
+        A2uiMessageProcessor p = processor();
+        p.processAll(queens.getMessages());
+        A2uiComponent root = p.getSurface(queens.getId()).project("root");
+
+        A2uiComponent inMotion = A2uiPruner.prune(root,
+                A2uiRestrictionPolicy.allowedComponents(
+                        A2uiRestrictionPolicy.UX_RESTRICTIONS_NO_VIDEO));
+        assertThat(A2uiPruner.countOfType(inMotion, ComponentType.VIDEO)).isEqualTo(0);
+        assertThat(A2uiPruner.countOfType(inMotion, ComponentType.AUDIO_PLAYER)).isEqualTo(1);
+        assertThat(findById(inMotion, "play").getVoicePhrase()).isEqualTo("play audio");
+        assertThat(findById(root, "watch").getVoicePhrase()).isEqualTo("open Big Buck Bunny");
+        assertThat(findById(root, "movie").getTitle()).isEqualTo("Big Buck Bunny");
+        assertThat(findById(root, "video").getTitle()).doesNotContain("Fifth House");
+    }
+
+    @Test
+    public void queensChargeNamesThreeRealChargersAndCoffee() {
+        UseCaseCorpus.UseCase queens = UseCaseCorpus.byId("queens_charge");
+        assertThat(queens).isNotNull();
+        assertThat(queens.getTemplateCapabilities()).containsAtLeast(
+                UseCaseCorpus.TemplateCapability.PLACE_LIST_MAP,
+                UseCaseCorpus.TemplateCapability.NAVIGATION,
+                UseCaseCorpus.TemplateCapability.VIDEO);
+
+        A2uiMessageProcessor p = processor();
+        p.processAll(queens.getMessages());
+        A2uiComponent root = p.getSurface(queens.getId()).project("root");
+        assertThat(findById(root, "c1").getTitle()).isEqualTo("Tesla Supercharger");
+        assertThat(findById(root, "c2").getTitle()).isEqualTo("Electrify America");
+        assertThat(findById(root, "c3").getTitle()).isEqualTo("Borough Hall Garage");
+        assertThat(findById(root, "c1").getVoicePhrase())
+                .isEqualTo("take me to the first one");
+        assertThat(findById(root, "coffee").getAction()).isEqualTo("purchase");
+        assertThat(findById(root, "bbb").getVoicePhrase()).isEqualTo("play big buck bunny");
+    }
+
+    @Test
     public void useCaseIdsAreUniqueAndAddressable() {
         Set<String> ids = new LinkedHashSet<>();
         for (UseCaseCorpus.UseCase c : UseCaseCorpus.all()) {

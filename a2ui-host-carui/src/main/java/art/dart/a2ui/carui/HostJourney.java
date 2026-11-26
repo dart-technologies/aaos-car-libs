@@ -70,7 +70,8 @@ final class HostJourney {
     /** Queens Center pickup: same pointers, read from the queens case's own data model. */
     private static final HostJourney QUEENS_RUN = new HostJourney("queens_run",
             "queens_pickup",
-            new LinkedHashSet<>(Collections.singletonList("queens_pickup")),
+            new LinkedHashSet<>(Arrays.asList("queens_pickup", "queens_watch",
+                    "queens_charge")),
             "/order/status", Arrays.asList("/order/eta", "/order/pickup"),
             "/arrival/title", "/arrival/detail",
             R.drawable.a2ui_ic_pickup, 0, 0);

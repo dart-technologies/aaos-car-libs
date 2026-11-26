@@ -129,8 +129,10 @@ public final class UseCaseCorpus {
             poiDiscoveryOrder(),
             queensPickup(),
             bigBuckBunny(),
+            queensWatch(),
             metVisit(),
             evChargeCoffee(),
+            queensCharge(),
             artworkGrid(),
             signIn(),
             longMessage(),
@@ -414,6 +416,42 @@ public final class UseCaseCorpus {
     }
 
     /**
+     * Parked video for the Queens run: the bigBuckBunny flow with Queens-neutral
+     * strings (no Fifth House), so the journey never cuts to another brand.
+     * Same component ids, types, actions, and templates; only strings differ.
+     */
+    private static UseCase queensWatch() {
+        Builder b = new Builder("queens_watch",
+                "While waiting at Hudson Yards, find and watch a curated short while parked, "
+                        + "then continue audio in motion",
+                "BASELINE permits search/video; NO_VIDEO removes pixels while AudioPlayer and "
+                        + "safe transport remain");
+        b.container("root", "Column", "field", "results", "video", "watch", "audio", "play",
+                "note");
+        b.put("root", "title", "A short while you wait");
+        b.action("field", "TextField", "Find a curated short",
+                "Parked at Hudson Yards", "search");
+        b.put("field", "voicePhrase", "find curated short films");
+        b.container("results", "List", "movie");
+        b.put("results", "action", "open");
+        b.action("movie", "Card", "Big Buck Bunny",
+                "DEMO collection · generated fixture", "open");
+        b.component("video", "Video", "Parked short · Big Buck Bunny",
+                "Parked video · generated placeholder pixels");
+        b.action("watch", "Button", "Watch video", "Parked only", "open");
+        b.put("watch", "voicePhrase", "open Big Buck Bunny");
+        b.component("audio", "AudioPlayer", "Parked short · audio",
+                "Generated placeholder audio · available in motion");
+        b.action("play", "Button", "Play audio / pause", null, "play");
+        b.put("play", "voicePhrase", "play audio");
+        b.text("note", "Leave Hudson Yards",
+                "Video is withheld in motion; audio controls remain available");
+        b.templates(TemplateCapability.SEARCH, TemplateCapability.VIDEO,
+                TemplateCapability.MEDIA_PLAYBACK);
+        return b.build();
+    }
+
+    /**
      * The Met, safely: a cited brief, a parked-only DEMO reservation, a route preview and artwork.
      * Nesting is deliberate and ordinary (citations inside the brief, the map inside the route
      * card): under LIMIT_CONTENT the vehicle's own content-depth limit cuts them, while the ETA,
@@ -543,6 +581,46 @@ public final class UseCaseCorpus {
         b.data("/order/pickup", "Oat milk latte");
         b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
                 TemplateCapability.MODAL, TemplateCapability.VIDEO);
+        return b.build();
+    }
+
+    /**
+     * Charging plus coffee for the Queens run: three real chargers as static
+     * strings (nothing on the demo path rewrites charger data at runtime, so
+     * placeholders would only reintroduce fake precision), a coffee reorder
+     * naming the real mall café, and a parked-only short. Charger names come
+     * from the cached Meta Spark rankings; no live status, hours, or prices.
+     */
+    private static UseCase queensCharge() {
+        Builder b = new Builder("queens_charge",
+                "Arrived at Queens Center: compare three real chargers, choose one by voice, "
+                        + "then order coffee and finish a short while charging",
+                "BASELINE adds the parked reorder and a short to watch; motion keeps the "
+                        + "glanceable charger comparison and navigation, refuses the purchase, "
+                        + "removes the short");
+        b.container("root", "Column", "c1", "c2", "c3", "coffee", "bbb");
+        b.put("root", "title", "Charge and a coffee");
+        b.action("c1", "Card", "Tesla Supercharger",
+                "Queens Center · Elmhurst", "navigate");
+        b.put("c1", "voicePhrase", "take me to the first one");
+        b.action("c2", "Card", "Electrify America",
+                "Queens Center · 6th floor", "navigate");
+        b.put("c2", "voicePhrase", "take me to the second one");
+        b.action("c3", "Card", "Borough Hall Garage",
+                "Kew Gardens", "navigate");
+        b.put("c3", "voicePhrase", "take me to the third one");
+        b.action("coffee", "Button", "Order coffee ahead",
+                "Starbucks · Queens Center Mall", "purchase");
+        b.put("coffee", "voicePhrase", "order my usual coffee");
+        // Something to watch while charging: a Video, so motion prunes it, and opening it is
+        // navigation, not a purchase. Big Buck Bunny © Blender Foundation, CC BY 3.0.
+        b.action("bbb", "Video", "Big Buck Bunny", "Watch while you charge", "open");
+        // Past the visitor card cap: voice is the only way to reach it.
+        b.put("bbb", "voicePhrase", "play big buck bunny");
+        b.data("/order/status", "Order confirmed");
+        b.data("/order/pickup", "Starbucks · Queens Center Mall");
+        b.templates(TemplateCapability.PLACE_LIST_MAP, TemplateCapability.NAVIGATION,
+                TemplateCapability.VIDEO);
         return b.build();
     }
 
