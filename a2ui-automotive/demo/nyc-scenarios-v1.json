@@ -197,6 +197,13 @@
           "text": "Video is available only in the parked state. Before leaving, the driver closes the picture and switches to the separate audio control. Now the emulator enters drive through the real car service."
         },
         {
+          "id": "media_utterance_audio",
+          "role": "user_utterance",
+          "atMs": 51500,
+          "text": "Play audio.",
+          "expectedTranscript": "play audio"
+        },
+        {
           "id": "media_narration_04",
           "role": "narration",
           "atMs": 59000,
@@ -206,8 +213,8 @@
       "actions": [
         {"atMs": 18500, "type": "speak", "clipId": "media_utterance_search"},
         {"atMs": 36500, "type": "speak", "clipId": "media_utterance_open"},
-        {"atMs": 51000, "type": "tapText", "text": "Cancel"},
-        {"atMs": 53000, "type": "tapText", "text": "Play audio / pause"},
+        {"atMs": 51000, "type": "tapText", "text": "Close"},
+        {"atMs": 54000, "type": "speak", "clipId": "media_utterance_audio"},
         {"atMs": 56500, "type": "carState", "state": "drive"}
       ],
       "soundEffects": [
@@ -257,9 +264,16 @@
           "text": "The order is a fixture, but the confirmation is real policy. It is allowed only while parked and is decided again when OK is pressed. The concierge now offers a short Fifth House city note from the curated media surface."
         },
         {
+          "id": "concierge_utterance_audio",
+          "role": "user_utterance",
+          "atMs": 35300,
+          "text": "Play audio.",
+          "expectedTranscript": "play audio"
+        },
+        {
           "id": "concierge_narration_03",
           "role": "narration",
-          "atMs": 36000,
+          "atMs": 37000,
           "text": "Audio begins before departure. As the emulator enters drive through car service, video and search leave the surface while the local media session continues. The experience gets quieter rather than simply going blank."
         },
         {
@@ -286,7 +300,7 @@
         {"atMs": 19100, "type": "speak", "clipId": "concierge_utterance_order"},
         {"atMs": 20400, "type": "tapText", "text": "Confirm"},
         {"atMs": 35000, "type": "selectCase", "caseId": "big_buck_bunny"},
-        {"atMs": 38000, "type": "tapText", "text": "Play audio / pause"},
+        {"atMs": 38000, "type": "speak", "clipId": "concierge_utterance_audio"},
         {"atMs": 51000, "type": "carState", "state": "drive"},
         {"atMs": 69000, "type": "carState", "state": "park"},
         {"atMs": 73000, "type": "speak", "clipId": "concierge_utterance_open"},
